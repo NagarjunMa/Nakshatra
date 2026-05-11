@@ -1,0 +1,98 @@
+{
+  "mesha": {
+    "name_en": "Aries",
+    "ruling_planet": "mars",
+    "palettes": [
+      { "name": "Crimson Fire", "primary": "#C8102E", "secondary": "#FFB81C", "accent": "#1A1A1A" },
+      { "name": "Royal Maroon", "primary": "#8B0000", "secondary": "#FFE4B5", "accent": "#2F2F2F" }
+    ]
+  },
+  "vrishabha": {
+    "name_en": "Taurus",
+    "ruling_planet": "venus",
+    "palettes": [
+      { "name": "Emerald Earth", "primary": "#2E8B57", "secondary": "#F5F5DC", "accent": "#1A1A1A" },
+      { "name": "Rose Garden", "primary": "#C48793", "secondary": "#FFF5EE", "accent": "#2F2F2F" }
+    ]
+  },
+  "mithuna": {
+    "name_en": "Gemini",
+    "ruling_planet": "mercury",
+    "palettes": [
+      { "name": "Jade Wind", "primary": "#00A86B", "secondary": "#F0FFF0", "accent": "#1A1A1A" },
+      { "name": "Mint Breeze", "primary": "#3EB489", "secondary": "#F5FFFA", "accent": "#2F2F2F" }
+    ]
+  },
+  "karka": {
+    "name_en": "Cancer",
+    "ruling_planet": "moon",
+    "palettes": [
+      { "name": "Pearl Moonlight", "primary": "#E6E6FA", "secondary": "#FFFAF0", "accent": "#2F2F2F" },
+      { "name": "Silver Tide", "primary": "#C0C0C0", "secondary": "#F8F8FF", "accent": "#1A1A1A" }
+    ]
+  },
+  "simha": {
+    "name_en": "Leo",
+    "ruling_planet": "sun",
+    "palettes": [
+      { "name": "Golden Sun", "primary": "#DAA520", "secondary": "#FFFFF0", "accent": "#1A1A1A" },
+      { "name": "Amber Throne", "primary": "#FF8C00", "secondary": "#FFF8DC", "accent": "#2F2F2F" }
+    ]
+  },
+  "kanya": {
+    "name_en": "Virgo",
+    "ruling_planet": "mercury",
+    "palettes": [
+      { "name": "Forest Sage", "primary": "#556B2F", "secondary": "#F5F5DC", "accent": "#1A1A1A" },
+      { "name": "Olive Grove", "primary": "#6B8E23", "secondary": "#FAFAD2", "accent": "#2F2F2F" }
+    ]
+  },
+  "tula": {
+    "name_en": "Libra",
+    "ruling_planet": "venus",
+    "palettes": [
+      { "name": "Celestial Lavender", "primary": "#9370DB", "secondary": "#FAF0E6", "accent": "#1A1A1A" },
+      { "name": "Ivory Balance", "primary": "#CBBEFF", "secondary": "#FFFFF0", "accent": "#2F2F2F" }
+    ]
+  },
+  "vrishchika": {
+    "name_en": "Scorpio",
+    "ruling_planet": "mars",
+    "palettes": [
+      { "name": "Deep Crimson", "primary": "#8B0000", "secondary": "#FFF0F5", "accent": "#1A1A1A" },
+      { "name": "Midnight Ruby", "primary": "#722F37", "secondary": "#F5F5F5", "accent": "#2F2F2F" }
+    ]
+  },
+  "dhanu": {
+    "name_en": "Sagittarius",
+    "ruling_planet": "jupiter",
+    "palettes": [
+      { "name": "Saffron Blaze", "primary": "#FF9933", "secondary": "#FFFFF0", "accent": "#1A1A1A" },
+      { "name": "Turmeric Gold", "primary": "#E3A857", "secondary": "#FFF8DC", "accent": "#2F2F2F" }
+    ]
+  },
+  "makara": {
+    "name_en": "Capricorn",
+    "ruling_planet": "saturn",
+    "palettes": [
+      { "name": "Obsidian Night", "primary": "#2F4F4F", "secondary": "#F5F5F5", "accent": "#1A1A1A" },
+      { "name": "Slate Mountain", "primary": "#696969", "secondary": "#DCDCDC", "accent": "#2F2F2F" }
+    ]
+  },
+  "kumbha": {
+    "name_en": "Aquarius",
+    "ruling_planet": "saturn",
+    "palettes": [
+      { "name": "Sapphire Sky", "primary": "#4169E1", "secondary": "#F0F8FF", "accent": "#1A1A1A" },
+      { "name": "Electric Indigo", "primary": "#6F00FF", "secondary": "#E6E6FA", "accent": "#2F2F2F" }
+    ]
+  },
+  "meena": {
+    "name_en": "Pisces",
+    "ruling_planet": "jupiter",
+    "palettes": [
+      { "name": "Ocean Pearl", "primary": "#FFD700", "secondary": "#F0FFFF", "accent": "#1A1A1A" },
+      { "name": "Lotus Yellow", "primary": "#F0E68C", "secondary": "#FFFACD", "accent": "#2F2F2F" }
+    ]
+  }
+}

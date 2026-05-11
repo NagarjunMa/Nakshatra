@@ -1,26 +1,331 @@
 @import "tailwindcss";
 
+/* --- Custom fonts --- */
+@font-face {
+  font-family: "Harmond";
+  src: url("/fonts/Harmond-ExtraBoldExpanded.otf") format("opentype");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Harmond";
+  src: url("/fonts/Harmond-SemiBoldCondensed.otf") format("opentype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MangoGrotesque";
+  src: url("/fonts/MangoGrotesque-Light.ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MangoGrotesque";
+  src: url("/fonts/MangoGrotesque-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MangoGrotesque";
+  src: url("/fonts/MangoGrotesque-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MangoGrotesque";
+  src: url("/fonts/MangoGrotesque-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
+  /* App theme (existing) */
   --background: #ffffff;
   --foreground: #171717;
+  --primary: #6366f1;
+  --primary-foreground: #ffffff;
+  --muted: #f5f5f5;
+  --muted-foreground: #737373;
+  --border: #e5e5e5;
+  --ring: #6366f1;
+  --destructive: #ef4444;
+
+  /* Theme color — overridden per user's rashi palette */
+  --theme-color: #6366f1;
+  --theme-color-light: #e0e7ff;
+
+  /* Landing page palette (Noguchi Purple) */
+  --landing-bg-deep: #1e202c;
+  --landing-surface: #31323e;
+  --landing-accent: #8676c4;
+  --landing-accent-deep: #60519b;
+  --landing-accent-soft: rgba(134, 118, 196, 0.16);
+  --landing-text: #e4e5ee;
+  --landing-text-dim: rgba(228, 229, 238, 0.72);
+  --landing-text-muted: rgba(228, 229, 238, 0.55);
+  --landing-glass: rgba(30, 32, 44, 0.55);
+  --landing-glass-strong: rgba(30, 32, 44, 0.75);
+  --landing-border: rgba(228, 229, 238, 0.14);
+  --landing-border-strong: rgba(228, 229, 238, 0.28);
+
+  /* Fonts */
+  --font-harmond: "Harmond", "Playfair Display", serif;
+  --font-mango: "MangoGrotesque", "Inter", system-ui, sans-serif;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+  --color-destructive: var(--destructive);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Landing tokens exposed to Tailwind */
+  --color-landing-bg: var(--landing-bg-deep);
+  --color-landing-surface: var(--landing-surface);
+  --color-landing-accent: var(--landing-accent);
+  --color-landing-text: var(--landing-text);
+  --color-landing-text-dim: var(--landing-text-dim);
+  --color-landing-border: var(--landing-border);
+  --font-harmond: var(--font-harmond);
+  --font-mango: var(--font-mango);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --muted: #262626;
+    --muted-foreground: #a3a3a3;
+    --border: #404040;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* --- Landing page layout --- */
+.landing-root {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  color: var(--landing-text);
+  font-family: var(--font-mango);
+  overflow-x: hidden;
+  background-color: #0a0b14;
+}
+
+.landing-glass {
+  background: var(--landing-glass);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--landing-border);
+  border-radius: 4px;
+}
+
+.landing-glass-strong {
+  background: var(--landing-glass-strong);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--landing-border-strong);
+  border-radius: 6px;
+}
+
+.landing-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.875rem;
+  border: 1px solid var(--landing-border-strong);
+  border-radius: 9999px;
+  background: var(--landing-accent-soft);
+  font-family: var(--font-mango);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--landing-accent);
+}
+
+.landing-section-title {
+  font-family: var(--font-mango);
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--landing-accent);
+}
+
+.landing-display {
+  font-family: var(--font-harmond);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.landing-sub {
+  font-family: var(--font-mango);
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.landing-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.75rem;
+  background: var(--landing-accent);
+  color: #fff;
+  font-family: var(--font-mango);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  border-radius: 9999px;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 0 0 0 rgba(134, 118, 196, 0);
+}
+
+.landing-btn-primary:hover {
+  background: #9685d2;
+  box-shadow: 0 0 36px 0 rgba(134, 118, 196, 0.5);
+  transform: translateY(-1px);
+}
+
+.landing-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  color: var(--landing-text);
+  font-family: var(--font-mango);
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  position: relative;
+  transition: color 0.3s ease;
+}
+
+.landing-btn-ghost::after {
+  content: "";
+  position: absolute;
+  bottom: 0.5rem;
+  left: 50%;
+  width: 0;
+  height: 1px;
+  background: currentColor;
+  transition: width 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  transform: translateX(-50%);
+}
+
+.landing-btn-ghost:hover {
+  color: var(--landing-accent);
+}
+
+.landing-btn-ghost:hover::after {
+  width: calc(100% - 3rem);
+}
+
+/* --- Hero entry animation --- */
+@keyframes landing-fade-up {
+  0% {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.landing-fade-up {
+  opacity: 0;
+  animation: landing-fade-up 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Smooth page transitions */
+@view-transition {
+  navigation: auto;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .landing-fade-up {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* Print styles */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  [data-constellation-bg] {
+    display: none !important;
+  }
+
+  [data-preview-bar] {
+    display: none !important;
+  }
+
+  [data-template="celestial-union"] {
+    background: white !important;
+    color: #171717 !important;
+  }
+
+  [data-template="celestial-union"] h1,
+  [data-template="celestial-union"] h2,
+  [data-template="celestial-union"] span,
+  [data-template="celestial-union"] p {
+    color: #171717 !important;
+    opacity: 1 !important;
+  }
+
+  [data-template="celestial-union"] h2 {
+    color: #737373 !important;
+  }
+
+  [data-template="celestial-union"] .backdrop-blur-md {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(0, 0, 0, 0.02) !important;
+    border-color: rgba(0, 0, 0, 0.12) !important;
+  }
+
+  img {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 1.5cm;
+  }
 }

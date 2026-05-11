@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="currentColor" stroke="currentColor">
+  <!-- Libra / Tula - balance/diamond shape, like reference Corona -->
+  <line x1="100" y1="40" x2="60" y2="80" stroke-width="1.2" />
+  <line x1="100" y1="40" x2="140" y2="80" stroke-width="1.2" />
+  <line x1="60" y1="80" x2="50" y2="120" stroke-width="1.2" />
+  <line x1="140" y1="80" x2="150" y2="120" stroke-width="1.2" />
+  <line x1="50" y1="120" x2="100" y2="150" stroke-width="1.2" />
+  <line x1="150" y1="120" x2="100" y2="150" stroke-width="1.2" />
+  <line x1="100" y1="150" x2="100" y2="170" stroke-width="1.2" />
+  <circle cx="100" cy="40" r="5.5" />
+  <circle cx="60" cy="80" r="4" />
+  <circle cx="140" cy="80" r="4" />
+  <circle cx="50" cy="120" r="4.5" />
+  <circle cx="150" cy="120" r="4.5" />
+  <circle cx="100" cy="150" r="4" />
+  <circle cx="100" cy="170" r="3.5" />
+</svg>

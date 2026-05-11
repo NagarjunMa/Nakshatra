@@ -1,0 +1,11 @@
+node_modules
+.next
+.git
+.claude
+.env*
+.DS_Store
+npm-debug.log*
+README.md
+CLAUDE.md
+AGENTS.md
+Makefile

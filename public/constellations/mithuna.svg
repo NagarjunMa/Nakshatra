@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="currentColor" stroke="currentColor">
+  <!-- Gemini / Mithuna - two parallel figures, like reference Gemeni -->
+  <line x1="55" y1="40" x2="55" y2="80" stroke-width="1.2" />
+  <line x1="55" y1="80" x2="70" y2="110" stroke-width="1.2" />
+  <line x1="55" y1="80" x2="40" y2="115" stroke-width="1.2" />
+  <line x1="55" y1="60" x2="75" y2="50" stroke-width="1.2" />
+  <line x1="55" y1="60" x2="35" y2="50" stroke-width="1.2" />
+  <line x1="140" y1="45" x2="140" y2="85" stroke-width="1.2" />
+  <line x1="140" y1="85" x2="155" y2="115" stroke-width="1.2" />
+  <line x1="140" y1="85" x2="125" y2="118" stroke-width="1.2" />
+  <line x1="140" y1="65" x2="160" y2="55" stroke-width="1.2" />
+  <line x1="140" y1="65" x2="120" y2="55" stroke-width="1.2" />
+  <line x1="70" y1="110" x2="125" y2="118" stroke-width="1.2" />
+  <line x1="55" y1="40" x2="140" y2="45" stroke-width="1.2" />
+  <circle cx="55" cy="40" r="5" />
+  <circle cx="55" cy="80" r="3.5" />
+  <circle cx="70" cy="110" r="4" />
+  <circle cx="40" cy="115" r="3.5" />
+  <circle cx="75" cy="50" r="3" />
+  <circle cx="35" cy="50" r="3" />
+  <circle cx="140" cy="45" r="5" />
+  <circle cx="140" cy="85" r="3.5" />
+  <circle cx="155" cy="115" r="4" />
+  <circle cx="125" cy="118" r="3.5" />
+  <circle cx="160" cy="55" r="3" />
+  <circle cx="120" cy="55" r="3" />
+</svg>
