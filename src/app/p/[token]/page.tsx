@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getTemplate } from "@/components/templates";
+import { BiodataTemplate } from "@/components/templates";
 import type { Metadata } from "next";
 import type { PortfolioData } from "@/types/portfolio";
 
@@ -88,9 +88,13 @@ export default async function PublicBiodataPage({ params }: Props) {
   const data = portfolio.published_data as PortfolioData;
   const themeColor = portfolio.theme_color || "#6366f1";
   const sunSign = portfolio.sun_sign;
-  const Template = getTemplate(portfolio.template_id);
 
   return (
-    <Template data={data} themeColor={themeColor} sunSign={sunSign} />
+    <BiodataTemplate
+      templateId={portfolio.template_id}
+      data={data}
+      themeColor={themeColor}
+      sunSign={sunSign}
+    />
   );
 }

@@ -1,6 +1,6 @@
 import { getAuthenticatedUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { getTemplate } from "@/components/templates";
+import { BiodataTemplate } from "@/components/templates";
 import type { Metadata } from "next";
 import type { PortfolioData } from "@/types/portfolio";
 import Link from "next/link";
@@ -23,7 +23,6 @@ export default async function PreviewPage() {
   const data = portfolio.draft_data as PortfolioData;
   const themeColor = portfolio.theme_color || "#6366f1";
   const sunSign = portfolio.sun_sign;
-  const Template = getTemplate(portfolio.template_id);
 
   return (
     <div className="flex flex-1 flex-col">
@@ -48,9 +47,13 @@ export default async function PreviewPage() {
         </div>
       </div>
 
-      {/* Template render */}
       <div className="flex-1">
-        <Template data={data} themeColor={themeColor} sunSign={sunSign} />
+        <BiodataTemplate
+          templateId={portfolio.template_id}
+          data={data}
+          themeColor={themeColor}
+          sunSign={sunSign}
+        />
       </div>
     </div>
   );
