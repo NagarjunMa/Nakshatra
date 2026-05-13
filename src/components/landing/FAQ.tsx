@@ -1,4 +1,5 @@
 import { Plus } from "lucide-react";
+import { Reveal } from "./Reveal";
 
 const faqs = [
   {
@@ -49,13 +50,14 @@ export function FAQ() {
       id="faq"
       className="relative py-24 sm:py-32 px-6 sm:px-10 border-t border-[color:var(--landing-border)]"
     >
+      <Reveal stagger={0.05}>
       <div className="max-w-3xl mx-auto">
-        <div className="text-center mb-16">
+        <div className="text-center mb-16 reveal">
           <p className="landing-section-title mb-4">FAQ</p>
           <h2
-            className="text-[36px] sm:text-[52px] md:text-[64px] text-[color:var(--landing-text)] leading-[1.05]"
+            className="text-[32px] sm:text-[52px] md:text-[64px] text-[color:var(--landing-text)] leading-[1.05]"
             style={{
-              fontFamily: "var(--font-harmond)",
+              fontFamily: "var(--font-hkgrotesk)",
               fontWeight: 600,
               letterSpacing: "-0.02em",
             }}
@@ -72,13 +74,13 @@ export function FAQ() {
           {faqs.map(({ q, a }, i) => (
             <details
               key={i}
-              className="landing-glass group px-6 py-5 sm:px-7 sm:py-6 [&_summary::-webkit-details-marker]:hidden"
+              className="reveal landing-glass group px-6 py-5 sm:px-7 sm:py-6 [&_summary::-webkit-details-marker]:hidden"
             >
               <summary className="flex items-start justify-between gap-4 cursor-pointer list-none">
                 <span
                   className="text-[16px] sm:text-[18px] text-[color:var(--landing-text)] pr-2 leading-snug"
                   style={{
-                    fontFamily: "var(--font-mango)",
+                    fontFamily: "var(--font-ranade)",
                     fontWeight: 600,
                     letterSpacing: "-0.005em",
                   }}
@@ -92,7 +94,7 @@ export function FAQ() {
               </summary>
               <p
                 className="text-[14px] sm:text-[15px] text-[color:var(--landing-text-dim)] leading-[1.65] mt-4 pr-8"
-                style={{ fontFamily: "var(--font-mango)" }}
+                style={{ fontFamily: "var(--font-ranade)" }}
               >
                 {a}
               </p>
@@ -100,6 +102,7 @@ export function FAQ() {
           ))}
         </div>
       </div>
+      </Reveal>
     </section>
   );
 }

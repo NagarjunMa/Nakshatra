@@ -6,6 +6,7 @@ import {
   Smartphone,
   Lock,
 } from "lucide-react";
+import { Reveal } from "./Reveal";
 
 const benefits = [
   {
@@ -46,13 +47,14 @@ export function Benefits() {
       id="benefits"
       className="relative py-24 sm:py-32 px-6 sm:px-10 border-t border-[color:var(--landing-border)]"
     >
+      <Reveal>
       <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-16">
+        <div className="text-center mb-16 reveal">
           <p className="landing-section-title mb-4">Why Nakshatra</p>
           <h2
-            className="text-[36px] sm:text-[52px] md:text-[64px] text-[color:var(--landing-text)] leading-[1.05]"
+            className="text-[32px] sm:text-[52px] md:text-[64px] text-[color:var(--landing-text)] leading-[1.05]"
             style={{
-              fontFamily: "var(--font-harmond)",
+              fontFamily: "var(--font-hkgrotesk)",
               fontWeight: 600,
               letterSpacing: "-0.02em",
             }}
@@ -69,7 +71,7 @@ export function Benefits() {
           {benefits.map(({ icon: Icon, title, body }, i) => (
             <article
               key={i}
-              className="landing-glass p-7 sm:p-8 group hover:border-[color:var(--landing-border-strong)] transition-all duration-500 hover:-translate-y-1"
+              className="reveal landing-glass p-7 sm:p-8 group hover:border-[color:var(--landing-border-strong)] transition-all duration-500 hover:-translate-y-1"
             >
               <div className="w-10 h-10 mb-6 rounded-full flex items-center justify-center bg-[color:var(--landing-accent)]/15 border border-[color:var(--landing-accent)]/30">
                 <Icon
@@ -80,7 +82,7 @@ export function Benefits() {
               <h3
                 className="text-[20px] sm:text-[22px] text-[color:var(--landing-text)] mb-3 leading-[1.15]"
                 style={{
-                  fontFamily: "var(--font-harmond)",
+                  fontFamily: "var(--font-hkgrotesk)",
                   fontWeight: 600,
                   letterSpacing: "-0.01em",
                 }}
@@ -89,7 +91,7 @@ export function Benefits() {
               </h3>
               <p
                 className="text-[14px] sm:text-[15px] text-[color:var(--landing-text-dim)] leading-[1.65]"
-                style={{ fontFamily: "var(--font-mango)", fontWeight: 400 }}
+                style={{ fontFamily: "var(--font-ranade)", fontWeight: 400 }}
               >
                 {body}
               </p>
@@ -97,6 +99,7 @@ export function Benefits() {
           ))}
         </div>
       </div>
+      </Reveal>
     </section>
   );
 }

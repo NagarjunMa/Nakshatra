@@ -34,7 +34,7 @@ export function FormPreview() {
           <h2
             className="text-[36px] sm:text-[52px] md:text-[64px] text-[color:var(--landing-text)] leading-[1.05]"
             style={{
-              fontFamily: "var(--font-harmond)",
+              fontFamily: "var(--font-hkgrotesk)",
               fontWeight: 600,
               letterSpacing: "-0.02em",
             }}
@@ -56,7 +56,7 @@ export function FormPreview() {
               <span
                 className="text-[28px] text-[color:var(--landing-accent)]/70 shrink-0 tabular-nums"
                 style={{
-                  fontFamily: "var(--font-harmond)",
+                  fontFamily: "var(--font-hkgrotesk)",
                   fontWeight: 800,
                   letterSpacing: "-0.02em",
                 }}
@@ -67,7 +67,7 @@ export function FormPreview() {
                 <h3
                   className="text-[17px] sm:text-[18px] text-[color:var(--landing-text)]"
                   style={{
-                    fontFamily: "var(--font-mango)",
+                    fontFamily: "var(--font-ranade)",
                     fontWeight: 600,
                     letterSpacing: "-0.005em",
                   }}
@@ -76,7 +76,7 @@ export function FormPreview() {
                 </h3>
                 <p
                   className="text-[13px] sm:text-[14px] text-[color:var(--landing-text-dim)] mt-0.5"
-                  style={{ fontFamily: "var(--font-mango)" }}
+                  style={{ fontFamily: "var(--font-ranade)" }}
                 >
                   {detail}
                 </p>
@@ -87,7 +87,7 @@ export function FormPreview() {
 
         <p
           className="text-center mt-12 text-[12px] tracking-[0.32em] uppercase text-[color:var(--landing-text-dim)]"
-          style={{ fontFamily: "var(--font-mango)" }}
+          style={{ fontFamily: "var(--font-ranade)" }}
         >
           Nine sections · Ten minutes · Save as you go
         </p>

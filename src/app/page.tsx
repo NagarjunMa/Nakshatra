@@ -1,5 +1,6 @@
 import { Header } from "@/components/landing/Header";
 import { Hero } from "@/components/landing/Hero";
+import { FloatingCTA } from "@/components/landing/FloatingCTA";
 import { ShaderBackground } from "@/components/landing/ShaderBackground";
 import { SampleShowcase } from "@/components/landing/SampleShowcase";
 import { HowItWorks } from "@/components/landing/HowItWorks";
@@ -37,6 +38,7 @@ export default function Home() {
     <div className="landing-root">
       <ShaderBackground />
       <Header />
+      <FloatingCTA />
       <main>
         <Hero />
         <SampleShowcase />

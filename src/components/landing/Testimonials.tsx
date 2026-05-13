@@ -1,4 +1,5 @@
 import { Quote } from "lucide-react";
+import { Reveal } from "./Reveal";
 
 const quotes = [
   {
@@ -36,13 +37,14 @@ const quotes = [
 export function Testimonials() {
   return (
     <section className="relative py-24 sm:py-32 px-6 sm:px-10">
+      <Reveal>
       <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-16">
+        <div className="text-center mb-16 reveal">
           <p className="landing-section-title mb-4">Voices</p>
           <h2
-            className="text-[36px] sm:text-[52px] md:text-[64px] text-[color:var(--landing-text)] leading-[1.05]"
+            className="text-[32px] sm:text-[52px] md:text-[64px] text-[color:var(--landing-text)] leading-[1.05]"
             style={{
-              fontFamily: "var(--font-harmond)",
+              fontFamily: "var(--font-hkgrotesk)",
               fontWeight: 600,
               letterSpacing: "-0.02em",
             }}
@@ -59,7 +61,7 @@ export function Testimonials() {
           {quotes.map(({ text, name, meta }, i) => (
             <figure
               key={i}
-              className="landing-glass p-7 sm:p-8 flex flex-col gap-5 hover:border-[color:var(--landing-border-strong)] transition-all hover:-translate-y-1 duration-500"
+              className="reveal landing-glass p-7 sm:p-8 flex flex-col gap-5 hover:border-[color:var(--landing-border-strong)] transition-all hover:-translate-y-1 duration-500"
             >
               <Quote
                 className="w-6 h-6 text-[color:var(--landing-accent)]/40"
@@ -67,7 +69,7 @@ export function Testimonials() {
               />
               <blockquote
                 className="text-[16px] sm:text-[17px] leading-[1.55] text-[color:var(--landing-text)]"
-                style={{ fontFamily: "var(--font-mango)", fontWeight: 400 }}
+                style={{ fontFamily: "var(--font-ranade)", fontWeight: 400 }}
               >
                 {`“${text}”`}
               </blockquote>
@@ -75,7 +77,7 @@ export function Testimonials() {
                 <div
                   className="text-[14px] text-[color:var(--landing-text)]"
                   style={{
-                    fontFamily: "var(--font-harmond)",
+                    fontFamily: "var(--font-hkgrotesk)",
                     fontWeight: 600,
                   }}
                 >
@@ -83,7 +85,7 @@ export function Testimonials() {
                 </div>
                 <div
                   className="text-[11px] tracking-[0.22em] uppercase text-[color:var(--landing-text-dim)] mt-0.5"
-                  style={{ fontFamily: "var(--font-mango)" }}
+                  style={{ fontFamily: "var(--font-ranade)" }}
                 >
                   {meta}
                 </div>
@@ -92,6 +94,7 @@ export function Testimonials() {
           ))}
         </div>
       </div>
+      </Reveal>
     </section>
   );
 }
