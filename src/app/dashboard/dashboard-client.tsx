@@ -20,34 +20,23 @@ interface Props {
   portfolio: Portfolio | null;
   viewCount: number;
   userEmail: string;
+  shareUrl: string | null;
+  isExpired: boolean;
+  daysLeft: number | null;
 }
 
 export default function DashboardClient({
   portfolio,
   viewCount,
   userEmail,
+  shareUrl,
+  isExpired,
+  daysLeft,
 }: Props) {
   const [copied, setCopied] = useState(false);
   const [renewing, setRenewing] = useState(false);
   const router = useRouter();
   const supabase = createClient();
-
-  const shareUrl = portfolio?.share_token
-    ? `${window.location.origin}/p/${portfolio.share_token}`
-    : null;
-
-  const isExpired =
-    portfolio?.expires_at && new Date(portfolio.expires_at) < new Date();
-
-  const daysLeft = portfolio?.expires_at
-    ? Math.max(
-        0,
-        Math.ceil(
-          (new Date(portfolio.expires_at).getTime() - Date.now()) /
-            (1000 * 60 * 60 * 24)
-        )
-      )
-    : null;
 
   async function copyLink() {
     if (!shareUrl) return;
