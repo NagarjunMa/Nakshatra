@@ -1,3 +1,5 @@
+import { Reveal } from "./Reveal";
+
 const items = [
   {
     not: "Not a matrimony platform.",
@@ -20,13 +22,14 @@ const items = [
 export function Differentiation() {
   return (
     <section className="relative py-24 sm:py-32 px-6 sm:px-10">
+      <Reveal>
       <div className="max-w-4xl mx-auto">
-        <div className="mb-14">
+        <div className="mb-14 reveal">
           <p className="landing-section-title mb-4">Positioning</p>
           <h2
-            className="text-[36px] sm:text-[52px] md:text-[64px] text-[color:var(--landing-text)] leading-[1.05]"
+            className="text-[32px] sm:text-[52px] md:text-[64px] text-[color:var(--landing-text)] leading-[1.05]"
             style={{
-              fontFamily: "var(--font-harmond)",
+              fontFamily: "var(--font-hkgrotesk)",
               fontWeight: 600,
               letterSpacing: "-0.02em",
             }}
@@ -43,12 +46,12 @@ export function Differentiation() {
           {items.map(({ not, is }, i) => (
             <li
               key={i}
-              className="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-8 px-6 sm:px-8 py-6 border-b border-[color:var(--landing-border)] last:border-0"
+              className="reveal flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-8 px-6 sm:px-8 py-6 border-b border-[color:var(--landing-border)] last:border-0"
             >
               <span
                 className="text-[20px] sm:text-[24px] text-[color:var(--landing-text)] shrink-0 sm:w-72"
                 style={{
-                  fontFamily: "var(--font-harmond)",
+                  fontFamily: "var(--font-hkgrotesk)",
                   fontWeight: 600,
                   letterSpacing: "-0.01em",
                 }}
@@ -57,7 +60,7 @@ export function Differentiation() {
               </span>
               <span
                 className="text-[15px] sm:text-[16px] text-[color:var(--landing-text-dim)] leading-relaxed"
-                style={{ fontFamily: "var(--font-mango)", fontWeight: 400 }}
+                style={{ fontFamily: "var(--font-ranade)", fontWeight: 400 }}
               >
                 {is}
               </span>
@@ -65,6 +68,7 @@ export function Differentiation() {
           ))}
         </ul>
       </div>
+      </Reveal>
     </section>
   );
 }

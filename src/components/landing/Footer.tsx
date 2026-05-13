@@ -43,13 +43,13 @@ export function Footer() {
           <div className="md:col-span-5">
             <span
               className="text-[24px] sm:text-[28px] tracking-[0.18em] text-[color:var(--landing-text)] block mb-4"
-              style={{ fontFamily: "var(--font-harmond)", fontWeight: 800 }}
+              style={{ fontFamily: "var(--font-hkgrotesk)", fontWeight: 800 }}
             >
               NAKSHATRA
             </span>
             <p
               className="text-[15px] text-[color:var(--landing-text-dim)] max-w-sm leading-relaxed"
-              style={{ fontFamily: "var(--font-mango)" }}
+              style={{ fontFamily: "var(--font-ranade)" }}
             >
               Made with care for Indian families. The wedding biodata, on one
               link.
@@ -87,7 +87,7 @@ export function Footer() {
         <div className="pt-8 border-t border-[color:var(--landing-border)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <p
             className="text-[12px] tracking-[0.18em] uppercase text-[color:var(--landing-text-dim)]"
-            style={{ fontFamily: "var(--font-mango)" }}
+            style={{ fontFamily: "var(--font-ranade)" }}
           >
             © 2026 Nakshatra · All rights reserved
           </p>
@@ -129,7 +129,7 @@ function FooterCol({
             <Link
               href={href}
               className="text-[14px] text-[color:var(--landing-text-dim)] hover:text-[color:var(--landing-accent)] transition-colors"
-              style={{ fontFamily: "var(--font-mango)" }}
+              style={{ fontFamily: "var(--font-ranade)" }}
             >
               {label}
             </Link>
