@@ -72,6 +72,7 @@ Fill a form once. Get a shareable link. Update anytime — the link always shows
    - `supabase/migrations/001_initial_schema.sql`
    - `supabase/migrations/002_storage_policies.sql`
    - `supabase/migrations/003_rate_limit_views.sql`
+   - `supabase/migrations/004_b2c_b2b2c_architecture.sql`
 
 5. Enable Google OAuth in Supabase dashboard:
    Authentication → Providers → Google → Add Client ID + Secret.
@@ -154,8 +155,18 @@ public/
 └── landing/                            # bg-cosmic.jpg (legacy, unused)
 
 supabase/
-└── migrations/                         # 3 SQL migration files
+└── migrations/                         # SQL migration files
 ```
+
+## Architecture Notes
+
+- `docs/db-architecture.md` explains the new B2C/B2B2C database foundation:
+  candidates, organizations, tracked portfolio links, interest requests,
+  controlled reveal, attribution records, verification services, compatibility
+  reports, and marketplace lead claims.
+- The architecture is additive. The current app still works through the
+  existing `portfolios` flow while future development can migrate toward the
+  richer candidate and portfolio-link model.
 
 ## Scripts
 
