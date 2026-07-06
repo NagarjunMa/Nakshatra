@@ -30,7 +30,7 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Protected routes — redirect to login if not authenticated
+  // Protected routes - redirect to login if not authenticated.
   const protectedPaths = ["/dashboard", "/edit", "/preview"];
   const isProtected = protectedPaths.some((p) =>
     request.nextUrl.pathname.startsWith(p)
@@ -43,7 +43,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Redirect logged-in users away from login/signup
+  // Redirect logged-in users away from login/signup.
   const authPaths = ["/login", "/signup"];
   const isAuthPage = authPaths.some((p) =>
     request.nextUrl.pathname.startsWith(p)

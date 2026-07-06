@@ -12,10 +12,10 @@
 - [x] Write DB schema + RLS policies (SQL migration)
 - [x] Apply migration to remote Supabase (`initial_schema`)
 - [x] Create `photos` storage bucket (public)
-- [x] Set up Supabase client + auth helpers (client, server, middleware)
+- [x] Set up Supabase client + auth helpers (client, server, proxy)
 - [x] Google OAuth + Magic link auth (`/login`, `/signup`)
 - [x] Auth callback with auto portfolio row creation
-- [x] Middleware session refresh + route protection
+- [x] Proxy session refresh + route protection
 - [x] Shared `getAuthenticatedUser()` helper for server pages
 - [x] Client-side JWT expiry detection → redirect to login
 - [x] Public route `/p/[token]` with dynamic data rendering
