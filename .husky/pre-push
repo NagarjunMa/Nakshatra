@@ -1,0 +1,10 @@
+branch="$(git symbolic-ref --short HEAD 2>/dev/null)"
+
+case "$branch" in
+  main|master)
+    echo "Direct pushes from '$branch' are blocked. Create a feature branch and open a pull request."
+    exit 1
+    ;;
+esac
+
+npm run typecheck
