@@ -143,8 +143,8 @@ src/
 │   ├── auth.ts                        # getAuthenticatedUser, getApiUser
 │   ├── auth-utils.ts                  # isAuthError (client-safe)
 │   ├── env.ts                         # Env validation (Zod)
-│   └── supabase/{client,server,middleware}.ts
-├── middleware.ts                       # Next.js middleware entry
+│   └── supabase/{client,server,proxy}.ts
+├── proxy.ts                            # Next.js request proxy entry
 └── types/
     └── portfolio.ts                   # Zod schemas, types, form config
 

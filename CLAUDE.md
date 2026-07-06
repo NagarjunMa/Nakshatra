@@ -77,7 +77,7 @@ Indian families create wedding biodatas in Word/Canva, save as PDF, share via Wh
 - Separate from `id` to allow future link rotation
 
 ### Auth Architecture
-- Middleware refreshes Supabase session on every request
+- Proxy refreshes Supabase session on every request
 - Server pages use `getAuthenticatedUser()` from `@/lib/auth` — returns `{ supabase, user }` or redirects
 - API routes use `getApiUser()` — returns `{ supabase, user }` or nulls (no redirect)
 - Client components use `isAuthError()` from `@/lib/auth-utils` — detects JWT expiry → redirect
@@ -189,8 +189,8 @@ src/
 │   └── supabase/
 │       ├── client.ts                 # Browser client
 │       ├── server.ts                 # Server client (cookies)
-│       └── middleware.ts             # Session refresh + route guards
-├── middleware.ts                      # Next.js middleware entry
+│       └── proxy.ts                  # Session refresh + route guards
+├── proxy.ts                           # Next.js request proxy entry
 └── types/
     └── portfolio.ts                  # Zod schemas, types, form config
 
