@@ -15,5 +15,5 @@ export default async function EditPage() {
     .eq("user_id", user.id)
     .single();
 
-  return <EditWizard portfolio={portfolio} userId={user.id} />;
+  return <EditWizard portfolio={portfolio} />;
 }

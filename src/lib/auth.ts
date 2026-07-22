@@ -25,15 +25,15 @@ export async function getAuthenticatedUser() {
 export async function getApiUser() {
   const supabase = await createClient();
   const {
-    data: { user },
+    data: authData,
     error,
-  } = await supabase.auth.getUser();
+  } = await supabase.auth.getClaims();
 
-  if (error || !user) {
+  if (error || !authData?.claims.sub) {
     return { supabase: null, user: null };
   }
 
-  return { supabase, user };
+  return { supabase, user: { id: authData.claims.sub } };
 }
 
 // Re-export for server-side usage

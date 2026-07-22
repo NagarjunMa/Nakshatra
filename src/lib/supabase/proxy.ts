@@ -27,8 +27,9 @@ export async function updateSession(request: NextRequest) {
   );
 
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: authData,
+  } = await supabase.auth.getClaims();
+  const isAuthenticated = Boolean(authData?.claims.sub);
 
   // Protected routes - redirect to login if not authenticated.
   const protectedPaths = ["/dashboard", "/edit", "/preview"];
@@ -36,7 +37,7 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith(p)
   );
 
-  if (isProtected && !user) {
+  if (isProtected && !isAuthenticated) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("redirect", request.nextUrl.pathname);
@@ -49,7 +50,7 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith(p)
   );
 
-  if (isAuthPage && user) {
+  if (isAuthPage && isAuthenticated) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);

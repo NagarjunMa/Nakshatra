@@ -4,8 +4,8 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
-import Image from "next/image";
-import { ArrowRight, Mail, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Mail, Sparkles } from "lucide-react";
+import { ShaderBackground } from "@/components/landing/ShaderBackground";
 
 type Mode = "login" | "signup";
 
@@ -14,6 +14,7 @@ type Copy = {
   title: string;
   titleAccent: string;
   body: string;
+  googleAction: string;
   primaryAction: string;
   altPrompt: string;
   altCta: string;
@@ -26,7 +27,8 @@ const COPY: Record<Mode, Copy> = {
     title: "Sign in to",
     titleAccent: "Nakshatra.",
     body: "Continue building your wedding biodata. Sign in with Google, or get a magic link in your inbox.",
-    primaryAction: "Send magic link",
+    googleAction: "Sign in with Google",
+    primaryAction: "Email me a sign-in link",
     altPrompt: "New to Nakshatra?",
     altCta: "Create an account",
     altHref: "/signup",
@@ -36,7 +38,8 @@ const COPY: Record<Mode, Copy> = {
     title: "Create your",
     titleAccent: "biodata.",
     body: "Ten minutes to fill. Forever yours to update. Your rashi becomes the design.",
-    primaryAction: "Send magic link",
+    googleAction: "Sign up with Google",
+    primaryAction: "Email me a sign-in link",
     altPrompt: "Already have an account?",
     altCta: "Sign in",
     altHref: "/login",
@@ -45,16 +48,19 @@ const COPY: Record<Mode, Copy> = {
 
 export function AuthForm({ mode }: { mode: Mode }) {
   const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [pendingAction, setPendingAction] = useState<"google" | "email" | null>(
+    null
+  );
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
   const supabase = createClient();
   const searchParams = useSearchParams();
   const redirectPath = searchParams.get("redirect") || "/dashboard";
+  const authFailed = searchParams.get("error") === "auth_failed";
   const copy = COPY[mode];
 
   async function handleGoogle() {
-    setLoading(true);
+    setPendingAction("google");
     setError("");
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -64,13 +70,13 @@ export function AuthForm({ mode }: { mode: Mode }) {
     });
     if (error) {
       setError(error.message);
-      setLoading(false);
+      setPendingAction(null);
     }
   }
 
   async function handleMagicLink(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
+    setPendingAction("email");
     setError("");
     const { error } = await supabase.auth.signInWithOtp({
       email,
@@ -83,126 +89,62 @@ export function AuthForm({ mode }: { mode: Mode }) {
     } else {
       setSent(true);
     }
-    setLoading(false);
+    setPendingAction(null);
   }
 
   return (
-    <div className="auth-shell min-h-screen flex">
-      <aside className="relative hidden lg:flex lg:w-1/2 xl:w-[55%] overflow-hidden">
-        <Image
-          src="/pictures/login-image.jpg"
-          alt="Nakshatra — wedding biodata"
-          fill
-          priority
-          sizes="(min-width: 1024px) 50vw, 0vw"
-          className="object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0a0b14]/65 via-[#1a1530]/55 to-[#0a0b14]/85" />
-        <div
-          className="absolute inset-0 mix-blend-soft-light"
-          style={{
-            background:
-              "radial-gradient(ellipse at top left, var(--landing-accent) 0%, transparent 55%)",
-          }}
-        />
+    <div className="auth-shell min-h-screen relative isolate overflow-hidden">
+      <ShaderBackground />
+      <div aria-hidden className="auth-atmosphere" />
 
-        <div className="relative z-10 flex flex-col justify-between p-10 xl:p-14 w-full">
-          <Link href="/" className="inline-flex items-center gap-2 w-fit">
-            <span
-              className="text-[18px] tracking-[0.22em] text-white"
-              style={{ fontFamily: "var(--font-hkgrotesk)", fontWeight: 800 }}
-            >
-              NAKSHATRA
-            </span>
-          </Link>
+      <header className="relative z-10 flex items-center justify-between px-6 py-6 sm:px-10 sm:py-8">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 text-white/80 transition-colors hover:text-white"
+          style={{ fontFamily: "var(--font-ranade)", fontWeight: 600 }}
+        >
+          <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
+          <span className="text-[11px] tracking-[0.24em] uppercase">Nakshatra</span>
+        </Link>
+        <span
+          className="text-[10px] tracking-[0.28em] uppercase text-white/45"
+          style={{ fontFamily: "var(--font-ranade)" }}
+        >
+          Wedding biodata · India
+        </span>
+      </header>
 
-          <div className="max-w-md">
-            <div
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-full mb-6"
-              style={{
-                border:
-                  "1px solid color-mix(in srgb, var(--landing-accent) 35%, transparent)",
-                background: "var(--landing-accent-soft)",
-              }}
-            >
-              <Sparkles
-                className="w-3 h-3 text-[color:var(--landing-accent)]"
-                strokeWidth={1.5}
-              />
-              <span
-                className="text-[10px] tracking-[0.28em] uppercase text-[color:var(--landing-accent)]"
-                style={{ fontFamily: "var(--font-ranade)", fontWeight: 600 }}
-              >
-                Wedding biodata · India
-              </span>
-            </div>
-
-            <h2
-              className="text-[40px] xl:text-[52px] leading-[1.05] text-white mb-5"
-              style={{
-                fontFamily: "var(--font-hkgrotesk)",
-                fontWeight: 700,
-                letterSpacing: "-0.02em",
-              }}
-            >
-              A biodata{" "}
-              <span className="italic text-[color:var(--landing-accent)]">
-                designed by your stars.
-              </span>
-            </h2>
-            <p
-              className="text-[15px] xl:text-[16px] leading-[1.6] text-white/75 max-w-sm"
-              style={{ fontFamily: "var(--font-ranade)" }}
-            >
-              Your rashi chooses the palette. Your nakshatra fills the
-              background. Editorial design, on one link your family can open
-              forever.
-            </p>
-          </div>
-
-          <p
-            className="text-[10px] tracking-[0.28em] uppercase text-white/40"
-            style={{ fontFamily: "var(--font-ranade)" }}
-          >
-            © 2026 Nakshatra
-          </p>
-        </div>
-      </aside>
-
-      <main className="flex-1 flex items-center justify-center px-6 sm:px-10 py-12 relative">
-        <div
-          aria-hidden
-          className="absolute inset-0 pointer-events-none opacity-60"
-          style={{
-            background:
-              "radial-gradient(ellipse at top right, color-mix(in srgb, var(--landing-accent) 16%, transparent) 0%, transparent 55%)",
-          }}
-        />
-
-        <div className="relative w-full max-w-sm">
-          <Link
-            href="/"
-            className="lg:hidden inline-block mb-10 text-[16px] tracking-[0.22em] text-white"
-            style={{ fontFamily: "var(--font-hkgrotesk)", fontWeight: 800 }}
-          >
-            NAKSHATRA
-          </Link>
-
+      <main className="relative z-10 flex min-h-[calc(100vh-84px)] items-center justify-center px-5 pb-12 sm:px-6 sm:pb-20">
+        <section className="auth-glass-panel w-full max-w-[430px] p-6 sm:p-8">
           {sent ? (
             <SentState email={email} />
           ) : (
             <>
-              <p
-                className="text-[11px] tracking-[0.32em] uppercase text-[color:var(--landing-accent)] mb-4"
-                style={{ fontFamily: "var(--font-ranade)", fontWeight: 600 }}
-              >
-                {copy.eyebrow}
-              </p>
+              <div className="mb-8 flex items-center gap-3">
+                <div className="auth-icon-orbit">
+                  <Sparkles className="w-4 h-4" strokeWidth={1.5} />
+                </div>
+                <div>
+                  <p
+                    className="text-[10px] tracking-[0.28em] uppercase text-[color:var(--landing-accent)]"
+                    style={{ fontFamily: "var(--font-ranade)", fontWeight: 600 }}
+                  >
+                    {copy.eyebrow}
+                  </p>
+                  <p
+                    className="mt-1 text-[12px] text-white/50"
+                    style={{ fontFamily: "var(--font-ranade)" }}
+                  >
+                    Your biodata, on one link.
+                  </p>
+                </div>
+              </div>
+
               <h1
-                className="text-[36px] sm:text-[40px] leading-[1.05] text-white mb-3"
+                className="text-[34px] sm:text-[40px] leading-[1.05] text-white mb-3"
                 style={{
-                  fontFamily: "var(--font-hkgrotesk)",
-                  fontWeight: 700,
+                  fontFamily: "var(--font-harmond)",
+                  fontWeight: 600,
                   letterSpacing: "-0.02em",
                 }}
               >
@@ -212,38 +154,40 @@ export function AuthForm({ mode }: { mode: Mode }) {
                 </span>
               </h1>
               <p
-                className="text-[14px] sm:text-[15px] text-white/65 leading-[1.6] mb-9"
+                className="text-[14px] sm:text-[15px] text-white/65 leading-[1.65] mb-8"
                 style={{ fontFamily: "var(--font-ranade)" }}
               >
                 {copy.body}
               </p>
 
               <button
+                type="button"
                 onClick={handleGoogle}
-                disabled={loading}
-                className="auth-google-btn group"
+                disabled={pendingAction !== null}
+                className="auth-google-btn"
               >
                 <GoogleIcon />
-                <span>Continue with Google</span>
+                <span>{pendingAction === "google" ? "Connecting..." : copy.googleAction}</span>
               </button>
 
-              <div className="flex items-center gap-4 my-6">
+              <div className="flex items-center gap-4 my-6" aria-hidden>
                 <div className="flex-1 h-px bg-white/10" />
                 <span
-                  className="text-[10px] tracking-[0.32em] uppercase text-white/40"
+                  className="text-[10px] tracking-[0.28em] uppercase text-white/40"
                   style={{ fontFamily: "var(--font-ranade)" }}
                 >
-                  or
+                  or email
                 </span>
                 <div className="flex-1 h-px bg-white/10" />
               </div>
 
               <form onSubmit={handleMagicLink} className="flex flex-col gap-3">
                 <label
-                  className="text-[10px] tracking-[0.32em] uppercase text-white/55"
+                  htmlFor={`${mode}-email`}
+                  className="text-[10px] tracking-[0.28em] uppercase text-white/55"
                   style={{ fontFamily: "var(--font-ranade)", fontWeight: 600 }}
                 >
-                  Email
+                  Email address
                 </label>
                 <div className="auth-input-wrap">
                   <Mail
@@ -251,7 +195,9 @@ export function AuthForm({ mode }: { mode: Mode }) {
                     strokeWidth={1.5}
                   />
                   <input
+                    id={`${mode}-email`}
                     type="email"
+                    autoComplete="email"
                     placeholder="you@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -261,22 +207,23 @@ export function AuthForm({ mode }: { mode: Mode }) {
                 </div>
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={pendingAction !== null}
                   className="auth-primary-btn"
                 >
-                  {loading ? "Sending..." : copy.primaryAction}
-                  {!loading && (
-                    <ArrowRight className="w-4 h-4" strokeWidth={2} />
+                  {pendingAction === "email" ? "Sending link..." : copy.primaryAction}
+                  {pendingAction !== "email" && (
+                    <ArrowRight className="w-4 h-4" strokeWidth={1.75} />
                   )}
                 </button>
               </form>
 
-              {error && (
+              {(error || authFailed) && (
                 <p
-                  className="mt-4 text-[13px] text-red-300/90 text-center"
+                  className="mt-4 text-[13px] text-red-200/90"
+                  role="alert"
                   style={{ fontFamily: "var(--font-ranade)" }}
                 >
-                  {error}
+                  {error || "We could not complete the sign-in. Please try again."}
                 </p>
               )}
 
@@ -287,14 +234,14 @@ export function AuthForm({ mode }: { mode: Mode }) {
                 {copy.altPrompt}{" "}
                 <Link
                   href={copy.altHref}
-                  className="text-[color:var(--landing-accent)] hover:underline font-medium"
+                  className="text-[color:var(--landing-accent)] hover:text-white transition-colors font-medium"
                 >
                   {copy.altCta}
                 </Link>
               </p>
             </>
           )}
-        </div>
+        </section>
       </main>
     </div>
   );
@@ -303,17 +250,9 @@ export function AuthForm({ mode }: { mode: Mode }) {
 function SentState({ email }: { email: string }) {
   return (
     <div className="text-center">
-      <div
-        className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-6"
-        style={{
-          background:
-            "radial-gradient(circle, color-mix(in srgb, var(--landing-accent) 25%, transparent), transparent 70%)",
-          border:
-            "1px solid color-mix(in srgb, var(--landing-accent) 45%, transparent)",
-        }}
-      >
+      <div className="auth-icon-orbit mx-auto mb-6">
         <Mail
-          className="w-6 h-6 text-[color:var(--landing-accent)]"
+          className="w-5 h-5"
           strokeWidth={1.5}
         />
       </div>
@@ -331,7 +270,7 @@ function SentState({ email }: { email: string }) {
         className="text-[15px] text-white/65 leading-[1.6]"
         style={{ fontFamily: "var(--font-ranade)" }}
       >
-        We sent a sign-in link to{" "}
+        We sent a magic link to{" "}
         <span className="text-white font-medium">{email}</span>. Open it on this
         device to continue.
       </p>

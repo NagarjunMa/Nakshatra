@@ -95,6 +95,7 @@ export default async function PublicBiodataPage({ params }: Props) {
       data={data}
       themeColor={themeColor}
       sunSign={sunSign}
+      accessMode="restricted"
     />
   );
 }

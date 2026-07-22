@@ -1,10 +1,8 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-import { isAuthError } from "@/lib/auth-utils";
-import { nanoid } from "nanoid";
 import {
   FORM_STEPS,
   RASHI_OPTIONS,
@@ -45,7 +43,6 @@ const PATH_TO_STEP: Record<string, number> = {
 
 interface Props {
   portfolio: Portfolio | null;
-  userId: string;
 }
 
 const EMPTY_DATA: PortfolioData = {
@@ -60,7 +57,7 @@ const EMPTY_DATA: PortfolioData = {
   style: {},
 };
 
-export default function EditWizard({ portfolio, userId }: Props) {
+export default function EditWizard({ portfolio }: Props) {
   const [step, setStep] = useState(0);
   const [data, setData] = useState<PortfolioData>(
     (portfolio?.draft_data as PortfolioData) || EMPTY_DATA
@@ -73,11 +70,9 @@ export default function EditWizard({ portfolio, userId }: Props) {
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const publishingRef = useRef(false);
   const router = useRouter();
-  const supabase = createClient();
 
   const currentStep = FORM_STEPS[step];
   const isLastStep = step === FORM_STEPS.length - 1;
-  const isPublished = portfolio?.is_published ?? false;
 
   // Auto-save with debounce
   const autoSave = useCallback(
@@ -87,45 +82,33 @@ export default function EditWizard({ portfolio, userId }: Props) {
       saveTimeoutRef.current = setTimeout(async () => {
         setSaving(true);
         setSaveError(null);
-        const sunSign = newData.astrology?.rashi || null;
-        const themeColor =
-          newData.style?.theme_color || portfolio?.theme_color || null;
+        try {
+          const response = await fetch("/api/dashboard", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ data: newData }),
+          });
+          if (response.status === 401) {
+            setSaving(false);
+            router.push("/login?error=session_expired");
+            return;
+          }
 
-        let error;
-        if (portfolio) {
-          ({ error } = await supabase
-            .from("portfolios")
-            .update({
-              draft_data: newData,
-              sun_sign: sunSign,
-              theme_color: themeColor,
-            })
-            .eq("id", portfolio.id));
-        } else {
-          ({ error } = await supabase.from("portfolios").insert({
-            user_id: userId,
-            draft_data: newData,
-            sun_sign: sunSign,
-            theme_color: themeColor,
-          }));
-        }
+          if (!response.ok) {
+            setSaveError("Save failed — will retry");
+            setSaving(false);
+            return;
+          }
 
-        if (isAuthError(error)) {
-          router.push("/login?error=session_expired");
-          return;
-        }
-
-        if (error) {
-          setSaveError("Save failed — will retry");
           setSaving(false);
-          return;
+          setLastSaved(new Date());
+        } catch {
+          setSaveError("Save failed — check your connection");
+          setSaving(false);
         }
-
-        setSaving(false);
-        setLastSaved(new Date());
       }, 1000);
     },
-    [portfolio, userId, supabase]
+    [router]
   );
 
   function updateSection(key: FormStepKey, sectionData: Record<string, unknown>) {
@@ -165,41 +148,31 @@ export default function EditWizard({ portfolio, userId }: Props) {
     publishingRef.current = true;
     setPublishing(true);
 
-    const updates: Record<string, unknown> = {
-      draft_data: data,
-      published_data: data,
-      is_published: true,
-      published_at: new Date().toISOString(),
-      sun_sign: data.astrology?.rashi || null,
-      theme_color: data.style?.theme_color || null,
-    };
-
-    if (!isPublished) {
-      updates.share_token = nanoid(8);
-      const expiry = new Date();
-      expiry.setDate(expiry.getDate() + 90);
-      updates.expires_at = expiry.toISOString();
-    }
-
-    const { error } = await supabase
-      .from("portfolios")
-      .update(updates)
-      .eq("user_id", userId);
-
-    publishingRef.current = false;
-
-    if (error) {
-      setPublishing(false);
-      if (isAuthError(error)) {
+    try {
+      const response = await fetch("/api/portfolio/publish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data }),
+      });
+      publishingRef.current = false;
+      if (response.status === 401) {
+        setPublishing(false);
         router.push("/login?error=session_expired");
         return;
       }
-      setValidationErrors({ _publish: `Publish failed: ${error.message}` });
-      return;
+      if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as { error?: string } | null;
+        setPublishing(false);
+        setValidationErrors({ _publish: `Publish failed: ${body?.error || "Try again."}` });
+        return;
+      }
+      setPublishing(false);
+      router.push("/dashboard");
+    } catch {
+      publishingRef.current = false;
+      setPublishing(false);
+      setValidationErrors({ _publish: "Publish failed: Check your connection and try again." });
     }
-
-    setPublishing(false);
-    router.push("/dashboard");
   }
 
   useEffect(() => {
@@ -362,7 +335,7 @@ export default function EditWizard({ portfolio, userId }: Props) {
                 {publishing ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : null}
-                {isPublished ? "Update" : "Create"}
+                Publish
               </button>
             ) : (
               <button
@@ -551,9 +524,11 @@ function PersonalForm({
         <div className="flex items-center gap-4">
           {photoUrl ? (
             <div className="relative">
-              <img
+              <Image
                 src={photoUrl}
                 alt="Profile"
+                width={80}
+                height={80}
                 className="h-20 w-20 rounded-full object-cover"
               />
               <button
