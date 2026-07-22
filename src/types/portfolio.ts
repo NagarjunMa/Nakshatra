@@ -25,6 +25,7 @@ const RASHI_KEYS = RASHI_OPTIONS.map((r) => r.key) as [string, ...string[]];
 
 export const personalSchema = z.object({
   name: z.string().min(1, "Name is required").max(100, "Name too long"),
+  preferred_name: z.string().max(100).optional(),
   photo_url: z.string().url().optional(),
   photo_thumb_url: z.string().url().optional(),
   dob: z
@@ -32,7 +33,12 @@ export const personalSchema = z.object({
     .min(1, "Date of birth is required")
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
   place_of_birth: z.string().max(200).optional(),
+  current_location: z.string().max(200).optional(),
   gender: z.enum(["male", "female"]),
+  marital_status: z.string().max(100).optional(),
+  immigration_status: z.string().max(200).optional(),
+  relocation_preference: z.string().max(200).optional(),
+  profile_summary: z.string().max(1600).optional(),
 });
 
 export const vitalsSchema = z.object({
@@ -44,23 +50,31 @@ export const vitalsSchema = z.object({
 export const astrologySchema = z.object({
   rashi: z.enum(["", ...RASHI_KEYS]).optional(),
   nakshatra: z.string().max(100).optional(),
+  pada: z.string().max(50).optional(),
   time_of_birth: z
     .union([
       z.string().regex(/^\d{2}:\d{2}$/, "Invalid time format"),
       z.literal(""),
     ])
     .optional(),
+  lagnam: z.string().max(100).optional(),
+  manglik_status: z.string().max(100).optional(),
+  maternal_gotra: z.string().max(100).optional(),
 });
 
 export const educationSchema = z.object({
   degree: z.string().max(200).optional(),
   institution: z.string().max(200).optional(),
   year: z.string().max(10).optional(),
+  location: z.string().max(200).optional(),
+  summary: z.string().max(600).optional(),
 });
 
 export const careerSchema = z.object({
   title: z.string().max(200).optional(),
   company: z.string().max(200).optional(),
+  location: z.string().max(200).optional(),
+  summary: z.string().max(600).optional(),
 });
 
 const familyMemberSchema = z.object({
@@ -72,13 +86,19 @@ export const familySchema = z.object({
   father: familyMemberSchema.optional(),
   mother: familyMemberSchema.optional(),
   siblings: z.array(familyMemberSchema).max(10, "Maximum 10 siblings").optional(),
+  ancestral_origin: z.string().max(200).optional(),
+  current_settlement: z.string().max(200).optional(),
+  family_note: z.string().max(800).optional(),
 });
 
 export const lifestyleSchema = z.object({
   hobbies: z.string().max(500).optional(),
   languages: z.string().max(300).optional(),
   diet: z.string().max(100).optional(),
+  smoking: z.string().max(100).optional(),
+  drinking: z.string().max(100).optional(),
   music: z.string().max(300).optional(),
+  values_statement: z.string().max(1200).optional(),
 });
 
 export const contactSchema = z.object({
@@ -90,6 +110,7 @@ export const contactSchema = z.object({
     ])
     .optional(),
   email: z.union([z.email("Invalid email"), z.literal("")]).optional(),
+  secure_note: z.string().max(600).optional(),
 });
 
 export const styleSchema = z.object({
@@ -100,6 +121,23 @@ export const styleSchema = z.object({
     ])
     .optional(),
   rashi_palette: z.string().max(100).optional(),
+  template_name: z.string().max(100).optional(),
+});
+
+export const preferencesSchema = z.object({
+  narrative: z.string().max(1200).optional(),
+  age_range: z.string().max(100).optional(),
+  height_range: z.string().max(100).optional(),
+  marital_status: z.string().max(100).optional(),
+  background: z.string().max(200).optional(),
+  location_preference: z.string().max(200).optional(),
+});
+
+export const visibilitySchema = z.object({
+  family: z.enum(["public", "restricted"]).optional(),
+  astrology_details: z.enum(["public", "restricted"]).optional(),
+  gallery: z.enum(["public", "restricted"]).optional(),
+  contact: z.enum(["public", "restricted"]).optional(),
 });
 
 // --- Combined Portfolio Schema ---
@@ -114,6 +152,13 @@ export const portfolioDataSchema = z.object({
   lifestyle: lifestyleSchema.optional(),
   contact: contactSchema.optional(),
   style: styleSchema.optional(),
+  preferences: preferencesSchema.optional(),
+  visibility: visibilitySchema.optional(),
+});
+
+// Drafts can be persisted before the required publishing details are complete.
+export const portfolioDraftSchema = portfolioDataSchema.extend({
+  personal: personalSchema.partial(),
 });
 
 export type PortfolioData = z.infer<typeof portfolioDataSchema>;
@@ -126,6 +171,27 @@ export type FamilyData = z.infer<typeof familySchema>;
 export type LifestyleData = z.infer<typeof lifestyleSchema>;
 export type ContactData = z.infer<typeof contactSchema>;
 export type StyleData = z.infer<typeof styleSchema>;
+export type PreferencesData = z.infer<typeof preferencesSchema>;
+export type VisibilityData = z.infer<typeof visibilitySchema>;
+
+export type PortfolioMediaVisibility =
+  | "public"
+  | "blurred"
+  | "interest_required"
+  | "approved_only"
+  | "owner_only"
+  | "hidden";
+
+export interface PortfolioMedia {
+  id: string;
+  portfolio_id: string;
+  storage_path: string;
+  thumbnail_path: string | null;
+  media_type: "hero" | "gallery" | "family" | "horoscope" | "document" | "verification";
+  visibility: PortfolioMediaVisibility;
+  sort_order: number;
+  alt_text: string | null;
+}
 
 // --- Form Steps Config ---
 
@@ -158,6 +224,8 @@ export interface Portfolio {
   published_at: string | null;
   expires_at: string | null;
   last_renewed_at: string | null;
+  privacy_mode?: "open" | "progressive" | "private";
+  visibility_settings?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }

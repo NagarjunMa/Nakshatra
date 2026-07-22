@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { getAuthenticatedUser } from "@/lib/auth";
 import type { Metadata } from "next";
 import DashboardClient from "./dashboard-client";
+import type { PortfolioMedia } from "@/types/portfolio";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -17,12 +18,21 @@ export default async function DashboardPage() {
     .single();
 
   let viewCount = 0;
+  let media: PortfolioMedia[] = [];
   if (portfolio) {
     const { count } = await supabase
       .from("portfolio_views")
       .select("*", { count: "exact", head: true })
       .eq("portfolio_id", portfolio.id);
     viewCount = count ?? 0;
+
+    const { data: portfolioMedia } = await supabase
+      .from("portfolio_media")
+      .select("id, portfolio_id, storage_path, thumbnail_path, media_type, visibility, sort_order, alt_text")
+      .eq("portfolio_id", portfolio.id)
+      .in("media_type", ["hero", "gallery"])
+      .order("sort_order");
+    media = (portfolioMedia ?? []) as PortfolioMedia[];
   }
 
   let shareUrl: string | null = null;
@@ -51,6 +61,7 @@ export default async function DashboardPage() {
       shareUrl={shareUrl}
       isExpired={isExpired}
       daysLeft={daysLeft}
+      media={media}
     />
   );
 }

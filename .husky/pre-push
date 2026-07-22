@@ -8,3 +8,4 @@ case "$branch" in
 esac
 
 npm run typecheck
+npm test
