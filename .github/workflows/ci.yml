@@ -18,6 +18,11 @@ jobs:
     name: Lint, Test, Coverage & Build
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Build-only placeholders: CI validates the app but never calls Supabase.
+    # Production values are pulled by the Vercel deployment workflow instead.
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://ci-build.supabase.co
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ci-build-placeholder
 
     steps:
       - name: Checkout
