@@ -18,11 +18,11 @@ jobs:
     name: Lint, Test, Coverage & Build
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    # Build-only placeholders: CI validates the app but never calls Supabase.
-    # Production values are pulled by the Vercel deployment workflow instead.
+    # Public Supabase configuration is inlined into the browser bundle at build time.
+    # Store these as GitHub Actions repository variables, not source-controlled values.
     env:
-      NEXT_PUBLIC_SUPABASE_URL: https://ci-build.supabase.co
-      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ci-build-placeholder
+      NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
 
     steps:
       - name: Checkout
@@ -54,6 +54,12 @@ jobs:
 
       - name: Test
         run: npm test
+
+      - name: Validate Supabase build configuration
+        run: |
+          test -n "$NEXT_PUBLIC_SUPABASE_URL" || { echo "NEXT_PUBLIC_SUPABASE_URL is not configured"; exit 1; }
+          test -n "$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY" || { echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY is not configured"; exit 1; }
+          node --input-type=module -e 'new URL(process.env.NEXT_PUBLIC_SUPABASE_URL)'
 
       - name: Upload coverage report
         if: always()
