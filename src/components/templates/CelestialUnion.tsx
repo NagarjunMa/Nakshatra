@@ -10,6 +10,8 @@ import {
   LockKeyhole,
 } from "lucide-react";
 import Image from "next/image";
+import { ConstellationBackdrop } from "./ConstellationBackdrop";
+import { resolveRashiTheme } from "@/features/portfolio/rashi-theme";
 import { RASHI_OPTIONS, type PortfolioData } from "@/types/portfolio";
 
 interface CelestialUnionProps {
@@ -25,9 +27,14 @@ export default function CelestialUnion({
   sunSign,
   accessMode = "full",
 }: CelestialUnionProps) {
-  const constellationUrl = sunSign ? `/constellations/${sunSign}.svg` : null;
-  const rashiLabel = sunSign
-    ? RASHI_OPTIONS.find((r) => r.key === sunSign)?.label
+  const rashi = data.astrology?.rashi || sunSign;
+  const theme = resolveRashiTheme({
+    rashi,
+    paletteId: data.style?.rashi_palette,
+    backgroundColor: themeColor,
+  });
+  const rashiLabel = rashi
+    ? RASHI_OPTIONS.find((r) => r.key === rashi)?.label
     : null;
   const showRestricted = accessMode === "restricted";
   const isSectionRestricted = (
@@ -47,34 +54,17 @@ export default function CelestialUnion({
   return (
     <div
       data-template="celestial-union"
-      className="relative min-h-screen overflow-hidden bg-[#0a0a1a] text-white font-sans"
-      style={{ "--theme-color": themeColor } as React.CSSProperties}
+      className="relative min-h-screen overflow-hidden font-sans"
+      style={{
+        backgroundColor: theme.background,
+        color: theme.foreground,
+        "--portfolio-accent": theme.accent,
+        "--portfolio-muted": theme.mutedForeground,
+        "--portfolio-surface": theme.isLightBackground ? "rgba(255, 255, 255, 0.42)" : "rgba(10, 10, 26, 0.42)",
+        "--portfolio-border": theme.isLightBackground ? "rgba(23, 21, 28, 0.18)" : "rgba(255, 253, 248, 0.16)",
+      } as React.CSSProperties}
     >
-      {/* Constellation background */}
-      {constellationUrl && (
-        <div
-          data-constellation-bg
-          className="pointer-events-none absolute inset-0 opacity-[0.05]"
-          style={{ color: themeColor }}
-        >
-          <Image
-            src={constellationUrl}
-            alt=""
-            width={600}
-            height={600}
-            unoptimized
-            className="absolute -right-[5%] top-[8%] h-[55%] w-auto"
-          />
-          <Image
-            src={constellationUrl}
-            alt=""
-            width={600}
-            height={600}
-            unoptimized
-            className="absolute -left-[8%] bottom-[5%] h-[40%] w-auto rotate-180 opacity-60"
-          />
-        </div>
-      )}
+      <ConstellationBackdrop constellationPath={theme.constellationPath} isLightBackground={theme.isLightBackground} className="opacity-90" />
 
       {/* Content */}
       <div className="relative z-10 mx-auto max-w-xl px-5 py-10 sm:py-16">
@@ -89,13 +79,13 @@ export default function CelestialUnion({
               sizes="(min-width: 640px) 176px, 144px"
               className="h-36 w-36 rounded-full object-cover sm:h-44 sm:w-44"
               style={{
-                boxShadow: `0 0 0 3px ${themeColor}, 0 0 30px ${themeColor}20`,
+                boxShadow: `0 0 0 3px ${theme.accent}, 0 0 30px ${theme.accent}40`,
               }}
             />
           ) : (
             <div
-              className="flex h-36 w-36 items-center justify-center rounded-full bg-white/[0.06] sm:h-44 sm:w-44"
-              style={{ boxShadow: `0 0 0 3px ${themeColor}40` }}
+              className="flex h-36 w-36 items-center justify-center rounded-full sm:h-44 sm:w-44"
+              style={{ backgroundColor: "var(--portfolio-surface)", boxShadow: `0 0 0 3px ${theme.accent}66` }}
             >
               <User className="h-16 w-16 text-white/20" />
             </div>
@@ -108,14 +98,14 @@ export default function CelestialUnion({
           {data.personal?.preferred_name && (
             <p
               className="mt-1 text-sm font-medium"
-              style={{ color: themeColor }}
+              style={{ color: theme.accent }}
             >
               ({data.personal.preferred_name})
             </p>
           )}
 
           {heroLine && (
-            <p className="mt-3 text-sm font-medium text-white/70">
+            <p className="mt-3 text-sm font-medium" style={{ color: theme.mutedForeground }}>
               {heroLine}
             </p>
           )}
@@ -123,7 +113,7 @@ export default function CelestialUnion({
           {rashiLabel && (
             <p
               className="mt-2 text-sm font-medium uppercase tracking-[0.15em] opacity-80"
-              style={{ color: themeColor }}
+              style={{ color: theme.accent }}
             >
               {rashiLabel}
               {data.astrology?.nakshatra && ` · ${data.astrology.nakshatra}`}
@@ -133,12 +123,12 @@ export default function CelestialUnion({
           {/* Divider */}
           <div
             className="mx-auto mt-6 mb-10 h-[2px] w-16"
-            style={{ backgroundColor: themeColor, opacity: 0.4 }}
+            style={{ backgroundColor: theme.accent, opacity: 0.4 }}
           />
         </div>
 
         {data.personal?.profile_summary && (
-          <div className="mb-5 rounded-2xl border border-white/10 bg-white/[0.05] p-5 text-sm leading-6 text-white/80 backdrop-blur-md sm:p-6">
+          <div className="mb-5 rounded-2xl border p-5 text-sm leading-6 backdrop-blur-md sm:p-6" style={{ backgroundColor: "var(--portfolio-surface)", borderColor: "var(--portfolio-border)", color: theme.mutedForeground }}>
             {data.personal.profile_summary}
           </div>
         )}
@@ -146,7 +136,7 @@ export default function CelestialUnion({
         {/* Sections */}
         <div className="flex flex-col gap-5">
           {/* Personal */}
-          <GlassCard title="Personal" icon={<User className="h-4 w-4" />} themeColor={themeColor}>
+            <GlassCard title="Personal" icon={<User className="h-4 w-4" />}>
             <InfoField label="Date of Birth" value={formatDate(data.personal?.dob)} />
             <InfoField label="Place of Birth" value={data.personal?.place_of_birth} />
             <InfoField label="Current Location" value={data.personal?.current_location} />
@@ -156,7 +146,7 @@ export default function CelestialUnion({
 
           {/* Vitals */}
           {hasContent(data.vitals) && (
-            <GlassCard title="Vitals" icon={<Heart className="h-4 w-4" />} themeColor={themeColor}>
+            <GlassCard title="Vitals" icon={<Heart className="h-4 w-4" />}>
               <InfoField label="Height" value={data.vitals?.height} />
               <InfoField label="Complexion" value={data.vitals?.complexion} />
               <InfoField label="Gotra" value={data.vitals?.gotra} />
@@ -165,7 +155,7 @@ export default function CelestialUnion({
 
           {/* Astrology */}
           {hasContent(data.astrology) && (
-            <GlassCard title="Astrology" icon={<Star className="h-4 w-4" />} themeColor={themeColor}>
+            <GlassCard title="Astrology" icon={<Star className="h-4 w-4" />}>
               <InfoField
                 label="Rashi"
                 value={
@@ -191,7 +181,7 @@ export default function CelestialUnion({
 
           {/* Education */}
           {hasContent(data.education) && (
-            <GlassCard title="Education" icon={<GraduationCap className="h-4 w-4" />} themeColor={themeColor}>
+            <GlassCard title="Education" icon={<GraduationCap className="h-4 w-4" />}>
               <InfoField label="Degree" value={data.education?.degree} />
               <InfoField label="Institution" value={data.education?.institution} />
               <InfoField label="Location" value={data.education?.location} />
@@ -202,7 +192,7 @@ export default function CelestialUnion({
 
           {/* Career */}
           {hasContent(data.career) && (
-            <GlassCard title="Career" icon={<Briefcase className="h-4 w-4" />} themeColor={themeColor}>
+            <GlassCard title="Career" icon={<Briefcase className="h-4 w-4" />}>
               <InfoField label="Title" value={data.career?.title} />
               <InfoField label="Company" value={data.career?.company} />
               <InfoField label="Location" value={data.career?.location} />
@@ -212,7 +202,7 @@ export default function CelestialUnion({
 
           {/* Family */}
           {hasFamilyContent(data.family) && (
-            <GlassCard title="Family" icon={<Users className="h-4 w-4" />} themeColor={themeColor}>
+            <GlassCard title="Family" icon={<Users className="h-4 w-4" />}>
               <RestrictedBlock
                 restricted={isSectionRestricted("family")}
                 title="Family privacy protected"
@@ -249,7 +239,7 @@ export default function CelestialUnion({
 
           {/* Lifestyle */}
           {hasContent(data.lifestyle) && (
-            <GlassCard title="Lifestyle" icon={<Music className="h-4 w-4" />} themeColor={themeColor}>
+            <GlassCard title="Lifestyle" icon={<Music className="h-4 w-4" />}>
               <InfoField label="Hobbies" value={data.lifestyle?.hobbies} />
               <InfoField label="Languages" value={data.lifestyle?.languages} />
               <InfoField label="Diet" value={data.lifestyle?.diet} />
@@ -262,7 +252,7 @@ export default function CelestialUnion({
 
           {/* Preferences */}
           {hasContent(data.preferences) && (
-            <GlassCard title="Partner Preferences" icon={<Heart className="h-4 w-4" />} themeColor={themeColor}>
+            <GlassCard title="Partner Preferences" icon={<Heart className="h-4 w-4" />}>
               <InfoField label="Summary" value={data.preferences?.narrative} />
               <InfoField label="Age" value={data.preferences?.age_range} />
               <InfoField label="Height" value={data.preferences?.height_range} />
@@ -274,7 +264,7 @@ export default function CelestialUnion({
 
           {/* Contact */}
           {hasContent(data.contact) && (
-            <GlassCard title="Contact" icon={<Phone className="h-4 w-4" />} themeColor={themeColor}>
+            <GlassCard title="Contact" icon={<Phone className="h-4 w-4" />}>
               <RestrictedBlock
                 restricted={isSectionRestricted("contact")}
                 title="Request secure access"
@@ -318,11 +308,11 @@ function RestrictedBlock({
       <div className="pointer-events-none select-none blur-sm opacity-45">
         {children}
       </div>
-      <div className="absolute inset-0 flex items-center justify-center bg-[#0a0a1a]/45 p-4 text-center backdrop-blur-[2px]">
-        <div className="max-w-xs rounded-xl border border-white/10 bg-white/[0.08] p-4">
-          <LockKeyhole className="mx-auto mb-2 h-5 w-5 text-white/80" />
-          <p className="text-sm font-semibold text-white">{title}</p>
-          <p className="mt-1 text-xs leading-5 text-white/60">{body}</p>
+      <div className="absolute inset-0 flex items-center justify-center p-4 text-center backdrop-blur-[2px]" style={{ backgroundColor: "color-mix(in srgb, var(--portfolio-surface) 80%, transparent)" }}>
+        <div className="max-w-xs rounded-xl border p-4" style={{ backgroundColor: "var(--portfolio-surface)", borderColor: "var(--portfolio-border)" }}>
+          <LockKeyhole className="mx-auto mb-2 h-5 w-5" style={{ color: "var(--portfolio-muted)" }} />
+          <p className="text-sm font-semibold">{title}</p>
+          <p className="mt-1 text-xs leading-5" style={{ color: "var(--portfolio-muted)" }}>{body}</p>
         </div>
       </div>
     </div>
@@ -332,19 +322,17 @@ function RestrictedBlock({
 function GlassCard({
   title,
   icon,
-  themeColor,
   children,
 }: {
   title: string;
   icon: React.ReactNode;
-  themeColor: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-md sm:p-6">
+    <div className="rounded-2xl border p-5 backdrop-blur-md sm:p-6" style={{ backgroundColor: "var(--portfolio-surface)", borderColor: "var(--portfolio-border)" }}>
       <div className="mb-4 flex items-center gap-2.5">
-        <span style={{ color: themeColor }}>{icon}</span>
-        <h2 className="text-xs font-semibold uppercase tracking-[0.15em] text-white/60">
+        <span style={{ color: "var(--portfolio-accent)" }}>{icon}</span>
+        <h2 className="text-xs font-semibold uppercase tracking-[0.15em]" style={{ color: "var(--portfolio-muted)" }}>
           {title}
         </h2>
       </div>
@@ -363,10 +351,10 @@ function InfoField({
   if (!value) return null;
   return (
     <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-4">
-      <span className="shrink-0 text-xs uppercase tracking-wider text-white/40 sm:w-28">
+      <span className="shrink-0 text-xs uppercase tracking-wider sm:w-28" style={{ color: "var(--portfolio-muted)" }}>
         {label}
       </span>
-      <span className="text-sm font-medium text-white/90">{value}</span>
+      <span className="text-sm font-medium">{value}</span>
     </div>
   );
 }

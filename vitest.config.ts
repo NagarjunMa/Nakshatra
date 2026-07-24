@@ -17,6 +17,7 @@ export default defineConfig({
         "src/features/**/*.mapper.ts",
         "src/features/**/*.service.ts",
         "src/features/**/*.contract.ts",
+        "src/features/**/*theme.ts",
       ],
       thresholds: {
         branches: 80,

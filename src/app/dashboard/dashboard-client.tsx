@@ -10,7 +10,15 @@ import {
   type PortfolioData,
   type PortfolioMedia,
   type PortfolioMediaVisibility,
+  type RashiKey,
 } from "@/types/portfolio";
+import {
+  getDefaultRashiPalette,
+  getRashiPalette,
+  getRashiPalettes,
+  type RashiPalette,
+} from "@/features/portfolio/rashi-theme";
+import { RashiPalettePicker } from "@/components/portfolio/RashiPalettePicker";
 import { ShaderBackground } from "@/components/landing/ShaderBackground";
 import {
   Eye,
@@ -486,7 +494,7 @@ const EMPTY_DATA: PortfolioData = {
   family: {},
   lifestyle: {},
   contact: {},
-  style: { template_name: "Editorial Matrimonial" },
+  style: { template_name: "Royal Heritage" },
   preferences: {},
   visibility: {
     family: "restricted",
@@ -641,6 +649,41 @@ function DashboardPortfolioForm({
   data: PortfolioData;
   onUpdate: (key: keyof PortfolioData, sectionData: Record<string, unknown>) => void;
 }) {
+  const rashi = data.astrology?.rashi || "";
+  const palettes = getRashiPalettes(rashi);
+  const selectedPalette = getRashiPalette(data.style?.rashi_palette, rashi);
+
+  /** Updates the rashi and initializes its default palette when the previous choice no longer applies. */
+  function selectRashi(value: string) {
+    const nextRashi = value as RashiKey | "";
+    const nextDefault = getDefaultRashiPalette(nextRashi);
+    const existingPalette = getRashiPalette(data.style?.rashi_palette, nextRashi);
+
+    onUpdate("astrology", { ...(data.astrology || {}), rashi: value });
+
+    if (nextDefault && !existingPalette) {
+      onUpdate("style", {
+        ...(data.style || {}),
+        rashi_palette: nextDefault.id,
+        theme_color: nextDefault.background,
+      });
+    }
+  }
+
+  /** Persists a selected palette as both a stable ID and the rendered portfolio background. */
+  function selectPalette(palette: RashiPalette) {
+    onUpdate("style", {
+      ...(data.style || {}),
+      rashi_palette: palette.id,
+      theme_color: palette.background,
+    });
+  }
+
+  /** Persists the selected public portfolio layout. */
+  function selectTemplate(templateName: string) {
+    onUpdate("style", { ...(data.style || {}), template_name: templateName });
+  }
+
   return (
     <div className="space-y-7">
       <FormSection title="Identity and story">
@@ -719,14 +762,6 @@ function DashboardPortfolioForm({
             value={data.personal.marital_status || ""}
             onChange={(value) =>
               onUpdate("personal", { ...data.personal, marital_status: value })
-            }
-          />
-          <TextInput
-            label="Theme color"
-            type="color"
-            value={data.style?.theme_color || "#031632"}
-            onChange={(value) =>
-              onUpdate("style", { ...(data.style || {}), theme_color: value })
             }
           />
         </div>
@@ -819,9 +854,7 @@ function DashboardPortfolioForm({
                 label: rashi.label,
               })),
             ]}
-            onChange={(value) =>
-              onUpdate("astrology", { ...(data.astrology || {}), rashi: value })
-            }
+            onChange={selectRashi}
           />
           <TextInput
             label="Nakshatra"
@@ -833,6 +866,42 @@ function DashboardPortfolioForm({
               })
             }
           />
+        </div>
+        <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
+          <div className="mb-3">
+            <p className="text-sm font-medium text-white">Portfolio colors</p>
+            <p className="mt-1 text-xs leading-5 text-white/55">
+              Choose a background from your rashi&apos;s curated palette. Text color is adjusted automatically for readability.
+            </p>
+          </div>
+          <RashiPalettePicker
+            palettes={palettes}
+            selectedPaletteId={selectedPalette?.id}
+            onSelect={selectPalette}
+          />
+        </div>
+        <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
+          <p className="text-sm font-medium text-white">Portfolio template</p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {["Royal Heritage", "Celestial Union"].map((templateName) => {
+              const selected = (data.style?.template_name || "Royal Heritage") === templateName;
+              return (
+                <button
+                  key={templateName}
+                  type="button"
+                  onClick={() => selectTemplate(templateName)}
+                  className={`rounded-lg border px-3 py-3 text-left text-xs font-semibold transition ${
+                    selected
+                      ? "border-[#f4d98f] bg-[#f4d98f]/15 text-[#f4d98f]"
+                      : "border-white/15 text-white/70 hover:border-white/35"
+                  }`}
+                  aria-pressed={selected}
+                >
+                  {templateName}
+                </button>
+              );
+            })}
+          </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <TextInput
