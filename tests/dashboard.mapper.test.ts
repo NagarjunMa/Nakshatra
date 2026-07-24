@@ -35,6 +35,7 @@ describe("dashboard portfolio mapping", () => {
       draft_data: draft,
       theme_color: "#123456",
       sun_sign: "kanya",
+      template_id: 3,
     });
     expect(mapCandidateDetails(draft)).toMatchObject({
       personal: { immigration_status: "H-1B", height_text: "5 ft 5 in" },
@@ -88,6 +89,7 @@ describe("dashboard portfolio mapping", () => {
     } satisfies PortfolioData;
 
     expect(mapPortfolioDraft(populated, "#123456").theme_color).toBe("#221133");
+    expect(mapPortfolioDraft({ ...populated, style: { template_name: "Royal Heritage" } }, "#123456").template_id).toBe(3);
     expect(mapEducationEntry(populated)).toMatchObject({ end_year: 2020 });
     expect(mapCareerEntry(populated)).toMatchObject({
       title: "Engineer",

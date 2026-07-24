@@ -44,7 +44,22 @@ export function mapPortfolioDraft(
     draft_data: data,
     theme_color: data.style?.theme_color || existingThemeColor || null,
     sun_sign: data.astrology?.rashi || null,
+    template_id: templateIdFor(data.style?.template_name),
   };
+}
+
+/** Selects the persisted template ID from the dashboard template label. Input: optional template label. Output: supported database template ID. */
+function templateIdFor(templateName?: string) {
+  switch (templateName) {
+    case "Celestial Union":
+      return 2;
+    case "Royal Heritage":
+      return 3;
+    case "Editorial Matrimonial":
+      return 1;
+    default:
+      return 3;
+  }
 }
 
 /**

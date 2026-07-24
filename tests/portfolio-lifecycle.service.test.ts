@@ -26,6 +26,7 @@ import {
 
 const draft: PortfolioData = {
   personal: { name: "Aditi Rao", dob: "1996-08-12", gender: "female" },
+  style: { template_name: "Royal Heritage" },
 };
 
 describe("portfolio lifecycle services", () => {
@@ -43,8 +44,34 @@ describe("portfolio lifecycle services", () => {
     await publishPortfolio({ supabase: {} as never, userId: "user-id", data: draft });
     expect(repository.publishPortfolio).toHaveBeenCalledWith(
       "user-id",
-      expect.objectContaining({ is_published: true, share_token: expect.any(String) })
+      expect.objectContaining({
+        is_published: true,
+        share_token: expect.any(String),
+        template_id: 3,
+      })
     );
+  });
+
+  it("persists the chosen supported template ID", async () => {
+    await publishPortfolio({
+      supabase: {} as never,
+      userId: "user-id",
+      data: { ...draft, style: { template_name: "Celestial Union" } },
+    });
+    expect(repository.publishPortfolio.mock.calls[0][1]).toMatchObject({ template_id: 2 });
+
+    vi.clearAllMocks();
+    repository.findPortfolioForUser.mockResolvedValue({
+      data: { id: "portfolio-id", is_published: false },
+      error: null,
+    });
+    repository.publishPortfolio.mockResolvedValue({ error: null });
+    await publishPortfolio({
+      supabase: {} as never,
+      userId: "user-id",
+      data: { ...draft, style: { template_name: "Editorial Matrimonial" } },
+    });
+    expect(repository.publishPortfolio.mock.calls[0][1]).toMatchObject({ template_id: 1 });
   });
 
   it("does not rotate the share token for a published portfolio", async () => {

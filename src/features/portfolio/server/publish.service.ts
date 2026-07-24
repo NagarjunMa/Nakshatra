@@ -5,6 +5,20 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PortfolioData } from "@/types/portfolio";
 import { DashboardRepository } from "./dashboard.repository";
 
+/** Selects the persisted template ID from the dashboard template label. Input: optional template label. Output: supported database template ID. */
+function templateIdFor(templateName?: string) {
+  switch (templateName) {
+    case "Celestial Union":
+      return 2;
+    case "Royal Heritage":
+      return 3;
+    case "Editorial Matrimonial":
+      return 1;
+    default:
+      return 3;
+  }
+}
+
 export class PortfolioPublishError extends Error {}
 
 /**
@@ -33,6 +47,7 @@ export async function publishPortfolio({
     published_at: new Date().toISOString(),
     sun_sign: data.astrology?.rashi || null,
     theme_color: data.style?.theme_color || null,
+    template_id: templateIdFor(data.style?.template_name),
   };
 
   if (!portfolio.is_published) {

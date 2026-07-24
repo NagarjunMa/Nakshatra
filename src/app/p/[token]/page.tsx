@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { BiodataTemplate } from "@/components/templates";
 import type { Metadata } from "next";
 import type { PortfolioData } from "@/types/portfolio";
+import type { PortfolioMedia } from "@/types/portfolio";
+import { createPortfolioPhotoUrls } from "@/features/media/server/photo-url.service";
 
 interface Props {
   params: Promise<{ token: string }>;
@@ -88,6 +90,15 @@ export default async function PublicBiodataPage({ params }: Props) {
   const data = portfolio.published_data as PortfolioData;
   const themeColor = portfolio.theme_color || "#6366f1";
   const sunSign = portfolio.sun_sign;
+  const { data: media } = await supabase
+    .from("portfolio_media")
+    .select("id, portfolio_id, storage_path, thumbnail_path, media_type, visibility, sort_order, alt_text")
+    .eq("portfolio_id", portfolio.id)
+    .in("media_type", ["hero", "gallery"]);
+  const photos = await createPortfolioPhotoUrls({
+    supabase,
+    media: (media ?? []) as PortfolioMedia[],
+  });
 
   return (
     <BiodataTemplate
@@ -96,6 +107,7 @@ export default async function PublicBiodataPage({ params }: Props) {
       themeColor={themeColor}
       sunSign={sunSign}
       accessMode="restricted"
+      photos={photos}
     />
   );
 }

@@ -3,7 +3,9 @@ import { redirect } from "next/navigation";
 import { BiodataTemplate } from "@/components/templates";
 import type { Metadata } from "next";
 import type { PortfolioData } from "@/types/portfolio";
+import type { PortfolioMedia } from "@/types/portfolio";
 import Link from "next/link";
+import { createPortfolioPhotoUrls } from "@/features/media/server/photo-url.service";
 
 export const metadata: Metadata = {
   title: "Preview Biodata",
@@ -23,6 +25,15 @@ export default async function PreviewPage() {
   const data = portfolio.draft_data as PortfolioData;
   const themeColor = portfolio.theme_color || "#6366f1";
   const sunSign = portfolio.sun_sign;
+  const { data: media } = await supabase
+    .from("portfolio_media")
+    .select("id, portfolio_id, storage_path, thumbnail_path, media_type, visibility, sort_order, alt_text")
+    .eq("portfolio_id", portfolio.id)
+    .in("media_type", ["hero", "gallery"]);
+  const photos = await createPortfolioPhotoUrls({
+    supabase,
+    media: (media ?? []) as PortfolioMedia[],
+  });
 
   return (
     <div className="flex flex-1 flex-col">
@@ -53,6 +64,7 @@ export default async function PreviewPage() {
           data={data}
           themeColor={themeColor}
           sunSign={sunSign}
+          photos={photos}
         />
       </div>
     </div>

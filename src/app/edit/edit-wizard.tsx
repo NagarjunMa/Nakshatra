@@ -29,7 +29,13 @@ import {
   X,
   AlertCircle,
 } from "lucide-react";
-import rashiColors from "@/config/rashi_colors.json";
+import {
+  getDefaultRashiPalette,
+  getRashiPalette,
+  getRashiPalettes,
+  type RashiPalette,
+} from "@/features/portfolio/rashi-theme";
+import { RashiPalettePicker } from "@/components/portfolio/RashiPalettePicker";
 
 const STEP_ICONS: Record<string, React.ElementType> = {
   User, Heart, Star, GraduationCap, Briefcase, Users, Music, Phone, Palette,
@@ -54,7 +60,7 @@ const EMPTY_DATA: PortfolioData = {
   family: {},
   lifestyle: {},
   contact: {},
-  style: {},
+  style: { template_name: "Royal Heritage" },
 };
 
 export default function EditWizard({ portfolio }: Props) {
@@ -846,83 +852,65 @@ function StyleForm({
   rashi?: string;
   onUpdate: (d: Record<string, unknown>) => void;
 }) {
-  const currentColor = (data.theme_color as string) || "";
-  const rashiKey = rashi as keyof typeof rashiColors;
-  const rashiData = rashiKey ? rashiColors[rashiKey] : null;
+  const palettes = getRashiPalettes(rashi);
+  const selectedPalette = getRashiPalette(data.rashi_palette as string | undefined, rashi);
+  const defaultPalette = getDefaultRashiPalette(rashi);
 
-  function selectColor(color: string) {
-    onUpdate({ ...data, theme_color: color });
+  useEffect(() => {
+    if (defaultPalette && !selectedPalette) {
+      onUpdate({
+        ...data,
+        rashi_palette: defaultPalette.id,
+        theme_color: defaultPalette.background,
+      });
+    }
+  }, [data, defaultPalette, onUpdate, selectedPalette]);
+
+  /** Persists the selected rashi palette for the legacy edit flow. */
+  function selectPalette(palette: RashiPalette) {
+    onUpdate({ ...data, rashi_palette: palette.id, theme_color: palette.background });
+  }
+
+  /** Persists the selected portfolio template for the legacy edit flow. */
+  function selectTemplate(templateName: string) {
+    onUpdate({ ...data, template_name: templateName });
   }
 
   return (
     <div className="flex flex-col gap-6">
-      {rashiData && (
-        <div>
-          <p className="text-sm font-medium mb-3">
-            Suggested for {rashiData.name_en} ({rashiKey})
-          </p>
-          <div className="flex flex-wrap gap-3">
-            {rashiData.palettes.map((p) => (
-              <button
-                key={p.name}
-                onClick={() => selectColor(p.primary)}
-                className={`flex items-center gap-2 rounded-lg border-2 px-3 py-2 transition-colors ${
-                  currentColor === p.primary
-                    ? "border-foreground"
-                    : "border-border"
-                }`}
-              >
-                <div
-                  className="h-6 w-6 rounded-full"
-                  style={{ backgroundColor: p.primary }}
-                />
-                <span className="text-sm">{p.name}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       <div>
-        <p className="text-sm font-medium mb-3">
-          {rashiData ? "Or pick a custom color" : "Choose a theme color"}
-        </p>
-        <div className="flex items-center gap-3">
-          <input
-            type="color"
-            value={currentColor || "#6366f1"}
-            onChange={(e) => selectColor(e.target.value)}
-            className="h-11 w-14 cursor-pointer rounded-lg border border-border"
-          />
-          <Input
-            value={currentColor}
-            onChange={selectColor}
-            placeholder="#6366f1"
+        <p className="text-sm font-medium">Rashi palette</p>
+        <p className="mt-1 text-sm text-muted-foreground">Your selected background automatically receives readable dark or light typography.</p>
+        <div className="mt-3">
+          <RashiPalettePicker
+            palettes={palettes}
+            selectedPaletteId={selectedPalette?.id}
+            onSelect={selectPalette}
           />
         </div>
       </div>
 
-      {currentColor && (
-        <div className="rounded-xl border border-border p-4">
-          <p className="text-sm font-medium mb-2">Preview</p>
-          <div className="flex items-center gap-3">
-            <div
-              className="h-10 w-10 rounded-full"
-              style={{ backgroundColor: currentColor }}
-            />
-            <div>
-              <div
-                className="h-2 w-24 rounded"
-                style={{ backgroundColor: currentColor }}
-              />
-              <div
-                className="mt-1.5 h-2 w-16 rounded opacity-50"
-                style={{ backgroundColor: currentColor }}
-              />
-            </div>
-          </div>
+      <div>
+        <p className="text-sm font-medium">Portfolio template</p>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          {["Royal Heritage", "Celestial Union"].map((templateName) => {
+            const selected = (data.template_name as string | undefined || "Royal Heritage") === templateName;
+            return (
+              <button
+                key={templateName}
+                type="button"
+                onClick={() => selectTemplate(templateName)}
+                className={`rounded-lg border px-3 py-3 text-left text-xs font-semibold transition ${
+                  selected ? "border-foreground bg-muted" : "border-border hover:bg-muted"
+                }`}
+                aria-pressed={selected}
+              >
+                {templateName}
+              </button>
+            );
+          })}
         </div>
-      )}
+      </div>
     </div>
   );
 }
