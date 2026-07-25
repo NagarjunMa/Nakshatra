@@ -7,6 +7,8 @@ export interface StoredPortfolio {
   candidate_id: string | null;
   theme_color: string | null;
   is_published: boolean;
+  share_token: string | null;
+  expires_at: string | null;
 }
 
 /**
@@ -20,7 +22,7 @@ export class DashboardRepository {
   async findPortfolioForUser(userId: string) {
     return this.supabase
       .from("portfolios")
-      .select("id, candidate_id, theme_color, is_published")
+      .select("id, candidate_id, theme_color, is_published, share_token, expires_at")
       .eq("user_id", userId)
       .maybeSingle();
   }
@@ -42,6 +44,16 @@ export class DashboardRepository {
       .from("portfolios")
       .update(payload)
       .eq("user_id", userId);
+  }
+
+  /**
+   * Stores the whitelisted public representation of a portfolio separately from owner data.
+   * Input: one snapshot row keyed by portfolio ID. Output: the Supabase upsert result.
+   */
+  async savePublicSnapshot(payload: Record<string, unknown>) {
+    return this.supabase
+      .from("public_portfolio_snapshots")
+      .upsert(payload, { onConflict: "portfolio_id" });
   }
 
   async renewPortfolioLink(userId: string, expiresAt: string) {

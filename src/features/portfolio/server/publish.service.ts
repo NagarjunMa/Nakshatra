@@ -4,6 +4,7 @@ import { nanoid } from "nanoid";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PortfolioData } from "@/types/portfolio";
 import { DashboardRepository } from "./dashboard.repository";
+import { createPublicPortfolioSnapshot } from "./public-snapshot.service";
 
 /** Selects the persisted template ID from the dashboard template label. Input: optional template label. Output: supported database template ID. */
 function templateIdFor(templateName?: string) {
@@ -22,8 +23,8 @@ function templateIdFor(templateName?: string) {
 export class PortfolioPublishError extends Error {}
 
 /**
- * Publishes an already-saved draft and creates its first share link when needed.
- * Input: authenticated Supabase client, owner ID, and validated portfolio data. Output: resolves after persistence.
+ * Publishes an already-saved draft and creates its first safe public snapshot when needed.
+ * Input: authenticated Supabase client, owner ID, and validated portfolio data. Output: resolves after owner and public persistence.
  */
 export async function publishPortfolio({
   supabase,
@@ -50,13 +51,32 @@ export async function publishPortfolio({
     template_id: templateIdFor(data.style?.template_name),
   };
 
-  if (!portfolio.is_published) {
-    updates.share_token = nanoid(8);
+  const shareToken = portfolio.share_token || nanoid(8);
+  const expiresAt = portfolio.expires_at ?? (() => {
     const expiry = new Date();
     expiry.setDate(expiry.getDate() + 90);
-    updates.expires_at = expiry.toISOString();
+    return expiry.toISOString();
+  })();
+
+  if (!portfolio.is_published || !portfolio.share_token) {
+    updates.share_token = shareToken;
+    updates.expires_at = expiresAt;
   }
 
   const { error } = await repository.publishPortfolio(userId, updates);
   if (error) throw new PortfolioPublishError("Could not publish portfolio");
+
+  const { error: snapshotError } = await repository.savePublicSnapshot({
+    portfolio_id: portfolio.id,
+    share_token: shareToken,
+    data: createPublicPortfolioSnapshot(data),
+    template_id: updates.template_id,
+    theme_color: updates.theme_color,
+    sun_sign: updates.sun_sign,
+    expires_at: expiresAt,
+    published_at: updates.published_at,
+  });
+  if (snapshotError) {
+    throw new PortfolioPublishError("Could not create a safe public portfolio");
+  }
 }

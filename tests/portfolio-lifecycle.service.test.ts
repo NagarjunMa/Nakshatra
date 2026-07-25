@@ -4,6 +4,7 @@ import type { PortfolioData } from "../src/types/portfolio";
 const repository = vi.hoisted(() => ({
   findPortfolioForUser: vi.fn(),
   publishPortfolio: vi.fn(),
+  savePublicSnapshot: vi.fn(),
   renewPortfolioLink: vi.fn(),
 }));
 
@@ -33,10 +34,11 @@ describe("portfolio lifecycle services", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     repository.findPortfolioForUser.mockResolvedValue({
-      data: { id: "portfolio-id", is_published: false },
+      data: { id: "portfolio-id", is_published: false, share_token: null, expires_at: null },
       error: null,
     });
     repository.publishPortfolio.mockResolvedValue({ error: null });
+    repository.savePublicSnapshot.mockResolvedValue({ error: null });
     repository.renewPortfolioLink.mockResolvedValue({ error: null });
   });
 
@@ -48,6 +50,13 @@ describe("portfolio lifecycle services", () => {
         is_published: true,
         share_token: expect.any(String),
         template_id: 3,
+      })
+    );
+    expect(repository.savePublicSnapshot).toHaveBeenCalledWith(
+      expect.objectContaining({
+        portfolio_id: "portfolio-id",
+        share_token: expect.any(String),
+        data: expect.not.objectContaining({ family: expect.anything(), contact: expect.anything() }),
       })
     );
   });
@@ -62,7 +71,7 @@ describe("portfolio lifecycle services", () => {
 
     vi.clearAllMocks();
     repository.findPortfolioForUser.mockResolvedValue({
-      data: { id: "portfolio-id", is_published: false },
+      data: { id: "portfolio-id", is_published: false, share_token: null, expires_at: null },
       error: null,
     });
     repository.publishPortfolio.mockResolvedValue({ error: null });
@@ -76,7 +85,7 @@ describe("portfolio lifecycle services", () => {
 
   it("does not rotate the share token for a published portfolio", async () => {
     repository.findPortfolioForUser.mockResolvedValue({
-      data: { id: "portfolio-id", is_published: true },
+      data: { id: "portfolio-id", is_published: true, share_token: "stable-token", expires_at: "2099-01-01T00:00:00.000Z" },
       error: null,
     });
     await publishPortfolio({ supabase: {} as never, userId: "user-id", data: draft });
@@ -90,7 +99,7 @@ describe("portfolio lifecycle services", () => {
     ).rejects.toBeInstanceOf(PortfolioPublishError);
 
     repository.findPortfolioForUser.mockResolvedValue({
-      data: { id: "portfolio-id", is_published: false },
+      data: { id: "portfolio-id", is_published: false, share_token: null, expires_at: null },
       error: null,
     });
     repository.publishPortfolio.mockResolvedValue({ error: new Error("db") });

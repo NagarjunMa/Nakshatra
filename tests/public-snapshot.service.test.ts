@@ -1,0 +1,75 @@
+import { describe, expect, it } from "vitest";
+import type { PortfolioData } from "../src/types/portfolio";
+import { createPublicPortfolioSnapshot } from "../src/features/portfolio/server/public-snapshot.service";
+
+const portfolio: PortfolioData = {
+  personal: {
+    name: "Aditi Rao",
+    preferred_name: "Aditi",
+    photo_url: "https://private.example/original.webp",
+    photo_thumb_url: "https://private.example/thumb.webp",
+    dob: "1996-08-12",
+    place_of_birth: "Bengaluru",
+    current_location: "New York",
+    gender: "female",
+    immigration_status: "H-1B",
+    profile_summary: "A thoughtful public introduction.",
+  },
+  vitals: { height: "5 ft 5 in", complexion: "Fair", gotra: "Kashyap" },
+  astrology: {
+    rashi: "kanya",
+    nakshatra: "Uttara Phalguni",
+    pada: "2",
+    time_of_birth: "09:15",
+    lagnam: "Mithuna",
+    maternal_gotra: "Bharadwaj",
+  },
+  family: {
+    father: { name: "Private Father", occupation: "Engineer" },
+    family_note: "Private family note",
+  },
+  contact: {
+    contact_person: "Private Contact",
+    phone: "+1 555 0100",
+    email: "private@example.com",
+    secure_note: "Private contact note",
+  },
+  style: { template_name: "Royal Heritage", theme_color: "#000000" },
+};
+
+describe("public portfolio snapshot", () => {
+  it("includes safe display data while omitting private personal, family, and contact values", () => {
+    const snapshot = createPublicPortfolioSnapshot(portfolio);
+
+    expect(snapshot.personal).toMatchObject({
+      name: "Aditi Rao",
+      preferred_name: "Aditi",
+      current_location: "New York",
+    });
+    expect(snapshot.personal).not.toHaveProperty("photo_url");
+    expect(snapshot.personal).not.toHaveProperty("photo_thumb_url");
+    expect(snapshot.personal).not.toHaveProperty("place_of_birth");
+    expect(snapshot.personal).not.toHaveProperty("immigration_status");
+    expect(snapshot).not.toHaveProperty("family");
+    expect(snapshot).not.toHaveProperty("contact");
+  });
+
+  it("removes detailed astrology and forces gated scopes to remain restricted", () => {
+    const snapshot = createPublicPortfolioSnapshot(portfolio);
+
+    expect(snapshot.astrology).toEqual({
+      rashi: "kanya",
+      nakshatra: "Uttara Phalguni",
+      pada: "2",
+    });
+    expect(snapshot.astrology).not.toHaveProperty("time_of_birth");
+    expect(snapshot.astrology).not.toHaveProperty("lagnam");
+    expect(snapshot.astrology).not.toHaveProperty("maternal_gotra");
+    expect(snapshot.visibility).toEqual({
+      family: "restricted",
+      astrology_details: "restricted",
+      gallery: "restricted",
+      contact: "restricted",
+    });
+  });
+});
