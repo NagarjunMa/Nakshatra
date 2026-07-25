@@ -15,17 +15,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const supabase = await createClient();
 
   const { data: portfolio } = await supabase
-    .from("portfolios")
-    .select("published_data, theme_color, sun_sign, share_token")
+    .from("public_portfolio_snapshots")
+    .select("data, theme_color, sun_sign, share_token")
     .eq("share_token", token)
     .eq("is_published", true)
     .single();
 
-  if (!portfolio?.published_data) {
+  if (!portfolio?.data) {
     return { title: "Biodata Not Found" };
   }
 
-  const data = portfolio.published_data as PortfolioData;
+  const data = portfolio.data as PortfolioData;
   const name = data.personal?.name || "Wedding Biodata";
   const rashi = data.astrology?.rashi || "";
   const rashiLabel = rashi
@@ -61,15 +61,15 @@ export default async function PublicBiodataPage({ params }: Props) {
   const supabase = await createClient();
 
   const { data: portfolio } = await supabase
-    .from("portfolios")
+    .from("public_portfolio_snapshots")
     .select(
-      "id, published_data, template_id, theme_color, sun_sign, is_published, expires_at"
+      "portfolio_id, data, template_id, theme_color, sun_sign, expires_at"
     )
     .eq("share_token", token)
     .eq("is_published", true)
     .single();
 
-  if (!portfolio) return notFound();
+  if (!portfolio?.data) return notFound();
 
   if (portfolio.expires_at && new Date(portfolio.expires_at) < new Date()) {
     return (
@@ -84,16 +84,16 @@ export default async function PublicBiodataPage({ params }: Props) {
 
   // Record view (rate-limited: max 1 per hour)
   supabase
-    .rpc("record_view", { p_portfolio_id: portfolio.id })
+    .rpc("record_view", { p_portfolio_id: portfolio.portfolio_id })
     .then(() => {});
 
-  const data = portfolio.published_data as PortfolioData;
+  const data = portfolio.data as PortfolioData;
   const themeColor = portfolio.theme_color || "#6366f1";
   const sunSign = portfolio.sun_sign;
   const { data: media } = await supabase
     .from("portfolio_media")
     .select("id, portfolio_id, storage_path, thumbnail_path, media_type, visibility, sort_order, alt_text")
-    .eq("portfolio_id", portfolio.id)
+    .eq("portfolio_id", portfolio.portfolio_id)
     .in("media_type", ["hero", "gallery"]);
   const photos = await createPortfolioPhotoUrls({
     supabase,
