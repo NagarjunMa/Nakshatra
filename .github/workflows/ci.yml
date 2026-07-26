@@ -52,8 +52,8 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
-      - name: Test
-        run: npm test
+      - name: Unit tests and full-source coverage
+        run: npm run test:unit:coverage
 
       - name: Validate Supabase build configuration
         run: |
@@ -72,3 +72,48 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: End-to-end tests
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-${{ github.run_id }}
+          path: |
+            playwright-report
+            test-results
+          if-no-files-found: ignore
+          retention-days: 14
+
+  database:
+    name: Supabase migrations and pgTAP
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start minimal local Supabase stack
+        run: npm run test:db:start
+
+      - name: Run database tests
+        run: npm run test:db
+
+      - name: Stop local Supabase stack
+        if: always()
+        run: npx supabase stop
