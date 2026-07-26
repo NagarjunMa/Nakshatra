@@ -5,6 +5,8 @@ const repository = vi.hoisted(() => ({
   findPortfolioForUser: vi.fn(),
   publishPortfolio: vi.fn(),
   savePublicSnapshot: vi.fn(),
+  findPublicHeroPhoto: vi.fn(),
+  updatePublicSnapshot: vi.fn(),
   renewPortfolioLink: vi.fn(),
 }));
 
@@ -27,7 +29,8 @@ import {
 
 const draft: PortfolioData = {
   personal: { name: "Aditi Rao", dob: "1996-08-12", gender: "female" },
-  style: { template_name: "Royal Heritage" },
+  astrology: { rashi: "kanya" },
+  style: { template_name: "Royal Heritage", rashi_palette: "kanya-midnight" },
 };
 
 describe("portfolio lifecycle services", () => {
@@ -39,33 +42,37 @@ describe("portfolio lifecycle services", () => {
     });
     repository.publishPortfolio.mockResolvedValue({ error: null });
     repository.savePublicSnapshot.mockResolvedValue({ error: null });
+    repository.findPublicHeroPhoto.mockResolvedValue({ data: { id: "hero-photo-id" }, error: null });
+    repository.updatePublicSnapshot.mockResolvedValue({ error: null });
     repository.renewPortfolioLink.mockResolvedValue({ error: null });
   });
 
-  it("publishes a saved draft with a share token and expiry", async () => {
-    await publishPortfolio({ supabase: {} as never, userId: "user-id", data: draft });
+  it("publishes a saved draft with a share token, expiry, and safe snapshot", async () => {
+    const result = await publishPortfolio({ supabase: {} as never, userId: "user-id", data: draft });
     expect(repository.publishPortfolio).toHaveBeenCalledWith(
       "user-id",
       expect.objectContaining({
         is_published: true,
-        share_token: expect.any(String),
+        share_token: expect.stringMatching(/^.{21}$/),
         template_id: 3,
       })
     );
     expect(repository.savePublicSnapshot).toHaveBeenCalledWith(
       expect.objectContaining({
         portfolio_id: "portfolio-id",
-        share_token: expect.any(String),
+        share_token: expect.stringMatching(/^.{21}$/),
         data: expect.not.objectContaining({ family: expect.anything(), contact: expect.anything() }),
+        is_active: true,
       })
     );
+    expect(result).toMatchObject({ action: "created", shareUrl: expect.stringContaining("/p/") });
   });
 
   it("persists the chosen supported template ID", async () => {
     await publishPortfolio({
       supabase: {} as never,
       userId: "user-id",
-      data: { ...draft, style: { template_name: "Celestial Union" } },
+      data: { ...draft, style: { ...draft.style, template_name: "Celestial Union" } },
     });
     expect(repository.publishPortfolio.mock.calls[0][1]).toMatchObject({ template_id: 2 });
 
@@ -78,7 +85,7 @@ describe("portfolio lifecycle services", () => {
     await publishPortfolio({
       supabase: {} as never,
       userId: "user-id",
-      data: { ...draft, style: { template_name: "Editorial Matrimonial" } },
+      data: { ...draft, style: { ...draft.style, template_name: "Editorial Matrimonial" } },
     });
     expect(repository.publishPortfolio.mock.calls[0][1]).toMatchObject({ template_id: 1 });
   });
@@ -109,12 +116,40 @@ describe("portfolio lifecycle services", () => {
   });
 
   it("renews for 90 days and returns a safe error on failure", async () => {
+    repository.findPortfolioForUser.mockResolvedValue({
+      data: { id: "portfolio-id", is_published: true, share_token: "stable-token", expires_at: "2000-01-01T00:00:00.000Z" },
+      error: null,
+    });
     const before = Date.now();
     await renewPortfolioLink({ supabase: {} as never, userId: "user-id" });
     const expiresAt = new Date(repository.renewPortfolioLink.mock.calls[0][1]).getTime();
     expect(expiresAt).toBeGreaterThan(before + 89 * 86_400_000);
+    expect(repository.updatePublicSnapshot).toHaveBeenCalledWith(
+      "portfolio-id",
+      expect.objectContaining({ is_active: true })
+    );
 
     repository.renewPortfolioLink.mockResolvedValue({ error: new Error("db") });
+    await expect(
+      renewPortfolioLink({ supabase: {} as never, userId: "user-id" })
+    ).rejects.toBeInstanceOf(PortfolioRenewalError);
+  });
+
+  it("rejects renewals for unpublished portfolios and snapshot synchronization failures", async () => {
+    repository.findPortfolioForUser.mockResolvedValue({
+      data: { id: "portfolio-id", is_published: false, share_token: null, expires_at: null },
+      error: null,
+    });
+    await expect(
+      renewPortfolioLink({ supabase: {} as never, userId: "user-id" })
+    ).rejects.toBeInstanceOf(PortfolioRenewalError);
+
+    repository.findPortfolioForUser.mockResolvedValue({
+      data: { id: "portfolio-id", is_published: true, share_token: "stable-token", expires_at: null },
+      error: null,
+    });
+    repository.renewPortfolioLink.mockResolvedValue({ error: null });
+    repository.updatePublicSnapshot.mockResolvedValue({ error: new Error("db") });
     await expect(
       renewPortfolioLink({ supabase: {} as never, userId: "user-id" })
     ).rejects.toBeInstanceOf(PortfolioRenewalError);

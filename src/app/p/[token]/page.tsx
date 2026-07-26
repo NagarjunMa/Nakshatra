@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .from("public_portfolio_snapshots")
     .select("data, theme_color, sun_sign, share_token")
     .eq("share_token", token)
-    .eq("is_published", true)
+    .eq("is_active", true)
     .single();
 
   if (!portfolio?.data) {
@@ -32,7 +32,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     ? ` | ${rashi.charAt(0).toUpperCase() + rashi.slice(1)}`
     : "";
   const description = `${name}'s Wedding Biodata${rashiLabel}`;
-  const photoUrl = data.personal?.photo_thumb_url || data.personal?.photo_url;
 
   return {
     title: `${name} — Wedding Biodata`,
@@ -42,16 +41,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: `${name} — Wedding Biodata`,
       description,
       type: "profile",
-      ...(photoUrl && {
-        images: [
-          {
-            url: photoUrl,
-            width: 800,
-            height: 800,
-            alt: `${name}'s photo`,
-          },
-        ],
-      }),
+      images: [{
+        url: `/p/${token}/opengraph-image`,
+        width: 1200,
+        height: 630,
+        alt: `${name}'s wedding biodata`,
+      }],
     },
   };
 }
@@ -63,24 +58,13 @@ export default async function PublicBiodataPage({ params }: Props) {
   const { data: portfolio } = await supabase
     .from("public_portfolio_snapshots")
     .select(
-      "portfolio_id, data, template_id, theme_color, sun_sign, expires_at"
+      "portfolio_id, data, template_id, theme_color, sun_sign"
     )
     .eq("share_token", token)
-    .eq("is_published", true)
+    .eq("is_active", true)
     .single();
 
   if (!portfolio?.data) return notFound();
-
-  if (portfolio.expires_at && new Date(portfolio.expires_at) < new Date()) {
-    return (
-      <div className="flex flex-1 flex-col items-center justify-center px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold">This biodata has expired</h1>
-        <p className="mt-2 text-muted-foreground">
-          The owner can renew it from their dashboard.
-        </p>
-      </div>
-    );
-  }
 
   // Record view (rate-limited: max 1 per hour)
   supabase
@@ -94,6 +78,7 @@ export default async function PublicBiodataPage({ params }: Props) {
     .from("portfolio_media")
     .select("id, portfolio_id, storage_path, thumbnail_path, media_type, visibility, sort_order, alt_text")
     .eq("portfolio_id", portfolio.portfolio_id)
+    .eq("visibility", "public")
     .in("media_type", ["hero", "gallery"]);
   const photos = await createPortfolioPhotoUrls({
     supabase,

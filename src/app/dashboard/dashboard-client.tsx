@@ -18,6 +18,7 @@ import {
   getRashiPalettes,
   type RashiPalette,
 } from "@/features/portfolio/rashi-theme";
+import type { PortfolioApiFailure } from "@/features/portfolio/client/portfolio-dashboard.api";
 import { RashiPalettePicker } from "@/components/portfolio/RashiPalettePicker";
 import { ShaderBackground } from "@/components/landing/ShaderBackground";
 import {
@@ -28,7 +29,9 @@ import {
   Share2,
   LogOut,
   RefreshCw,
+  RotateCcw,
   Save,
+  Send,
   X,
   LockKeyhole,
   PanelRightOpen,
@@ -65,6 +68,9 @@ export default function DashboardClient({
     normalizePortfolioData(portfolio?.draft_data)
   );
   const [savingDraft, setSavingDraft] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [rotatingLink, setRotatingLink] = useState(false);
+  const [unpublishing, setUnpublishing] = useState(false);
   const [draftError, setDraftError] = useState<string | null>(null);
   const [portfolioMedia, setPortfolioMedia] = useState(media);
   const [mediaUrls, setMediaUrls] = useState<Record<string, string>>({});
@@ -116,23 +122,89 @@ export default function DashboardClient({
     window.open(`https://wa.me/?text=${text}`, "_blank");
   }
 
+  /**
+   * Maps a feature API failure to a session redirect or an actionable dashboard message.
+   * Input: a normalized client API failure. Output: true when navigation has replaced the current dashboard flow.
+   */
+  function handlePortfolioApiFailure(failure: PortfolioApiFailure): boolean {
+    if (failure.error.code === "AUTH_SESSION_MISSING" || failure.error.code === "AUTH_SESSION_INVALID") {
+      router.push("/login?error=session_expired");
+      return true;
+    }
+
+    setDraftError(failure.error.message);
+    return false;
+  }
+
   async function renewLink() {
     if (!portfolio) return;
     if (!confirm("Renew link for 90 days?")) return;
     setRenewing(true);
-    const response = await fetch("/api/portfolio/renew", { method: "POST" });
-    if (response.status === 401) {
+    setDraftError(null);
+    try {
+      const { renewPortfolioLinkRequest } = await import(
+        "@/features/portfolio/client/portfolio-dashboard.api"
+      );
+      const result = await renewPortfolioLinkRequest();
+      if (!result.ok) {
+        handlePortfolioApiFailure(result);
+        return;
+      }
+      router.refresh();
+    } finally {
       setRenewing(false);
-      router.push("/login?error=session_expired");
-      return;
     }
-    if (!response.ok) {
-      setRenewing(false);
-      return;
-    }
+  }
 
-    router.refresh();
-    setRenewing(false);
+  /** Generates a new portfolio or explicitly updates the existing public snapshot from the private draft. */
+  async function publishPortfolio() {
+    setPublishing(true);
+    setDraftError(null);
+    try {
+      const { publishPortfolioRequest } = await import(
+        "@/features/portfolio/client/portfolio-dashboard.api"
+      );
+      const result = await publishPortfolioRequest(draftData);
+      if (!result.ok) return void handlePortfolioApiFailure(result);
+      setFormOpen(false);
+      router.refresh();
+    } finally {
+      setPublishing(false);
+    }
+  }
+
+  /** Replaces the active public URL after the owner confirms that the previous link should stop working. */
+  async function rotateLink() {
+    if (!confirm("Rotate this link? The existing portfolio URL will stop working immediately.")) return;
+    setRotatingLink(true);
+    setDraftError(null);
+    try {
+      const { rotatePortfolioLinkRequest } = await import(
+        "@/features/portfolio/client/portfolio-dashboard.api"
+      );
+      const result = await rotatePortfolioLinkRequest();
+      if (!result.ok) return void handlePortfolioApiFailure(result);
+      router.refresh();
+    } finally {
+      setRotatingLink(false);
+    }
+  }
+
+  /** Removes public access without deleting the owner draft, media, or dashboard configuration. */
+  async function unpublishPortfolio() {
+    if (!confirm("Unpublish this portfolio? Anyone using the current link will no longer be able to view it.")) return;
+    setUnpublishing(true);
+    setDraftError(null);
+    try {
+      const { unpublishPortfolioRequest } = await import(
+        "@/features/portfolio/client/portfolio-dashboard.api"
+      );
+      const result = await unpublishPortfolioRequest();
+      if (!result.ok) return void handlePortfolioApiFailure(result);
+      router.refresh();
+    } finally {
+      setUnpublishing(false);
+    }
   }
 
   async function handleSignOut() {
@@ -150,31 +222,17 @@ export default function DashboardClient({
   async function saveDashboardDraft() {
     setSavingDraft(true);
     setDraftError(null);
-
-    const response = await fetch("/api/dashboard", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ data: draftData }),
-    });
-
-    if (response.status === 401) {
-      router.push("/login?error=session_expired");
-      return;
-    }
-
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as {
-        error?: string;
-      } | null;
-      setDraftError(body?.error || "Unable to save your portfolio details.");
+    try {
+      const { saveDashboardDraftRequest } = await import(
+        "@/features/portfolio/client/portfolio-dashboard.api"
+      );
+      const result = await saveDashboardDraftRequest(draftData);
+      if (!result.ok) return void handlePortfolioApiFailure(result);
+      setActivePortfolioId(result.data.portfolioId);
+      router.refresh();
+    } finally {
       setSavingDraft(false);
-      return;
     }
-
-    const saved = (await response.json()) as { portfolioId: string };
-    setActivePortfolioId(saved.portfolioId);
-    setSavingDraft(false);
-    router.refresh();
   }
 
   async function uploadPhotos(files: FileList | null) {
@@ -194,23 +252,17 @@ export default function DashboardClient({
     setUploadingMedia(true);
     setDraftError(null);
     try {
+      const { uploadPortfolioPhotoRequest } = await import(
+        "@/features/portfolio/client/portfolio-dashboard.api"
+      );
       const uploaded: PortfolioMedia[] = [];
       for (const file of selectedFiles) {
         const formData = new FormData();
         formData.append("photo", file);
         formData.append("portfolioId", activePortfolioId);
-        const response = await fetch("/api/portfolio-media", {
-          method: "POST",
-          body: formData,
-        });
-        const body = (await response.json()) as {
-          error?: string;
-          media?: PortfolioMedia;
-        };
-        if (!response.ok || !body.media) {
-          throw new Error(body.error || "Unable to upload this photo.");
-        }
-        uploaded.push(body.media);
+        const result = await uploadPortfolioPhotoRequest(formData);
+        if (!result.ok) return void handlePortfolioApiFailure(result);
+        uploaded.push(result.data.media);
       }
       setPortfolioMedia((current) => [...current, ...uploaded]);
       router.refresh();
@@ -226,22 +278,14 @@ export default function DashboardClient({
     mediaId: string,
     changes: Partial<Pick<PortfolioMedia, "visibility" | "media_type" | "alt_text">>
   ) {
-    const response = await fetch("/api/portfolio-media", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mediaId, ...changes }),
-    });
-    const body = (await response.json().catch(() => null)) as {
-      error?: string;
-      media?: PortfolioMedia;
-    } | null;
-    if (!response.ok || !body?.media) {
-      setDraftError(body?.error || "Unable to update photo visibility.");
-      return;
-    }
+    const { updatePortfolioPhotoRequest } = await import(
+      "@/features/portfolio/client/portfolio-dashboard.api"
+    );
+    const result = await updatePortfolioPhotoRequest(mediaId, changes);
+    if (!result.ok) return void handlePortfolioApiFailure(result);
     setPortfolioMedia((current) =>
       current.map((item) => {
-        if (item.id === body.media?.id) return body.media;
+        if (item.id === result.data.media.id) return result.data.media;
         if (changes.media_type === "hero" && item.media_type === "hero") {
           return { ...item, media_type: "gallery" };
         }
@@ -251,14 +295,11 @@ export default function DashboardClient({
   }
 
   async function deletePhoto(mediaId: string) {
-    const response = await fetch(`/api/portfolio-media?mediaId=${mediaId}`, {
-      method: "DELETE",
-    });
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as { error?: string } | null;
-      setDraftError(body?.error || "Unable to remove photo.");
-      return;
-    }
+    const { deletePortfolioPhotoRequest } = await import(
+      "@/features/portfolio/client/portfolio-dashboard.api"
+    );
+    const result = await deletePortfolioPhotoRequest(mediaId);
+    if (!result.ok) return void handlePortfolioApiFailure(result);
     setPortfolioMedia((current) => current.filter((item) => item.id !== mediaId));
   }
 
@@ -384,6 +425,22 @@ export default function DashboardClient({
                         Renew (90 days)
                       </button>
                     )}
+                    <button
+                      onClick={rotateLink}
+                      disabled={rotatingLink}
+                      className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/10 disabled:opacity-50"
+                    >
+                      <RotateCcw className={`h-4 w-4 ${rotatingLink ? "animate-spin" : ""}`} />
+                      Rotate link
+                    </button>
+                    <button
+                      onClick={unpublishPortfolio}
+                      disabled={unpublishing}
+                      className="inline-flex items-center gap-2 rounded-lg border border-red-300/25 px-4 py-2 text-sm font-medium text-red-100 transition-colors hover:bg-red-400/10 disabled:opacity-50"
+                    >
+                      <LockKeyhole className="h-4 w-4" />
+                      {unpublishing ? "Unpublishing..." : "Unpublish"}
+                    </button>
                   </div>
                 </div>
               )}
@@ -463,7 +520,7 @@ export default function DashboardClient({
               )}
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-xs text-white/50">
-                  Photo visibility and free-view restrictions are saved here.
+                  Draft edits stay private until you update the published portfolio.
                 </p>
                 <div className="flex gap-2">
                   <button
@@ -474,6 +531,19 @@ export default function DashboardClient({
                   >
                     <Save className="h-4 w-4" />
                     {savingDraft ? "Saving..." : "Save draft"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={publishPortfolio}
+                    disabled={publishing}
+                    className="inline-flex h-10 items-center gap-2 rounded-lg border border-[#f4d98f]/30 bg-[#f4d98f]/10 px-4 text-sm font-semibold text-[#f4d98f] transition-colors hover:bg-[#f4d98f]/20 disabled:opacity-50"
+                  >
+                    <Send className={`h-4 w-4 ${publishing ? "animate-pulse" : ""}`} />
+                    {publishing
+                      ? "Generating..."
+                      : portfolio?.is_published
+                        ? "Update published"
+                        : "Generate portfolio"}
                   </button>
                 </div>
               </div>

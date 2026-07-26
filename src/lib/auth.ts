@@ -1,6 +1,12 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
+export type ApiUserResult =
+  | { status: "authenticated"; supabase: Awaited<ReturnType<typeof createClient>>; user: { id: string } }
+  | { status: "missing_session" }
+  | { status: "invalid_session" }
+  | { status: "service_unavailable" };
+
 /**
  * Get authenticated user or redirect to login.
  * Use in server components and API routes.
@@ -20,20 +26,21 @@ export async function getAuthenticatedUser() {
 }
 
 /**
- * Get authenticated user for API routes (returns null instead of redirect).
+ * Resolves API authentication without redirecting the request.
+ * Input: the current request's Supabase cookies. Output: an authenticated actor or a precise failure category.
  */
-export async function getApiUser() {
-  const supabase = await createClient();
-  const {
-    data: authData,
-    error,
-  } = await supabase.auth.getClaims();
+export async function getApiUser(): Promise<ApiUserResult> {
+  try {
+    const supabase = await createClient();
+    const { data: authData, error } = await supabase.auth.getClaims();
 
-  if (error || !authData?.claims.sub) {
-    return { supabase: null, user: null };
+    if (error) return { status: "invalid_session" };
+    if (!authData?.claims.sub) return { status: "missing_session" };
+
+    return { status: "authenticated", supabase, user: { id: authData.claims.sub } };
+  } catch {
+    return { status: "service_unavailable" };
   }
-
-  return { supabase, user: { id: authData.claims.sub } };
 }
 
 // Re-export for server-side usage

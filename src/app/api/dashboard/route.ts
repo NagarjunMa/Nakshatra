@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getApiUser } from "@/lib/auth";
+import { apiAuthFailureResponse } from "@/lib/api/auth-response";
 import { portfolioDraftSchema, type PortfolioData } from "@/types/portfolio";
 import {
   DashboardSaveError,
@@ -7,24 +8,22 @@ import {
 } from "@/features/portfolio/server/dashboard.service";
 
 export async function PUT(request: Request) {
-  const { supabase, user } = await getApiUser();
-  if (!supabase || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await getApiUser();
+  if (auth.status !== "authenticated") return apiAuthFailureResponse(auth);
 
   const payload = await request.json().catch(() => null);
   const parsed = portfolioDraftSchema.safeParse(payload?.data);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Invalid dashboard data", details: parsed.error.flatten() },
+      { code: "DASHBOARD_DATA_INVALID", error: "Some dashboard details are invalid.", details: parsed.error.flatten() },
       { status: 400 }
     );
   }
 
   try {
     const result = await saveDashboardDraft({
-      supabase,
-      userId: user.id,
+      supabase: auth.supabase,
+      userId: auth.user.id,
       data: parsed.data as PortfolioData,
     });
     return NextResponse.json(result);
@@ -32,6 +31,6 @@ export async function PUT(request: Request) {
     const message = error instanceof DashboardSaveError
       ? error.message
       : "Unable to save portfolio details";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ code: "DASHBOARD_SAVE_FAILED", error: message }, { status: 500 });
   }
 }
