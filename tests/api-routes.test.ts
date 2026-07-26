@@ -1,0 +1,238 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const getApiUser = vi.hoisted(() => vi.fn());
+const createClient = vi.hoisted(() => vi.fn());
+const saveDashboardDraft = vi.hoisted(() => vi.fn());
+const publishPortfolio = vi.hoisted(() => vi.fn());
+const renewPortfolioLink = vi.hoisted(() => vi.fn());
+const rotatePortfolioLink = vi.hoisted(() => vi.fn());
+const unpublishPortfolio = vi.hoisted(() => vi.fn());
+const uploadPortfolioPhoto = vi.hoisted(() => vi.fn());
+const updatePortfolioPhoto = vi.hoisted(() => vi.fn());
+const deletePortfolioPhoto = vi.hoisted(() => vi.fn());
+const sharp = vi.hoisted(() => vi.fn());
+
+vi.mock("../src/lib/auth", () => ({ getApiUser }));
+vi.mock("../src/lib/supabase/server", () => ({ createClient }));
+vi.mock("../src/features/portfolio/server/dashboard.service", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../src/features/portfolio/server/dashboard.service")>();
+  return { ...actual, saveDashboardDraft };
+});
+vi.mock("../src/features/portfolio/server/publish.service", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../src/features/portfolio/server/publish.service")>();
+  return { ...actual, publishPortfolio };
+});
+vi.mock("../src/features/portfolio/server/renew.service", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../src/features/portfolio/server/renew.service")>();
+  return { ...actual, renewPortfolioLink };
+});
+vi.mock("../src/features/portfolio/server/share-lifecycle.service", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../src/features/portfolio/server/share-lifecycle.service")>();
+  return { ...actual, rotatePortfolioLink, unpublishPortfolio };
+});
+vi.mock("../src/features/media/server/media.service", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../src/features/media/server/media.service")>();
+  return { ...actual, uploadPortfolioPhoto, updatePortfolioPhoto, deletePortfolioPhoto };
+});
+vi.mock("sharp", () => ({ default: sharp }));
+
+import { GET as authCallback } from "../src/app/api/auth/callback/route";
+import { PUT as dashboardPut } from "../src/app/api/dashboard/route";
+import { DELETE as mediaDelete, PATCH as mediaPatch, POST as mediaPost } from "../src/app/api/portfolio-media/route";
+import { POST as publishPost } from "../src/app/api/portfolio/publish/route";
+import { POST as renewPost } from "../src/app/api/portfolio/renew/route";
+import { POST as rotatePost } from "../src/app/api/portfolio/share/rotate/route";
+import { POST as unpublishPost } from "../src/app/api/portfolio/share/unpublish/route";
+import { POST as legacyUploadPost } from "../src/app/api/upload/route";
+import { DashboardSaveError } from "../src/features/portfolio/server/dashboard.service";
+import { PortfolioMediaError } from "../src/features/media/server/media.service";
+import { PortfolioPublishError } from "../src/features/portfolio/server/publish.service";
+import { PortfolioRenewalError } from "../src/features/portfolio/server/renew.service";
+import { PortfolioShareLifecycleError } from "../src/features/portfolio/server/share-lifecycle.service";
+
+const actor = { status: "authenticated", user: { id: "owner" }, supabase: {} };
+const data = {
+  personal: { name: "Aditi Rao", dob: "1996-08-12", gender: "female" },
+  astrology: { rashi: "kanya" },
+  style: { rashi_palette: "kanya-midnight" },
+};
+
+function jsonRequest(url: string, method: string, body: unknown) {
+  return new Request(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+}
+
+describe("API route authentication", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getApiUser.mockResolvedValue(actor);
+    saveDashboardDraft.mockResolvedValue({ portfolioId: "portfolio" });
+    publishPortfolio.mockResolvedValue({ shareUrl: "https://example.test/p/token", expiresAt: "2099-01-01", action: "created" });
+    renewPortfolioLink.mockResolvedValue(undefined);
+    rotatePortfolioLink.mockResolvedValue({ shareUrl: "https://example.test/p/new", shareToken: "new" });
+    unpublishPortfolio.mockResolvedValue(undefined);
+  });
+
+  it.each([
+    ["dashboard", () => dashboardPut(jsonRequest("http://local/api/dashboard", "PUT", { data }))],
+    ["publish", () => publishPost(jsonRequest("http://local/api/portfolio/publish", "POST", { data }))],
+    ["renew", () => renewPost()],
+    ["rotate", () => rotatePost()],
+    ["unpublish", () => unpublishPost()],
+  ])("rejects missing sessions on %s", async (_name, call) => {
+    getApiUser.mockResolvedValueOnce({ status: "missing_session" });
+    expect((await call()).status).toBe(401);
+  });
+});
+
+describe("dashboard and portfolio lifecycle routes", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getApiUser.mockResolvedValue(actor);
+    saveDashboardDraft.mockResolvedValue({ portfolioId: "portfolio" });
+    publishPortfolio.mockResolvedValue({ shareUrl: "https://example.test/p/token", expiresAt: "2099-01-01", action: "created" });
+    renewPortfolioLink.mockResolvedValue(undefined);
+    rotatePortfolioLink.mockResolvedValue({ shareUrl: "https://example.test/p/new", shareToken: "new" });
+    unpublishPortfolio.mockResolvedValue(undefined);
+  });
+
+  it("validates and saves dashboard drafts", async () => {
+    expect((await dashboardPut(new Request("http://local/api/dashboard", { method: "PUT", body: "{" }))).status).toBe(400);
+    expect((await dashboardPut(jsonRequest("http://local/api/dashboard", "PUT", { data: { personal: { gender: "other" } } }))).status).toBe(400);
+    const response = await dashboardPut(jsonRequest("http://local/api/dashboard", "PUT", { data }));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ portfolioId: "portfolio" });
+  });
+
+  it("maps dashboard failures without leaking unknown errors", async () => {
+    saveDashboardDraft.mockRejectedValueOnce(new DashboardSaveError("Could not save portfolio"));
+    expect(await (await dashboardPut(jsonRequest("http://local/api/dashboard", "PUT", { data }))).json()).toMatchObject({ error: "Could not save portfolio" });
+    saveDashboardDraft.mockRejectedValueOnce(new Error("database password"));
+    expect(await (await dashboardPut(jsonRequest("http://local/api/dashboard", "PUT", { data }))).json()).toMatchObject({ error: "Unable to save portfolio details" });
+  });
+
+  it("publishes valid data and reports validation and domain errors", async () => {
+    expect((await publishPost(new Request("http://local/api/portfolio/publish", { method: "POST", body: "{" }))).status).toBe(400);
+    const success = await publishPost(jsonRequest("http://local/api/portfolio/publish", "POST", { data }));
+    expect(await success.json()).toMatchObject({ ok: true, action: "created" });
+    expect(saveDashboardDraft).toHaveBeenCalledBefore(publishPortfolio);
+
+    publishPortfolio.mockRejectedValueOnce(new PortfolioPublishError("Not ready", "PORTFOLIO_NOT_READY", 400));
+    const failure = await publishPost(jsonRequest("http://local/api/portfolio/publish", "POST", { data }));
+    expect(failure.status).toBe(400);
+    expect(await failure.json()).toMatchObject({ code: "PORTFOLIO_NOT_READY", error: "Not ready" });
+  });
+
+  it("handles renew, rotate, and unpublish success and failures", async () => {
+    expect((await renewPost()).status).toBe(200);
+    expect(await (await rotatePost()).json()).toMatchObject({ shareToken: "new" });
+    expect(await (await unpublishPost()).json()).toEqual({ ok: true });
+
+    renewPortfolioLink.mockRejectedValueOnce(new PortfolioRenewalError("Not published", "PORTFOLIO_NOT_PUBLISHED", 400));
+    expect((await renewPost()).status).toBe(400);
+    rotatePortfolioLink.mockRejectedValueOnce(new PortfolioShareLifecycleError("Cannot rotate", "ROTATE_FAILED", 409));
+    expect((await rotatePost()).status).toBe(409);
+    unpublishPortfolio.mockRejectedValueOnce(new Error("private database detail"));
+    const response = await unpublishPost();
+    expect(response.status).toBe(500);
+    expect(await response.json()).toMatchObject({ code: "PORTFOLIO_UNPUBLISH_FAILED" });
+  });
+});
+
+describe("portfolio media route", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getApiUser.mockResolvedValue(actor);
+    uploadPortfolioPhoto.mockResolvedValue({ id: "media" });
+    updatePortfolioPhoto.mockResolvedValue({ id: "media", visibility: "public" });
+    deletePortfolioPhoto.mockResolvedValue(undefined);
+  });
+
+  it("validates and uploads a photo", async () => {
+    const invalid = new FormData();
+    expect((await mediaPost(new Request("http://local/api/portfolio-media", { method: "POST", body: invalid }))).status).toBe(400);
+    const form = new FormData();
+    form.set("photo", new File(["image"], "photo.png", { type: "image/png" }));
+    form.set("portfolioId", "portfolio");
+    form.set("visibility", "public");
+    expect(await (await mediaPost(new Request("http://local/api/portfolio-media", { method: "POST", body: form }))).json()).toEqual({ media: { id: "media" } });
+  });
+
+  it("validates, updates, and deletes media", async () => {
+    expect((await mediaPatch(new Request("http://local/api/portfolio-media", { method: "PATCH", body: "{" }))).status).toBe(400);
+    expect((await mediaPatch(jsonRequest("http://local/api/portfolio-media", "PATCH", { mediaId: "bad" }))).status).toBe(400);
+    const mediaId = "8f378bb8-ec91-4f3f-90ef-b7eea2c01506";
+    expect((await mediaPatch(jsonRequest("http://local/api/portfolio-media", "PATCH", { mediaId, visibility: "public" }))).status).toBe(200);
+    expect((await mediaDelete(new Request("http://local/api/portfolio-media", { method: "DELETE" }))).status).toBe(400);
+    expect((await mediaDelete(new Request(`http://local/api/portfolio-media?mediaId=${mediaId}`, { method: "DELETE" }))).status).toBe(200);
+  });
+
+  it("preserves domain status and hides unknown errors", async () => {
+    updatePortfolioPhoto.mockRejectedValueOnce(new PortfolioMediaError("Photo not found", 404));
+    const mediaId = "8f378bb8-ec91-4f3f-90ef-b7eea2c01506";
+    expect((await mediaPatch(jsonRequest("http://local/api/portfolio-media", "PATCH", { mediaId, visibility: "public" }))).status).toBe(404);
+    deletePortfolioPhoto.mockRejectedValueOnce(new Error("secret"));
+    const response = await mediaDelete(new Request(`http://local/api/portfolio-media?mediaId=${mediaId}`, { method: "DELETE" }));
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({ error: "Unable to manage photo" });
+  });
+});
+
+describe("authentication callback", () => {
+  it("redirects failed callbacks to login", async () => {
+    expect((await authCallback(new Request("http://local/api/auth/callback"))).headers.get("location")).toBe("http://local/login?error=auth_failed");
+  });
+
+  it("creates a portfolio for a new authenticated user", async () => {
+    const insert = vi.fn().mockResolvedValue({ error: null });
+    const single = vi.fn().mockResolvedValue({ data: null });
+    const eq = vi.fn(() => ({ single }));
+    const select = vi.fn(() => ({ eq }));
+    const from = vi.fn(() => ({ select, insert }));
+    createClient.mockResolvedValue({
+      auth: {
+        exchangeCodeForSession: vi.fn().mockResolvedValue({ error: null }),
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: "owner" } } }),
+      },
+      from,
+    });
+    const response = await authCallback(new Request("http://local/api/auth/callback?code=ok&next=/edit"));
+    expect(response.headers.get("location")).toBe("http://local/edit");
+    expect(insert).toHaveBeenCalled();
+  });
+});
+
+describe("legacy upload route", () => {
+  const storage = {
+    from: vi.fn(() => ({
+      upload: vi.fn().mockResolvedValue({ error: null }),
+      getPublicUrl: vi.fn((path: string) => ({ data: { publicUrl: `https://photos.test/${path}` } })),
+    })),
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getApiUser.mockResolvedValue({ ...actor, supabase: { storage } });
+    const pipeline = { resize: vi.fn(), webp: vi.fn(), toBuffer: vi.fn().mockResolvedValue(Buffer.from("webp")) };
+    pipeline.resize.mockReturnValue(pipeline);
+    pipeline.webp.mockReturnValue(pipeline);
+    sharp.mockReturnValue(pipeline);
+  });
+
+  it("validates missing, oversized, and unsupported files", async () => {
+    expect((await legacyUploadPost(new Request("http://local/api/upload", { method: "POST", body: new FormData() }))).status).toBe(400);
+    const oversized = new FormData();
+    oversized.set("photo", new File([new Uint8Array(10 * 1024 * 1024 + 1)], "large.png", { type: "image/png" }));
+    expect((await legacyUploadPost(new Request("http://local/api/upload", { method: "POST", body: oversized }))).status).toBe(413);
+    const unsupported = new FormData();
+    unsupported.set("photo", new File(["x"], "file.pdf", { type: "application/pdf" }));
+    expect((await legacyUploadPost(new Request("http://local/api/upload", { method: "POST", body: unsupported }))).status).toBe(415);
+  });
+
+  it("processes a supported upload", async () => {
+    const form = new FormData();
+    form.set("photo", new File(["image"], "photo.png", { type: "image/png" }));
+    const response = await legacyUploadPost(new Request("http://local/api/upload", { method: "POST", body: form }));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ photo_url: expect.stringContaining("photo.webp"), photo_thumb_url: expect.stringContaining("thumb.webp") });
+  });
+});

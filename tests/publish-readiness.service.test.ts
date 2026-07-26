@@ -20,6 +20,11 @@ describe("portfolio publish readiness", () => {
 
   it.each([
     [
+      { ...readyPortfolio, personal: { ...readyPortfolio.personal, name: "" } },
+      true,
+      "Add your name",
+    ],
+    [
       { ...readyPortfolio, astrology: {} },
       true,
       "Choose your rashi",

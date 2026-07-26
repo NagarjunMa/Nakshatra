@@ -29,7 +29,7 @@ export async function updateSession(request: NextRequest) {
   const {
     data: authData,
   } = await supabase.auth.getClaims();
-  const isAuthenticated = Boolean(authData?.claims.sub);
+  const isAuthenticated = Boolean(authData?.claims?.sub);
 
   // Protected routes - redirect to login if not authenticated.
   const protectedPaths = ["/dashboard", "/edit", "/preview"];

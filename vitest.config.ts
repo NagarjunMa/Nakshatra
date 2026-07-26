@@ -1,8 +1,11 @@
 import { fileURLToPath, URL } from "node:url";
+import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
+  plugins: [react()],
   resolve: {
+    tsconfigPaths: true,
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
       "server-only": fileURLToPath(new URL("./tests/server-only.ts", import.meta.url)),
@@ -10,22 +13,20 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    include: ["tests/**/*.test.ts"],
+    include: ["tests/**/*.test.{ts,tsx}"],
+    setupFiles: ["./tests/setup.ts"],
+    clearMocks: true,
+    restoreMocks: true,
     coverage: {
       provider: "v8",
       reporter: ["text", "json-summary", "lcov"],
-      include: [
-        "src/features/**/*.mapper.ts",
-        "src/features/**/*.service.ts",
-        "src/features/**/*.contract.ts",
-        "src/features/**/*theme.ts",
-      ],
+      include: ["src/**/*.{ts,tsx}"],
       thresholds: {
         branches: 80,
-        functions: 80,
-        lines: 80,
-        statements: 80,
-        perFile: true,
+        functions: 100,
+        lines: 95,
+        statements: 90,
+        perFile: false,
       },
     },
   },

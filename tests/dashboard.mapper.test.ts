@@ -95,5 +95,8 @@ describe("dashboard portfolio mapping", () => {
       title: "Engineer",
       industry: "Technology",
     });
+    expect(mapPortfolioDraft({ ...populated, style: { template_name: "Celestial Union" } }, null).template_id).toBe(2);
+    expect(mapPortfolioDraft({ ...populated, style: { template_name: "Editorial Matrimonial" } }, null).template_id).toBe(1);
+    expect(mapPortfolioDraft({ ...populated, style: { template_name: "Unknown" } }, null).template_id).toBe(3);
   });
 });
