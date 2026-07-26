@@ -1,16 +1,14 @@
 import { NextResponse } from "next/server";
 import { getApiUser } from "@/lib/auth";
+import { apiAuthFailureResponse } from "@/lib/api/auth-response";
 import sharp from "sharp";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
 
 export async function POST(request: Request) {
-  const { supabase, user } = await getApiUser();
-
-  if (!supabase || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await getApiUser();
+  if (auth.status !== "authenticated") return apiAuthFailureResponse(auth);
 
   try {
     const formData = await request.formData();
@@ -48,16 +46,16 @@ export async function POST(request: Request) {
         .toBuffer(),
     ]);
 
-    const mainPath = `${user.id}/photo.webp`;
-    const thumbPath = `${user.id}/thumb.webp`;
+    const mainPath = `${auth.user.id}/photo.webp`;
+    const thumbPath = `${auth.user.id}/thumb.webp`;
 
     // Upload both (upsert to overwrite on re-upload)
     const [mainResult, thumbResult] = await Promise.all([
-      supabase.storage.from("photos").upload(mainPath, mainBuffer, {
+      auth.supabase.storage.from("photos").upload(mainPath, mainBuffer, {
         contentType: "image/webp",
         upsert: true,
       }),
-      supabase.storage.from("photos").upload(thumbPath, thumbBuffer, {
+      auth.supabase.storage.from("photos").upload(thumbPath, thumbBuffer, {
         contentType: "image/webp",
         upsert: true,
       }),
@@ -79,11 +77,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const { data: { publicUrl: photoUrl } } = supabase.storage
+    const { data: { publicUrl: photoUrl } } = auth.supabase.storage
       .from("photos")
       .getPublicUrl(mainPath);
 
-    const { data: { publicUrl: thumbUrl } } = supabase.storage
+    const { data: { publicUrl: thumbUrl } } = auth.supabase.storage
       .from("photos")
       .getPublicUrl(thumbPath);
 

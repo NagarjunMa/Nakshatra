@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getApiUser } from "@/lib/auth";
+import { apiAuthFailureResponse } from "@/lib/api/auth-response";
 import {
   mediaVisibilitySchema,
   updatePortfolioMediaSchema,
@@ -19,8 +20,8 @@ function errorResponse(error: unknown) {
 }
 
 export async function POST(request: Request) {
-  const { supabase, user } = await getApiUser();
-  if (!supabase || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await getApiUser();
+  if (auth.status !== "authenticated") return apiAuthFailureResponse(auth);
 
   const formData = await request.formData();
   const file = formData.get("photo");
@@ -38,8 +39,8 @@ export async function POST(request: Request) {
 
   try {
     const media = await uploadPortfolioPhoto({
-      supabase,
-      userId: user.id,
+      supabase: auth.supabase,
+      userId: auth.user.id,
       portfolioId,
       file,
       visibility: visibility.data,
@@ -51,8 +52,8 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const { supabase, user } = await getApiUser();
-  if (!supabase || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await getApiUser();
+  if (auth.status !== "authenticated") return apiAuthFailureResponse(auth);
 
   const payload = await request.json().catch(() => null);
   const parsed = updatePortfolioMediaSchema.safeParse(payload);
@@ -62,7 +63,7 @@ export async function PATCH(request: Request) {
 
   const { mediaId, ...changes } = parsed.data;
   try {
-    const media = await updatePortfolioPhoto({ supabase, mediaId, changes });
+    const media = await updatePortfolioPhoto({ supabase: auth.supabase, mediaId, changes });
     return NextResponse.json({ media });
   } catch (error) {
     return errorResponse(error);
@@ -70,14 +71,14 @@ export async function PATCH(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const { supabase, user } = await getApiUser();
-  if (!supabase || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await getApiUser();
+  if (auth.status !== "authenticated") return apiAuthFailureResponse(auth);
 
   const mediaId = new URL(request.url).searchParams.get("mediaId");
   if (!mediaId) return NextResponse.json({ error: "Photo is required" }, { status: 400 });
 
   try {
-    await deletePortfolioPhoto({ supabase, mediaId });
+    await deletePortfolioPhoto({ supabase: auth.supabase, mediaId });
     return NextResponse.json({ ok: true });
   } catch (error) {
     return errorResponse(error);

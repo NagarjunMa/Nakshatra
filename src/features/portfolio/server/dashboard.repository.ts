@@ -11,6 +11,18 @@ export interface StoredPortfolio {
   expires_at: string | null;
 }
 
+export interface PublicPortfolioSnapshotPayload {
+  portfolio_id: string;
+  share_token: string;
+  data: Record<string, unknown>;
+  template_id: number;
+  theme_color: string | null;
+  sun_sign: string | null;
+  expires_at: string | null;
+  published_at: string;
+  is_active: boolean;
+}
+
 /**
  * Performs dashboard persistence for server-side portfolio services.
  * Input: an authenticated Supabase client at construction and typed method arguments.
@@ -54,6 +66,47 @@ export class DashboardRepository {
     return this.supabase
       .from("public_portfolio_snapshots")
       .upsert(payload, { onConflict: "portfolio_id" });
+  }
+
+  /**
+   * Finds whether a portfolio has a photo intentionally selected for public hero display.
+   * Input: portfolio ID. Output: a minimal public-hero row or null.
+   */
+  async findPublicHeroPhoto(portfolioId: string) {
+    return this.supabase
+      .from("portfolio_media")
+      .select("id")
+      .eq("portfolio_id", portfolioId)
+      .eq("media_type", "hero")
+      .eq("visibility", "public")
+      .maybeSingle();
+  }
+
+  /**
+   * Updates lifecycle fields on the sanitized snapshot without exposing owner data.
+   * Input: owner portfolio ID and safe snapshot lifecycle changes. Output: Supabase update result.
+   */
+  async updatePublicSnapshot(
+    portfolioId: string,
+    updates: Partial<Pick<PublicPortfolioSnapshotPayload, "share_token" | "expires_at" | "is_active">>
+  ) {
+    return this.supabase
+      .from("public_portfolio_snapshots")
+      .update(updates)
+      .eq("portfolio_id", portfolioId);
+  }
+
+  /**
+   * Disables the owner's public portfolio while retaining their private draft and generated snapshot.
+   * Input: owner user ID. Output: Supabase update result for the owner portfolio row.
+   */
+  async unpublishPortfolio(userId: string) {
+    return this.supabase
+      .from("portfolios")
+      .update({ is_published: false })
+      .eq("user_id", userId)
+      .select("id")
+      .maybeSingle();
   }
 
   async renewPortfolioLink(userId: string, expiresAt: string) {

@@ -5,6 +5,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PortfolioData } from "@/types/portfolio";
 import { DashboardRepository } from "./dashboard.repository";
 import { createPublicPortfolioSnapshot } from "./public-snapshot.service";
+import {
+  PortfolioPublishReadinessError,
+  requirePortfolioPublishReadiness,
+} from "./publish-readiness.service";
+import { createShareUrl } from "./share-url.service";
 
 /** Selects the persisted template ID from the dashboard template label. Input: optional template label. Output: supported database template ID. */
 function templateIdFor(templateName?: string) {
@@ -20,7 +25,15 @@ function templateIdFor(templateName?: string) {
   }
 }
 
-export class PortfolioPublishError extends Error {}
+export class PortfolioPublishError extends Error {
+  constructor(
+    message: string,
+    readonly code = "PORTFOLIO_PUBLISH_FAILED",
+    readonly status = 500
+  ) {
+    super(message);
+  }
+}
 
 /**
  * Publishes an already-saved draft and creates its first safe public snapshot when needed.
@@ -38,7 +51,25 @@ export async function publishPortfolio({
   const repository = new DashboardRepository(supabase);
   const { data: portfolio, error: findError } = await repository.findPortfolioForUser(userId);
   if (findError || !portfolio) {
-    throw new PortfolioPublishError("Save your portfolio before publishing it");
+    throw new PortfolioPublishError("Save your portfolio before generating it.", "PORTFOLIO_DRAFT_MISSING", 400);
+  }
+
+  const { data: publicHeroPhoto, error: publicHeroPhotoError } =
+    await repository.findPublicHeroPhoto(portfolio.id);
+  if (publicHeroPhotoError) {
+    throw new PortfolioPublishError("We could not verify your public hero photo. Please try again.", "PUBLIC_HERO_CHECK_FAILED");
+  }
+
+  try {
+    requirePortfolioPublishReadiness({
+      data,
+      hasPublicHeroPhoto: Boolean(publicHeroPhoto),
+    });
+  } catch (error) {
+    if (error instanceof PortfolioPublishReadinessError) {
+      throw new PortfolioPublishError(error.message, "PORTFOLIO_NOT_READY", 400);
+    }
+    throw error;
   }
 
   const updates: Record<string, unknown> = {
@@ -51,7 +82,7 @@ export async function publishPortfolio({
     template_id: templateIdFor(data.style?.template_name),
   };
 
-  const shareToken = portfolio.share_token || nanoid(8);
+  const shareToken = portfolio.share_token || nanoid(21);
   const expiresAt = portfolio.expires_at ?? (() => {
     const expiry = new Date();
     expiry.setDate(expiry.getDate() + 90);
@@ -64,7 +95,7 @@ export async function publishPortfolio({
   }
 
   const { error } = await repository.publishPortfolio(userId, updates);
-  if (error) throw new PortfolioPublishError("Could not publish portfolio");
+  if (error) throw new PortfolioPublishError("We could not publish your portfolio. Please try again.", "PORTFOLIO_PERSISTENCE_FAILED");
 
   const { error: snapshotError } = await repository.savePublicSnapshot({
     portfolio_id: portfolio.id,
@@ -75,8 +106,16 @@ export async function publishPortfolio({
     sun_sign: updates.sun_sign,
     expires_at: expiresAt,
     published_at: updates.published_at,
+    is_active: true,
   });
   if (snapshotError) {
-    throw new PortfolioPublishError("Could not create a safe public portfolio");
+    throw new PortfolioPublishError("We could not create the public portfolio safely. Please try again.", "PUBLIC_SNAPSHOT_PERSISTENCE_FAILED");
   }
+
+  return {
+    action: portfolio.is_published ? "updated" : "created",
+    expiresAt,
+    shareToken,
+    shareUrl: createShareUrl(shareToken),
+  } as const;
 }
