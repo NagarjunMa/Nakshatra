@@ -11,7 +11,7 @@
     "test": "vitest run --coverage",
     "test:unit": "vitest run",
     "test:unit:coverage": "vitest run --coverage",
-    "test:db:start": "supabase start -x analytics,edge-runtime,functions,imgproxy,inbucket,kong,meta,realtime,rest,storage,studio,vector",
+    "test:db:start": "supabase start -x edge-runtime,imgproxy,logflare,studio,vector",
     "test:db": "supabase test db supabase/tests/database --local",
     "test:db:local": "npm run test:db:start && npm run test:db",
     "test:e2e": "playwright test",
