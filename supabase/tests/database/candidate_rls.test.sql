@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(15);
+select plan(16);
 
 select ok(
   not exists (
@@ -38,6 +38,30 @@ select is(
   ),
   4,
   'every candidate policy targets one authenticated operation'
+);
+
+select ok(
+  (
+    select bool_and(
+      has_table_privilege('authenticated', format('public.%I', table_name), 'SELECT')
+      and has_table_privilege('authenticated', format('public.%I', table_name), 'INSERT')
+      and has_table_privilege('authenticated', format('public.%I', table_name), 'UPDATE')
+      and has_table_privilege('authenticated', format('public.%I', table_name), 'DELETE')
+    )
+    from unnest(array[
+      'portfolios',
+      'candidates',
+      'candidate_personal_details',
+      'candidate_astrology_details',
+      'candidate_family_members',
+      'candidate_education_entries',
+      'candidate_career_entries',
+      'candidate_lifestyle_details',
+      'candidate_partner_preferences',
+      'visibility_rules'
+    ]) as dashboard_tables(table_name)
+  ),
+  'authenticated dashboard saves have explicit table privileges'
 );
 
 insert into auth.users (id, aud, role, email, created_at, updated_at)
