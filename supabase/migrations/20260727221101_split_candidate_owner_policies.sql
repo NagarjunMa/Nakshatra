@@ -82,3 +82,19 @@ create policy "Candidate owners can delete candidates"
       )
     )
   );
+
+-- Data API object privileges and RLS are separate authorization layers.
+-- Grant the authenticated role access to the tables used by dashboard saves;
+-- the policies on each table continue to restrict access to authorized rows.
+grant select, insert, update, delete on table
+  public.portfolios,
+  public.candidates,
+  public.candidate_personal_details,
+  public.candidate_astrology_details,
+  public.candidate_family_members,
+  public.candidate_education_entries,
+  public.candidate_career_entries,
+  public.candidate_lifestyle_details,
+  public.candidate_partner_preferences,
+  public.visibility_rules
+to authenticated;
