@@ -466,9 +466,9 @@ function ChipList({
 
   return (
     <div className="flex flex-wrap gap-3">
-      {values.map((item) => (
+      {values.map((item, index) => (
         <span
-          key={item}
+          key={`${item}-${index}`}
           className={`inline-flex items-center gap-2 rounded-md px-4 py-2 text-xs font-bold tracking-wide ${
             variant === "muted"
               ? "bg-[#eeeeee] text-[#44474d]"

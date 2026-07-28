@@ -6,10 +6,15 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { PortfolioData } from "../src/types/portfolio";
 
 vi.mock("next/image", () => ({
-  default: (props: React.ImgHTMLAttributes<HTMLImageElement> & { priority?: boolean; fill?: boolean }) => {
+  default: (props: React.ImgHTMLAttributes<HTMLImageElement> & {
+    priority?: boolean;
+    fill?: boolean;
+    unoptimized?: boolean;
+  }) => {
     const imageProps = { ...props };
     delete imageProps.priority;
     delete imageProps.fill;
+    delete imageProps.unoptimized;
     return React.createElement("img", { alt: "", ...imageProps });
   },
 }));
