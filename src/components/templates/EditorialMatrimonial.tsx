@@ -198,7 +198,17 @@ export default function EditorialMatrimonial({
                 className="md:col-span-2"
                 label="Ancestral Origin"
                 value={data.family?.ancestral_origin}
-                detail={data.family?.current_settlement}
+                detail={
+                  [
+                    data.family?.current_city,
+                    data.family?.current_region,
+                    data.family?.current_country,
+                  ]
+                    .filter(Boolean)
+                    .join(", ") ||
+                  data.family?.parents_location ||
+                  data.family?.current_settlement
+                }
               />
               <GlanceCard
                 className="md:col-span-2"
@@ -260,6 +270,24 @@ export default function EditorialMatrimonial({
                     body={sibling.occupation}
                   />
                 ))}
+                <TimelineItem
+                  title="Immediate Family Location"
+                  body={
+                    [
+                      data.family?.current_city,
+                      data.family?.current_region,
+                      data.family?.current_country,
+                    ]
+                      .filter(Boolean)
+                      .join(", ") ||
+                    data.family?.parents_location ||
+                    data.family?.current_settlement
+                  }
+                />
+                <TimelineItem
+                  title="Wider Family"
+                  body={data.family?.family_spread}
+                />
                 {data.family?.family_note && (
                   <div className="mt-10 rounded-lg border-l-4 border-[#775a19] bg-[#eeeeee] p-6">
                     <p className="text-sm font-medium text-[#031632]">

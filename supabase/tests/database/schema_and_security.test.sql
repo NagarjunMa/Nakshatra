@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(26);
+select plan(32);
 
 select has_schema('app_private', 'private helper schema exists');
 select has_table('public', 'portfolios', 'owner portfolios table exists');
@@ -11,6 +11,9 @@ select has_table('public', 'portfolio_views', 'portfolio view audit table exists
 select has_table('public', 'public_portfolio_snapshots', 'sanitized public snapshots table exists');
 select has_table('public', 'candidates', 'candidate domain table exists');
 select has_table('public', 'portfolio_media', 'portfolio media table exists');
+select has_table('public', 'reference_countries', 'country reference table exists');
+select has_table('public', 'reference_regions', 'region reference table exists');
+select has_table('public', 'reference_cities', 'city reference table exists');
 
 select has_function('public', 'update_updated_at', array[]::text[], 'updated-at trigger function exists');
 select has_function('public', 'record_view', array['uuid'], 'rate-limited view function exists');
@@ -22,6 +25,9 @@ select ok((select relrowsecurity from pg_class where oid = 'public.portfolios'::
 select ok((select relrowsecurity from pg_class where oid = 'public.portfolio_views'::regclass), 'portfolio views has RLS enabled');
 select ok((select relrowsecurity from pg_class where oid = 'public.public_portfolio_snapshots'::regclass), 'public snapshots has RLS enabled');
 select ok((select relrowsecurity from pg_class where oid = 'public.portfolio_media'::regclass), 'portfolio media has RLS enabled');
+select ok((select relrowsecurity from pg_class where oid = 'public.reference_countries'::regclass), 'country references have RLS enabled');
+select ok((select relrowsecurity from pg_class where oid = 'public.reference_regions'::regclass), 'region references have RLS enabled');
+select ok((select relrowsecurity from pg_class where oid = 'public.reference_cities'::regclass), 'city references have RLS enabled');
 
 select ok(exists(select 1 from pg_policies where schemaname = 'public' and tablename = 'portfolios' and policyname = 'Users can manage own portfolio'), 'owner portfolio policy exists');
 select ok(not exists(select 1 from pg_policies where schemaname = 'public' and tablename = 'portfolios' and policyname = 'Public can view published portfolios'), 'unsafe direct public portfolio policy was removed');

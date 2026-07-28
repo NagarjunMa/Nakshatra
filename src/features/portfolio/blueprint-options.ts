@@ -171,9 +171,28 @@ export const HOBBY_OPTIONS = [
 ].map((value) => option(value));
 
 export const LANGUAGE_OPTIONS = [
-  "Telugu", "English", "Hindi", "Tamil", "Kannada", "Malayalam", "Marathi",
-  "Gujarati", "Bengali", "Punjabi", "Urdu", "Spanish", "French", "German",
+  "Assamese", "Arabic", "Bengali", "Bhojpuri", "English", "French", "German",
+  "Gujarati", "Hindi", "Kannada", "Kashmiri", "Konkani", "Malayalam",
+  "Mandarin", "Marathi", "Marwari", "Nepali", "Odia", "Persian", "Punjabi",
+  "Rajasthani", "Russian", "Sanskrit", "Sindhi", "Spanish", "Tamil", "Telugu",
+  "Tulu", "Urdu", "Other",
 ].map((value) => option(value));
+
+export const COMMUNITY_OPTIONS = [
+  option("", "Select community"),
+  "No caste", "Arya Vysya", "Bestha", "Brahmin", "Goud", "Intercaste",
+  "Kamma", "Kalinga Vysya", "Kapu", "Kshatriya", "Lambadi", "Madiga", "Mala",
+  "Mudaliyar", "Mudhiraj", "Nai Brahmin", "Padmasali", "Padmanayaka Velama",
+  "Perika", "Reddy", "Velama", "Viswabrahmin", "Yadav", "Other",
+].map((value) => typeof value === "string" ? option(value) : value);
+
+export const CASTE_PREFERENCE_OPTIONS = [
+  option("", "Select community preference"),
+  option("open", "Open to all communities"),
+  option("specific", "Open to specific communities"),
+  option("not_applicable", "Not applicable"),
+  option("prefer_not_to_say", "Prefer not to say"),
+];
 
 export const SIBLING_POSITION_OPTIONS = [
   option("", "Select position"),

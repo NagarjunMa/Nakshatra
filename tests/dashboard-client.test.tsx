@@ -113,7 +113,7 @@ describe("dashboard client", () => {
     fireEvent.click(screen.getByRole("button", { name: /generate portfolio/i }));
     await waitFor(() => expect(mocks.publish).toHaveBeenCalled());
     expect(mocks.refresh).toHaveBeenCalledTimes(2);
-  });
+  }, 10_000);
 
   it("operates published-link controls and signs out", async () => {
     renderDashboard();

@@ -175,6 +175,23 @@ export default function RoyalHeritage({
                 <DataPair key={`${sibling.name || "sibling"}-${index}`} label="Sibling" value={familyValue(sibling)} theme={theme} />
               ))}
               <DataPair label="Ancestral origin" value={data.family?.ancestral_origin} theme={theme} />
+              <DataPair
+                label="Immediate family location"
+                value={
+                  [
+                    data.family?.current_city,
+                    data.family?.current_region,
+                    data.family?.current_country,
+                  ]
+                    .filter(Boolean)
+                    .join(", ") ||
+                  data.family?.parents_location ||
+                  data.family?.current_settlement
+                }
+                theme={theme}
+              />
+              <DataPair label="Wider family" value={data.family?.family_spread} theme={theme} />
+              <DataPair label="Family note" value={data.family?.family_note} theme={theme} />
             </div>
           </RestrictedBlock>
         </section>

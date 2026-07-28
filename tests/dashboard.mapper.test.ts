@@ -11,6 +11,7 @@ import {
 import type { PortfolioData } from "../src/types/portfolio";
 
 const draft: PortfolioData = {
+  privacy_mode: "progressive",
   personal: {
     name: "Aditi Rao",
     dob: "1996-08-12",
@@ -37,10 +38,14 @@ describe("dashboard portfolio mapping", () => {
       theme_color: "#123456",
       sun_sign: "kanya",
       template_id: 3,
+      privacy_mode: "progressive",
       visibility_settings: {
-        journey: "public",
-        family: "approved",
-        preferences: "broker",
+        preset: "progressive",
+        legacy_sections: {
+          journey: "public",
+          family: "approved",
+          preferences: "broker",
+        },
       },
     });
     expect(mapCandidateDetails(draft)).toMatchObject({
@@ -64,8 +69,8 @@ describe("dashboard portfolio mapping", () => {
         }),
         expect.objectContaining({
           section_key: "contact",
-          visibility: "public",
-          requires_interest: false,
+          visibility: "interest_required",
+          requires_interest: true,
         }),
       ])
     );
@@ -84,6 +89,31 @@ describe("dashboard portfolio mapping", () => {
       visibility: "interest_required",
       requires_interest: true,
     });
+    expect(
+      mapVisibilityRules("portfolio-id", {
+        ...draft,
+        privacy_mode: "open",
+      })
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          section_key: "family",
+          visibility: "public",
+          requires_interest: false,
+        }),
+        expect.objectContaining({
+          section_key: "contact",
+          visibility: "interest_required",
+          requires_interest: true,
+        }),
+      ])
+    );
+    expect(
+      mapVisibilityRules("portfolio-id", {
+        ...draft,
+        privacy_mode: "private",
+      }).every((rule) => rule.requires_interest)
+    ).toBe(true);
   });
 
   it("maps populated education and career records", () => {

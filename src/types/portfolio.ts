@@ -41,8 +41,11 @@ export const personalSchema = z.object({
   profile_summary: z.string().max(1600).optional(),
   profile_for: z.string().max(50).optional(),
   country: z.string().max(100).optional(),
+  country_code: z.string().max(2).optional(),
   region: z.string().max(100).optional(),
+  region_code: z.string().max(30).optional(),
   city: z.string().max(120).optional(),
+  city_geoname_id: z.number().int().positive().optional(),
   citizenship: z.string().max(100).optional(),
   religion: z.string().max(100).optional(),
   community: z.string().max(150).optional(),
@@ -108,6 +111,13 @@ export const familySchema = z.object({
   sibling_count: z.number().int().min(0).max(20).optional(),
   sibling_position: z.string().max(100).optional(),
   parents_location: z.string().max(200).optional(),
+  current_country: z.string().max(100).optional(),
+  current_country_code: z.string().max(2).optional(),
+  current_region: z.string().max(100).optional(),
+  current_region_code: z.string().max(30).optional(),
+  current_city: z.string().max(120).optional(),
+  current_city_geoname_id: z.number().int().positive().optional(),
+  family_spread: z.string().max(600).optional(),
 });
 
 export const lifestyleSchema = z.object({
@@ -161,6 +171,11 @@ export const preferencesSchema = z.object({
   wedding_expectations: z.string().max(300).optional(),
   gift_expectations: z.string().max(200).optional(),
   parent_support: z.string().max(200).optional(),
+  religion_preference: z.string().max(200).optional(),
+  lifestyle_expectations: z.string().max(800).optional(),
+  education_expectations: z.string().max(500).optional(),
+  career_expectations: z.string().max(500).optional(),
+  private_notes: z.string().max(1000).optional(),
 });
 
 export const accessAudienceSchema = z.enum(["public", "approved", "broker", "owner"]);
@@ -187,6 +202,7 @@ export const visibilitySchema = z.object({
 // --- Combined Portfolio Schema ---
 
 export const portfolioDataSchema = z.object({
+  privacy_mode: z.enum(["open", "progressive", "private"]).optional(),
   personal: personalSchema,
   vitals: vitalsSchema.optional(),
   astrology: astrologySchema.optional(),

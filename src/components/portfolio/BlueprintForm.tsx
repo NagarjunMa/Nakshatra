@@ -1,6 +1,8 @@
 "use client";
 
-import { LockKeyhole, ShieldCheck } from "lucide-react";
+import { useState } from "react";
+import { Eye, LockKeyhole, ShieldCheck } from "lucide-react";
+import { LocationFields, type LocationValue } from "@/components/portfolio/LocationFields";
 import { RashiPalettePicker } from "@/components/portfolio/RashiPalettePicker";
 import {
   getDefaultRashiPalette,
@@ -10,6 +12,8 @@ import {
 } from "@/features/portfolio/rashi-theme";
 import {
   CHILDREN_OPTIONS,
+  CASTE_PREFERENCE_OPTIONS,
+  COMMUNITY_OPTIONS,
   COUNTRY_OPTIONS,
   CURRENCY_OPTIONS,
   DIET_OPTIONS,
@@ -30,7 +34,6 @@ import {
   QUALIFICATION_OPTIONS,
   RELOCATION_OPTIONS,
   RELIGION_OPTIONS,
-  SECTION_AUDIENCE_OPTIONS,
   SIBLING_POSITION_OPTIONS,
   VISA_OPTIONS,
   WEALTH_STAGE_OPTIONS,
@@ -39,15 +42,38 @@ import {
 } from "@/features/portfolio/blueprint-options";
 import {
   RASHI_OPTIONS,
-  type AccessData,
   type PortfolioData,
   type RashiKey,
 } from "@/types/portfolio";
 
-type UpdatePortfolioSection = (
-  key: keyof PortfolioData,
-  sectionData: Record<string, unknown>
+type UpdatePortfolioSection = <K extends keyof PortfolioData>(
+  key: K,
+  value: PortfolioData[K]
 ) => void;
+
+const PRIVACY_PRESETS = [
+  {
+    value: "progressive" as const,
+    label: "Balanced",
+    description:
+      "A meaningful introduction is public; family, matching, contact, and sensitive details require approval.",
+    icon: ShieldCheck,
+  },
+  {
+    value: "private" as const,
+    label: "Private",
+    description:
+      "Only a small introduction is public. Most of the blueprint is shared after approval.",
+    icon: LockKeyhole,
+  },
+  {
+    value: "open" as const,
+    label: "Open",
+    description:
+      "More background and lifestyle information is public, while contact and highly sensitive details stay protected.",
+    icon: Eye,
+  },
+];
 
 export function BlueprintForm({
   data,
@@ -59,6 +85,11 @@ export function BlueprintForm({
   const rashi = data.astrology?.rashi || "";
   const palettes = getRashiPalettes(rashi);
   const selectedPalette = getRashiPalette(data.style?.rashi_palette, rashi);
+  const candidateName =
+    data.personal.preferred_name || data.personal.name || "the candidate";
+  const isFamilyCreated = ["son", "daughter", "sibling", "relative"].includes(
+    data.personal.profile_for || ""
+  );
 
   function updatePersonal(changes: Record<string, unknown>) {
     const next = { ...data.personal, ...changes };
@@ -70,8 +101,53 @@ export function BlueprintForm({
     onUpdate("personal", next);
   }
 
-  function updateAccess(section: keyof AccessData, value: string) {
-    onUpdate("access", { ...(data.access || {}), [section]: value });
+  function updateResidence(changes: LocationValue) {
+    const mapped: Record<string, unknown> = {};
+    if ("country" in changes) mapped.country = changes.country;
+    if ("countryCode" in changes) mapped.country_code = changes.countryCode;
+    if ("region" in changes) mapped.region = changes.region;
+    if ("regionCode" in changes) mapped.region_code = changes.regionCode;
+    if ("city" in changes) mapped.city = changes.city;
+    if ("cityGeonameId" in changes) {
+      mapped.city_geoname_id = changes.cityGeonameId;
+    }
+    updatePersonal(mapped);
+  }
+
+  function updateFamily(changes: Record<string, unknown>) {
+    onUpdate("family", { ...(data.family || {}), ...changes });
+  }
+
+  function updateFamilyLocation(changes: LocationValue) {
+    const next = {
+      current_country:
+        "country" in changes ? changes.country : data.family?.current_country,
+      current_country_code:
+        "countryCode" in changes
+          ? changes.countryCode
+          : data.family?.current_country_code,
+      current_region:
+        "region" in changes ? changes.region : data.family?.current_region,
+      current_region_code:
+        "regionCode" in changes
+          ? changes.regionCode
+          : data.family?.current_region_code,
+      current_city: "city" in changes ? changes.city : data.family?.current_city,
+      current_city_geoname_id:
+        "cityGeonameId" in changes
+          ? changes.cityGeonameId
+          : data.family?.current_city_geoname_id,
+    };
+    updateFamily({
+      ...next,
+      parents_location: [
+        next.current_city,
+        next.current_region,
+        next.current_country,
+      ]
+        .filter(Boolean)
+        .join(", "),
+    });
   }
 
   function selectRashi(value: string) {
@@ -105,8 +181,9 @@ export function BlueprintForm({
           <div>
             <p className="text-sm font-semibold text-white">Your private blueprint</p>
             <p className="mt-1 text-xs leading-5 text-white/60">
-              Public information shapes your portfolio. Approved and broker information stays
-              private until you explicitly grant access.
+              {isFamilyCreated
+                ? `You are creating one portfolio for ${candidateName}. You can save and return at any time.`
+                : "One person, one portfolio. Save as you go and choose a simple privacy template before publishing."}
             </p>
           </div>
         </div>
@@ -116,8 +193,6 @@ export function BlueprintForm({
         number="01"
         title="Your story"
         description="Give people a genuine sense of your journey, outlook, and the life you hope to build."
-        audience={data.access?.journey || "public"}
-        onAudienceChange={(value) => updateAccess("journey", value)}
       >
         <SelectInput
           label="Who is creating this profile?"
@@ -139,7 +214,11 @@ export function BlueprintForm({
           />
         </div>
         <TextArea
-          label="What would you like someone to understand about you?"
+          label={
+            isFamilyCreated
+              ? `What should someone understand about ${candidateName}?`
+              : "What would you like someone to understand about you?"
+          }
           value={data.personal.profile_summary || ""}
           placeholder="Share a few thoughtful lines about your personality and journey..."
           hint="Recommended for your public portfolio."
@@ -163,8 +242,6 @@ export function BlueprintForm({
         number="02"
         title="Personal details"
         description="Structured details help portfolios stay consistent and make broker matching more reliable."
-        audience={data.access?.personal || "approved"}
-        onAudienceChange={(value) => updateAccess("personal", value)}
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <TextInput
@@ -198,24 +275,22 @@ export function BlueprintForm({
             onChange={(value) => updatePersonal({ marital_status: value })}
           />
         </div>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <SelectInput
-            label="Country of residence"
-            value={data.personal.country || ""}
-            options={COUNTRY_OPTIONS}
-            onChange={(value) => updatePersonal({ country: value })}
-          />
-          <TextInput
-            label="State or region"
-            value={data.personal.region || ""}
-            onChange={(value) => updatePersonal({ region: value })}
-          />
-          <TextInput
-            label="City"
-            value={data.personal.city || ""}
-            onChange={(value) => updatePersonal({ city: value })}
-          />
-        </div>
+        <LocationFields
+          value={{
+            country: data.personal.country,
+            countryCode: data.personal.country_code,
+            region: data.personal.region,
+            regionCode: data.personal.region_code,
+            city: data.personal.city,
+            cityGeonameId: data.personal.city_geoname_id,
+          }}
+          labels={{
+            country: "Country of residence",
+            region: "State or region",
+            city: "City",
+          }}
+          onChange={updateResidence}
+        />
         <div className="grid gap-4 sm:grid-cols-2">
           <SelectInput
             label="Citizenship"
@@ -238,9 +313,10 @@ export function BlueprintForm({
             options={RELIGION_OPTIONS}
             onChange={(value) => updatePersonal({ religion: value })}
           />
-          <TextInput
+          <SelectInput
             label="Community"
             value={data.personal.community || ""}
+            options={COMMUNITY_OPTIONS}
             onChange={(value) => updatePersonal({ community: value })}
           />
           <TextInput
@@ -255,8 +331,6 @@ export function BlueprintForm({
         number="03"
         title="Education and work"
         description="Capture the structured facts for matching, then add context in your own words."
-        audience={data.access?.career || "public"}
-        onAudienceChange={(value) => updateAccess("career", value)}
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <SelectInput
@@ -370,8 +444,6 @@ export function BlueprintForm({
         number="04"
         title="Family and background"
         description="Family details are request-only by default. Your public portfolio can show a short introduction instead."
-        audience={data.access?.family || "approved"}
-        onAudienceChange={(value) => updateAccess("family", value)}
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <TextInput
@@ -417,7 +489,7 @@ export function BlueprintForm({
             }
           />
         </div>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2">
           <TextInput
             label="Number of siblings"
             type="number"
@@ -440,39 +512,35 @@ export function BlueprintForm({
               })
             }
           />
-          <TextInput
-            label="Parents' current location"
-            value={data.family?.parents_location || ""}
-            onChange={(value) =>
-              onUpdate("family", {
-                ...(data.family || {}),
-                parents_location: value,
-              })
-            }
-          />
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <TextInput
-            label="Ancestral origin"
-            value={data.family?.ancestral_origin || ""}
-            onChange={(value) =>
-              onUpdate("family", {
-                ...(data.family || {}),
-                ancestral_origin: value,
-              })
-            }
-          />
-          <TextInput
-            label="Current family settlement"
-            value={data.family?.current_settlement || ""}
-            onChange={(value) =>
-              onUpdate("family", {
-                ...(data.family || {}),
-                current_settlement: value,
-              })
-            }
-          />
-        </div>
+        <LocationFields
+          value={{
+            country: data.family?.current_country,
+            countryCode: data.family?.current_country_code,
+            region: data.family?.current_region,
+            regionCode: data.family?.current_region_code,
+            city: data.family?.current_city,
+            cityGeonameId: data.family?.current_city_geoname_id,
+          }}
+          labels={{
+            country: "Immediate family country",
+            region: "Immediate family state or region",
+            city: "Immediate family city",
+          }}
+          onChange={updateFamilyLocation}
+        />
+        <TextInput
+          label="Ancestral roots"
+          value={data.family?.ancestral_origin || ""}
+          placeholder="Town, district, state, or region"
+          onChange={(value) => updateFamily({ ancestral_origin: value })}
+        />
+        <TextArea
+          label="Where is the wider family based?"
+          value={data.family?.family_spread || ""}
+          placeholder="For example: close family in Bengaluru, with relatives across India and the US."
+          onChange={(value) => updateFamily({ family_spread: value })}
+        />
         <TextArea
           label="How would you introduce your family?"
           value={data.family?.family_note || ""}
@@ -487,8 +555,6 @@ export function BlueprintForm({
         number="05"
         title="Lifestyle and interests"
         description="Select structured habits for compatibility and use interests to make the portfolio feel personal."
-        audience={data.access?.lifestyle || "public"}
-        onAudienceChange={(value) => updateAccess("lifestyle", value)}
       >
         <div className="grid gap-4 sm:grid-cols-3">
           <SelectInput
@@ -549,11 +615,13 @@ export function BlueprintForm({
         number="06"
         title="Partner preferences"
         description="These answers support compatibility and broker decisions; they are not public by default."
-        audience={data.access?.preferences || "broker"}
-        onAudienceChange={(value) => updateAccess("preferences", value)}
       >
         <TextArea
-          label="What kind of partnership are you hoping to build?"
+          label={
+            isFamilyCreated
+              ? `What kind of partnership would suit ${candidateName}?`
+              : "What kind of partnership are you hoping to build?"
+          }
           value={data.preferences?.narrative || ""}
           placeholder="Describe the qualities and shared direction that matter most..."
           onChange={(value) =>
@@ -587,6 +655,11 @@ export function BlueprintForm({
             }
           />
         </div>
+        <div className="border-t border-white/10 pt-5">
+          <p className="mb-4 text-xs font-semibold uppercase tracking-[0.13em] text-[#f4d98f]/80">
+            Background and matching
+          </p>
+        </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <SelectInput
             label="Preferred marital status"
@@ -612,10 +685,38 @@ export function BlueprintForm({
           />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <TextInput
-            label="Preferred communities"
+          <SelectInput
+            label="Religion or outlook preference"
+            value={data.preferences?.religion_preference || ""}
+            options={RELIGION_OPTIONS}
+            onChange={(value) =>
+              onUpdate("preferences", {
+                ...(data.preferences || {}),
+                religion_preference: value,
+              })
+            }
+          />
+          <SelectInput
+            label="Community preference"
+            value={data.preferences?.caste_preference || ""}
+            options={CASTE_PREFERENCE_OPTIONS}
+            onChange={(value) =>
+              onUpdate("preferences", {
+                ...(data.preferences || {}),
+                caste_preference: value,
+                specific_communities:
+                  value === "specific"
+                    ? data.preferences?.specific_communities
+                    : "",
+              })
+            }
+          />
+        </div>
+        {data.preferences?.caste_preference === "specific" && (
+          <MultiSelectInput
+            label="Select preferred communities"
             value={data.preferences?.specific_communities || ""}
-            placeholder="Comma-separated; leave blank if open"
+            options={COMMUNITY_OPTIONS.filter((item) => item.value)}
             onChange={(value) =>
               onUpdate("preferences", {
                 ...(data.preferences || {}),
@@ -623,6 +724,13 @@ export function BlueprintForm({
               })
             }
           />
+        )}
+        <div className="border-t border-white/10 pt-5">
+          <p className="mb-4 text-xs font-semibold uppercase tracking-[0.13em] text-[#f4d98f]/80">
+            Location and practical fit
+          </p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
           <MultiSelectInput
             label="Preferred countries"
             value={
@@ -651,14 +759,64 @@ export function BlueprintForm({
             })
           }
         />
+        <div className="border-t border-white/10 pt-5">
+          <p className="mb-4 text-xs font-semibold uppercase tracking-[0.13em] text-[#f4d98f]/80">
+            Shared life expectations
+          </p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <TextArea
+            label="Lifestyle expectations"
+            value={data.preferences?.lifestyle_expectations || ""}
+            placeholder="Habits, values, social life, family involvement, or flexibility..."
+            onChange={(value) =>
+              onUpdate("preferences", {
+                ...(data.preferences || {}),
+                lifestyle_expectations: value,
+              })
+            }
+          />
+          <TextArea
+            label="Education expectations"
+            value={data.preferences?.education_expectations || ""}
+            placeholder="Leave blank if education level is not a deciding factor."
+            onChange={(value) =>
+              onUpdate("preferences", {
+                ...(data.preferences || {}),
+                education_expectations: value,
+              })
+            }
+          />
+        </div>
+        <TextArea
+          label="Career expectations"
+          value={data.preferences?.career_expectations || ""}
+          placeholder="Career direction, mobility, work-life balance, or openness to change..."
+          onChange={(value) =>
+            onUpdate("preferences", {
+              ...(data.preferences || {}),
+              career_expectations: value,
+            })
+          }
+        />
+        <TextArea
+          label="Private notes for matching"
+          value={data.preferences?.private_notes || ""}
+          hint="Never shown on the public portfolio. Intended for the profile owner and an authorized broker."
+          placeholder="Add nuance that may help during a private matchmaking conversation..."
+          onChange={(value) =>
+            onUpdate("preferences", {
+              ...(data.preferences || {}),
+              private_notes: value,
+            })
+          }
+        />
       </FormSection>
 
       <FormSection
         number="07"
         title="Future plans"
         description="Direct questions make practical alignment easier while keeping room for discussion."
-        audience={data.access?.future_plans || "approved"}
-        onAudienceChange={(value) => updateAccess("future_plans", value)}
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <SelectInput
@@ -731,8 +889,6 @@ export function BlueprintForm({
         number="08"
         title="Astrology"
         description="Core astrological details can support matching while exact birth information remains restricted."
-        audience={data.access?.astrology || "approved"}
-        onAudienceChange={(value) => updateAccess("astrology", value)}
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <TextInput
@@ -812,10 +968,7 @@ export function BlueprintForm({
       <FormSection
         number="09"
         title="Portfolio and privacy"
-        description="Choose the public presentation and confirm which existing detail groups require approval."
-        audience="owner"
-        onAudienceChange={() => {}}
-        lockAudience
+        description="Choose a clear privacy template now. Field-by-field controls can be added later without changing your profile."
       >
         <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
           <p className="text-sm font-medium text-white">Rashi-inspired palette</p>
@@ -857,38 +1010,45 @@ export function BlueprintForm({
             })}
           </div>
         </div>
-        <RestrictionToggle
-          label="Require approval for family details"
-          checked={(data.visibility?.family || "restricted") === "restricted"}
-          onChange={(checked) =>
-            onUpdate("visibility", {
-              ...(data.visibility || {}),
-              family: checked ? "restricted" : "public",
-            })
-          }
-        />
-        <RestrictionToggle
-          label="Require approval for detailed astrology"
-          checked={
-            (data.visibility?.astrology_details || "restricted") === "restricted"
-          }
-          onChange={(checked) =>
-            onUpdate("visibility", {
-              ...(data.visibility || {}),
-              astrology_details: checked ? "restricted" : "public",
-            })
-          }
-        />
-        <RestrictionToggle
-          label="Require approval for private gallery photos"
-          checked={(data.visibility?.gallery || "restricted") === "restricted"}
-          onChange={(checked) =>
-            onUpdate("visibility", {
-              ...(data.visibility || {}),
-              gallery: checked ? "restricted" : "public",
-            })
-          }
-        />
+        <div>
+          <p className="text-sm font-medium text-white">Privacy template</p>
+          <p className="mb-3 mt-1 text-xs leading-5 text-white/55">
+            Contact details and highly sensitive information always remain protected.
+          </p>
+          <div className="grid gap-3 lg:grid-cols-3">
+            {PRIVACY_PRESETS.map((preset) => {
+              const selected =
+                (data.privacy_mode || "progressive") === preset.value;
+              const Icon = preset.icon;
+              return (
+                <button
+                  key={preset.value}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => onUpdate("privacy_mode", preset.value)}
+                  className={`rounded-xl border p-4 text-left transition ${
+                    selected
+                      ? "border-[#f4d98f] bg-[#f4d98f]/12"
+                      : "border-white/10 bg-white/[0.03] hover:border-white/30"
+                  }`}
+                >
+                  <span className="flex items-center gap-2 text-sm font-semibold text-white">
+                    <Icon className="h-4 w-4 text-[#f4d98f]" />
+                    {preset.label}
+                    {preset.value === "progressive" && (
+                      <span className="rounded-full bg-[#f4d98f]/15 px-2 py-0.5 text-[9px] uppercase tracking-wide text-[#f4d98f]">
+                        Recommended
+                      </span>
+                    )}
+                  </span>
+                  <span className="mt-2 block text-xs leading-5 text-white/55">
+                    {preset.description}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </FormSection>
     </div>
   );
@@ -898,17 +1058,11 @@ function FormSection({
   number,
   title,
   description,
-  audience,
-  onAudienceChange,
-  lockAudience = false,
   children,
 }: {
   number: string;
   title: string;
   description: string;
-  audience: string;
-  onAudienceChange: (value: string) => void;
-  lockAudience?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -925,21 +1079,6 @@ function FormSection({
             </p>
           </div>
         </div>
-        <label className="flex min-w-44 flex-col gap-1 text-[10px] font-semibold uppercase tracking-[0.13em] text-white/45">
-          Who can see this
-          <select
-            value={audience}
-            onChange={(event) => onAudienceChange(event.target.value)}
-            disabled={lockAudience}
-            className="h-9 rounded-lg border border-white/10 bg-[#20212e] px-2 text-xs font-medium normal-case tracking-normal text-white outline-none disabled:opacity-60"
-          >
-            {SECTION_AUDIENCE_OPTIONS.map((item) => (
-              <option key={item.value} value={item.value}>
-                {item.label}
-              </option>
-            ))}
-          </select>
-        </label>
       </div>
       {children}
     </section>
@@ -1073,6 +1212,7 @@ function MultiSelectInput({
   options: BlueprintOption[];
   onChange: (value: string) => void;
 }) {
+  const [query, setQuery] = useState("");
   const selected = value
     .split(",")
     .map((item) => item.trim())
@@ -1084,6 +1224,9 @@ function MultiSelectInput({
       : [...selected, item];
     onChange(next.join(", "));
   }
+  const visibleOptions = options.filter((item) =>
+    item.label.toLowerCase().includes(query.trim().toLowerCase())
+  );
 
   return (
     <fieldset className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
@@ -1104,8 +1247,18 @@ function MultiSelectInput({
         <summary className="cursor-pointer text-xs font-medium text-white/60">
           {selected.length ? "Edit selections" : "Choose one or more"}
         </summary>
+        {options.length > 20 && (
+          <input
+            type="search"
+            aria-label={`Search ${label}`}
+            value={query}
+            placeholder={`Search ${label.toLowerCase()}...`}
+            onChange={(event) => setQuery(event.target.value)}
+            className="mt-3 h-9 w-full rounded-md border border-white/10 bg-black/15 px-3 text-xs font-normal text-white outline-none placeholder:text-white/30 focus:border-[#f4d98f]/60"
+          />
+        )}
         <div className="mt-3 grid max-h-48 gap-1 overflow-y-auto sm:grid-cols-2">
-          {options.map((item) => (
+          {visibleOptions.map((item) => (
             <label
               key={item.value}
               className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs text-white/70 hover:bg-white/5"
@@ -1119,33 +1272,13 @@ function MultiSelectInput({
               {item.label}
             </label>
           ))}
+          {visibleOptions.length === 0 && (
+            <p className="px-2 py-3 text-xs text-white/40">
+              No matches. Choose “Other” when available.
+            </p>
+          )}
         </div>
       </details>
     </fieldset>
-  );
-}
-
-function RestrictionToggle({
-  label,
-  checked,
-  onChange,
-}: {
-  label: string;
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-}) {
-  return (
-    <label className="flex items-center justify-between gap-4 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-3 text-sm font-medium text-white/85">
-      <span className="flex items-center gap-2">
-        <LockKeyhole className="h-4 w-4 text-white/50" />
-        {label}
-      </span>
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(event) => onChange(event.target.checked)}
-        className="h-4 w-4 accent-[#f4d98f]"
-      />
-    </label>
   );
 }

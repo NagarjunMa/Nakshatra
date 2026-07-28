@@ -57,7 +57,7 @@ export default function DashboardClient({
   const [renewing, setRenewing] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [draftData, setDraftData] = useState<PortfolioData>(() =>
-    normalizePortfolioData(portfolio?.draft_data)
+    normalizePortfolioData(portfolio?.draft_data, portfolio?.privacy_mode)
   );
   const [savingDraft, setSavingDraft] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -204,11 +204,11 @@ export default function DashboardClient({
     router.push("/");
   }
 
-  function updateSection(
-    key: keyof PortfolioData,
-    sectionData: Record<string, unknown>
+  function updateSection<K extends keyof PortfolioData>(
+    key: K,
+    value: PortfolioData[K]
   ) {
-    setDraftData((current) => ({ ...current, [key]: sectionData }));
+    setDraftData((current) => ({ ...current, [key]: value }));
   }
 
   async function saveDashboardDraft() {
@@ -548,6 +548,7 @@ export default function DashboardClient({
 }
 
 const EMPTY_DATA: PortfolioData = {
+  privacy_mode: "progressive",
   personal: { name: "", dob: "", gender: "male" },
   vitals: {},
   astrology: {},
@@ -577,10 +578,14 @@ const EMPTY_DATA: PortfolioData = {
   },
 };
 
-function normalizePortfolioData(data: Portfolio["draft_data"] | undefined): PortfolioData {
+function normalizePortfolioData(
+  data: Portfolio["draft_data"] | undefined,
+  privacyMode?: Portfolio["privacy_mode"]
+): PortfolioData {
   return {
     ...EMPTY_DATA,
     ...(data || {}),
+    privacy_mode: data?.privacy_mode || privacyMode || "progressive",
     personal: { ...EMPTY_DATA.personal, ...(data?.personal || {}) },
     vitals: { ...(data?.vitals || {}) },
     astrology: { ...(data?.astrology || {}) },

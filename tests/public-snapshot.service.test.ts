@@ -93,4 +93,36 @@ describe("public portfolio snapshot", () => {
       contact: "restricted",
     });
   });
+
+  it("applies private and open templates without exposing contact details", () => {
+    const privateSnapshot = createPublicPortfolioSnapshot({
+      ...portfolio,
+      privacy_mode: "private",
+    });
+    expect(privateSnapshot).not.toHaveProperty("career");
+    expect(privateSnapshot).not.toHaveProperty("family");
+    expect(privateSnapshot.personal).not.toHaveProperty("long_term_goals");
+
+    const openSnapshot = createPublicPortfolioSnapshot({
+      ...portfolio,
+      privacy_mode: "open",
+      family: {
+        ...portfolio.family,
+        ancestral_origin: "Mysuru",
+        family_spread: "India and the US",
+      },
+    });
+    expect(openSnapshot.family).toEqual({
+      ancestral_origin: "Mysuru",
+      family_note: "Private family note",
+      family_spread: "India and the US",
+    });
+    expect(openSnapshot).not.toHaveProperty("contact");
+    expect(openSnapshot.visibility).toEqual({
+      family: "public",
+      astrology_details: "public",
+      gallery: "public",
+      contact: "restricted",
+    });
+  });
 });

@@ -2,11 +2,12 @@
 
 import React from "react";
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { BlueprintForm } from "../src/components/portfolio/BlueprintForm";
 import type { PortfolioData } from "../src/types/portfolio";
 
 const completeBlueprint: PortfolioData = {
+  privacy_mode: "progressive",
   personal: {
     name: "Aditi Rao",
     preferred_name: "Aditi",
@@ -55,8 +56,15 @@ const completeBlueprint: PortfolioData = {
     sibling_count: 1,
     sibling_position: "Oldest",
     parents_location: "Bengaluru",
+    current_country: "India",
+    current_country_code: "IN",
+    current_region: "Karnataka",
+    current_region_code: "19",
+    current_city: "Bengaluru",
+    current_city_geoname_id: 1277333,
     ancestral_origin: "Mysuru",
     current_settlement: "Bengaluru",
+    family_spread: "Across India and the US",
     family_note: "A close-knit family",
   },
   lifestyle: {
@@ -73,10 +81,16 @@ const completeBlueprint: PortfolioData = {
     height_range: `5'4"-5'10"`,
     marital_status: "Never Married",
     horoscope_preference: "Flexible",
+    caste_preference: "specific",
     specific_communities: "Open",
     location_preferences: "United States, India",
     location_preference: "United States, India",
     visa_preferences: "Citizen, H1B",
+    religion_preference: "Hindu",
+    lifestyle_expectations: "Kind and balanced",
+    education_expectations: "Open",
+    career_expectations: "Mutual support",
+    private_notes: "Discuss privately",
     marriage_timeline: "Within the next 2 years",
     children_preference: "Open to discussion",
     wedding_expectations: "Discuss and decide together",
@@ -122,6 +136,18 @@ function chooseDifferentOption(select: HTMLSelectElement) {
 }
 
 describe("blueprint form", () => {
+  beforeEach(() => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ options: [] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      )
+    );
+  });
+
   it("routes every field, selector, palette, and privacy control to its section", () => {
     const onUpdate = vi.fn();
     const { container } = render(
@@ -141,7 +167,7 @@ describe("blueprint form", () => {
 
     for (const control of container.querySelectorAll<
       HTMLInputElement | HTMLTextAreaElement
-    >('input:not([type="checkbox"]), textarea')) {
+    >('input:not([type="checkbox"]):not([type="search"]), textarea')) {
       const value =
         control instanceof HTMLInputElement && control.type === "date"
           ? "1990-01-01"
@@ -153,16 +179,19 @@ describe("blueprint form", () => {
       fireEvent.change(control, { target: { value } });
     }
 
-    const selects = screen.getAllByRole("combobox") as HTMLSelectElement[];
+    const languageSearch = screen.getByLabelText("Search Languages");
+    fireEvent.change(languageSearch, { target: { value: "zzzz" } });
+    expect(screen.getByText(/No matches/)).toBeInTheDocument();
+    fireEvent.change(languageSearch, { target: { value: "" } });
+
+    const selects = screen
+      .getAllByRole("combobox")
+      .filter(
+        (control): control is HTMLSelectElement =>
+          control instanceof HTMLSelectElement
+      );
     for (const select of selects.filter((control) => !control.disabled)) {
       chooseDifferentOption(select);
-    }
-
-    const ownerAudience = selects.find((control) => control.disabled);
-    expect(ownerAudience).toBeDefined();
-    ownerAudience?.removeAttribute("disabled");
-    if (ownerAudience) {
-      fireEvent.change(ownerAudience, { target: { value: "public" } });
     }
 
     for (const fieldset of screen.getAllByRole("group")) {
@@ -194,7 +223,6 @@ describe("blueprint form", () => {
     );
     expect(updatedSections).toEqual(
       new Set([
-        "access",
         "astrology",
         "career",
         "education",
@@ -202,8 +230,8 @@ describe("blueprint form", () => {
         "lifestyle",
         "personal",
         "preferences",
+        "privacy_mode",
         "style",
-        "visibility",
         "vitals",
       ])
     );
@@ -211,7 +239,7 @@ describe("blueprint form", () => {
       "personal",
       expect.objectContaining({
         country: "",
-        current_location: "Boston, Massachusetts",
+        current_location: "",
       })
     );
     expect(onUpdate).toHaveBeenCalledWith(
@@ -222,15 +250,13 @@ describe("blueprint form", () => {
       "family",
       expect.objectContaining({ sibling_count: 2 })
     );
-    expect(onUpdate).toHaveBeenCalledWith(
-      "visibility",
-      expect.objectContaining({ astrology_details: "restricted" })
-    );
+    expect(onUpdate).toHaveBeenCalledWith("privacy_mode", "open");
   });
 
   it("renders empty optional data and the legacy location preference fallback", () => {
     const onUpdate = vi.fn();
     const minimal: PortfolioData = {
+      privacy_mode: "private",
       personal: {
         name: "",
         dob: "",
@@ -258,6 +284,10 @@ describe("blueprint form", () => {
       within(preferredCountries).getByRole("checkbox", { name: "Canada" })
     ).toBeChecked();
     expect(screen.getAllByText("Choose one or more").length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: /Private/ })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
 
     rerender(
       <BlueprintForm

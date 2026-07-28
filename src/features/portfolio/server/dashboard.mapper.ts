@@ -28,8 +28,14 @@ function ageRange(value: string | undefined) {
 }
 
 /** Converts dashboard visibility choices to the relational visibility enum. Input: dashboard setting. Output: persisted visibility. */
-function dashboardVisibility(value: "public" | "restricted" | undefined) {
-  return value === "public" ? "public" : "interest_required";
+function presetVisibility(
+  privacyMode: PortfolioData["privacy_mode"],
+  section: "family" | "astrology" | "gallery" | "contact"
+) {
+  if (section === "contact" || privacyMode === "private") {
+    return "interest_required";
+  }
+  return privacyMode === "open" ? "public" : "interest_required";
 }
 
 /**
@@ -45,7 +51,11 @@ export function mapPortfolioDraft(
     theme_color: data.style?.theme_color || existingThemeColor || null,
     sun_sign: data.astrology?.rashi || null,
     template_id: templateIdFor(data.style?.template_name),
-    visibility_settings: data.access || {},
+    privacy_mode: data.privacy_mode || "progressive",
+    visibility_settings: {
+      preset: data.privacy_mode || "progressive",
+      legacy_sections: data.access || {},
+    },
   };
 }
 
@@ -108,7 +118,16 @@ export function mapCandidateDetails(data: PortfolioData) {
       shared_life_plans: nullable(data.personal.shared_life_plans),
       sibling_count: data.family?.sibling_count ?? null,
       sibling_position: nullable(data.family?.sibling_position),
-      parents_location: nullable(data.family?.parents_location),
+      parents_location: nullable(
+        data.family?.parents_location ||
+          [
+            data.family?.current_city,
+            data.family?.current_region,
+            data.family?.current_country,
+          ]
+            .filter(Boolean)
+            .join(", ")
+      ),
     },
     astrology: {
       birth_time: nullable(data.astrology?.time_of_birth),
@@ -155,6 +174,13 @@ export function mapCandidateDetails(data: PortfolioData) {
         wedding_expectations: data.preferences?.wedding_expectations || null,
         gift_expectations: data.preferences?.gift_expectations || null,
         parent_support: data.preferences?.parent_support || null,
+        religion_preference: data.preferences?.religion_preference || null,
+        lifestyle_expectations:
+          data.preferences?.lifestyle_expectations || null,
+        education_expectations:
+          data.preferences?.education_expectations || null,
+        career_expectations: data.preferences?.career_expectations || null,
+        private_notes: data.preferences?.private_notes || null,
       },
     },
   };
@@ -165,17 +191,18 @@ export function mapCandidateDetails(data: PortfolioData) {
  * Input: portfolio ID and validated visibility choices. Output: visibility_rules upsert rows.
  */
 export function mapVisibilityRules(portfolioId: string, data: PortfolioData) {
-  return [
-    ["family", data.visibility?.family],
-    ["astrology", data.visibility?.astrology_details],
-    ["gallery", data.visibility?.gallery],
-    ["contact", data.visibility?.contact],
-  ].map(([section_key, value]) => ({
+  const privacyMode = data.privacy_mode || "progressive";
+  return (["family", "astrology", "gallery", "contact"] as const).map(
+    (section_key) => {
+      const visibility = presetVisibility(privacyMode, section_key);
+      return {
     portfolio_id: portfolioId,
     section_key,
-    visibility: dashboardVisibility(value as "public" | "restricted" | undefined),
-    requires_interest: value !== "public",
-  }));
+        visibility,
+        requires_interest: visibility !== "public",
+      };
+    }
+  );
 }
 
 /**
