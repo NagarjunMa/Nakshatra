@@ -22,6 +22,7 @@ const draft: PortfolioData = {
   astrology: { rashi: "kanya", nakshatra: "Uttara Phalguni" },
   lifestyle: { languages: "Telugu, English", hobbies: "Reading, Music" },
   preferences: { age_range: "28-32" },
+  access: { journey: "public", family: "approved", preferences: "broker" },
   family: {
     father: { name: "Rao", occupation: "Engineer" },
     siblings: [{ name: "Maya", occupation: "Designer" }, {}],
@@ -36,6 +37,11 @@ describe("dashboard portfolio mapping", () => {
       theme_color: "#123456",
       sun_sign: "kanya",
       template_id: 3,
+      visibility_settings: {
+        journey: "public",
+        family: "approved",
+        preferences: "broker",
+      },
     });
     expect(mapCandidateDetails(draft)).toMatchObject({
       personal: { immigration_status: "H-1B", height_text: "5 ft 5 in" },

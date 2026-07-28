@@ -82,23 +82,26 @@ beforeEach(() => {
 
 describe("dashboard client", () => {
   it("opens a new private draft, edits it, saves it, and publishes it", async () => {
-    const { container } = renderDashboard({ portfolio: null, shareUrl: null, media: [] });
+    renderDashboard({ portfolio: null, shareUrl: null, media: [] });
     expect(screen.getByText(/biodata is waiting/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /start your biodata/i }));
     fireEvent.change(screen.getByLabelText("Full name"), { target: { value: "New Name" } });
-    fireEvent.change(screen.getByLabelText("Profile summary"), { target: { value: "A story" } });
-    for (const input of container.querySelectorAll<HTMLInputElement>('input:not([type="file"]):not([type="checkbox"])')) {
-      const value = input.type === "date" ? "1990-01-01" : input.type === "time" ? "10:30" : "Updated";
-      fireEvent.change(input, { target: { value } });
-    }
-    for (const textarea of container.querySelectorAll<HTMLTextAreaElement>("textarea")) {
-      fireEvent.change(textarea, { target: { value: "Updated narrative" } });
-    }
-    for (const select of container.querySelectorAll<HTMLSelectElement>("select")) {
-      const option = select.options[Math.min(1, select.options.length - 1)];
-      if (option) fireEvent.change(select, { target: { value: option.value } });
-    }
-    for (const checkbox of container.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')) fireEvent.click(checkbox);
+    fireEvent.change(
+      screen.getByLabelText("What would you like someone to understand about you?"),
+      { target: { value: "A story" } }
+    );
+    fireEvent.change(screen.getByLabelText("Date of birth"), {
+      target: { value: "1990-01-01" },
+    });
+    fireEvent.change(screen.getByLabelText("Gender"), {
+      target: { value: "female" },
+    });
+    fireEvent.change(screen.getByLabelText("Height"), {
+      target: { value: `5'5"` },
+    });
+    fireEvent.change(screen.getByLabelText("Marital status"), {
+      target: { value: "Never Married" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Celestial Union" }));
     const palette = screen.queryAllByRole("button").find((button) => button.textContent?.includes("#"));
     if (palette) fireEvent.click(palette);

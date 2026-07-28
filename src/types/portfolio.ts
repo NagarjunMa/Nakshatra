@@ -34,11 +34,21 @@ export const personalSchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
   place_of_birth: z.string().max(200).optional(),
   current_location: z.string().max(200).optional(),
-  gender: z.enum(["male", "female"]),
+  gender: z.enum(["male", "female", "non_binary", "prefer_not_to_say"]),
   marital_status: z.string().max(100).optional(),
   immigration_status: z.string().max(200).optional(),
   relocation_preference: z.string().max(200).optional(),
   profile_summary: z.string().max(1600).optional(),
+  profile_for: z.string().max(50).optional(),
+  country: z.string().max(100).optional(),
+  region: z.string().max(100).optional(),
+  city: z.string().max(120).optional(),
+  citizenship: z.string().max(100).optional(),
+  religion: z.string().max(100).optional(),
+  community: z.string().max(150).optional(),
+  sub_community: z.string().max(150).optional(),
+  long_term_goals: z.string().max(1200).optional(),
+  shared_life_plans: z.string().max(1200).optional(),
 });
 
 export const vitalsSchema = z.object({
@@ -68,6 +78,7 @@ export const educationSchema = z.object({
   year: z.string().max(10).optional(),
   location: z.string().max(200).optional(),
   summary: z.string().max(600).optional(),
+  qualification_level: z.string().max(100).optional(),
 });
 
 export const careerSchema = z.object({
@@ -75,6 +86,11 @@ export const careerSchema = z.object({
   company: z.string().max(200).optional(),
   location: z.string().max(200).optional(),
   summary: z.string().max(600).optional(),
+  job_type: z.string().max(100).optional(),
+  annual_income: z.string().max(100).optional(),
+  income_currency: z.string().max(20).optional(),
+  wealth_stage: z.string().max(100).optional(),
+  career_goals: z.string().max(800).optional(),
 });
 
 const familyMemberSchema = z.object({
@@ -89,6 +105,9 @@ export const familySchema = z.object({
   ancestral_origin: z.string().max(200).optional(),
   current_settlement: z.string().max(200).optional(),
   family_note: z.string().max(800).optional(),
+  sibling_count: z.number().int().min(0).max(20).optional(),
+  sibling_position: z.string().max(100).optional(),
+  parents_location: z.string().max(200).optional(),
 });
 
 export const lifestyleSchema = z.object({
@@ -99,6 +118,7 @@ export const lifestyleSchema = z.object({
   drinking: z.string().max(100).optional(),
   music: z.string().max(300).optional(),
   values_statement: z.string().max(1200).optional(),
+  credit_score_band: z.string().max(100).optional(),
 });
 
 export const contactSchema = z.object({
@@ -131,6 +151,30 @@ export const preferencesSchema = z.object({
   marital_status: z.string().max(100).optional(),
   background: z.string().max(200).optional(),
   location_preference: z.string().max(200).optional(),
+  location_preferences: z.string().max(500).optional(),
+  visa_preferences: z.string().max(500).optional(),
+  caste_preference: z.string().max(100).optional(),
+  specific_communities: z.string().max(500).optional(),
+  horoscope_preference: z.string().max(100).optional(),
+  marriage_timeline: z.string().max(100).optional(),
+  children_preference: z.string().max(100).optional(),
+  wedding_expectations: z.string().max(300).optional(),
+  gift_expectations: z.string().max(200).optional(),
+  parent_support: z.string().max(200).optional(),
+});
+
+export const accessAudienceSchema = z.enum(["public", "approved", "broker", "owner"]);
+
+export const accessSchema = z.object({
+  journey: accessAudienceSchema.optional(),
+  personal: accessAudienceSchema.optional(),
+  career: accessAudienceSchema.optional(),
+  family: accessAudienceSchema.optional(),
+  lifestyle: accessAudienceSchema.optional(),
+  preferences: accessAudienceSchema.optional(),
+  future_plans: accessAudienceSchema.optional(),
+  astrology: accessAudienceSchema.optional(),
+  contact: accessAudienceSchema.optional(),
 });
 
 export const visibilitySchema = z.object({
@@ -154,6 +198,7 @@ export const portfolioDataSchema = z.object({
   style: styleSchema.optional(),
   preferences: preferencesSchema.optional(),
   visibility: visibilitySchema.optional(),
+  access: accessSchema.optional(),
 });
 
 // Drafts can be persisted before the required publishing details are complete.
@@ -173,6 +218,7 @@ export type ContactData = z.infer<typeof contactSchema>;
 export type StyleData = z.infer<typeof styleSchema>;
 export type PreferencesData = z.infer<typeof preferencesSchema>;
 export type VisibilityData = z.infer<typeof visibilitySchema>;
+export type AccessData = z.infer<typeof accessSchema>;
 
 export type PortfolioMediaVisibility =
   | "public"
