@@ -192,6 +192,16 @@ make docker-stop         # Stop + remove container
 vercel --prod            # Production deploy
 ```
 
+### Importing location reference data
+
+The profile form uses GeoNames reference tables for dependent Country → State/Region → City suggestions. After applying Supabase migrations, add the server-only `SUPABASE_SERVICE_ROLE_KEY` to `.env.local`, then run:
+
+```bash
+node --env-file=.env.local scripts/import-geonames.mjs
+```
+
+The importer downloads `countryInfo.txt`, `admin1CodesASCII.txt`, and `cities500.zip` directly from [GeoNames](https://www.geonames.org/), then safely upserts the records. The form retains manual state/region and city entry when reference data is unavailable or incomplete. Never prefix the service-role key with `NEXT_PUBLIC_` or commit it.
+
 ## Landing Page
 
 The landing page (`/`) is a single scrolling experience built on a custom design system.

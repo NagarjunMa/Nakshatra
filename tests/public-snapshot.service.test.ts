@@ -14,6 +14,8 @@ const portfolio: PortfolioData = {
     gender: "female",
     immigration_status: "H-1B",
     profile_summary: "A thoughtful public introduction.",
+    long_term_goals: "Build a generous and grounded life.",
+    religion: "Hindu",
   },
   vitals: { height: "5 ft 5 in", complexion: "Fair", gotra: "Kashyap" },
   astrology: {
@@ -35,6 +37,18 @@ const portfolio: PortfolioData = {
     secure_note: "Private contact note",
   },
   style: { template_name: "Royal Heritage", theme_color: "#000000" },
+  career: {
+    title: "Engineer",
+    company: "Private Employer",
+    annual_income: "150000",
+    income_currency: "USD",
+    wealth_stage: "Comfortable",
+  },
+  preferences: {
+    narrative: "A kind and curious partner.",
+    marriage_timeline: "Within the next 2 years",
+    visa_preferences: "H1B, Citizen",
+  },
 };
 
 describe("public portfolio snapshot", () => {
@@ -50,8 +64,15 @@ describe("public portfolio snapshot", () => {
     expect(snapshot.personal).not.toHaveProperty("photo_thumb_url");
     expect(snapshot.personal).not.toHaveProperty("place_of_birth");
     expect(snapshot.personal).not.toHaveProperty("immigration_status");
+    expect(snapshot.personal).not.toHaveProperty("religion");
     expect(snapshot).not.toHaveProperty("family");
     expect(snapshot).not.toHaveProperty("contact");
+    expect(snapshot.career).not.toHaveProperty("annual_income");
+    expect(snapshot.career).not.toHaveProperty("income_currency");
+    expect(snapshot.career).not.toHaveProperty("wealth_stage");
+    expect(snapshot.preferences).toEqual({
+      narrative: "A kind and curious partner.",
+    });
   });
 
   it("removes detailed astrology and forces gated scopes to remain restricted", () => {
@@ -69,6 +90,38 @@ describe("public portfolio snapshot", () => {
       family: "restricted",
       astrology_details: "restricted",
       gallery: "restricted",
+      contact: "restricted",
+    });
+  });
+
+  it("applies private and open templates without exposing contact details", () => {
+    const privateSnapshot = createPublicPortfolioSnapshot({
+      ...portfolio,
+      privacy_mode: "private",
+    });
+    expect(privateSnapshot).not.toHaveProperty("career");
+    expect(privateSnapshot).not.toHaveProperty("family");
+    expect(privateSnapshot.personal).not.toHaveProperty("long_term_goals");
+
+    const openSnapshot = createPublicPortfolioSnapshot({
+      ...portfolio,
+      privacy_mode: "open",
+      family: {
+        ...portfolio.family,
+        ancestral_origin: "Mysuru",
+        family_spread: "India and the US",
+      },
+    });
+    expect(openSnapshot.family).toEqual({
+      ancestral_origin: "Mysuru",
+      family_note: "Private family note",
+      family_spread: "India and the US",
+    });
+    expect(openSnapshot).not.toHaveProperty("contact");
+    expect(openSnapshot.visibility).toEqual({
+      family: "public",
+      astrology_details: "public",
+      gallery: "public",
       contact: "restricted",
     });
   });

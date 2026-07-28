@@ -231,7 +231,21 @@ export default function CelestialUnion({
                     )
                 )}
                 <InfoField label="Ancestral Origin" value={data.family?.ancestral_origin} />
-                <InfoField label="Current Settlement" value={data.family?.current_settlement} />
+                <InfoField
+                  label="Immediate Family Location"
+                  value={
+                    [
+                      data.family?.current_city,
+                      data.family?.current_region,
+                      data.family?.current_country,
+                    ]
+                      .filter(Boolean)
+                      .join(", ") ||
+                    data.family?.parents_location ||
+                    data.family?.current_settlement
+                  }
+                />
+                <InfoField label="Wider Family" value={data.family?.family_spread} />
                 <InfoField label="Family Note" value={data.family?.family_note} />
               </RestrictedBlock>
             </GlassCard>

@@ -28,8 +28,14 @@ function ageRange(value: string | undefined) {
 }
 
 /** Converts dashboard visibility choices to the relational visibility enum. Input: dashboard setting. Output: persisted visibility. */
-function dashboardVisibility(value: "public" | "restricted" | undefined) {
-  return value === "public" ? "public" : "interest_required";
+function presetVisibility(
+  privacyMode: PortfolioData["privacy_mode"],
+  section: "family" | "astrology" | "gallery" | "contact"
+) {
+  if (section === "contact" || privacyMode === "private") {
+    return "interest_required";
+  }
+  return privacyMode === "open" ? "public" : "interest_required";
 }
 
 /**
@@ -45,6 +51,11 @@ export function mapPortfolioDraft(
     theme_color: data.style?.theme_color || existingThemeColor || null,
     sun_sign: data.astrology?.rashi || null,
     template_id: templateIdFor(data.style?.template_name),
+    privacy_mode: data.privacy_mode || "progressive",
+    visibility_settings: {
+      preset: data.privacy_mode || "progressive",
+      legacy_sections: data.access || {},
+    },
   };
 }
 
@@ -72,7 +83,9 @@ export function mapCandidate(data: PortfolioData, userId: string) {
     legal_name: data.personal.name.trim(),
     gender: nullable(data.personal.gender),
     birth_date: nullable(data.personal.dob),
-    current_city: nullable(data.personal.current_location),
+    current_city: nullable(data.personal.city || data.personal.current_location),
+    current_region: nullable(data.personal.region),
+    current_country: nullable(data.personal.country),
     primary_owner_user_id: userId,
     created_by: userId,
   };
@@ -96,6 +109,25 @@ export function mapCandidateDetails(data: PortfolioData) {
       relocation_preference: nullable(data.personal.relocation_preference),
       about: nullable(data.personal.profile_summary),
       values_statement: nullable(data.lifestyle?.values_statement),
+      profile_for: nullable(data.personal.profile_for),
+      citizenship: nullable(data.personal.citizenship),
+      religion: nullable(data.personal.religion),
+      community: nullable(data.personal.community),
+      sub_community: nullable(data.personal.sub_community),
+      long_term_goals: nullable(data.personal.long_term_goals),
+      shared_life_plans: nullable(data.personal.shared_life_plans),
+      sibling_count: data.family?.sibling_count ?? null,
+      sibling_position: nullable(data.family?.sibling_position),
+      parents_location: nullable(
+        data.family?.parents_location ||
+          [
+            data.family?.current_city,
+            data.family?.current_region,
+            data.family?.current_country,
+          ]
+            .filter(Boolean)
+            .join(", ")
+      ),
     },
     astrology: {
       birth_time: nullable(data.astrology?.time_of_birth),
@@ -115,6 +147,9 @@ export function mapCandidateDetails(data: PortfolioData) {
       languages: commaSeparatedList(data.lifestyle?.languages),
       hobbies: commaSeparatedList(data.lifestyle?.hobbies),
       music: nullable(data.lifestyle?.music),
+      lifestyle_payload: {
+        credit_score_band: data.lifestyle?.credit_score_band || null,
+      },
     },
     preferences: {
       age_min: ages.min,
@@ -124,6 +159,29 @@ export function mapCandidateDetails(data: PortfolioData) {
       community: nullable(data.preferences?.background),
       location_preference: nullable(data.preferences?.location_preference),
       narrative: nullable(data.preferences?.narrative),
+      preferences_payload: {
+        location_preferences: commaSeparatedList(
+          data.preferences?.location_preferences
+        ),
+        visa_preferences: commaSeparatedList(data.preferences?.visa_preferences),
+        caste_preference: data.preferences?.caste_preference || null,
+        specific_communities: commaSeparatedList(
+          data.preferences?.specific_communities
+        ),
+        horoscope_preference: data.preferences?.horoscope_preference || null,
+        marriage_timeline: data.preferences?.marriage_timeline || null,
+        children_preference: data.preferences?.children_preference || null,
+        wedding_expectations: data.preferences?.wedding_expectations || null,
+        gift_expectations: data.preferences?.gift_expectations || null,
+        parent_support: data.preferences?.parent_support || null,
+        religion_preference: data.preferences?.religion_preference || null,
+        lifestyle_expectations:
+          data.preferences?.lifestyle_expectations || null,
+        education_expectations:
+          data.preferences?.education_expectations || null,
+        career_expectations: data.preferences?.career_expectations || null,
+        private_notes: data.preferences?.private_notes || null,
+      },
     },
   };
 }
@@ -133,17 +191,18 @@ export function mapCandidateDetails(data: PortfolioData) {
  * Input: portfolio ID and validated visibility choices. Output: visibility_rules upsert rows.
  */
 export function mapVisibilityRules(portfolioId: string, data: PortfolioData) {
-  return [
-    ["family", data.visibility?.family],
-    ["astrology", data.visibility?.astrology_details],
-    ["gallery", data.visibility?.gallery],
-    ["contact", data.visibility?.contact],
-  ].map(([section_key, value]) => ({
+  const privacyMode = data.privacy_mode || "progressive";
+  return (["family", "astrology", "gallery", "contact"] as const).map(
+    (section_key) => {
+      const visibility = presetVisibility(privacyMode, section_key);
+      return {
     portfolio_id: portfolioId,
     section_key,
-    visibility: dashboardVisibility(value as "public" | "restricted" | undefined),
-    requires_interest: value !== "public",
-  }));
+        visibility,
+        requires_interest: visibility !== "public",
+      };
+    }
+  );
 }
 
 /**
@@ -173,6 +232,7 @@ export function mapEducationEntry(data: PortfolioData) {
 
   return {
     degree: nullable(data.education.degree),
+    qualification_level: nullable(data.education.qualification_level),
     institution: nullable(data.education.institution),
     location: nullable(data.education.location),
     end_year: Number(data.education.year) || null,
@@ -191,6 +251,11 @@ export function mapCareerEntry(data: PortfolioData) {
     title: nullable(data.career.title),
     company: nullable(data.career.company),
     industry: nullable(data.career.summary),
+    job_type: nullable(data.career.job_type),
+    annual_income: nullable(data.career.annual_income),
+    income_currency: nullable(data.career.income_currency),
+    wealth_stage: nullable(data.career.wealth_stage),
+    career_goals: nullable(data.career.career_goals),
     location: nullable(data.career.location),
     is_current: true,
     sort_order: 0,
