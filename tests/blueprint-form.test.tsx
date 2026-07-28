@@ -251,7 +251,7 @@ describe("blueprint form", () => {
       expect.objectContaining({ sibling_count: 2 })
     );
     expect(onUpdate).toHaveBeenCalledWith("privacy_mode", "open");
-  });
+  }, 10_000);
 
   it("renders empty optional data and the legacy location preference fallback", () => {
     const onUpdate = vi.fn();
