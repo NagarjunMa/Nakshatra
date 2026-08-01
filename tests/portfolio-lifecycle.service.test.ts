@@ -54,7 +54,10 @@ describe("portfolio lifecycle services", () => {
       expect.objectContaining({
         is_published: true,
         share_token: expect.stringMatching(/^.{21}$/),
-        template_id: 3,
+        template_id: 1,
+        draft_data: expect.objectContaining({
+          style: expect.objectContaining({ template_name: "Celestial Union" }),
+        }),
       })
     );
     expect(repository.savePublicSnapshot).toHaveBeenCalledWith(
@@ -68,13 +71,13 @@ describe("portfolio lifecycle services", () => {
     expect(result).toMatchObject({ action: "created", shareUrl: expect.stringContaining("/p/") });
   });
 
-  it("persists the chosen supported template ID", async () => {
+  it("normalizes legacy template labels to Celestial Union", async () => {
     await publishPortfolio({
       supabase: {} as never,
       userId: "user-id",
       data: { ...draft, style: { ...draft.style, template_name: "Celestial Union" } },
     });
-    expect(repository.publishPortfolio.mock.calls[0][1]).toMatchObject({ template_id: 2 });
+    expect(repository.publishPortfolio.mock.calls[0][1]).toMatchObject({ template_id: 1 });
 
     vi.clearAllMocks();
     repository.findPortfolioForUser.mockResolvedValue({
@@ -87,7 +90,12 @@ describe("portfolio lifecycle services", () => {
       userId: "user-id",
       data: { ...draft, style: { ...draft.style, template_name: "Editorial Matrimonial" } },
     });
-    expect(repository.publishPortfolio.mock.calls[0][1]).toMatchObject({ template_id: 1 });
+    expect(repository.publishPortfolio.mock.calls[0][1]).toMatchObject({
+      template_id: 1,
+      draft_data: expect.objectContaining({
+        style: expect.objectContaining({ template_name: "Celestial Union" }),
+      }),
+    });
   });
 
   it("does not rotate the share token for a published portfolio", async () => {

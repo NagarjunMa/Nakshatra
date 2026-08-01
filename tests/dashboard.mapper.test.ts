@@ -34,10 +34,12 @@ const draft: PortfolioData = {
 describe("dashboard portfolio mapping", () => {
   it("preserves the dashboard draft while deriving relational details", () => {
     expect(mapPortfolioDraft(draft, "#123456")).toMatchObject({
-      draft_data: draft,
+      draft_data: expect.objectContaining({
+        style: { template_name: "Celestial Union" },
+      }),
       theme_color: "#123456",
       sun_sign: "kanya",
-      template_id: 3,
+      template_id: 1,
       privacy_mode: "progressive",
       visibility_settings: {
         preset: "progressive",
@@ -125,14 +127,14 @@ describe("dashboard portfolio mapping", () => {
     } satisfies PortfolioData;
 
     expect(mapPortfolioDraft(populated, "#123456").theme_color).toBe("#221133");
-    expect(mapPortfolioDraft({ ...populated, style: { template_name: "Royal Heritage" } }, "#123456").template_id).toBe(3);
+    expect(mapPortfolioDraft({ ...populated, style: { template_name: "Royal Heritage" } }, "#123456").template_id).toBe(1);
     expect(mapEducationEntry(populated)).toMatchObject({ end_year: 2020 });
     expect(mapCareerEntry(populated)).toMatchObject({
       title: "Engineer",
       industry: "Technology",
     });
-    expect(mapPortfolioDraft({ ...populated, style: { template_name: "Celestial Union" } }, null).template_id).toBe(2);
+    expect(mapPortfolioDraft({ ...populated, style: { template_name: "Celestial Union" } }, null).template_id).toBe(1);
     expect(mapPortfolioDraft({ ...populated, style: { template_name: "Editorial Matrimonial" } }, null).template_id).toBe(1);
-    expect(mapPortfolioDraft({ ...populated, style: { template_name: "Unknown" } }, null).template_id).toBe(3);
+    expect(mapPortfolioDraft({ ...populated, style: { template_name: "Unknown" } }, null).template_id).toBe(1);
   });
 });

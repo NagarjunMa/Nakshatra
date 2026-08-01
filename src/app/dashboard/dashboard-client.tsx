@@ -557,7 +557,7 @@ const EMPTY_DATA: PortfolioData = {
   family: {},
   lifestyle: {},
   contact: {},
-  style: { template_name: "Royal Heritage" },
+  style: { template_name: "Celestial Union" },
   preferences: {},
   access: {
     journey: "public",

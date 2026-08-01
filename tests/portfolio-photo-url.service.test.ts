@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { orderPortfolioPhotos } from "../src/features/media/portfolio-photo";
+import {
+  classifyPhotoOrientation,
+  orderPortfolioPhotos,
+} from "../src/features/media/portfolio-photo";
 import { createPortfolioPhotoUrls } from "../src/features/media/server/photo-url.service";
 import type { PortfolioMedia } from "../src/types/portfolio";
 
@@ -23,10 +26,18 @@ const media = [
     visibility: "public",
     sort_order: 4,
     alt_text: null,
+    metadata: { width: 900, height: 1200, aspectRatio: 0.75, orientation: "portrait" },
   },
 ] satisfies PortfolioMedia[];
 
 describe("portfolio hero photo URLs", () => {
+  it("classifies post-rotation image dimensions", () => {
+    expect(classifyPhotoOrientation(900, 1200)).toBe("portrait");
+    expect(classifyPhotoOrientation(1600, 900)).toBe("landscape");
+    expect(classifyPhotoOrientation(1000, 960)).toBe("square");
+    expect(classifyPhotoOrientation()).toBe("unknown");
+  });
+
   it("places the selected hero before gallery images without changing the source array", () => {
     const ordered = orderPortfolioPhotos(media);
 
@@ -44,7 +55,16 @@ describe("portfolio hero photo URLs", () => {
     } as never;
 
     await expect(createPortfolioPhotoUrls({ supabase, media })).resolves.toEqual([
-      { id: "hero-id", src: "https://photos.test/hero", alt: "Portfolio photo" },
+      {
+        id: "hero-id",
+        src: "https://photos.test/hero",
+        alt: "Portfolio photo",
+        mediaType: "hero",
+        width: 900,
+        height: 1200,
+        aspectRatio: 0.75,
+        orientation: "portrait",
+      },
     ]);
     expect(createSignedUrl).toHaveBeenNthCalledWith(1, "owner/portfolio/hero.webp", 3600);
     expect(createSignedUrl).toHaveBeenNthCalledWith(2, "owner/portfolio/gallery.webp", 3600);

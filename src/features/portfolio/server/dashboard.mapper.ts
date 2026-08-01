@@ -1,4 +1,8 @@
 import type { PortfolioData } from "@/types/portfolio";
+import {
+  CELESTIAL_UNION_TEMPLATE_ID,
+  withCanonicalTemplate,
+} from "@/features/portfolio/template";
 
 const EMPTY_VALUES = new Set(["", undefined, null]);
 
@@ -46,31 +50,22 @@ export function mapPortfolioDraft(
   data: PortfolioData,
   existingThemeColor: string | null
 ) {
+  const canonicalData = {
+    ...data,
+    style: withCanonicalTemplate(data.style),
+  };
+
   return {
-    draft_data: data,
+    draft_data: canonicalData,
     theme_color: data.style?.theme_color || existingThemeColor || null,
     sun_sign: data.astrology?.rashi || null,
-    template_id: templateIdFor(data.style?.template_name),
+    template_id: CELESTIAL_UNION_TEMPLATE_ID,
     privacy_mode: data.privacy_mode || "progressive",
     visibility_settings: {
       preset: data.privacy_mode || "progressive",
       legacy_sections: data.access || {},
     },
   };
-}
-
-/** Selects the persisted template ID from the dashboard template label. Input: optional template label. Output: supported database template ID. */
-function templateIdFor(templateName?: string) {
-  switch (templateName) {
-    case "Celestial Union":
-      return 2;
-    case "Royal Heritage":
-      return 3;
-    case "Editorial Matrimonial":
-      return 1;
-    default:
-      return 3;
-  }
 }
 
 /**

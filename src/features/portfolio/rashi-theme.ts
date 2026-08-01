@@ -2,6 +2,7 @@ import type { RashiKey } from "@/types/portfolio";
 
 export const DARK_FONT_COLOR = "#17151c";
 export const LIGHT_FONT_COLOR = "#fffdf8";
+export const PORTFOLIO_HERO_SURFACE_COLOR = "#111415";
 
 export interface RashiPalette {
   id: string;
@@ -21,7 +22,8 @@ export interface ResolvedRashiTheme {
   background: string;
   foreground: string;
   mutedForeground: string;
-  accent: string;
+  accentOnSurface: string;
+  accentOnHero: string;
   constellationPath: string | null;
   isLightBackground: boolean;
 }
@@ -203,13 +205,23 @@ export function resolveRashiTheme({
   const palette = getRashiPalette(paletteId, rashi) ?? getDefaultRashiPalette(rashi) ?? FALLBACK_PALETTE;
   const background = normalizeHex(backgroundColor) ?? palette.background;
   const { foreground, isLightBackground } = resolveForeground(background);
+  const accentOnSurface =
+    contrastRatio(palette.accent, background) >= 4.5
+      ? palette.accent
+      : foreground;
+  const heroForeground = resolveForeground(PORTFOLIO_HERO_SURFACE_COLOR).foreground;
+  const accentOnHero =
+    contrastRatio(palette.accent, PORTFOLIO_HERO_SURFACE_COLOR) >= 4.5
+      ? palette.accent
+      : heroForeground;
 
   return {
     palette,
     background,
     foreground,
     mutedForeground: isLightBackground ? "#4b4642" : "#ddd6ca",
-    accent: palette.accent,
+    accentOnSurface,
+    accentOnHero,
     constellationPath: isRashiKey(rashi) ? RASHI_THEMES[rashi].constellationPath : null,
     isLightBackground,
   };
@@ -239,7 +251,7 @@ function relativeLuminance(color: string) {
 }
 
 /** Calculates WCAG contrast between two hex colors. Input: foreground and background colors. Output: contrast ratio. */
-function contrastRatio(first: string, second: string) {
+export function contrastRatio(first: string, second: string) {
   const [light, dark] = [relativeLuminance(first), relativeLuminance(second)].sort((a, b) => b - a);
   return (light + 0.05) / (dark + 0.05);
 }

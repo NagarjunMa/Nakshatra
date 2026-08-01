@@ -1,9 +1,32 @@
-import type { PortfolioMedia } from "@/types/portfolio";
+import type {
+  PortfolioMedia,
+  PortfolioPhotoOrientation,
+} from "@/types/portfolio";
 
 export interface PortfolioPhoto {
   id: string;
   src: string;
   alt: string;
+  mediaType: "hero" | "gallery";
+  width?: number;
+  height?: number;
+  aspectRatio?: number;
+  orientation: PortfolioPhotoOrientation;
+}
+
+/**
+ * Classifies an image using its post-rotation dimensions while tolerating near-square photos.
+ * Input: optional positive width and height. Output: portrait, landscape, square, or unknown.
+ */
+export function classifyPhotoOrientation(
+  width?: number,
+  height?: number
+): PortfolioPhotoOrientation {
+  if (!width || !height || width <= 0 || height <= 0) return "unknown";
+  const aspectRatio = width / height;
+  if (aspectRatio < 0.9) return "portrait";
+  if (aspectRatio > 1.1) return "landscape";
+  return "square";
 }
 
 /**

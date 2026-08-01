@@ -59,8 +59,7 @@ describe("edit wizard", () => {
         fireEvent.click(screen.getByRole("button", { name: "Remove" }));
       }
     }
-    fireEvent.click(screen.getByRole("button", { name: "Celestial Union" }));
-    expect(screen.getByRole("button", { name: "Celestial Union" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByText("Portfolio template")).not.toBeInTheDocument();
     const palette = screen.queryAllByRole("button").find((button) => button.textContent?.includes("#"));
     if (palette) fireEvent.click(palette);
   });

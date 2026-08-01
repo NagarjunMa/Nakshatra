@@ -31,3 +31,55 @@ test("landing page remains usable with reduced motion", async ({ page }) => {
   await expect(page.locator("[data-hero-cta]")).toBeVisible();
   await expect(page.getByRole("link", { name: /see a sample/i })).toBeVisible();
 });
+
+test("public portfolio renders sanitized data and adaptive media", async ({ page }) => {
+  await page.goto("/p/e2e-portfolio-token");
+
+  await expect(page.getByRole("heading", { name: "Aditi Rao" })).toBeVisible();
+  await expect(page.getByText("Family details are shared after approval")).toBeVisible();
+  await expect(page.getByText("Contact details are shared after approval")).toBeVisible();
+  await expect(page.getByText("Ramesh Rao", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("family@example.com", { exact: true })).toHaveCount(0);
+
+  const hero = page.locator('.portfolio-hero-media[data-orientation="portrait"]');
+  await expect(hero).toBeVisible();
+  await expect(hero.getByAltText("Public portrait")).toBeVisible();
+  await expect(page.locator('.portfolio-gallery-item[data-orientation="landscape"]')).toBeVisible();
+  await expect(page.getByAltText("Public landscape")).toBeVisible();
+
+  await page.getByRole("button", { name: "Show next photo" }).click();
+  await expect(page.getByText("2 / 2")).toBeVisible();
+});
+
+test("public portfolio exposes production-ready metadata and distinct accent roles", async ({ page }) => {
+  await page.goto("/p/e2e-portfolio-token");
+
+  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
+    "content",
+    "http://127.0.0.1:3100/p/e2e-portfolio-token/opengraph-image"
+  );
+
+  const accents = await page.locator(".portfolio-root").evaluate((element) => {
+    const styles = getComputedStyle(element);
+    return {
+      surface: styles.getPropertyValue("--portfolio-accent").trim(),
+      hero: styles.getPropertyValue("--portfolio-hero-accent").trim(),
+    };
+  });
+  expect(accents).toEqual({ surface: "#17151c", hero: "#688db1" });
+
+  const nextButton = page.getByRole("button", { name: "Show next photo" });
+  await nextButton.focus();
+  await expect(nextButton).toBeFocused();
+  expect(
+    await nextButton.evaluate((element) => getComputedStyle(element).outlineWidth)
+  ).toBe("2px");
+
+  if ((page.viewportSize()?.width || 0) >= 900) {
+    const stickyStyles = await page.locator(".portfolio-facts-column").evaluate((element) => {
+      const styles = getComputedStyle(element);
+      return { position: styles.position, alignSelf: styles.alignSelf };
+    });
+    expect(stickyStyles).toEqual({ position: "sticky", alignSelf: "start" });
+  }
+});

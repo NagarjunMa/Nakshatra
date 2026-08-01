@@ -1,6 +1,4 @@
 import CelestialUnion from "./CelestialUnion";
-import EditorialMatrimonial from "./EditorialMatrimonial";
-import RoyalHeritage from "./RoyalHeritage";
 import type { PortfolioPhoto } from "@/features/media/portfolio-photo";
 import type { PortfolioData } from "@/types/portfolio";
 
@@ -12,17 +10,20 @@ export interface TemplateProps {
   photos?: PortfolioPhoto[];
 }
 
-export function BiodataTemplate({
-  templateId,
-  ...props
-}: TemplateProps & { templateId: number }) {
-  switch (templateId) {
-    case 3:
-      return <RoyalHeritage {...props} />;
-    case 2:
-      return <CelestialUnion {...props} />;
-    case 1:
-    default:
-      return <EditorialMatrimonial {...props} />;
-  }
+/**
+ * Routes every persisted template ID to the single supported Celestial Union renderer.
+ * Input: legacy template ID plus portfolio props. Output: canonical portfolio markup.
+ */
+export function BiodataTemplate(
+  props: TemplateProps & { templateId: number }
+) {
+  return (
+    <CelestialUnion
+      data={props.data}
+      themeColor={props.themeColor}
+      sunSign={props.sunSign}
+      accessMode={props.accessMode}
+      photos={props.photos}
+    />
+  );
 }

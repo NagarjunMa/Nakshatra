@@ -60,7 +60,7 @@ const EMPTY_DATA: PortfolioData = {
   family: {},
   lifestyle: {},
   contact: {},
-  style: { template_name: "Royal Heritage" },
+  style: { template_name: "Celestial Union" },
 };
 
 export default function EditWizard({ portfolio }: Props) {
@@ -871,11 +871,6 @@ function StyleForm({
     onUpdate({ ...data, rashi_palette: palette.id, theme_color: palette.background });
   }
 
-  /** Persists the selected portfolio template for the legacy edit flow. */
-  function selectTemplate(templateName: string) {
-    onUpdate({ ...data, template_name: templateName });
-  }
-
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -890,27 +885,6 @@ function StyleForm({
         </div>
       </div>
 
-      <div>
-        <p className="text-sm font-medium">Portfolio template</p>
-        <div className="mt-3 grid gap-2 sm:grid-cols-2">
-          {["Royal Heritage", "Celestial Union"].map((templateName) => {
-            const selected = (data.template_name as string | undefined || "Royal Heritage") === templateName;
-            return (
-              <button
-                key={templateName}
-                type="button"
-                onClick={() => selectTemplate(templateName)}
-                className={`rounded-lg border px-3 py-3 text-left text-xs font-semibold transition ${
-                  selected ? "border-foreground bg-muted" : "border-border hover:bg-muted"
-                }`}
-                aria-pressed={selected}
-              >
-                {templateName}
-              </button>
-            );
-          })}
-        </div>
-      </div>
     </div>
   );
 }

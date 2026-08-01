@@ -1,9 +1,8 @@
-import Image from "next/image";
-
 interface ConstellationBackdropProps {
   constellationPath: string | null;
-  isLightBackground: boolean;
+  isLightBackground?: boolean;
   className?: string;
+  variant?: "page" | "card";
 }
 
 /**
@@ -12,24 +11,29 @@ interface ConstellationBackdropProps {
  */
 export function ConstellationBackdrop({
   constellationPath,
-  isLightBackground,
   className = "",
+  variant = "card",
 }: ConstellationBackdropProps) {
   if (!constellationPath) return null;
 
   return (
     <div
-      className={`pointer-events-none absolute inset-0 overflow-hidden ${className}`}
+      className={`portfolio-constellation portfolio-constellation-${variant} ${className}`}
       aria-hidden="true"
     >
-      <Image
-        src={constellationPath}
-        alt=""
-        width={600}
-        height={600}
-        unoptimized
-        className="absolute -right-12 -top-12 h-56 w-56 opacity-[0.09] sm:h-72 sm:w-72"
-        style={{ filter: isLightBackground ? "none" : "invert(1)" }}
+      <span
+        className="portfolio-constellation-shadow"
+        style={{
+          WebkitMaskImage: `url(${constellationPath})`,
+          maskImage: `url(${constellationPath})`,
+        }}
+      />
+      <span
+        className="portfolio-constellation-highlight"
+        style={{
+          WebkitMaskImage: `url(${constellationPath})`,
+          maskImage: `url(${constellationPath})`,
+        }}
       />
     </div>
   );

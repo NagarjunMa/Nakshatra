@@ -42,7 +42,7 @@ export class PortfolioMediaRepository {
     return this.supabase
       .from("portfolio_media")
       .insert(payload)
-      .select("id, portfolio_id, storage_path, thumbnail_path, media_type, visibility, sort_order, alt_text")
+      .select("id, portfolio_id, storage_path, thumbnail_path, media_type, visibility, sort_order, alt_text, metadata")
       .single();
   }
 
@@ -51,7 +51,7 @@ export class PortfolioMediaRepository {
       .from("portfolio_media")
       .update(updates)
       .eq("id", mediaId)
-      .select("id, portfolio_id, storage_path, thumbnail_path, media_type, visibility, sort_order, alt_text")
+      .select("id, portfolio_id, storage_path, thumbnail_path, media_type, visibility, sort_order, alt_text, metadata")
       .single();
   }
 

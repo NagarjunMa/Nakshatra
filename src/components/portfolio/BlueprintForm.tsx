@@ -981,35 +981,6 @@ export function BlueprintForm({
             onSelect={selectPalette}
           />
         </div>
-        <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
-          <p className="text-sm font-medium text-white">Portfolio template</p>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            {["Royal Heritage", "Celestial Union"].map((templateName) => {
-              const selected =
-                (data.style?.template_name || "Royal Heritage") === templateName;
-              return (
-                <button
-                  key={templateName}
-                  type="button"
-                  onClick={() =>
-                    onUpdate("style", {
-                      ...(data.style || {}),
-                      template_name: templateName,
-                    })
-                  }
-                  className={`rounded-lg border px-3 py-3 text-left text-xs font-semibold transition ${
-                    selected
-                      ? "border-[#f4d98f] bg-[#f4d98f]/15 text-[#f4d98f]"
-                      : "border-white/15 text-white/70 hover:border-white/35"
-                  }`}
-                  aria-pressed={selected}
-                >
-                  {templateName}
-                </button>
-              );
-            })}
-          </div>
-        </div>
         <div>
           <p className="text-sm font-medium text-white">Privacy template</p>
           <p className="mb-3 mt-1 text-xs leading-5 text-white/55">
