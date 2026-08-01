@@ -54,7 +54,16 @@ function mockSharp() {
       rotate: vi.fn(),
       resize: vi.fn(),
       webp: vi.fn(),
-      toBuffer: vi.fn().mockResolvedValue(Buffer.from("webp")),
+      toBuffer: vi.fn((options?: { resolveWithObject?: boolean }) =>
+        Promise.resolve(
+          options?.resolveWithObject
+            ? {
+                data: Buffer.from("webp"),
+                info: { width: 900, height: 1200 },
+              }
+            : Buffer.from("webp")
+        )
+      ),
     };
     pipeline.rotate.mockReturnValue(pipeline);
     pipeline.resize.mockReturnValue(pipeline);
@@ -147,7 +156,16 @@ describe("portfolio media service", () => {
     ).resolves.toEqual(media);
     expect(repository.upload).toHaveBeenCalledTimes(2);
     expect(repository.createMedia).toHaveBeenCalledWith(
-      expect.objectContaining({ media_type: "hero", visibility: "interest_required" })
+      expect.objectContaining({
+        media_type: "hero",
+        visibility: "interest_required",
+        metadata: {
+          width: 900,
+          height: 1200,
+          aspectRatio: 0.75,
+          orientation: "portrait",
+        },
+      })
     );
   });
 

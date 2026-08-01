@@ -28,7 +28,7 @@ export default async function DashboardPage() {
 
     const { data: portfolioMedia } = await supabase
       .from("portfolio_media")
-      .select("id, portfolio_id, storage_path, thumbnail_path, media_type, visibility, sort_order, alt_text")
+      .select("id, portfolio_id, storage_path, thumbnail_path, media_type, visibility, sort_order, alt_text, metadata")
       .eq("portfolio_id", portfolio.id)
       .in("media_type", ["hero", "gallery"])
       .order("sort_order");

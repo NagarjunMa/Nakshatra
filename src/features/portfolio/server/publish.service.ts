@@ -3,6 +3,10 @@ import "server-only";
 import { nanoid } from "nanoid";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PortfolioData } from "@/types/portfolio";
+import {
+  CELESTIAL_UNION_TEMPLATE_ID,
+  withCanonicalTemplate,
+} from "@/features/portfolio/template";
 import { DashboardRepository } from "./dashboard.repository";
 import { createPublicPortfolioSnapshot } from "./public-snapshot.service";
 import {
@@ -10,20 +14,6 @@ import {
   requirePortfolioPublishReadiness,
 } from "./publish-readiness.service";
 import { createShareUrl } from "./share-url.service";
-
-/** Selects the persisted template ID from the dashboard template label. Input: optional template label. Output: supported database template ID. */
-function templateIdFor(templateName?: string) {
-  switch (templateName) {
-    case "Celestial Union":
-      return 2;
-    case "Royal Heritage":
-      return 3;
-    case "Editorial Matrimonial":
-      return 1;
-    default:
-      return 3;
-  }
-}
 
 export class PortfolioPublishError extends Error {
   constructor(
@@ -72,14 +62,19 @@ export async function publishPortfolio({
     throw error;
   }
 
+  const canonicalData = {
+    ...data,
+    style: withCanonicalTemplate(data.style),
+  } as PortfolioData;
+
   const updates: Record<string, unknown> = {
-    draft_data: data,
-    published_data: data,
+    draft_data: canonicalData,
+    published_data: canonicalData,
     is_published: true,
     published_at: new Date().toISOString(),
     sun_sign: data.astrology?.rashi || null,
     theme_color: data.style?.theme_color || null,
-    template_id: templateIdFor(data.style?.template_name),
+    template_id: CELESTIAL_UNION_TEMPLATE_ID,
   };
 
   const shareToken = portfolio.share_token || nanoid(21);
@@ -100,7 +95,7 @@ export async function publishPortfolio({
   const { error: snapshotError } = await repository.savePublicSnapshot({
     portfolio_id: portfolio.id,
     share_token: shareToken,
-    data: createPublicPortfolioSnapshot(data),
+    data: createPublicPortfolioSnapshot(canonicalData),
     template_id: updates.template_id,
     theme_color: updates.theme_color,
     sun_sign: updates.sun_sign,

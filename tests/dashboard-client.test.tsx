@@ -102,7 +102,7 @@ describe("dashboard client", () => {
     fireEvent.change(screen.getByLabelText("Marital status"), {
       target: { value: "Never Married" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Celestial Union" }));
+    expect(screen.queryByText("Portfolio template")).not.toBeInTheDocument();
     const palette = screen.queryAllByRole("button").find((button) => button.textContent?.includes("#"));
     if (palette) fireEvent.click(palette);
     fireEvent.click(screen.getByRole("button", { name: /add photos/i }));

@@ -8,6 +8,7 @@ import {
   PHOTO_MIME_TYPES,
   type updatePortfolioMediaSchema,
 } from "./media.contract";
+import { classifyPhotoOrientation } from "../portfolio-photo";
 import { PortfolioMediaRepository } from "./media.repository";
 
 export class PortfolioMediaError extends Error {
@@ -66,18 +67,21 @@ export async function uploadPortfolioPhoto({
 
   try {
     const source = Buffer.from(await file.arrayBuffer());
-    const [image, thumbnail] = await Promise.all([
+    const [imageOutput, thumbnail] = await Promise.all([
       sharp(source)
         .rotate()
         .resize(1600, 1600, { fit: "inside", withoutEnlargement: true })
         .webp({ quality: 86 })
-        .toBuffer(),
+        .toBuffer({ resolveWithObject: true }),
       sharp(source)
         .rotate()
         .resize(360, 360, { fit: "cover" })
         .webp({ quality: 80 })
         .toBuffer(),
     ]);
+    const image = imageOutput.data;
+    const width = imageOutput.info.width;
+    const height = imageOutput.info.height;
     const id = crypto.randomUUID();
     const path = `${userId}/${portfolio.id}/${id}.webp`;
     const thumbnailPath = `${userId}/${portfolio.id}/${id}-thumb.webp`;
@@ -98,6 +102,12 @@ export async function uploadPortfolioPhoto({
       thumbnail_path: thumbnailPath,
       visibility,
       sort_order: count ?? 0,
+      metadata: {
+        width,
+        height,
+        aspectRatio: width / height,
+        orientation: classifyPhotoOrientation(width, height),
+      },
     });
     if (error || !media) {
       await repository.remove([path, thumbnailPath]);

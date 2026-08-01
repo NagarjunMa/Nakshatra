@@ -27,7 +27,7 @@ export default async function PreviewPage() {
   const sunSign = portfolio.sun_sign;
   const { data: media } = await supabase
     .from("portfolio_media")
-    .select("id, portfolio_id, storage_path, thumbnail_path, media_type, visibility, sort_order, alt_text")
+    .select("id, portfolio_id, storage_path, thumbnail_path, media_type, visibility, sort_order, alt_text, metadata")
     .eq("portfolio_id", portfolio.id)
     .in("media_type", ["hero", "gallery"]);
   const photos = await createPortfolioPhotoUrls({

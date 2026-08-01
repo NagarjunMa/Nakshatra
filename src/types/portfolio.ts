@@ -253,6 +253,16 @@ export interface PortfolioMedia {
   visibility: PortfolioMediaVisibility;
   sort_order: number;
   alt_text: string | null;
+  metadata?: PortfolioMediaMetadata | null;
+}
+
+export type PortfolioPhotoOrientation = "portrait" | "landscape" | "square" | "unknown";
+
+export interface PortfolioMediaMetadata {
+  width?: number;
+  height?: number;
+  aspectRatio?: number;
+  orientation?: PortfolioPhotoOrientation;
 }
 
 // --- Form Steps Config ---

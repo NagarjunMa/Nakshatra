@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   DARK_FONT_COLOR,
   LIGHT_FONT_COLOR,
+  PORTFOLIO_HERO_SURFACE_COLOR,
   RASHI_THEMES,
+  contrastRatio,
   getDefaultRashiPalette,
   getRashiPalette,
   getRashiPalettes,
@@ -59,6 +61,19 @@ describe("rashi theme contrast", () => {
     });
   });
 
+  it("resolves separate readable accents for the page surface and dark hero", () => {
+    expect(
+      resolveRashiTheme({
+        rashi: "kanya",
+        paletteId: "kanya-peach",
+        backgroundColor: "#f2c6a7",
+      })
+    ).toMatchObject({
+      accentOnSurface: DARK_FONT_COLOR,
+      accentOnHero: "#688db1",
+    });
+  });
+
   it("falls back to a readable midnight theme for invalid persisted values", () => {
     expect(resolveRashiTheme({ rashi: "not-a-rashi", backgroundColor: "blue" })).toMatchObject({
       background: "#17151c",
@@ -68,9 +83,21 @@ describe("rashi theme contrast", () => {
   });
 
   it("keeps every selectable background above the body-text contrast threshold", () => {
-    for (const theme of Object.values(RASHI_THEMES)) {
+    for (const [rashi, theme] of Object.entries(RASHI_THEMES)) {
       for (const palette of theme.palettes) {
         expect(resolveForeground(palette.background).contrast, palette.id).toBeGreaterThanOrEqual(4.5);
+        const resolved = resolveRashiTheme({
+          rashi,
+          paletteId: palette.id,
+        });
+        expect(
+          contrastRatio(resolved.accentOnSurface, resolved.background),
+          `${palette.id} surface accent`
+        ).toBeGreaterThanOrEqual(4.5);
+        expect(
+          contrastRatio(resolved.accentOnHero, PORTFOLIO_HERO_SURFACE_COLOR),
+          `${palette.id} hero accent`
+        ).toBeGreaterThanOrEqual(4.5);
       }
     }
   });

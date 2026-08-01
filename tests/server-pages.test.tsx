@@ -9,7 +9,13 @@ const mocks = vi.hoisted(() => ({
   outcomes: {} as Record<string, { data?: unknown; count?: number | null }>,
   redirect: vi.fn((path: string) => { throw new Error(`REDIRECT:${path}`); }),
   notFound: vi.fn(() => { throw new Error("NOT_FOUND"); }),
-  photoUrls: vi.fn(async () => [{ id: "photo", src: "https://signed.test/photo", alt: "Portrait" }]),
+  photoUrls: vi.fn(async () => [{
+    id: "photo",
+    src: "https://signed.test/photo",
+    alt: "Portrait",
+    mediaType: "hero" as const,
+    orientation: "portrait" as const,
+  }]),
   rpc: vi.fn(() => Promise.resolve({ data: null, error: null })),
   signedUrl: vi.fn(async () => ({ data: { signedUrl: "https://signed.test/hero" } })),
   imageResponse: vi.fn(),
@@ -36,6 +42,9 @@ vi.mock("next/headers", () => ({ headers: async () => new Headers({ host: "naksh
 vi.mock("next/font/google", () => ({
   Geist: () => ({ variable: "geist-sans" }),
   Geist_Mono: () => ({ variable: "geist-mono" }),
+  Manrope: () => ({ variable: "portfolio-body" }),
+  Playfair_Display: () => ({ variable: "portfolio-display" }),
+  Tenor_Sans: () => ({ variable: "portfolio-section" }),
 }));
 vi.mock("next/og", () => ({
   ImageResponse: class {

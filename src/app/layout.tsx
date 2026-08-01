@@ -1,5 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import {
+  Geist,
+  Geist_Mono,
+  Manrope,
+  Playfair_Display,
+  Tenor_Sans,
+} from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -12,7 +18,26 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const portfolioDisplay = Playfair_Display({
+  variable: "--font-portfolio-display",
+  subsets: ["latin"],
+});
+
+const portfolioBody = Manrope({
+  variable: "--font-portfolio-body",
+  subsets: ["latin"],
+});
+
+const portfolioSection = Tenor_Sans({
+  variable: "--font-portfolio-section",
+  weight: "400",
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+  ),
   title: {
     default: "Nakshatra — Wedding Biodata",
     template: "%s | Nakshatra",
@@ -33,7 +58,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${portfolioDisplay.variable} ${portfolioBody.variable} ${portfolioSection.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         {children}
