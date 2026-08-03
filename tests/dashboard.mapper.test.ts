@@ -37,7 +37,7 @@ describe("dashboard portfolio mapping", () => {
       draft_data: expect.objectContaining({
         style: { template_name: "Celestial Union" },
       }),
-      theme_color: "#123456",
+      theme_color: "#f7f5ef",
       sun_sign: "kanya",
       template_id: 1,
       privacy_mode: "progressive",
@@ -126,7 +126,8 @@ describe("dashboard portfolio mapping", () => {
       style: { theme_color: "#221133" },
     } satisfies PortfolioData;
 
-    expect(mapPortfolioDraft(populated, "#123456").theme_color).toBe("#221133");
+    expect(mapPortfolioDraft(populated, "#123456").theme_color).toBe("#f7f5ef");
+    expect(mapPortfolioDraft({ ...populated, style: { ...populated.style, appearance: "dark" } }, null).theme_color).toBe("#121a21");
     expect(mapPortfolioDraft({ ...populated, style: { template_name: "Royal Heritage" } }, "#123456").template_id).toBe(1);
     expect(mapEducationEntry(populated)).toMatchObject({ end_year: 2020 });
     expect(mapCareerEntry(populated)).toMatchObject({

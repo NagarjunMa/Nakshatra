@@ -62,11 +62,14 @@ describe("public portfolio snapshot", () => {
     });
     expect(snapshot.personal).not.toHaveProperty("photo_url");
     expect(snapshot.personal).not.toHaveProperty("photo_thumb_url");
+    expect(snapshot.personal).not.toHaveProperty("dob");
+    expect(snapshot.personal.age).toEqual(expect.any(Number));
     expect(snapshot.personal).not.toHaveProperty("place_of_birth");
     expect(snapshot.personal).not.toHaveProperty("immigration_status");
     expect(snapshot.personal).not.toHaveProperty("religion");
     expect(snapshot).not.toHaveProperty("family");
     expect(snapshot).not.toHaveProperty("contact");
+    expect(snapshot.vitals).not.toHaveProperty("complexion");
     expect(snapshot.career).not.toHaveProperty("annual_income");
     expect(snapshot.career).not.toHaveProperty("income_currency");
     expect(snapshot.career).not.toHaveProperty("wealth_stage");
@@ -108,13 +111,16 @@ describe("public portfolio snapshot", () => {
       privacy_mode: "open",
       family: {
         ...portfolio.family,
-        ancestral_origin: "Mysuru",
+        public_summary: "A close-knit family with roots in Karnataka.",
+        paternal_origin: "Mysuru",
+        maternal_origin: "Bengaluru",
         family_spread: "India and the US",
       },
     });
     expect(openSnapshot.family).toEqual({
-      ancestral_origin: "Mysuru",
-      family_note: "Private family note",
+      public_summary: "A close-knit family with roots in Karnataka.",
+      paternal_origin: "Mysuru",
+      maternal_origin: "Bengaluru",
       family_spread: "India and the US",
     });
     expect(openSnapshot).not.toHaveProperty("contact");

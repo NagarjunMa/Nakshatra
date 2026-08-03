@@ -28,9 +28,37 @@ import {
 } from "../src/features/portfolio/server/renew.service";
 
 const draft: PortfolioData = {
-  personal: { name: "Aditi Rao", dob: "1996-08-12", gender: "female" },
-  astrology: { rashi: "kanya" },
-  style: { template_name: "Royal Heritage", rashi_palette: "kanya-midnight" },
+  personal: {
+    name: "Aditi Rao",
+    dob: "1996-08-12",
+    gender: "female",
+    place_of_birth: "Bengaluru",
+    current_location: "Boston",
+    immigration_status: "H1B",
+    profile_summary: "A thoughtful introduction.",
+  },
+  vitals: { height: `5'5"`, gotra: "Kashyap" },
+  education: { degree: "MS", institution: "Northeastern" },
+  career: { title: "Engineer", company: "Nakshatra", location: "Boston" },
+  astrology: {
+    rashi: "kanya",
+    nakshatra: "Uttara Phalguni",
+    pada: "2",
+    time_of_birth: "09:15",
+    lagnam: "Mithuna",
+    maternal_gotra: "Bharadwaj",
+  },
+  family: {
+    father: { name: "Rao", occupation: "Engineer" },
+    mother: { name: "Lakshmi", occupation: "Teacher" },
+    paternal_origin: "Mysuru",
+    maternal_origin: "Bengaluru",
+    sibling_count: 0,
+  },
+  lifestyle: { languages: "English, Telugu" },
+  preferences: { narrative: "A kind and curious partnership." },
+  contact: { contacts: [{ name: "Rao", phone: "+91 90000 00000" }] },
+  style: { template_name: "Royal Heritage", appearance: "light" },
 };
 
 describe("portfolio lifecycle services", () => {
@@ -55,6 +83,7 @@ describe("portfolio lifecycle services", () => {
         is_published: true,
         share_token: expect.stringMatching(/^.{21}$/),
         template_id: 1,
+        theme_color: "#f7f5ef",
         draft_data: expect.objectContaining({
           style: expect.objectContaining({ template_name: "Celestial Union" }),
         }),

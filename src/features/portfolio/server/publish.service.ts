@@ -13,6 +13,7 @@ import {
   PortfolioPublishReadinessError,
   requirePortfolioPublishReadiness,
 } from "./publish-readiness.service";
+import { getCelestialBackground } from "@/features/portfolio/celestial-theme";
 import { createShareUrl } from "./share-url.service";
 
 export class PortfolioPublishError extends Error {
@@ -73,7 +74,7 @@ export async function publishPortfolio({
     is_published: true,
     published_at: new Date().toISOString(),
     sun_sign: data.astrology?.rashi || null,
-    theme_color: data.style?.theme_color || null,
+    theme_color: getCelestialBackground(data.style),
     template_id: CELESTIAL_UNION_TEMPLATE_ID,
   };
 

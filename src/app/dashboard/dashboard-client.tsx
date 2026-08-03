@@ -557,7 +557,11 @@ const EMPTY_DATA: PortfolioData = {
   family: {},
   lifestyle: {},
   contact: {},
-  style: { template_name: "Celestial Union" },
+  style: {
+    appearance: "light",
+    template_name: "Celestial Union",
+    theme_color: "#f7f5ef",
+  },
   preferences: {},
   access: {
     journey: "public",
@@ -574,7 +578,7 @@ const EMPTY_DATA: PortfolioData = {
     family: "restricted",
     astrology_details: "restricted",
     gallery: "restricted",
-    contact: "public",
+    contact: "restricted",
   },
 };
 

@@ -88,7 +88,7 @@ describe("celestial union portfolio", () => {
     expect(container.querySelector('[data-template="celestial-union"]')).toBeTruthy();
   });
 
-  it("renders the Stitch content hierarchy and data-free locked sections", () => {
+  it("renders the new hierarchy without leaking protected values", () => {
     render(
       <CelestialUnion
         data={complete}
@@ -100,11 +100,14 @@ describe("celestial union portfolio", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Aditi Rao" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Vitals" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Family Heritage" })).toBeInTheDocument();
-    expect(screen.getByText("Family details are shared after approval")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Education and career" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Personal details" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Some information is shared after approval" })).toBeInTheDocument();
+    expect(screen.getByAltText("Kanya (Virgo) zodiac")).toHaveAttribute("src", "/zodiac/kanya-light.svg");
+    expect(screen.queryByText("1996-08-12")).not.toBeInTheDocument();
+    expect(screen.queryByText("Fair")).not.toBeInTheDocument();
     expect(screen.queryByText("Kashyap")).not.toBeInTheDocument();
-    expect(screen.queryByText("Ramesh Rao - Architect")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Ramesh Rao/)).not.toBeInTheDocument();
     expect(screen.queryByText("family@example.com")).not.toBeInTheDocument();
     expect(screen.getByAltText("Landscape")).toBeInTheDocument();
   });
@@ -119,14 +122,22 @@ describe("celestial union portfolio", () => {
       />
     );
 
-    expect(screen.getByText("Ramesh Rao - Architect")).toBeInTheDocument();
-    expect(screen.getByText("Meera Rao - Teacher")).toBeInTheDocument();
-    expect(screen.getByText("Kiran Rao - Doctor")).toBeInTheDocument();
-    expect(screen.getByText("Bengaluru, Karnataka, India")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Contact" })).toBeInTheDocument();
+    expect(screen.getByText("Ramesh Rao · Architect")).toBeInTheDocument();
+    expect(screen.getByText("Meera Rao · Teacher")).toBeInTheDocument();
+    expect(screen.getByText("Kiran Rao · Doctor")).toBeInTheDocument();
+    expect(screen.getByText("Bengaluru · Karnataka · India")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Protected contact preview" })).toBeInTheDocument();
     expect(screen.getByText("+91 90000 00000")).toBeInTheDocument();
     expect(screen.getByText("family@example.com")).toBeInTheDocument();
-    expect(screen.getByText("Please introduce yourself first.")).toBeInTheDocument();
+  });
+
+  it("uses the dark zodiac artwork and fixed dark design tokens", () => {
+    const { container } = render(
+      <CelestialUnion data={{ ...complete, style: { appearance: "dark" } }} themeColor="#ffffff" sunSign="kanya" photos={photos} />
+    );
+    expect(container.querySelector('[data-appearance="dark"]')).toBeTruthy();
+    expect(screen.getByAltText("Kanya (Virgo) zodiac")).toHaveAttribute("src", "/zodiac/kanya-dark.svg");
+    expect(container.querySelector(".portfolio-root")).toHaveStyle({ "--portfolio-background": "#121a21" });
   });
 
   it("preserves the legacy owner portrait when no media hero exists", () => {
@@ -190,11 +201,9 @@ describe("adaptive portfolio media", () => {
     expect(container.querySelector('.portfolio-gallery-item[data-orientation="landscape"]')).toBeTruthy();
   });
 
-  it("navigates, wraps, and advances the adaptive hero slideshow", () => {
+  it("navigates, wraps, and advances the adaptive hero slideshow component", () => {
     vi.useFakeTimers();
-    render(
-      <CelestialUnion data={complete} themeColor="#17151c" sunSign="kanya" photos={photos} />
-    );
+    render(<AdaptivePortfolioHero photos={photos} />);
     fireEvent.click(screen.getByRole("button", { name: /next photo/i }));
     expect(screen.getByText("2 / 2")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /previous photo/i }));

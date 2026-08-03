@@ -2,6 +2,20 @@ import "server-only";
 
 import { portfolioDataSchema, type PortfolioData } from "@/types/portfolio";
 
+function ageFromDate(dateOfBirth?: string) {
+  if (!dateOfBirth) return undefined;
+  const birth = new Date(`${dateOfBirth}T00:00:00Z`);
+  if (Number.isNaN(birth.getTime())) return undefined;
+  const today = new Date();
+  let age = today.getUTCFullYear() - birth.getUTCFullYear();
+  const birthdayPassed =
+    today.getUTCMonth() > birth.getUTCMonth() ||
+    (today.getUTCMonth() === birth.getUTCMonth() &&
+      today.getUTCDate() >= birth.getUTCDate());
+  if (!birthdayPassed) age -= 1;
+  return age >= 18 && age <= 120 ? age : undefined;
+}
+
 /**
  * Builds the only data payload that may be exposed to an unauthenticated portfolio viewer.
  * Input: a validated owner portfolio. Output: a template-aware public snapshot that always
@@ -17,7 +31,7 @@ export function createPublicPortfolioSnapshot(data: PortfolioData): PortfolioDat
     personal: {
       name: data.personal.name,
       preferred_name: data.personal.preferred_name,
-      dob: data.personal.dob,
+      age: ageFromDate(data.personal.dob),
       current_location: data.personal.current_location,
       gender: data.personal.gender,
       profile_summary: data.personal.profile_summary,
@@ -30,13 +44,15 @@ export function createPublicPortfolioSnapshot(data: PortfolioData): PortfolioDat
             shared_life_plans: data.personal.shared_life_plans,
           }),
     },
-    style: data.style,
+    style: {
+      appearance: data.style?.appearance || "light",
+      template_name: "Celestial Union",
+    },
     ...(privateMode
       ? {}
       : {
           vitals: {
             height: data.vitals?.height,
-            complexion: data.vitals?.complexion,
           },
           astrology: {
             rashi: data.astrology?.rashi,
@@ -75,9 +91,10 @@ export function createPublicPortfolioSnapshot(data: PortfolioData): PortfolioDat
     ...(openMode
       ? {
           family: {
-          ancestral_origin: data.family?.ancestral_origin,
-          family_note: data.family?.family_note,
-          family_spread: data.family?.family_spread,
+            public_summary: data.family?.public_summary,
+            paternal_origin: data.family?.paternal_origin,
+            maternal_origin: data.family?.maternal_origin,
+            family_spread: data.family?.family_spread,
           },
         }
       : {}),

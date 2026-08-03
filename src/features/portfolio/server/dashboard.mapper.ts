@@ -3,6 +3,7 @@ import {
   CELESTIAL_UNION_TEMPLATE_ID,
   withCanonicalTemplate,
 } from "@/features/portfolio/template";
+import { getCelestialBackground } from "@/features/portfolio/celestial-theme";
 
 const EMPTY_VALUES = new Set(["", undefined, null]);
 
@@ -10,6 +11,8 @@ export interface FamilyMemberPayload {
   relationship: string;
   name?: string;
   occupation?: string;
+  location?: string;
+  marital_status?: string;
 }
 
 /** Converts an optional form string into a database-safe nullable value. Input: form value. Output: string or null. */
@@ -57,7 +60,7 @@ export function mapPortfolioDraft(
 
   return {
     draft_data: canonicalData,
-    theme_color: data.style?.theme_color || existingThemeColor || null,
+    theme_color: getCelestialBackground(data.style) || existingThemeColor || null,
     sun_sign: data.astrology?.rashi || null,
     template_id: CELESTIAL_UNION_TEMPLATE_ID,
     privacy_mode: data.privacy_mode || "progressive",

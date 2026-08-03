@@ -29,9 +29,12 @@ export const personalSchema = z.object({
   photo_url: z.string().url().optional(),
   photo_thumb_url: z.string().url().optional(),
   dob: z
-    .string()
-    .min(1, "Date of birth is required")
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
+    .union([
+      z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
+      z.literal(""),
+    ])
+    .optional(),
+  age: z.number().int().min(18).max(120).optional(),
   place_of_birth: z.string().max(200).optional(),
   current_location: z.string().max(200).optional(),
   gender: z.enum(["male", "female", "non_binary", "prefer_not_to_say"]),
@@ -99,6 +102,8 @@ export const careerSchema = z.object({
 const familyMemberSchema = z.object({
   name: z.string().max(100).optional(),
   occupation: z.string().max(200).optional(),
+  location: z.string().max(200).optional(),
+  marital_status: z.string().max(100).optional(),
 });
 
 export const familySchema = z.object({
@@ -106,6 +111,9 @@ export const familySchema = z.object({
   mother: familyMemberSchema.optional(),
   siblings: z.array(familyMemberSchema).max(10, "Maximum 10 siblings").optional(),
   ancestral_origin: z.string().max(200).optional(),
+  paternal_origin: z.string().max(200).optional(),
+  maternal_origin: z.string().max(200).optional(),
+  public_summary: z.string().max(600).optional(),
   current_settlement: z.string().max(200).optional(),
   family_note: z.string().max(800).optional(),
   sibling_count: z.number().int().min(0).max(20).optional(),
@@ -131,6 +139,18 @@ export const lifestyleSchema = z.object({
   credit_score_band: z.string().max(100).optional(),
 });
 
+const contactEntrySchema = z.object({
+  relationship: z.string().max(50).optional(),
+  name: z.string().max(100).optional(),
+  phone: z
+    .union([
+      z.string().regex(/^[+\d\s()-]*$/, "Invalid phone number"),
+      z.literal(""),
+    ])
+    .optional(),
+  email: z.union([z.email("Invalid email"), z.literal("")]).optional(),
+});
+
 export const contactSchema = z.object({
   contact_person: z.string().max(100).optional(),
   phone: z
@@ -141,9 +161,11 @@ export const contactSchema = z.object({
     .optional(),
   email: z.union([z.email("Invalid email"), z.literal("")]).optional(),
   secure_note: z.string().max(600).optional(),
+  contacts: z.array(contactEntrySchema).max(5, "Maximum 5 contacts").optional(),
 });
 
 export const styleSchema = z.object({
+  appearance: z.enum(["light", "dark"]).optional(),
   theme_color: z
     .union([
       z.string().regex(/^#[0-9a-fA-F]{6}$/, "Invalid color"),
