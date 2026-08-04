@@ -10,6 +10,7 @@ import {
   type PortfolioHoroscope,
   type PortfolioMedia,
   type PortfolioMediaVisibility,
+  normalizePortfolioPrivacyMode,
 } from "@/types/portfolio";
 import type { PortfolioApiFailure } from "@/features/portfolio/client/portfolio-dashboard.api";
 import { MAX_PORTFOLIO_PHOTOS } from "@/features/media/portfolio-photo";
@@ -36,6 +37,7 @@ import {
   Upload,
   FileText,
   ExternalLink,
+  ShieldCheck,
 } from "lucide-react";
 
 interface Props {
@@ -442,7 +444,7 @@ export default function DashboardClient({
                   <p className="mt-2 text-sm font-semibold text-white">
                     {daysLeft !== null
                       ? `${daysLeft} day${daysLeft !== 1 ? "s" : ""}`
-                      : "â€”"}
+                      : "—"}
                   </p>
                 </div>
               </div>
@@ -501,7 +503,7 @@ export default function DashboardClient({
                 </div>
               )}
 
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 <button
                   type="button"
                   onClick={() => setFormOpen(true)}
@@ -516,6 +518,13 @@ export default function DashboardClient({
                 >
                   <Eye className="mr-2 h-4 w-4" />
                   Preview
+                </Link>
+                <Link
+                  href="/approved-preview"
+                  className="inline-flex h-10 items-center justify-center rounded-lg border border-[#f4d98f]/35 bg-[#f4d98f]/10 px-4 text-sm font-medium text-[#f7dda0] transition-colors hover:bg-[#f4d98f]/15"
+                >
+                  <ShieldCheck className="mr-2 h-4 w-4" />
+                  Full Approved Request view
                 </Link>
               </div>
             </div>
@@ -724,7 +733,7 @@ function formatBytes(bytes: number) {
 }
 
 const EMPTY_DATA: PortfolioData = {
-  privacy_mode: "progressive",
+  privacy_mode: "balanced",
   personal: { name: "", dob: "", gender: "prefer_not_to_say" },
   vitals: {},
   astrology: {},
@@ -765,7 +774,7 @@ function normalizePortfolioData(
   return {
     ...EMPTY_DATA,
     ...(data || {}),
-    privacy_mode: data?.privacy_mode || privacyMode || "progressive",
+    privacy_mode: normalizePortfolioPrivacyMode(data?.privacy_mode || privacyMode),
     personal: { ...EMPTY_DATA.personal, ...(data?.personal || {}) },
     vitals: { ...(data?.vitals || {}) },
     astrology: { ...(data?.astrology || {}) },

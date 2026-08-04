@@ -1409,6 +1409,38 @@ body {
   gap: 9px;
 }
 
+[data-template="celestial-union"] .portfolio-lifestyle-groups {
+  display: grid;
+  gap: 24px;
+}
+
+[data-template="celestial-union"] .portfolio-lifestyle-group {
+  min-width: 0;
+}
+
+[data-template="celestial-union"] .portfolio-lifestyle-group h3 {
+  margin: 0 0 10px;
+  color: var(--portfolio-muted);
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+[data-template="celestial-union"] .portfolio-tags-muted span {
+  background: transparent;
+  font-weight: 600;
+}
+
+[data-template="celestial-union"] .portfolio-lifestyle-group .portfolio-detail-grid,
+[data-template="celestial-union"] .portfolio-timeline-details {
+  margin-top: 0;
+}
+
+[data-template="celestial-union"] .portfolio-preference-grid {
+  margin-top: 26px;
+}
+
 [data-template="celestial-union"] .portfolio-tags span,
 [data-template="celestial-union"] .portfolio-protected-items span {
   display: inline-flex;

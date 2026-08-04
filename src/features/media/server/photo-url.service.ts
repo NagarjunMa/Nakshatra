@@ -16,11 +16,11 @@ export async function createPortfolioPhotoUrls({
   supabase,
   media,
   viewer = "owner",
-  privacyMode = "progressive",
+  privacyMode = "balanced",
 }: {
   supabase: SupabaseClient;
   media: PortfolioMedia[];
-  viewer?: "owner" | "public";
+  viewer?: "owner" | "approved" | "public";
   privacyMode?: PortfolioData["privacy_mode"];
 }): Promise<PortfolioPhoto[]> {
   const orderedMedia = orderPortfolioPhotos(media);

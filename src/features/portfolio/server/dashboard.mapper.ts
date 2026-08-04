@@ -1,4 +1,7 @@
-import type { PortfolioData } from "@/types/portfolio";
+import {
+  normalizePortfolioPrivacyMode,
+  type PortfolioData,
+} from "@/types/portfolio";
 import {
   CELESTIAL_UNION_TEMPLATE_ID,
   withCanonicalTemplate,
@@ -42,7 +45,7 @@ function presetVisibility(
   if (section === "contact" || privacyMode === "private") {
     return "interest_required";
   }
-  return privacyMode === "open" ? "public" : "interest_required";
+  return "public";
 }
 
 /**
@@ -53,8 +56,10 @@ export function mapPortfolioDraft(
   data: PortfolioData,
   existingThemeColor: string | null
 ) {
+  const privacyMode = normalizePortfolioPrivacyMode(data.privacy_mode);
   const canonicalData = {
     ...data,
+    privacy_mode: privacyMode,
     style: withCanonicalTemplate(data.style),
   };
 
@@ -63,9 +68,9 @@ export function mapPortfolioDraft(
     theme_color: getCelestialBackground(data.style) || existingThemeColor || null,
     sun_sign: data.astrology?.rashi || null,
     template_id: CELESTIAL_UNION_TEMPLATE_ID,
-    privacy_mode: data.privacy_mode || "progressive",
+    privacy_mode: privacyMode,
     visibility_settings: {
-      preset: data.privacy_mode || "progressive",
+      preset: privacyMode,
       legacy_sections: data.access || {},
     },
   };
@@ -186,11 +191,11 @@ export function mapCandidateDetails(data: PortfolioData) {
 }
 
 /**
- * Produces the progressive-access rules for one portfolio.
+ * Produces the two-mode public visibility rules for one portfolio.
  * Input: portfolio ID and validated visibility choices. Output: visibility_rules upsert rows.
  */
 export function mapVisibilityRules(portfolioId: string, data: PortfolioData) {
-  const privacyMode = data.privacy_mode || "progressive";
+  const privacyMode = normalizePortfolioPrivacyMode(data.privacy_mode);
   return (["family", "astrology", "gallery", "contact"] as const).map(
     (section_key) => {
       const visibility = presetVisibility(privacyMode, section_key);

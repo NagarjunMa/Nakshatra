@@ -125,6 +125,7 @@ describe("dashboard client", () => {
 
   it("operates published-link controls and signs out", async () => {
     renderDashboard();
+    expect(screen.getByRole("link", { name: /full approved request view/i })).toHaveAttribute("href", "/approved-preview");
     await waitFor(() => expect(mocks.createSignedUrl).toHaveBeenCalledWith("one-thumb.webp", 3600));
     fireEvent.click(screen.getByRole("button", { name: "Copy" }));
     await waitFor(() => expect(navigator.clipboard.writeText).toHaveBeenCalled());

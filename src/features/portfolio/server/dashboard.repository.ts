@@ -68,6 +68,13 @@ export class DashboardRepository {
       .upsert(payload, { onConflict: "portfolio_id" });
   }
 
+  /** Stores the sanitized full-blueprint representation used by identity-bound grants. */
+  async saveApprovedSnapshot(payload: Record<string, unknown>) {
+    return this.supabase
+      .from("approved_portfolio_snapshots")
+      .upsert(payload, { onConflict: "portfolio_id" });
+  }
+
   /**
    * Finds whether a portfolio has a photo intentionally selected for public hero display.
    * Input: portfolio ID. Output: a minimal public-hero row or null.

@@ -2,13 +2,17 @@ import "server-only";
 
 import { nanoid } from "nanoid";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { PortfolioData } from "@/types/portfolio";
+import {
+  normalizePortfolioPrivacyMode,
+  type PortfolioData,
+} from "@/types/portfolio";
 import {
   CELESTIAL_UNION_TEMPLATE_ID,
   withCanonicalTemplate,
 } from "@/features/portfolio/template";
 import { DashboardRepository } from "./dashboard.repository";
 import { createPublicPortfolioSnapshot } from "./public-snapshot.service";
+import { createApprovedPortfolioSnapshot } from "./approved-snapshot.service";
 import {
   PortfolioPublishReadinessError,
   requirePortfolioPublishReadiness,
@@ -67,6 +71,7 @@ export async function publishPortfolio({
 
   const canonicalData = {
     ...data,
+    privacy_mode: normalizePortfolioPrivacyMode(data.privacy_mode),
     style: withCanonicalTemplate(data.style),
   } as PortfolioData;
 
@@ -118,6 +123,21 @@ export async function publishPortfolio({
   });
   if (snapshotError) {
     throw new PortfolioPublishError("We could not create the public portfolio safely. Please try again.", "PUBLIC_SNAPSHOT_PERSISTENCE_FAILED");
+  }
+
+  const { error: approvedSnapshotError } = await repository.saveApprovedSnapshot({
+    portfolio_id: portfolio.id,
+    data: createApprovedPortfolioSnapshot(canonicalData),
+    template_id: updates.template_id,
+    theme_color: updates.theme_color,
+    sun_sign: updates.sun_sign,
+    published_at: updates.published_at,
+  });
+  if (approvedSnapshotError) {
+    throw new PortfolioPublishError(
+      "We could not prepare the approved-request view safely. Please try again.",
+      "APPROVED_SNAPSHOT_PERSISTENCE_FAILED"
+    );
   }
 
   try {

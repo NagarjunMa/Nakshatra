@@ -5,6 +5,7 @@ const repository = vi.hoisted(() => ({
   findPortfolioForUser: vi.fn(),
   publishPortfolio: vi.fn(),
   savePublicSnapshot: vi.fn(),
+  saveApprovedSnapshot: vi.fn(),
   findPublicHeroPhoto: vi.fn(),
   updatePublicSnapshot: vi.fn(),
   renewPortfolioLink: vi.fn(),
@@ -82,6 +83,7 @@ describe("portfolio lifecycle services", () => {
     });
     repository.publishPortfolio.mockResolvedValue({ error: null });
     repository.savePublicSnapshot.mockResolvedValue({ error: null });
+    repository.saveApprovedSnapshot.mockResolvedValue({ error: null });
     repository.findPublicHeroPhoto.mockResolvedValue({ data: { id: "hero-photo-id" }, error: null });
     repository.updatePublicSnapshot.mockResolvedValue({ error: null });
     repository.renewPortfolioLink.mockResolvedValue({ error: null });
@@ -107,6 +109,17 @@ describe("portfolio lifecycle services", () => {
         share_token: expect.stringMatching(/^.{21}$/),
         data: expect.not.objectContaining({ family: expect.anything(), contact: expect.anything() }),
         is_active: true,
+      })
+    );
+    expect(repository.saveApprovedSnapshot).toHaveBeenCalledWith(
+      expect.objectContaining({
+        portfolio_id: "portfolio-id",
+        data: expect.objectContaining({
+          family: expect.objectContaining({
+            father: expect.objectContaining({ name: "Rao" }),
+          }),
+          astrology: expect.objectContaining({ maternal_gotra: "Bharadwaj" }),
+        }),
       })
     );
     expect(result).toMatchObject({ action: "created", shareUrl: expect.stringContaining("/p/") });

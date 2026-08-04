@@ -6,7 +6,7 @@ import { BlueprintForm } from "../src/components/portfolio/BlueprintForm";
 import type { PortfolioData } from "../src/types/portfolio";
 
 const completeBlueprint: PortfolioData = {
-  privacy_mode: "progressive",
+  privacy_mode: "balanced",
   personal: {
     name: "Aditi Rao",
     preferred_name: "Aditi",
@@ -75,7 +75,7 @@ describe("blueprint form", () => {
     fireEvent.click(screen.getByRole("button", { name: /Privacy & contact/ }));
     fireEvent.change(screen.getAllByLabelText("Name of contact")[0], { target: { value: "Updated Contact" } });
     fireEvent.click(screen.getByRole("button", { name: "Dark" }));
-    fireEvent.click(screen.getByRole("button", { name: /Open/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Balanced/ }));
 
     expect(onUpdate).toHaveBeenCalledWith("personal", expect.objectContaining({ name: "Updated Name" }));
     expect(onUpdate).toHaveBeenCalledWith("personal", expect.objectContaining({ short_bio: "A concise new bio" }));
@@ -89,7 +89,7 @@ describe("blueprint form", () => {
       theme_color: "#121a21",
       template_name: "Celestial Union",
     }));
-    expect(onUpdate).toHaveBeenCalledWith("privacy_mode", "open");
+    expect(onUpdate).toHaveBeenCalledWith("privacy_mode", "balanced");
   });
 
   it("renders a safe minimal draft and grows dynamic sibling and contact groups", () => {

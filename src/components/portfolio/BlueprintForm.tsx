@@ -5,7 +5,6 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
-  Eye,
   LockKeyhole,
   Moon,
   ShieldCheck,
@@ -81,9 +80,9 @@ const RASHI_SELECT_OPTIONS: BlueprintOption[] = [
 
 const PRIVACY_PRESETS = [
   {
-    value: "progressive" as const,
+    value: "balanced" as const,
     label: "Balanced",
-    description: "A thoughtful introduction is visible. Sensitive detail requires your approval.",
+    description: "A thoughtful public introduction with your story, journey, interests, family introduction, and selected astrology. Sensitive details still require approval.",
     icon: ShieldCheck,
   },
   {
@@ -91,12 +90,6 @@ const PRIVACY_PRESETS = [
     label: "Private",
     description: "Only a brief introduction is visible until you approve an interest request.",
     icon: LockKeyhole,
-  },
-  {
-    value: "open" as const,
-    label: "Open",
-    description: "More portfolio detail is visible, while contact and exact birth details stay protected.",
-    icon: Eye,
   },
 ];
 
@@ -249,7 +242,7 @@ export function BlueprintForm({
               <SelectInput label="Gender" value={data.personal.gender || ""} options={GENDER_OPTIONS} onChange={(value) => updatePersonal({ gender: value as PortfolioData["personal"]["gender"] })} required requirement="Required" audience="Portfolio" />
               <TextInput label="Profession or role" value={data.career?.title || ""} onChange={(value) => onUpdate("career", { ...(data.career || {}), title: value })} required requirement="Required" audience="Portfolio" hint="A broad role is enough; employer details can come later." />
               <SelectInput label="Height" value={data.vitals?.height || ""} options={HEIGHT_OPTIONS} onChange={(value) => onUpdate("vitals", { ...(data.vitals || {}), height: value })} requirement="Optional" audience="Portfolio" />
-              <SelectInput label="Marital status" value={data.personal.marital_status || ""} options={MARITAL_STATUS_OPTIONS} onChange={(value) => updatePersonal({ marital_status: value })} requirement="Recommended" audience="Approved people" />
+              <SelectInput label="Marital status" value={data.personal.marital_status || ""} options={MARITAL_STATUS_OPTIONS} onChange={(value) => updatePersonal({ marital_status: value })} requirement="Recommended" audience="Balanced portfolio" />
             </div>
             <LocationFields value={{ country: data.personal.country, countryCode: data.personal.country_code, region: data.personal.region, regionCode: data.personal.region_code, city: data.personal.city, cityGeonameId: data.personal.city_geoname_id }} onChange={updateResidence} labels={{ country: "Current country", region: "Current state or region", city: "Current city" }} />
             {photoManager && <EmbeddedPanel title="Photos" description="Choose a portrait and gallery moments.">{photoManager}</EmbeddedPanel>}
@@ -276,7 +269,7 @@ export function BlueprintForm({
               <TextInput label="Work location" value={data.career?.location || ""} onChange={(value) => onUpdate("career", { ...(data.career || {}), location: value })} requirement="Optional" audience="Portfolio" />
               <SelectInput label="Visa or residency status" value={data.personal.immigration_status || ""} options={VISA_OPTIONS} onChange={(value) => updatePersonal({ immigration_status: value })} audience="Approved people" />
               <TextInput label="Citizenship" value={data.personal.citizenship || ""} onChange={(value) => updatePersonal({ citizenship: value })} requirement="Optional" audience="Approved people" />
-              <SelectInput label="Annual income range" value={data.career?.annual_income || ""} options={INCOME_RANGE_OPTIONS} onChange={(value) => onUpdate("career", { ...(data.career || {}), annual_income: value })} audience="Protected" hint="Never shown publicly." />
+              <SelectInput label="Annual income range" value={data.career?.annual_income || ""} options={INCOME_RANGE_OPTIONS} onChange={(value) => onUpdate("career", { ...(data.career || {}), annual_income: value })} audience="Approved people" hint="Never shown publicly." />
               {hasValue(data.career?.annual_income) && data.career?.annual_income !== "Prefer not to say" && <SelectInput label="Income currency" value={data.career?.income_currency || ""} options={CURRENCY_OPTIONS} onChange={(value) => onUpdate("career", { ...(data.career || {}), income_currency: value })} audience="Protected" />}
             </div>
             <TextArea label="Where would you like your career to grow?" value={data.career?.career_goals || ""} onChange={(value) => onUpdate("career", { ...(data.career || {}), career_goals: value })} maxLength={800} requirement="Optional" audience="Approved people" />
@@ -359,14 +352,14 @@ export function BlueprintForm({
         {activeSection === "astrology" && (
           <FormSection eyebrow="Cultural alignment" title="Astrology" description="Add only what you know. Sensitive details stay protected.">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <TextInput label="Time of birth" type="time" value={data.astrology?.time_of_birth || ""} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), time_of_birth: value })} requirement="Optional" audience="Protected" />
-              <TextInput label="Place of birth" value={data.personal.place_of_birth || ""} onChange={(value) => updatePersonal({ place_of_birth: value })} requirement="Optional" audience="Protected" />
-              <SelectInput label="Rashi" value={data.astrology?.rashi || ""} options={RASHI_SELECT_OPTIONS} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), rashi: value as NonNullable<PortfolioData["astrology"]>["rashi"] })} requirement="Optional" audience="Portfolio, if you choose" />
-              <SelectInput label="Nakshatra" value={data.astrology?.nakshatra || ""} options={NAKSHATRA_OPTIONS} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), nakshatra: value })} requirement="Optional" audience="Approved people" />
-              <TextInput label="Pada" value={data.astrology?.pada || ""} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), pada: value })} requirement="Optional" audience="Approved people" />
-              <TextInput label="Lagnam" value={data.astrology?.lagnam || ""} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), lagnam: value })} requirement="Optional" audience="Protected" />
-              <TextInput label="Gotra" value={data.vitals?.gotra || ""} onChange={(value) => onUpdate("vitals", { ...(data.vitals || {}), gotra: value })} requirement="Optional" audience="Protected" />
-              <TextInput label="Maternal gotra" value={data.astrology?.maternal_gotra || ""} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), maternal_gotra: value })} requirement="Optional" audience="Protected" />
+              <TextInput label="Time of birth" type="time" value={data.astrology?.time_of_birth || ""} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), time_of_birth: value })} requirement="Optional" audience="Approved people" />
+              <TextInput label="Place of birth" value={data.personal.place_of_birth || ""} onChange={(value) => updatePersonal({ place_of_birth: value })} requirement="Optional" audience="Approved people" />
+              <SelectInput label="Rashi" value={data.astrology?.rashi || ""} options={RASHI_SELECT_OPTIONS} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), rashi: value as NonNullable<PortfolioData["astrology"]>["rashi"] })} requirement="Optional" audience="Balanced portfolio" />
+              <SelectInput label="Nakshatra" value={data.astrology?.nakshatra || ""} options={NAKSHATRA_OPTIONS} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), nakshatra: value })} requirement="Optional" audience="Balanced portfolio" />
+              <TextInput label="Pada" value={data.astrology?.pada || ""} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), pada: value })} requirement="Optional" audience="Balanced portfolio" />
+              <TextInput label="Lagnam" value={data.astrology?.lagnam || ""} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), lagnam: value })} requirement="Optional" audience="Approved people" />
+              <TextInput label="Paternal gothram" value={data.vitals?.gotra || ""} onChange={(value) => onUpdate("vitals", { ...(data.vitals || {}), gotra: value })} requirement="Optional" audience="Approved people" />
+              <TextInput label="Maternal gothram" value={data.astrology?.maternal_gotra || ""} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), maternal_gotra: value })} requirement="Optional" audience="Approved people" />
               <SelectInput label="Manglik status" value={data.astrology?.manglik_status || ""} options={MANGLIK_OPTIONS} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), manglik_status: value })} requirement="Optional" audience="Approved people" />
             </div>
             {horoscopeManager && <EmbeddedPanel title="Original horoscope attachment" description="Approved people can open it as a separate document.">{horoscopeManager}</EmbeddedPanel>}
@@ -389,13 +382,14 @@ export function BlueprintForm({
             </div>
             <div>
               <p className="mb-3 text-sm font-medium text-white">Privacy mode</p>
-              <div className="grid gap-3 xl:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 {PRIVACY_PRESETS.map((preset) => {
-                  const selected = (data.privacy_mode || "progressive") === preset.value;
+                  const selected = (data.privacy_mode || "balanced") === preset.value;
                   const Icon = preset.icon;
-                  return <button key={preset.value} type="button" aria-pressed={selected} onClick={() => onUpdate("privacy_mode", preset.value)} className={`rounded-xl border p-4 text-left transition ${selected ? "border-[#f4d98f] bg-[#f4d98f]/12" : "border-white/10 bg-white/[0.03] hover:border-white/30"}`}><span className="flex items-center gap-2 text-sm font-semibold text-white"><Icon className="h-4 w-4 text-[#f4d98f]" />{preset.label}{preset.value === "progressive" && <span className="rounded-full bg-[#f4d98f]/15 px-2 py-0.5 text-[9px] uppercase tracking-wide text-[#f4d98f]">Recommended</span>}</span><span className="mt-2 block text-xs leading-5 text-white/55">{preset.description}</span></button>;
+                  return <button key={preset.value} type="button" aria-pressed={selected} onClick={() => onUpdate("privacy_mode", preset.value)} className={`rounded-xl border p-4 text-left transition ${selected ? "border-[#f4d98f] bg-[#f4d98f]/12" : "border-white/10 bg-white/[0.03] hover:border-white/30"}`}><span className="flex items-center gap-2 text-sm font-semibold text-white"><Icon className="h-4 w-4 text-[#f4d98f]" />{preset.label}{preset.value === "balanced" && <span className="rounded-full bg-[#f4d98f]/15 px-2 py-0.5 text-[9px] uppercase tracking-wide text-[#f4d98f]">Recommended</span>}</span><span className="mt-2 block text-xs leading-5 text-white/55">{preset.description}</span></button>;
                 })}
               </div>
+              <p className="mt-3 text-xs leading-5 text-white/50">Both modes support Approved Requests. Approved people sign in and receive revocable access to the full blueprint; direct contact always stays protected.</p>
             </div>
             <div className="space-y-4 border-t border-white/10 pt-5">
               <InfoCard title="Protected contact" audience="Optional · Never public" text="Add a preferred contact only if you want one ready for approved introductions." />

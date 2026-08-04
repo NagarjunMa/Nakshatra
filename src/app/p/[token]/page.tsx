@@ -72,9 +72,16 @@ export default async function PublicBiodataPage({ params }: Props) {
     .rpc("record_view", { p_portfolio_id: portfolio.portfolio_id })
     .then(() => {});
 
-  const data = portfolio.data as PortfolioData;
-  const themeColor = portfolio.theme_color || "#6366f1";
-  const sunSign = portfolio.sun_sign;
+  const publicData = portfolio.data as PortfolioData;
+  const { data: approvedSnapshot } = await supabase
+    .from("approved_portfolio_snapshots")
+    .select("data, template_id, theme_color, sun_sign")
+    .eq("portfolio_id", portfolio.portfolio_id)
+    .maybeSingle();
+  const approvedAccess = Boolean(approvedSnapshot?.data);
+  const data = (approvedSnapshot?.data || publicData) as PortfolioData;
+  const themeColor = approvedSnapshot?.theme_color || portfolio.theme_color || "#6366f1";
+  const sunSign = approvedSnapshot?.sun_sign || portfolio.sun_sign;
   const { data: media } = await supabase
     .from("portfolio_media")
     .select("id, portfolio_id, storage_path, thumbnail_path, media_type, visibility, sort_order, alt_text, metadata")
@@ -84,15 +91,17 @@ export default async function PublicBiodataPage({ params }: Props) {
   const photos = await createPortfolioPhotoUrls({
     supabase,
     media: (media ?? []) as PortfolioMedia[],
-    viewer: "public",
+    viewer: approvedAccess ? "approved" : "public",
     privacyMode: data.privacy_mode,
   });
-  const { data: horoscopeRow } = await supabase
-    .from("portfolio_horoscopes")
-    .select("id, portfolio_id, storage_path, mime_type, file_extension, byte_size, language_label, page_count, published_at, created_at, updated_at")
-    .eq("portfolio_id", portfolio.portfolio_id)
-    .not("published_at", "is", null)
-    .maybeSingle();
+  const { data: horoscopeRow } = approvedAccess
+    ? await supabase
+        .from("portfolio_horoscopes")
+        .select("id, portfolio_id, storage_path, mime_type, file_extension, byte_size, language_label, page_count, published_at, created_at, updated_at")
+        .eq("portfolio_id", portfolio.portfolio_id)
+        .not("published_at", "is", null)
+        .maybeSingle()
+    : { data: null };
   const horoscope = horoscopeRow as PortfolioHoroscope | null;
   const horoscopeAttachment: PortfolioHoroscopeAttachment | undefined = horoscope
     ? {
@@ -105,11 +114,11 @@ export default async function PublicBiodataPage({ params }: Props) {
 
   return (
     <BiodataTemplate
-      templateId={portfolio.template_id}
+      templateId={approvedSnapshot?.template_id || portfolio.template_id}
       data={data}
       themeColor={themeColor}
       sunSign={sunSign}
-      accessMode={horoscopeAttachment ? "approved" : "restricted"}
+      accessMode={approvedAccess ? "approved" : "public"}
       photos={photos}
       horoscopeAttachment={horoscopeAttachment}
     />

@@ -72,7 +72,7 @@ export default async function PreviewPage() {
           data={data}
           themeColor={themeColor}
           sunSign={sunSign}
-          accessMode="restricted"
+          accessMode="public"
           photos={photos}
         />
       </div>

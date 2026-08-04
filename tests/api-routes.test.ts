@@ -46,6 +46,7 @@ import { GET as authCallback } from "../src/app/api/auth/callback/route";
 import { PUT as dashboardPut } from "../src/app/api/dashboard/route";
 import { DELETE as mediaDelete, PATCH as mediaPatch, POST as mediaPost } from "../src/app/api/portfolio-media/route";
 import { DELETE as horoscopeDelete, POST as horoscopePost } from "../src/app/api/portfolio-horoscope/route";
+import { GET as horoscopeView } from "../src/app/api/portfolio-horoscope/view/route";
 import { POST as publishPost } from "../src/app/api/portfolio/publish/route";
 import { POST as renewPost } from "../src/app/api/portfolio/renew/route";
 import { POST as rotatePost } from "../src/app/api/portfolio/share/rotate/route";
@@ -86,6 +87,7 @@ describe("API route authentication", () => {
     ["renew", () => renewPost()],
     ["rotate", () => rotatePost()],
     ["unpublish", () => unpublishPost()],
+    ["owner horoscope view", () => horoscopeView()],
   ])("rejects missing sessions on %s", async (_name, call) => {
     getApiUser.mockResolvedValueOnce({ status: "missing_session" });
     expect((await call()).status).toBe(401);
@@ -225,6 +227,47 @@ describe("horoscope attachment route", () => {
     const response = await horoscopePost(new Request("http://local/api/portfolio-horoscope", { method: "POST", body: form }));
     expect(response.status).toBe(413);
     expect(await response.json()).toEqual({ error: "Use a file up to 20MB" });
+  });
+
+  it("opens the owner's attachment through a short-lived signed URL", async () => {
+    const portfolioSingle = vi.fn().mockResolvedValue({ data: { id: portfolioId } });
+    const horoscopeSingle = vi.fn().mockResolvedValue({
+      data: {
+        id: "horoscope-id",
+        portfolio_id: portfolioId,
+        storage_path: `${portfolioId}/original/chart.pdf`,
+        mime_type: "application/pdf",
+        file_extension: "pdf",
+        byte_size: 1024,
+        language_label: "Kannada",
+        page_count: 2,
+        published_at: null,
+        created_at: "2026-08-04T00:00:00Z",
+        updated_at: "2026-08-04T00:00:00Z",
+      },
+    });
+    const from = vi.fn((table: string) => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => table === "portfolios"
+          ? { single: portfolioSingle }
+          : { maybeSingle: horoscopeSingle }),
+      })),
+    }));
+    const createSignedUrl = vi.fn().mockResolvedValue({
+      data: { signedUrl: "https://storage.test/chart.pdf?token=short-lived" },
+      error: null,
+    });
+    getApiUser.mockResolvedValueOnce({
+      status: "authenticated",
+      user: { id: "owner" },
+      supabase: { from, storage: { from: vi.fn(() => ({ createSignedUrl })) } },
+    });
+
+    const response = await horoscopeView();
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("https://storage.test/chart.pdf?token=short-lived");
+    expect(createSignedUrl).toHaveBeenCalledWith(`${portfolioId}/original/chart.pdf`, 300, undefined);
   });
 });
 

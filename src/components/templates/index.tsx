@@ -6,7 +6,7 @@ export interface TemplateProps {
   data: PortfolioData;
   themeColor: string;
   sunSign: string | null;
-  accessMode?: "full" | "approved" | "restricted";
+  accessMode?: "owner" | "approved" | "public";
   photos?: PortfolioPhoto[];
   horoscopeAttachment?: PortfolioHoroscopeAttachment;
 }

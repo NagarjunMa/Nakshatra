@@ -11,7 +11,7 @@ import {
 import type { PortfolioData } from "../src/types/portfolio";
 
 const draft: PortfolioData = {
-  privacy_mode: "progressive",
+  privacy_mode: "balanced",
   personal: {
     name: "Aditi Rao",
     dob: "1996-08-12",
@@ -40,9 +40,9 @@ describe("dashboard portfolio mapping", () => {
       theme_color: "#f7f5ef",
       sun_sign: "kanya",
       template_id: 1,
-      privacy_mode: "progressive",
+      privacy_mode: "balanced",
       visibility_settings: {
-        preset: "progressive",
+        preset: "balanced",
         legacy_sections: {
           journey: "public",
           family: "approved",
@@ -57,7 +57,7 @@ describe("dashboard portfolio mapping", () => {
     });
   });
 
-  it("only maps populated family members and applies progressive visibility", () => {
+  it("only maps populated family members and applies balanced visibility", () => {
     expect(mapFamilyMembers(draft)).toEqual([
       { relationship: "father", name: "Rao", occupation: "Engineer" },
       { relationship: "sibling", name: "Maya", occupation: "Designer" },
@@ -66,8 +66,8 @@ describe("dashboard portfolio mapping", () => {
       expect.arrayContaining([
         expect.objectContaining({
           section_key: "family",
-          visibility: "interest_required",
-          requires_interest: true,
+          visibility: "public",
+          requires_interest: false,
         }),
         expect.objectContaining({
           section_key: "contact",
@@ -88,13 +88,13 @@ describe("dashboard portfolio mapping", () => {
     expect(mapCareerEntry(draft)).toBeNull();
     expect(mapFamilyMembers({ ...draft, family: {} })).toEqual([]);
     expect(mapVisibilityRules("portfolio-id", { ...draft, visibility: {} })[0]).toMatchObject({
-      visibility: "interest_required",
-      requires_interest: true,
+      visibility: "public",
+      requires_interest: false,
     });
     expect(
       mapVisibilityRules("portfolio-id", {
         ...draft,
-        privacy_mode: "open",
+        privacy_mode: "balanced",
       })
     ).toEqual(
       expect.arrayContaining([

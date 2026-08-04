@@ -100,18 +100,18 @@ describe("public portfolio snapshot", () => {
     });
   });
 
-  it("applies private and open templates without exposing contact details", () => {
+  it("applies private and balanced templates without exposing contact details", () => {
     const privateSnapshot = createPublicPortfolioSnapshot({
       ...portfolio,
       privacy_mode: "private",
     });
-    expect(privateSnapshot).not.toHaveProperty("career");
+    expect(privateSnapshot.career).toEqual({ title: "Engineer" });
     expect(privateSnapshot).not.toHaveProperty("family");
     expect(privateSnapshot.personal).not.toHaveProperty("long_term_goals");
 
-    const openSnapshot = createPublicPortfolioSnapshot({
+    const balancedSnapshot = createPublicPortfolioSnapshot({
       ...portfolio,
-      privacy_mode: "open",
+      privacy_mode: "balanced",
       family: {
         ...portfolio.family,
         public_summary: "A close-knit family with roots in Karnataka.",
@@ -120,14 +120,14 @@ describe("public portfolio snapshot", () => {
         family_spread: "India and the US",
       },
     });
-    expect(openSnapshot.family).toEqual({
+    expect(balancedSnapshot.family).toEqual({
       public_summary: "A close-knit family with roots in Karnataka.",
       paternal_origin: "Mysuru",
       maternal_origin: "Bengaluru",
       family_spread: "India and the US",
     });
-    expect(openSnapshot).not.toHaveProperty("contact");
-    expect(openSnapshot.visibility).toEqual({
+    expect(balancedSnapshot).not.toHaveProperty("contact");
+    expect(balancedSnapshot.visibility).toEqual({
       family: "public",
       family_details: "restricted",
       astrology: "public",
@@ -164,7 +164,7 @@ describe("public portfolio snapshot", () => {
       astrology: "restricted",
       contact: "restricted",
     });
-    expect(privateSnapshot.personal.profile_summary).toBeUndefined();
+    expect(privateSnapshot.personal.profile_summary).toMatch(/…$/);
     expect(privateSnapshot.personal.short_bio).toBe("Warm, grounded, and curious about the world.");
   });
 });

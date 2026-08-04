@@ -10,6 +10,7 @@ import { BiodataTemplate } from "../src/components/templates";
 import CelestialUnion from "../src/components/templates/CelestialUnion";
 import type { PortfolioPhoto } from "../src/features/media/portfolio-photo";
 import { createPublicPortfolioSnapshot } from "../src/features/portfolio/server/public-snapshot.service";
+import { createApprovedPortfolioSnapshot } from "../src/features/portfolio/server/approved-snapshot.service";
 import type { PortfolioData } from "../src/types/portfolio";
 
 const complete: PortfolioData = {
@@ -98,7 +99,7 @@ describe("celestial union portfolio", () => {
         data={publicData}
         themeColor="#17151c"
         sunSign="kanya"
-        accessMode="restricted"
+        accessMode="public"
         photos={photos}
       />
     );
@@ -144,13 +145,16 @@ describe("celestial union portfolio", () => {
       pageCount: 3,
     };
     const { rerender } = render(
-      <CelestialUnion data={createPublicPortfolioSnapshot(complete)} themeColor="" sunSign="kanya" accessMode="approved" horoscopeAttachment={attachment} />
+      <CelestialUnion data={createApprovedPortfolioSnapshot(complete)} themeColor="" sunSign="kanya" accessMode="approved" horoscopeAttachment={attachment} />
     );
-    expect(screen.getByText("Approved view")).toBeInTheDocument();
+    expect(screen.getByText("Full Approved Request view")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /original horoscope/i })).toHaveAttribute("href", "/p/token/horoscope");
     expect(screen.getByText("PDF document · Kannada · 3 pages")).toBeInTheDocument();
+    expect(screen.getByText("Ramesh Rao · Architect")).toBeInTheDocument();
+    expect(screen.getByText("Kashyap")).toBeInTheDocument();
+    expect(screen.queryByText("family@example.com")).not.toBeInTheDocument();
 
-    rerender(<CelestialUnion data={createPublicPortfolioSnapshot(complete)} themeColor="" sunSign="kanya" accessMode="restricted" />);
+    rerender(<CelestialUnion data={createPublicPortfolioSnapshot(complete)} themeColor="" sunSign="kanya" accessMode="public" />);
     expect(screen.queryByRole("link", { name: /original horoscope/i })).not.toBeInTheDocument();
   });
 
@@ -235,12 +239,12 @@ describe("celestial union portfolio", () => {
     expect(screen.queryByRole("heading", { name: "More can be shared after approval." })).not.toBeInTheDocument();
   });
 
-  it("clears stale fields while rerendering Private, Balanced, and Open modes", () => {
+  it("clears stale fields while rerendering Private and Balanced modes", () => {
     const privateData = createPublicPortfolioSnapshot({ ...complete, privacy_mode: "private" });
-    const balancedData = createPublicPortfolioSnapshot({ ...complete, privacy_mode: "progressive" });
-    const openData = createPublicPortfolioSnapshot({
+    const balancedData = createPublicPortfolioSnapshot({ ...complete, privacy_mode: "balanced" });
+    const balancedFamilyData = createPublicPortfolioSnapshot({
       ...complete,
-      privacy_mode: "open",
+      privacy_mode: "balanced",
       family: {
         ...complete.family,
         public_summary: "A close-knit family with roots in Karnataka.",
@@ -249,7 +253,7 @@ describe("celestial union portfolio", () => {
       },
     });
     const { container, rerender } = render(
-      <CelestialUnion data={privateData} themeColor="" sunSign="kanya" accessMode="restricted" photos={photos} />
+      <CelestialUnion data={privateData} themeColor="" sunSign="kanya" accessMode="public" photos={photos} />
     );
 
     expect(container.querySelector('[data-privacy-mode="private"]')).toBeTruthy();
@@ -258,17 +262,17 @@ describe("celestial union portfolio", () => {
     expect(screen.queryByText("Northeastern · 2020")).not.toBeInTheDocument();
     expect(within(screen.getByLabelText("At a glance")).queryByText(/Kanya \(Virgo\)/)).not.toBeInTheDocument();
 
-    rerender(<CelestialUnion data={balancedData} themeColor="" sunSign="kanya" accessMode="restricted" photos={photos} />);
-    expect(container.querySelector('[data-privacy-mode="progressive"]')).toBeTruthy();
+    rerender(<CelestialUnion data={balancedData} themeColor="" sunSign="kanya" accessMode="public" photos={photos} />);
+    expect(container.querySelector('[data-privacy-mode="balanced"]')).toBeTruthy();
     expect(screen.getByText("Northeastern · 2020")).toBeInTheDocument();
     expect(within(screen.getByLabelText("At a glance")).getByText(/Kanya \(Virgo\)/)).toBeInTheDocument();
     expect(screen.queryByText("A close-knit family with roots in Karnataka.")).not.toBeInTheDocument();
 
-    rerender(<CelestialUnion data={openData} themeColor="" sunSign="kanya" accessMode="restricted" photos={photos} />);
-    expect(container.querySelector('[data-privacy-mode="open"]')).toBeTruthy();
+    rerender(<CelestialUnion data={balancedFamilyData} themeColor="" sunSign="kanya" accessMode="public" photos={photos} />);
+    expect(container.querySelector('[data-privacy-mode="balanced"]')).toBeTruthy();
     expect(screen.getByText("A close-knit family with roots in Karnataka.")).toBeInTheDocument();
 
-    rerender(<CelestialUnion data={privateData} themeColor="" sunSign="kanya" accessMode="restricted" photos={photos} />);
+    rerender(<CelestialUnion data={privateData} themeColor="" sunSign="kanya" accessMode="public" photos={photos} />);
     expect(screen.queryByText("A close-knit family with roots in Karnataka.")).not.toBeInTheDocument();
     expect(screen.queryByText("Northeastern · 2020")).not.toBeInTheDocument();
   });

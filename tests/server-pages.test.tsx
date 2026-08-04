@@ -65,6 +65,7 @@ vi.mock("@/app/dashboard/dashboard-client", () => ({ default: (props: { userEmai
 import DashboardPage from "../src/app/dashboard/page";
 import EditPage from "../src/app/edit/page";
 import PreviewPage from "../src/app/preview/page";
+import ApprovedPreviewPage from "../src/app/approved-preview/page";
 import PublicBiodataPage, { generateMetadata } from "../src/app/p/[token]/page";
 import HoroscopePage from "../src/app/p/[token]/horoscope/page";
 import OpenGraphImage from "../src/app/p/[token]/opengraph-image";
@@ -122,10 +123,20 @@ describe("authenticated server pages", () => {
     render(await PreviewPage());
     expect(screen.getByText("Preview Mode (Draft)")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Back to editing" })).toHaveAttribute("href", "/dashboard?edit=1");
-    expect(screen.getByTestId("template")).toHaveTextContent("Aditi Rao:restricted");
+    expect(screen.getByTestId("template")).toHaveTextContent("Aditi Rao:public");
     expect(mocks.photoUrls).toHaveBeenCalledWith(expect.objectContaining({ viewer: "public" }));
     mocks.outcomes.portfolios = { data: null };
     await expect(PreviewPage()).rejects.toThrow("REDIRECT:/dashboard?edit=1");
+  });
+
+  it("loads the owner-safe full approved request preview", async () => {
+    mocks.outcomes.portfolios = { data: portfolio };
+    mocks.outcomes.portfolio_media = { data: [] };
+    mocks.outcomes.portfolio_horoscopes = { data: null };
+    render(await ApprovedPreviewPage());
+    expect(screen.getByText(/Full Approved Request view · Owner preview/)).toBeInTheDocument();
+    expect(screen.getByTestId("template")).toHaveTextContent("Aditi Rao:approved");
+    expect(mocks.photoUrls).toHaveBeenCalledWith(expect.objectContaining({ viewer: "approved" }));
   });
 });
 
@@ -145,8 +156,18 @@ describe("public portfolio pages", () => {
     mocks.outcomes.public_portfolio_snapshots = { data: { portfolio_id: "portfolio-1", data, template_id: 3, theme_color: null, sun_sign: "kanya" } };
     mocks.outcomes.portfolio_media = { data: [] };
     render(await PublicBiodataPage({ params: Promise.resolve({ token: "token" }) }));
-    expect(screen.getByTestId("template")).toHaveTextContent("Aditi Rao:restricted");
+    expect(screen.getByTestId("template")).toHaveTextContent("Aditi Rao:public");
     await waitFor(() => expect(mocks.rpc).toHaveBeenCalledWith("record_view", { p_portfolio_id: "portfolio-1" }));
+  });
+
+  it("uses the approved projection only when row-level access returns an approved snapshot", async () => {
+    mocks.outcomes.public_portfolio_snapshots = { data: { portfolio_id: "portfolio-1", data, template_id: 3, theme_color: null, sun_sign: "kanya" } };
+    mocks.outcomes.approved_portfolio_snapshots = { data: { data: { ...data, personal: { ...data.personal, name: "Approved Aditi" } }, template_id: 3, theme_color: null, sun_sign: "kanya" } };
+    mocks.outcomes.portfolio_media = { data: [] };
+    mocks.outcomes.portfolio_horoscopes = { data: null };
+    render(await PublicBiodataPage({ params: Promise.resolve({ token: "token" }) }));
+    expect(screen.getByTestId("template")).toHaveTextContent("Approved Aditi:approved");
+    expect(mocks.photoUrls).toHaveBeenCalledWith(expect.objectContaining({ viewer: "approved" }));
   });
 
   it("keeps the separate horoscope viewer gated and uses a neutral Word download", async () => {

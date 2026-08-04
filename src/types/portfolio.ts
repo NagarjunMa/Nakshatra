@@ -1,5 +1,18 @@
 import { z } from "zod/v4";
 
+export const PORTFOLIO_PRIVACY_MODES = ["balanced", "private"] as const;
+export type PortfolioPrivacyMode = (typeof PORTFOLIO_PRIVACY_MODES)[number];
+
+/** Converts retired public-mode values without allowing them into new writes. */
+export function normalizePortfolioPrivacyMode(value: unknown): PortfolioPrivacyMode {
+  return value === "private" ? "private" : "balanced";
+}
+
+const privacyModeSchema = z.preprocess(
+  normalizePortfolioPrivacyMode,
+  z.enum(PORTFOLIO_PRIVACY_MODES)
+);
+
 // --- Rashi keys for validation ---
 
 export const RASHI_OPTIONS = [
@@ -231,7 +244,7 @@ export const visibilitySchema = z.object({
 // --- Combined Portfolio Schema ---
 
 export const portfolioDataSchema = z.object({
-  privacy_mode: z.enum(["open", "progressive", "private"]).optional(),
+  privacy_mode: privacyModeSchema.optional(),
   personal: personalSchema,
   vitals: vitalsSchema.optional(),
   astrology: astrologySchema.optional(),
@@ -336,7 +349,7 @@ export interface Portfolio {
   published_at: string | null;
   expires_at: string | null;
   last_renewed_at: string | null;
-  privacy_mode?: "open" | "progressive" | "private";
+  privacy_mode?: PortfolioPrivacyMode;
   visibility_settings?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
