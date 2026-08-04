@@ -296,6 +296,31 @@ export interface PortfolioMediaMetadata {
   blurPath?: string;
 }
 
+export interface PortfolioHoroscope {
+  id: string;
+  portfolio_id: string;
+  storage_path: string;
+  mime_type:
+    | "application/pdf"
+    | "application/msword"
+    | "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    | "image/webp";
+  file_extension: "pdf" | "doc" | "docx" | "webp";
+  byte_size: number;
+  language_label: string | null;
+  page_count: number | null;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PortfolioHoroscopeAttachment {
+  href: string;
+  formatLabel: string;
+  languageLabel: string | null;
+  pageCount: number | null;
+}
+
 // --- Form Steps Config ---
 
 export const FORM_STEPS = [

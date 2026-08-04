@@ -114,6 +114,24 @@ describe("celestial union portfolio", () => {
     expect(screen.getByAltText("Landscape")).toBeInTheDocument();
   });
 
+  it("shows the separate horoscope attachment only in an approved projection", () => {
+    const attachment = {
+      href: "/p/token/horoscope",
+      formatLabel: "PDF document",
+      languageLabel: "Kannada",
+      pageCount: 3,
+    };
+    const { rerender } = render(
+      <CelestialUnion data={createPublicPortfolioSnapshot(complete)} themeColor="" sunSign="kanya" accessMode="approved" horoscopeAttachment={attachment} />
+    );
+    expect(screen.getByText("Approved view")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /original horoscope/i })).toHaveAttribute("href", "/p/token/horoscope");
+    expect(screen.getByText("PDF document · Kannada · 3 pages")).toBeInTheDocument();
+
+    rerender(<CelestialUnion data={createPublicPortfolioSnapshot(complete)} themeColor="" sunSign="kanya" accessMode="restricted" />);
+    expect(screen.queryByRole("link", { name: /original horoscope/i })).not.toBeInTheDocument();
+  });
+
   it("renders family and contact values for the full owner preview", () => {
     render(
       <CelestialUnion

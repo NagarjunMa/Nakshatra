@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { PortfolioData } from "../src/types/portfolio";
 import {
   deletePortfolioPhotoRequest,
+  deleteHoroscopeRequest,
   publishPortfolioRequest,
   renewPortfolioLinkRequest,
   rotatePortfolioLinkRequest,
@@ -9,6 +10,7 @@ import {
   unpublishPortfolioRequest,
   updatePortfolioPhotoRequest,
   uploadPortfolioPhotoRequest,
+  uploadHoroscopeRequest,
 } from "../src/features/portfolio/client/portfolio-dashboard.api";
 
 const draft: PortfolioData = {
@@ -90,6 +92,18 @@ describe("portfolio dashboard API client", () => {
     await deletePortfolioPhotoRequest("id with/slash");
     expect(globalThis.fetch).toHaveBeenLastCalledWith(
       "/api/portfolio-media?mediaId=id%20with%2Fslash",
+      { method: "DELETE" }
+    );
+
+    await uploadHoroscopeRequest(formData);
+    expect(globalThis.fetch).toHaveBeenLastCalledWith(
+      "/api/portfolio-horoscope",
+      { method: "POST", body: formData }
+    );
+
+    await deleteHoroscopeRequest("id with/slash");
+    expect(globalThis.fetch).toHaveBeenLastCalledWith(
+      "/api/portfolio-horoscope?horoscopeId=id%20with%2Fslash",
       { method: "DELETE" }
     );
   });

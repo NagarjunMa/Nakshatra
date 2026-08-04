@@ -10,6 +10,7 @@ const repository = vi.hoisted(() => ({
   renewPortfolioLink: vi.fn(),
 }));
 const ensureProtectedPortfolioPhotoPreviews = vi.hoisted(() => vi.fn());
+const publishHoroscope = vi.hoisted(() => vi.fn());
 
 vi.mock("../src/features/portfolio/server/dashboard.repository", () => ({
   DashboardRepository: class {
@@ -21,6 +22,10 @@ vi.mock("../src/features/portfolio/server/dashboard.repository", () => ({
 
 vi.mock("../src/features/media/server/media.service", () => ({
   ensureProtectedPortfolioPhotoPreviews,
+}));
+
+vi.mock("../src/features/horoscope/server/horoscope.service", () => ({
+  publishHoroscope,
 }));
 
 import {
@@ -70,6 +75,7 @@ describe("portfolio lifecycle services", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     ensureProtectedPortfolioPhotoPreviews.mockResolvedValue(undefined);
+    publishHoroscope.mockResolvedValue(undefined);
     repository.findPortfolioForUser.mockResolvedValue({
       data: { id: "portfolio-id", is_published: false, share_token: null, expires_at: null },
       error: null,
@@ -104,6 +110,7 @@ describe("portfolio lifecycle services", () => {
       })
     );
     expect(result).toMatchObject({ action: "created", shareUrl: expect.stringContaining("/p/") });
+    expect(publishHoroscope).toHaveBeenCalledWith(expect.objectContaining({ portfolioId: "portfolio-id" }));
   });
 
   it("normalizes legacy template labels to Celestial Union", async () => {

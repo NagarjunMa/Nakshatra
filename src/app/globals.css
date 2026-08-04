@@ -1400,6 +1400,91 @@ body {
   border-bottom: 1px solid var(--portfolio-border);
 }
 
+[data-template="celestial-union"] .portfolio-horoscope-attachment {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  margin-top: 26px;
+  padding: 18px;
+  border: 1px solid color-mix(in srgb, var(--portfolio-gold) 38%, var(--portfolio-border));
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--portfolio-gold) 7%, var(--portfolio-surface));
+  color: var(--portfolio-foreground);
+  text-decoration: none;
+  transition: border-color 160ms ease, transform 160ms ease, background 160ms ease;
+}
+
+[data-template="celestial-union"] .portfolio-horoscope-attachment:hover {
+  border-color: color-mix(in srgb, var(--portfolio-gold) 70%, var(--portfolio-border));
+  background: color-mix(in srgb, var(--portfolio-gold) 11%, var(--portfolio-surface));
+  transform: translateY(-1px);
+}
+
+[data-template="celestial-union"] .portfolio-horoscope-icon {
+  display: inline-flex;
+  width: 46px;
+  height: 46px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--portfolio-teal) 38%, var(--portfolio-border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--portfolio-teal) 10%, transparent);
+  color: var(--portfolio-teal);
+}
+
+[data-template="celestial-union"] .portfolio-horoscope-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+[data-template="celestial-union"] .portfolio-horoscope-copy {
+  display: grid;
+  gap: 2px;
+}
+
+[data-template="celestial-union"] .portfolio-horoscope-copy strong {
+  color: var(--portfolio-foreground);
+  font-size: 16px;
+}
+
+[data-template="celestial-union"] .portfolio-horoscope-copy > span {
+  color: var(--portfolio-muted);
+  font-size: 13px;
+}
+
+[data-template="celestial-union"] .portfolio-horoscope-copy small {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+  color: var(--portfolio-teal);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+[data-template="celestial-union"] .portfolio-horoscope-copy small svg {
+  width: 12px;
+  height: 12px;
+}
+
+[data-template="celestial-union"] .portfolio-horoscope-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--portfolio-primary);
+  font-size: 13px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+[data-template="celestial-union"] .portfolio-horoscope-action svg {
+  width: 15px;
+  height: 15px;
+}
+
 [data-template="celestial-union"] .portfolio-partnership-copy {
   margin: 0;
   color: var(--portfolio-foreground);
@@ -1666,6 +1751,14 @@ body {
   [data-template="celestial-union"] .portfolio-detail-grid,
   [data-template="celestial-union"] .portfolio-astrology-grid {
     grid-template-columns: 1fr;
+  }
+
+  [data-template="celestial-union"] .portfolio-horoscope-attachment {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  [data-template="celestial-union"] .portfolio-horoscope-action {
+    grid-column: 2;
   }
 
   [data-template="celestial-union"] .portfolio-gallery,

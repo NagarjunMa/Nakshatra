@@ -10,6 +10,8 @@ const unpublishPortfolio = vi.hoisted(() => vi.fn());
 const uploadPortfolioPhoto = vi.hoisted(() => vi.fn());
 const updatePortfolioPhoto = vi.hoisted(() => vi.fn());
 const deletePortfolioPhoto = vi.hoisted(() => vi.fn());
+const uploadHoroscope = vi.hoisted(() => vi.fn());
+const deleteHoroscope = vi.hoisted(() => vi.fn());
 const sharp = vi.hoisted(() => vi.fn());
 
 vi.mock("../src/lib/auth", () => ({ getApiUser }));
@@ -34,11 +36,16 @@ vi.mock("../src/features/media/server/media.service", async (importOriginal) => 
   const actual = await importOriginal<typeof import("../src/features/media/server/media.service")>();
   return { ...actual, uploadPortfolioPhoto, updatePortfolioPhoto, deletePortfolioPhoto };
 });
+vi.mock("../src/features/horoscope/server/horoscope.service", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../src/features/horoscope/server/horoscope.service")>();
+  return { ...actual, uploadHoroscope, deleteHoroscope };
+});
 vi.mock("sharp", () => ({ default: sharp }));
 
 import { GET as authCallback } from "../src/app/api/auth/callback/route";
 import { PUT as dashboardPut } from "../src/app/api/dashboard/route";
 import { DELETE as mediaDelete, PATCH as mediaPatch, POST as mediaPost } from "../src/app/api/portfolio-media/route";
+import { DELETE as horoscopeDelete, POST as horoscopePost } from "../src/app/api/portfolio-horoscope/route";
 import { POST as publishPost } from "../src/app/api/portfolio/publish/route";
 import { POST as renewPost } from "../src/app/api/portfolio/renew/route";
 import { POST as rotatePost } from "../src/app/api/portfolio/share/rotate/route";
@@ -46,6 +53,7 @@ import { POST as unpublishPost } from "../src/app/api/portfolio/share/unpublish/
 import { POST as legacyUploadPost } from "../src/app/api/upload/route";
 import { DashboardSaveError } from "../src/features/portfolio/server/dashboard.service";
 import { PortfolioMediaError } from "../src/features/media/server/media.service";
+import { HoroscopeError } from "../src/features/horoscope/server/horoscope.service";
 import { PortfolioPublishError } from "../src/features/portfolio/server/publish.service";
 import { PortfolioRenewalError } from "../src/features/portfolio/server/renew.service";
 import { PortfolioShareLifecycleError } from "../src/features/portfolio/server/share-lifecycle.service";
@@ -174,6 +182,49 @@ describe("portfolio media route", () => {
     const response = await mediaDelete(new Request(`http://local/api/portfolio-media?mediaId=${mediaId}`, { method: "DELETE" }));
     expect(response.status).toBe(500);
     expect(await response.json()).toEqual({ error: "Unable to manage photo" });
+  });
+});
+
+describe("horoscope attachment route", () => {
+  const portfolioId = "8f378bb8-ec91-4f3f-90ef-b7eea2c01506";
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getApiUser.mockResolvedValue(actor);
+    uploadHoroscope.mockResolvedValue({ id: "horoscope", portfolio_id: portfolioId });
+    deleteHoroscope.mockResolvedValue(undefined);
+  });
+
+  it("requires authentication and validates upload identity", async () => {
+    getApiUser.mockResolvedValueOnce({ status: "missing_session" });
+    expect((await horoscopePost(new Request("http://local/api/portfolio-horoscope", { method: "POST", body: new FormData() }))).status).toBe(401);
+
+    const invalid = new FormData();
+    invalid.set("horoscope", new File(["%PDF-1.7"], "chart.pdf", { type: "application/pdf" }));
+    invalid.set("portfolioId", "not-a-uuid");
+    expect((await horoscopePost(new Request("http://local/api/portfolio-horoscope", { method: "POST", body: invalid }))).status).toBe(400);
+  });
+
+  it("uploads and deletes the one attachment", async () => {
+    const form = new FormData();
+    form.set("horoscope", new File(["%PDF-1.7"], "chart.pdf", { type: "application/pdf" }));
+    form.set("portfolioId", portfolioId);
+    form.set("language", "Kannada");
+    expect(await (await horoscopePost(new Request("http://local/api/portfolio-horoscope", { method: "POST", body: form }))).json()).toMatchObject({ horoscope: { id: "horoscope" } });
+    expect(uploadHoroscope).toHaveBeenCalledWith(expect.objectContaining({ portfolioId, language: "Kannada" }));
+
+    expect((await horoscopeDelete(new Request("http://local/api/portfolio-horoscope", { method: "DELETE" }))).status).toBe(400);
+    expect((await horoscopeDelete(new Request(`http://local/api/portfolio-horoscope?horoscopeId=${portfolioId}`, { method: "DELETE" }))).status).toBe(200);
+  });
+
+  it("preserves safe domain errors", async () => {
+    uploadHoroscope.mockRejectedValueOnce(new HoroscopeError("Use a file up to 20MB", 413));
+    const form = new FormData();
+    form.set("horoscope", new File(["%PDF-1.7"], "chart.pdf", { type: "application/pdf" }));
+    form.set("portfolioId", portfolioId);
+    const response = await horoscopePost(new Request("http://local/api/portfolio-horoscope", { method: "POST", body: form }));
+    expect(response.status).toBe(413);
+    expect(await response.json()).toEqual({ error: "Use a file up to 20MB" });
   });
 });
 

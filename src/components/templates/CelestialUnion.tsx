@@ -2,6 +2,8 @@ import type { CSSProperties, ReactNode } from "react";
 import {
   BriefcaseBusiness,
   GraduationCap,
+  FileText,
+  ExternalLink,
   LockKeyhole,
   ShieldCheck,
   Sparkles,
@@ -12,14 +14,15 @@ import {
   CELESTIAL_THEME_COLORS,
   getCelestialAppearance,
 } from "@/features/portfolio/celestial-theme";
-import { RASHI_OPTIONS, type PortfolioData, type RashiKey } from "@/types/portfolio";
+import { RASHI_OPTIONS, type PortfolioData, type PortfolioHoroscopeAttachment, type RashiKey } from "@/types/portfolio";
 
 interface CelestialUnionProps {
   data: PortfolioData;
   themeColor: string;
   sunSign: string | null;
-  accessMode?: "full" | "restricted";
+  accessMode?: "full" | "approved" | "restricted";
   photos?: PortfolioPhoto[];
+  horoscopeAttachment?: PortfolioHoroscopeAttachment;
 }
 
 interface ChapterDefinition {
@@ -49,10 +52,12 @@ export default function CelestialUnion({
   sunSign,
   accessMode = "full",
   photos = [],
+  horoscopeAttachment,
 }: CelestialUnionProps) {
   const appearance = getCelestialAppearance(data.style);
   const theme = CELESTIAL_THEME_COLORS[appearance];
   const ownerPreview = accessMode === "full";
+  const approvedViewer = accessMode === "approved";
   const privacyMode = data.privacy_mode || "progressive";
   const rashi = normalizeRashi(data.astrology?.rashi || sunSign);
   const rashiOption = RASHI_OPTIONS.find((option) => option.key === rashi);
@@ -113,10 +118,13 @@ export default function CelestialUnion({
     data.family?.family_spread,
   ]) || (ownerPreview && hasDetailedFamily(data)));
   const familyProtected = isRestricted(data, "family") || isRestricted(data, "family_details");
-  const hasVisibleAstrology = astrologyVisible && (Boolean(visibleRashi) || hasAny([
-    data.astrology?.nakshatra,
-    data.astrology?.pada,
-  ]) || (ownerPreview && hasDetailedAstrology(data)));
+  const hasVisibleAstrology = Boolean(horoscopeAttachment) || (
+    astrologyVisible && (
+      Boolean(visibleRashi)
+      || hasAny([data.astrology?.nakshatra, data.astrology?.pada])
+      || (ownerPreview && hasDetailedAstrology(data))
+    )
+  );
   const astrologyProtected = isRestricted(data, "astrology") || isRestricted(data, "astrology_details");
   const hasVisiblePreferences = preferencesVisible && hasAny([
     data.preferences?.narrative,
@@ -262,6 +270,21 @@ export default function CelestialUnion({
           {astrologyProtected && (
             <ProtectedInline>Exact birth time, place, chart, and gotra remain protected.</ProtectedInline>
           )}
+          {horoscopeAttachment && (
+            <a className="portfolio-horoscope-attachment" href={horoscopeAttachment.href} target="_blank" rel="noreferrer">
+              <span className="portfolio-horoscope-icon"><FileText aria-hidden="true" /></span>
+              <span className="portfolio-horoscope-copy">
+                <strong>Original horoscope</strong>
+                <span>
+                  {[horoscopeAttachment.formatLabel, horoscopeAttachment.languageLabel, horoscopeAttachment.pageCount ? `${horoscopeAttachment.pageCount} ${horoscopeAttachment.pageCount === 1 ? "page" : "pages"}` : null]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </span>
+                <small><LockKeyhole aria-hidden="true" /> Approved access</small>
+              </span>
+              <span className="portfolio-horoscope-action">View document <ExternalLink aria-hidden="true" /></span>
+            </a>
+          )}
         </>
       ),
     });
@@ -318,7 +341,7 @@ export default function CelestialUnion({
             </nav>
           )}
           <span className="portfolio-mode-label">
-            <ShieldCheck aria-hidden="true" /> {ownerPreview ? "Owner view" : `${privacyLabel(privacyMode)} view`}
+            <ShieldCheck aria-hidden="true" /> {ownerPreview ? "Owner view" : approvedViewer ? "Approved view" : `${privacyLabel(privacyMode)} view`}
           </span>
         </div>
       </header>

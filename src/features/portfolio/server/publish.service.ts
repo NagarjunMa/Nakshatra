@@ -16,6 +16,7 @@ import {
 import { getCelestialBackground } from "@/features/portfolio/celestial-theme";
 import { createShareUrl } from "./share-url.service";
 import { ensureProtectedPortfolioPhotoPreviews } from "@/features/media/server/media.service";
+import { publishHoroscope } from "@/features/horoscope/server/horoscope.service";
 
 export class PortfolioPublishError extends Error {
   constructor(
@@ -78,11 +79,12 @@ export async function publishPortfolio({
     );
   }
 
+  const publishedAt = new Date().toISOString();
   const updates: Record<string, unknown> = {
     draft_data: canonicalData,
     published_data: canonicalData,
     is_published: true,
-    published_at: new Date().toISOString(),
+    published_at: publishedAt,
     sun_sign: data.astrology?.rashi || null,
     theme_color: getCelestialBackground(data.style),
     template_id: CELESTIAL_UNION_TEMPLATE_ID,
@@ -116,6 +118,15 @@ export async function publishPortfolio({
   });
   if (snapshotError) {
     throw new PortfolioPublishError("We could not create the public portfolio safely. Please try again.", "PUBLIC_SNAPSHOT_PERSISTENCE_FAILED");
+  }
+
+  try {
+    await publishHoroscope({ supabase, portfolioId: portfolio.id, publishedAt });
+  } catch {
+    throw new PortfolioPublishError(
+      "Your portfolio was updated, but we could not publish its horoscope attachment. Please try again.",
+      "HOROSCOPE_PUBLISH_FAILED"
+    );
   }
 
   return {

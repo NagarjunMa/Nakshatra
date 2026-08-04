@@ -1,13 +1,14 @@
 import CelestialUnion from "./CelestialUnion";
 import type { PortfolioPhoto } from "@/features/media/portfolio-photo";
-import type { PortfolioData } from "@/types/portfolio";
+import type { PortfolioData, PortfolioHoroscopeAttachment } from "@/types/portfolio";
 
 export interface TemplateProps {
   data: PortfolioData;
   themeColor: string;
   sunSign: string | null;
-  accessMode?: "full" | "restricted";
+  accessMode?: "full" | "approved" | "restricted";
   photos?: PortfolioPhoto[];
+  horoscopeAttachment?: PortfolioHoroscopeAttachment;
 }
 
 /**
@@ -24,6 +25,7 @@ export function BiodataTemplate(
       sunSign={props.sunSign}
       accessMode={props.accessMode}
       photos={props.photos}
+      horoscopeAttachment={props.horoscopeAttachment}
     />
   );
 }

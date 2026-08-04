@@ -3,8 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { BiodataTemplate } from "@/components/templates";
 import type { Metadata } from "next";
 import type { PortfolioData } from "@/types/portfolio";
-import type { PortfolioMedia } from "@/types/portfolio";
+import type { PortfolioHoroscope, PortfolioHoroscopeAttachment, PortfolioMedia } from "@/types/portfolio";
 import { createPortfolioPhotoUrls } from "@/features/media/server/photo-url.service";
+import { horoscopeFormatLabel } from "@/features/horoscope/server/horoscope.contract";
 
 interface Props {
   params: Promise<{ token: string }>;
@@ -85,6 +86,21 @@ export default async function PublicBiodataPage({ params }: Props) {
     media: (media ?? []) as PortfolioMedia[],
     viewer: "public",
   });
+  const { data: horoscopeRow } = await supabase
+    .from("portfolio_horoscopes")
+    .select("id, portfolio_id, storage_path, mime_type, file_extension, byte_size, language_label, page_count, published_at, created_at, updated_at")
+    .eq("portfolio_id", portfolio.portfolio_id)
+    .not("published_at", "is", null)
+    .maybeSingle();
+  const horoscope = horoscopeRow as PortfolioHoroscope | null;
+  const horoscopeAttachment: PortfolioHoroscopeAttachment | undefined = horoscope
+    ? {
+        href: `/p/${encodeURIComponent(token)}/horoscope`,
+        formatLabel: horoscopeFormatLabel(horoscope.file_extension),
+        languageLabel: horoscope.language_label,
+        pageCount: horoscope.page_count,
+      }
+    : undefined;
 
   return (
     <BiodataTemplate
@@ -92,8 +108,9 @@ export default async function PublicBiodataPage({ params }: Props) {
       data={data}
       themeColor={themeColor}
       sunSign={sunSign}
-      accessMode="restricted"
+      accessMode={horoscopeAttachment ? "approved" : "restricted"}
       photos={photos}
+      horoscopeAttachment={horoscopeAttachment}
     />
   );
 }
