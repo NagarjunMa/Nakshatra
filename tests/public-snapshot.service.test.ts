@@ -13,7 +13,7 @@ const portfolio: PortfolioData = {
     current_location: "New York",
     gender: "female",
     immigration_status: "H-1B",
-    short_bio: "Warm, curious, and grounded.",
+    short_bio: "Warm, grounded, and curious about the world.",
     profile_summary: "A thoughtful public introduction.",
     long_term_goals: "Build a generous and grounded life.",
     religion: "Hindu",
@@ -60,7 +60,7 @@ describe("public portfolio snapshot", () => {
       name: "Aditi Rao",
       preferred_name: "Aditi",
       current_location: "New York",
-      short_bio: "Warm, curious, and grounded.",
+      short_bio: "Warm, grounded, and curious about the world.",
     });
     expect(snapshot.personal).not.toHaveProperty("photo_url");
     expect(snapshot.personal).not.toHaveProperty("photo_thumb_url");
@@ -164,12 +164,7 @@ describe("public portfolio snapshot", () => {
       astrology: "restricted",
       contact: "restricted",
     });
-    expect(privateSnapshot.personal.profile_summary?.length).toBeLessThan(
-      portfolioDataStoryLength({ ...portfolio, personal: { ...portfolio.personal, profile_summary: "A ".repeat(200) } })
-    );
+    expect(privateSnapshot.personal.profile_summary).toBeUndefined();
+    expect(privateSnapshot.personal.short_bio).toBe("Warm, grounded, and curious about the world.");
   });
 });
-
-function portfolioDataStoryLength(data: PortfolioData) {
-  return data.personal.profile_summary?.length ?? 0;
-}

@@ -13,6 +13,7 @@ const completeBlueprint: PortfolioData = {
     dob: "1996-08-12",
     gender: "female",
     profile_for: "self",
+    short_bio: "Warm, grounded, and curious.",
     profile_summary: "A thoughtful introduction",
     place_of_birth: "Bengaluru",
     current_location: "Boston, Massachusetts, United States",
@@ -66,6 +67,7 @@ describe("blueprint form", () => {
     render(<BlueprintForm data={completeBlueprint} onUpdate={onUpdate} />);
 
     fireEvent.change(screen.getByLabelText("Full name"), { target: { value: "Updated Name" } });
+    fireEvent.change(screen.getByLabelText("Short introduction"), { target: { value: "A concise new bio" } });
     fireEvent.click(screen.getByRole("button", { name: /Astrology/ }));
     fireEvent.change(screen.getByLabelText("Rashi"), { target: { value: "kumbha" } });
     fireEvent.click(screen.getByRole("button", { name: /Family/ }));
@@ -76,6 +78,7 @@ describe("blueprint form", () => {
     fireEvent.click(screen.getByRole("button", { name: /Open/ }));
 
     expect(onUpdate).toHaveBeenCalledWith("personal", expect.objectContaining({ name: "Updated Name" }));
+    expect(onUpdate).toHaveBeenCalledWith("personal", expect.objectContaining({ short_bio: "A concise new bio" }));
     expect(onUpdate).toHaveBeenCalledWith("astrology", expect.objectContaining({ rashi: "kumbha" }));
     expect(onUpdate).toHaveBeenCalledWith("family", expect.objectContaining({ sibling_count: 2 }));
     expect(onUpdate).toHaveBeenCalledWith("contact", expect.objectContaining({

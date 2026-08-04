@@ -15,7 +15,7 @@ import {
 } from "./publish-readiness.service";
 import { getCelestialBackground } from "@/features/portfolio/celestial-theme";
 import { createShareUrl } from "./share-url.service";
-import { ensureProtectedPortfolioPhotoPreviews } from "@/features/media/server/media.service";
+import { ensurePortfolioPhotoPreviews } from "@/features/media/server/media.service";
 import { publishHoroscope } from "@/features/horoscope/server/horoscope.service";
 
 export class PortfolioPublishError extends Error {
@@ -71,7 +71,7 @@ export async function publishPortfolio({
   } as PortfolioData;
 
   try {
-    await ensureProtectedPortfolioPhotoPreviews({ supabase, portfolioId: portfolio.id });
+    await ensurePortfolioPhotoPreviews({ supabase, portfolioId: portfolio.id });
   } catch {
     throw new PortfolioPublishError(
       "We could not safely prepare your protected photos. Please try again.",

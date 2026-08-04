@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   AdaptivePortfolioGallery,
@@ -19,7 +19,7 @@ const complete: PortfolioData = {
     dob: "1996-08-12",
     gender: "female",
     current_location: "Boston",
-    short_bio: "Warm, curious, and grounded.",
+    short_bio: "Warm, grounded, and curious about the world.",
     profile_summary: "A thoughtful introduction",
   },
   vitals: { height: "5 ft 5 in", complexion: "Fair", gotra: "Kashyap" },
@@ -42,7 +42,7 @@ const complete: PortfolioData = {
     current_country: "India",
     family_note: "Close-knit",
   },
-  lifestyle: { hobbies: "Reading, Travel", diet: "Vegetarian" },
+  lifestyle: { hobbies: "Reading, Travel", languages: "English, Hindi", diet: "Vegetarian" },
   preferences: { narrative: "A kind and curious partnership" },
   contact: {
     contact_person: "Ramesh Rao",
@@ -103,17 +103,22 @@ describe("celestial union portfolio", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Aditi Rao" })).toBeInTheDocument();
-    expect(screen.getByText("Warm, curious, and grounded.")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Education and career" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Family" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "More can be shared after approval." })).toBeInTheDocument();
-    expect(screen.getByLabelText("Rashi: Kanya (Virgo)")).toHaveTextContent("Kanya");
+    expect(screen.getByText(/Engineer.*Boston.*29/)).toBeInTheDocument();
+    expect(within(screen.getByLabelText("At a glance")).getByText(/Kanya \(Virgo\)/)).toBeInTheDocument();
+    expect(screen.getByText("Warm, grounded, and curious about the world.")).toBeInTheDocument();
+    expect(screen.getAllByText("English")).toHaveLength(1);
+    expect(screen.queryByRole("link", { name: "Explore profile" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "How privacy works" })).not.toBeInTheDocument();
     expect(screen.queryByText("1996-08-12")).not.toBeInTheDocument();
     expect(screen.queryByText("Fair")).not.toBeInTheDocument();
     expect(screen.queryByText("Kashyap")).not.toBeInTheDocument();
     expect(screen.queryByText(/Ramesh Rao/)).not.toBeInTheDocument();
     expect(screen.queryByText("family@example.com")).not.toBeInTheDocument();
     expect(screen.getByAltText("Landscape")).toBeInTheDocument();
+    expect(document.querySelector(".portfolio-chapter-pairs")?.children).toHaveLength(4);
   });
 
   it("shows the separate horoscope attachment only in an approved projection", () => {
@@ -153,12 +158,12 @@ describe("celestial union portfolio", () => {
     expect(screen.getByText("family@example.com")).toBeInTheDocument();
   });
 
-  it("uses the accessible zodiac badge and fixed dark design tokens", () => {
+  it("uses the accessible zodiac fact and fixed dark design tokens", () => {
     const { container } = render(
       <CelestialUnion data={{ ...complete, style: { appearance: "dark" } }} themeColor="#ffffff" sunSign="kanya" photos={photos} />
     );
     expect(container.querySelector('[data-appearance="dark"]')).toBeTruthy();
-    expect(screen.getByLabelText("Rashi: Kanya (Virgo)")).toHaveTextContent("Kanya");
+    expect(within(screen.getByLabelText("At a glance")).getByText(/Kanya \(Virgo\)/)).toBeInTheDocument();
     expect(container.querySelector(".portfolio-root")).toHaveStyle({ "--portfolio-background": "#121a21" });
   });
 
@@ -236,12 +241,12 @@ describe("celestial union portfolio", () => {
     expect(screen.getByRole("heading", { name: "Education and career" })).toBeInTheDocument();
     expect(screen.getByText(/Education and career information exists/)).toBeInTheDocument();
     expect(screen.queryByText("Northeastern · 2020")).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("Rashi: Kanya (Virgo)")).not.toBeInTheDocument();
+    expect(within(screen.getByLabelText("At a glance")).queryByText(/Kanya \(Virgo\)/)).not.toBeInTheDocument();
 
     rerender(<CelestialUnion data={balancedData} themeColor="" sunSign="kanya" accessMode="restricted" photos={photos} />);
     expect(container.querySelector('[data-privacy-mode="progressive"]')).toBeTruthy();
     expect(screen.getByText("Northeastern · 2020")).toBeInTheDocument();
-    expect(screen.getByLabelText("Rashi: Kanya (Virgo)")).toBeInTheDocument();
+    expect(within(screen.getByLabelText("At a glance")).getByText(/Kanya \(Virgo\)/)).toBeInTheDocument();
     expect(screen.queryByText("A close-knit family with roots in Karnataka.")).not.toBeInTheDocument();
 
     rerender(<CelestialUnion data={openData} themeColor="" sunSign="kanya" accessMode="restricted" photos={photos} />);

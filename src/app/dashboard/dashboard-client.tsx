@@ -12,6 +12,7 @@ import {
   type PortfolioMediaVisibility,
 } from "@/types/portfolio";
 import type { PortfolioApiFailure } from "@/features/portfolio/client/portfolio-dashboard.api";
+import { MAX_PORTFOLIO_PHOTOS } from "@/features/media/portfolio-photo";
 import { BlueprintForm } from "@/components/portfolio/BlueprintForm";
 import { ShaderBackground } from "@/components/landing/ShaderBackground";
 import {
@@ -244,10 +245,10 @@ export default function DashboardClient({
       return;
     }
 
-    const availableSlots = Math.max(0, 6 - portfolioMedia.length);
+    const availableSlots = Math.max(0, MAX_PORTFOLIO_PHOTOS - portfolioMedia.length);
     const selectedFiles = Array.from(files).slice(0, availableSlots);
     if (!selectedFiles.length) {
-      setDraftError("Your gallery already has the maximum of six photos.");
+      setDraftError("Your gallery already has the maximum of eight photos.");
       return;
     }
 
@@ -816,10 +817,10 @@ function PhotoManager({
             Profile photos
           </h3>
           <p className="mt-1 text-xs leading-5 text-white/55">
-            Add up to six photos. Your originals remain in the private photos bucket.
+            Add up to eight photos. Your originals remain in the private photos bucket.
           </p>
         </div>
-        <span className="shrink-0 text-xs font-medium text-[#f4d98f]">{media.length}/6</span>
+        <span className="shrink-0 text-xs font-medium text-[#f4d98f]">{media.length}/{MAX_PORTFOLIO_PHOTOS}</span>
       </div>
 
       <input
@@ -884,7 +885,7 @@ function PhotoManager({
             </div>
           </article>
         ))}
-        {media.length < 6 && (
+        {media.length < MAX_PORTFOLIO_PHOTOS && (
           <button
             type="button"
             onClick={() => inputRef.current?.click()}

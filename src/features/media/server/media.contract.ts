@@ -1,6 +1,7 @@
 import { z } from "zod/v4";
+import { MAX_PORTFOLIO_PHOTOS } from "../portfolio-photo";
 
-export const MAX_PORTFOLIO_PHOTOS = 6;
+export { MAX_PORTFOLIO_PHOTOS };
 export const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
 
 export const PHOTO_MIME_TYPES = new Set([

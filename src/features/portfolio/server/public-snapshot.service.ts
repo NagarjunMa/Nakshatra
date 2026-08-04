@@ -27,7 +27,7 @@ export function createPublicPortfolioSnapshot(data: PortfolioData): PortfolioDat
   const openMode = privacyMode === "open";
   const shortBio = clean(data.personal.short_bio);
   const originalStory = clean(data.personal.profile_summary);
-  const publicStory = privateMode && originalStory ? excerpt(originalStory, 280) : originalStory;
+  const publicStory = privateMode ? undefined : originalStory;
   const hasJourney = hasAny([
     data.education?.degree,
     data.education?.qualification_level,
@@ -93,7 +93,7 @@ export function createPublicPortfolioSnapshot(data: PortfolioData): PortfolioDat
     || data.contact?.contacts?.some((contact) => clean(contact.name) && (clean(contact.phone) || clean(contact.email)))
   );
   const visibility = compactVisibility({
-    ...(privateMode && originalStory && publicStory !== originalStory ? { personal_story: "restricted" as const } : {}),
+    ...(privateMode && originalStory ? { personal_story: "restricted" as const } : {}),
     ...(privateMode && hasJourney ? { journey: "restricted" as const } : {}),
     ...(privateMode && hasLifestyle ? { lifestyle: "restricted" as const } : {}),
     ...(hasPublicFamily || hasDetailedFamily
@@ -200,12 +200,4 @@ function clean(value?: string | null) {
 
 function hasAny(values: Array<string | null | undefined>) {
   return values.some((value) => Boolean(clean(value)));
-}
-
-function excerpt(value: string, maximumLength: number) {
-  if (value.length <= maximumLength) return value;
-  const shortened = value.slice(0, maximumLength + 1);
-  const boundary = shortened.lastIndexOf(" ");
-  const end = boundary > maximumLength * 0.65 ? boundary : maximumLength;
-  return `${shortened.slice(0, end).trim()}…`;
 }

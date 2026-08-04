@@ -144,6 +144,7 @@ describe("dashboard client", () => {
   it("updates, deletes, and uploads owner photos", async () => {
     const { container } = renderDashboard();
     fireEvent.click(screen.getByRole("button", { name: /edit biodata/i }));
+    expect(screen.getByText("1/8")).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Photo visibility"), { target: { value: "hidden" } });
     await waitFor(() => expect(mocks.update).toHaveBeenCalledWith("media-1", { visibility: "hidden" }));
     fireEvent.click(screen.getByRole("button", { name: /make hero/i }));

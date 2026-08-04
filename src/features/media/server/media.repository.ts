@@ -67,13 +67,12 @@ export class PortfolioMediaRepository {
       .single();
   }
 
-  async findProtectedPortfolioPhotos(portfolioId: string) {
+  async findPortfolioPhotos(portfolioId: string) {
     return this.supabase
       .from("portfolio_media")
       .select("id, portfolio_id, storage_path, thumbnail_path, media_type, visibility, sort_order, alt_text, metadata")
       .eq("portfolio_id", portfolioId)
-      .in("media_type", ["hero", "gallery"])
-      .in("visibility", ["blurred", "interest_required"]);
+      .in("media_type", ["hero", "gallery"]);
   }
 
   async demoteOtherHeroPhotos(portfolioId: string, mediaId: string) {

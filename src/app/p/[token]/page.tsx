@@ -79,12 +79,13 @@ export default async function PublicBiodataPage({ params }: Props) {
     .from("portfolio_media")
     .select("id, portfolio_id, storage_path, thumbnail_path, media_type, visibility, sort_order, alt_text, metadata")
     .eq("portfolio_id", portfolio.portfolio_id)
-    .in("visibility", ["public", "blurred", "interest_required"])
+    .in("visibility", ["public", "blurred", "interest_required", "approved_only"])
     .in("media_type", ["hero", "gallery"]);
   const photos = await createPortfolioPhotoUrls({
     supabase,
     media: (media ?? []) as PortfolioMedia[],
     viewer: "public",
+    privacyMode: data.privacy_mode,
   });
   const { data: horoscopeRow } = await supabase
     .from("portfolio_horoscopes")

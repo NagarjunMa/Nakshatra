@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(41);
+select plan(43);
 
 select has_schema('app_private', 'private helper schema exists');
 select has_table('public', 'portfolios', 'owner portfolios table exists');
@@ -41,6 +41,8 @@ select ok(exists(select 1 from pg_policies where schemaname = 'storage' and tabl
 select ok(exists(select 1 from pg_policies where schemaname = 'public' and tablename = 'portfolio_horoscopes' and policyname = 'Approved viewers can read published horoscope attachments'), 'approved viewers have an identity-bound horoscope policy');
 select ok(not exists(select 1 from pg_policies where schemaname = 'public' and tablename = 'portfolio_horoscopes' and roles @> array['anon'::name]), 'anonymous users have no horoscope table policy');
 select ok(exists(select 1 from pg_policies where schemaname = 'storage' and tablename = 'objects' and policyname = 'Approved viewers can read horoscope files'), 'approved viewers have a private storage policy');
+select ok(exists(select 1 from pg_policies where schemaname = 'public' and tablename = 'portfolio_media' and policyname = 'Public can read published protected media descriptors' and qual like '%approved_only%'), 'approved-interest-only photos expose only a protected descriptor before approval');
+select ok(exists(select 1 from pg_policies where schemaname = 'storage' and tablename = 'objects' and policyname = 'Published protected photo previews are readable' and qual like '%privacy_mode%'), 'private portfolios can read generated previews for otherwise public gallery photos');
 
 select has_trigger('public', 'portfolios', 'portfolios_updated_at', 'portfolio timestamp trigger exists');
 select has_trigger('public', 'public_portfolio_snapshots', 'public_portfolio_snapshots_updated_at', 'snapshot timestamp trigger exists');

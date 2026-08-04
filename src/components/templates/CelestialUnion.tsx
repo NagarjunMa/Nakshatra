@@ -77,7 +77,6 @@ export default function CelestialUnion({
   const blurredPhotos = photos.filter((photo) => photo.presentation === "blurred");
   const shortBio = clean(data.personal.short_bio);
   const profileSummary = clean(data.personal.profile_summary);
-  const heroSummary = shortBio || (profileSummary ? excerpt(profileSummary, 240) : undefined);
   const age = data.personal.age ?? ageFromDate(data.personal.dob);
   const currentLocation = clean(data.personal.current_location);
   const careerTitle = clean(data.career?.title);
@@ -89,7 +88,6 @@ export default function CelestialUnion({
   const preferencesVisible = ownerPreview || !isRestricted(data, "preferences");
   const futurePlansVisible = ownerPreview || !isRestricted(data, "future_plans");
   const visibleRashi = astrologyVisible ? rashi : undefined;
-  const visibleCareerTitle = journeyVisible ? careerTitle : undefined;
   const lifestyle = lifestyleVisible ? splitValues([
     data.lifestyle?.hobbies,
     data.lifestyle?.diet,
@@ -138,14 +136,18 @@ export default function CelestialUnion({
       || clean(data.personal.long_term_goals)
       || clean(data.lifestyle?.values_statement)
     : undefined;
+  const visibleCareerTitle = journeyVisible ? careerTitle : undefined;
+  const heroLine = joinValues([
+    visibleCareerTitle,
+    currentLocation,
+    age ? String(age) : undefined,
+  ]);
   const contactEntries = normalizedContacts(data.contact);
   const quickFacts = compactPairs([
+    ["Zodiac", visibleRashi && rashiOption ? `${ZODIAC_SYMBOLS[visibleRashi]} ${rashiOption.label}` : undefined],
     ["Age", age ? `${age} years` : undefined],
-    ["Lives in", currentLocation],
-    ["Profession", visibleCareerTitle],
-    ["Education", journeyVisible ? educationTitle : undefined],
-    ["Languages", lifestyleVisible ? clean(data.lifestyle?.languages) : undefined],
     ["Height", clean(data.vitals?.height)],
+    ["Lives in", currentLocation],
   ]);
   const protectedItems = protectedSectionLabels({
     data,
@@ -307,6 +309,17 @@ export default function CelestialUnion({
     });
   }
 
+  const numberedChapters = chapters.map((chapter, index) => ({
+    ...chapter,
+    number: index + 1,
+  }));
+  const pairedChapterIds = new Set(["journey", "lifestyle", "family", "astrology"]);
+  const leadingChapters = numberedChapters.filter((chapter) => chapter.id === "personal-story");
+  const pairedChapters = numberedChapters.filter((chapter) => pairedChapterIds.has(chapter.id));
+  const trailingChapters = numberedChapters.filter(
+    (chapter) => chapter.id !== "personal-story" && !pairedChapterIds.has(chapter.id)
+  );
+
   const variables = {
     "--portfolio-background": theme.background,
     "--portfolio-surface": theme.surface,
@@ -360,21 +373,9 @@ export default function CelestialUnion({
             <p className="portfolio-eyebrow">A personal portfolio</p>
             <div className="portfolio-name-row">
               <h1 id="portfolio-name">{clean(data.personal.name) || "Personal portfolio"}</h1>
-              {visibleRashi && (
-                <span className="portfolio-rashi" aria-label={`Rashi: ${rashiOption?.label || visibleRashi}`}>
-                  <span aria-hidden="true">{ZODIAC_SYMBOLS[visibleRashi]}</span>
-                  {shortRashiLabel(rashiOption?.label || visibleRashi)}
-                </span>
-              )}
             </div>
-            {joinValues([visibleCareerTitle, currentLocation, age ? String(age) : undefined]) && (
-              <p className="portfolio-hero-line">{joinValues([visibleCareerTitle, currentLocation, age ? String(age) : undefined])}</p>
-            )}
-            {heroSummary && <p className="portfolio-hero-summary">{heroSummary}</p>}
-            <div className="portfolio-hero-actions">
-              {chapters.length > 0 && <a className="portfolio-button portfolio-button-primary" href={`#${chapters[0].id}`}>Explore profile</a>}
-              {showProtectedSection && <a className="portfolio-button portfolio-button-secondary" href="#protected-details">How privacy works</a>}
-            </div>
+            {heroLine && <p className="portfolio-hero-line">{heroLine}</p>}
+            {shortBio && <p className="portfolio-hero-summary">{shortBio}</p>}
             <p className="portfolio-contact-assurance">
               <LockKeyhole aria-hidden="true" /> Direct contact is protected in every mode.
             </p>
@@ -388,9 +389,15 @@ export default function CelestialUnion({
         )}
 
         <div id="portfolio-profile" className="portfolio-chapters">
-          {chapters.map((chapter, index) => (
-            <Chapter key={chapter.id} number={index + 1} {...chapter} />
+          {leadingChapters.map((chapter) => (
+            <Chapter key={chapter.id} {...chapter} />
           ))}
+          {pairedChapters.length > 0 && (
+            <div className="portfolio-chapter-pairs">
+              {pairedChapters.map((chapter) => <Chapter key={chapter.id} {...chapter} />)}
+            </div>
+          )}
+          {trailingChapters.map((chapter) => <Chapter key={chapter.id} {...chapter} />)}
         </div>
 
         <AdaptivePortfolioGallery photos={galleryPhotos} />
@@ -428,9 +435,11 @@ export default function CelestialUnion({
                   </div>
                 ))}
               </div>
-            ) : (
-              <span className="portfolio-button portfolio-button-primary" aria-disabled="true">Interest requests coming soon</span>
-            )}
+            ) : !ownerPreview ? (
+              <span className="portfolio-button portfolio-button-primary" aria-disabled="true">
+                Interest requests coming soon
+              </span>
+            ) : null}
           </section>
         )}
       </main>
@@ -542,20 +551,8 @@ function hasAny(values: Array<string | null | undefined>) {
   return values.some((value) => Boolean(clean(value)));
 }
 
-function excerpt(value: string, maximumLength: number) {
-  if (value.length <= maximumLength) return value;
-  const shortened = value.slice(0, maximumLength + 1);
-  const boundary = shortened.lastIndexOf(" ");
-  const end = boundary > maximumLength * 0.65 ? boundary : maximumLength;
-  return `${shortened.slice(0, end).trim()}…`;
-}
-
 function firstName(value?: string) {
   return clean(value)?.split(/\s+/)[0] || "this profile";
-}
-
-function shortRashiLabel(value: string) {
-  return value.split(" (")[0];
 }
 
 function privacyLabel(mode: PortfolioData["privacy_mode"]) {

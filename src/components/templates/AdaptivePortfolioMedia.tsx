@@ -170,7 +170,7 @@ export function AdaptivePortfolioGallery({
         <p>Captured moments</p>
         <h2 id="portfolio-gallery-title">Gallery</h2>
       </div>
-      <div className="portfolio-gallery-grid" data-photo-count={Math.min(photos.length, 6)}>
+      <div className="portfolio-gallery-grid" data-photo-count={Math.min(photos.length, 8)}>
         {photos.map((photo) => {
           const orientation =
             photo.orientation === "unknown"

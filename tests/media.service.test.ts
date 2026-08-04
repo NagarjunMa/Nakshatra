@@ -8,7 +8,7 @@ const repository = vi.hoisted(() => ({
   createMedia: vi.fn(),
   updateMedia: vi.fn(),
   findMedia: vi.fn(),
-  findProtectedPortfolioPhotos: vi.fn(),
+  findPortfolioPhotos: vi.fn(),
   download: vi.fn(),
   demoteOtherHeroPhotos: vi.fn(),
   deleteMedia: vi.fn(),
@@ -27,7 +27,7 @@ vi.mock("sharp", () => ({ default: sharpMock }));
 
 import {
   deletePortfolioPhoto,
-  ensureProtectedPortfolioPhotoPreviews,
+  ensurePortfolioPhotoPreviews,
   PortfolioMediaError,
   updatePortfolioPhoto,
   uploadPortfolioPhoto,
@@ -144,7 +144,7 @@ describe("portfolio media service", () => {
       uploadPortfolioPhoto({ supabase: {} as never, userId, portfolioId, file: photo(), visibility: "public" })
     ).rejects.toMatchObject({ status: 404 });
 
-    mockUploadSuccess(6);
+    mockUploadSuccess(8);
     await expect(
       uploadPortfolioPhoto({ supabase: {} as never, userId, portfolioId, file: photo(), visibility: "public" })
     ).rejects.toMatchObject({ status: 400 });
@@ -257,11 +257,33 @@ describe("portfolio media service", () => {
     );
   });
 
-  it("backfills missing protected derivatives before publishing", async () => {
-    repository.findProtectedPortfolioPhotos.mockResolvedValue({
+  it("creates the same safe derivative for approved-interest-only photos", async () => {
+    repository.findMedia.mockResolvedValue({
+      data: { ...media, metadata: { width: 900, height: 1200 } },
+      error: null,
+    });
+    repository.download.mockResolvedValue({ data: new Blob([onePixelPng]), error: null });
+
+    await updatePortfolioPhoto({
+      supabase: {} as never,
+      mediaId: media.id,
+      changes: { visibility: "approved_only" },
+    });
+
+    expect(repository.updateMedia).toHaveBeenCalledWith(
+      media.id,
+      expect.objectContaining({
+        visibility: "approved_only",
+        metadata: expect.objectContaining({ blurPath: `${userId}/${portfolioId}/photo-blur.webp` }),
+      })
+    );
+  });
+
+  it("backfills missing photo derivatives before publishing", async () => {
+    repository.findPortfolioPhotos.mockResolvedValue({
       data: [
         { ...media, id: "already-safe", metadata: { blurPath: "already-blurred.webp" } },
-        { ...media, id: "legacy-protected", metadata: { width: 900, height: 1200 } },
+        { ...media, id: "legacy-public", visibility: "public", metadata: { width: 900, height: 1200 } },
       ],
       error: null,
     });
@@ -269,26 +291,26 @@ describe("portfolio media service", () => {
     repository.updateMedia.mockResolvedValue({ data: media, error: null });
 
     await expect(
-      ensureProtectedPortfolioPhotoPreviews({ supabase: {} as never, portfolioId })
+      ensurePortfolioPhotoPreviews({ supabase: {} as never, portfolioId })
     ).resolves.toBeUndefined();
     expect(repository.download).toHaveBeenCalledTimes(1);
     expect(repository.updateMedia).toHaveBeenCalledWith(
-      "legacy-protected",
+      "legacy-public",
       { metadata: expect.objectContaining({ blurPath: `${userId}/${portfolioId}/photo-blur.webp` }) }
     );
   });
 
-  it("fails closed when protected derivatives cannot be safely prepared", async () => {
-    repository.findProtectedPortfolioPhotos.mockResolvedValue({ data: null, error: new Error("db") });
+  it("fails closed when photo derivatives cannot be safely prepared", async () => {
+    repository.findPortfolioPhotos.mockResolvedValue({ data: null, error: new Error("db") });
     await expect(
-      ensureProtectedPortfolioPhotoPreviews({ supabase: {} as never, portfolioId })
+      ensurePortfolioPhotoPreviews({ supabase: {} as never, portfolioId })
     ).rejects.toMatchObject({ status: 500 });
 
-    repository.findProtectedPortfolioPhotos.mockResolvedValue({ data: [{ ...media, metadata: {} }], error: null });
+    repository.findPortfolioPhotos.mockResolvedValue({ data: [{ ...media, metadata: {} }], error: null });
     repository.download.mockResolvedValue({ data: new Blob([onePixelPng]), error: null });
     repository.upload.mockResolvedValue({ error: new Error("storage") });
     await expect(
-      ensureProtectedPortfolioPhotoPreviews({ supabase: {} as never, portfolioId })
+      ensurePortfolioPhotoPreviews({ supabase: {} as never, portfolioId })
     ).rejects.toMatchObject({ status: 500 });
   });
 

@@ -23,7 +23,7 @@ export class PortfolioMediaError extends Error {
 
 type MediaUpdate = Omit<ReturnType<typeof updatePortfolioMediaSchema.parse>, "mediaId">;
 
-const PROTECTED_VISIBILITIES = new Set(["blurred", "interest_required"]);
+const PROTECTED_VISIBILITIES = new Set(["blurred", "interest_required", "approved_only"]);
 
 /** Removes identifying facial detail while retaining enough color and shape to signal a protected photo. */
 async function createBlurredPreview(source: Buffer) {
@@ -185,8 +185,8 @@ export async function updatePortfolioPhoto({
   return media;
 }
 
-/** Ensures legacy protected photos gain safe derivatives before a public snapshot is updated. */
-export async function ensureProtectedPortfolioPhotoPreviews({
+/** Ensures every portfolio photo has a privacy-safe derivative before public rendering. */
+export async function ensurePortfolioPhotoPreviews({
   supabase,
   portfolioId,
 }: {
@@ -194,14 +194,14 @@ export async function ensureProtectedPortfolioPhotoPreviews({
   portfolioId: string;
 }) {
   const repository = new PortfolioMediaRepository(supabase);
-  const { data, error } = await repository.findProtectedPortfolioPhotos(portfolioId);
-  if (error) throw new PortfolioMediaError("Could not prepare protected photos", 500);
+  const { data, error } = await repository.findPortfolioPhotos(portfolioId);
+  if (error) throw new PortfolioMediaError("Could not prepare photo previews", 500);
 
   for (const item of (data ?? []) as PortfolioMedia[]) {
     if (item.metadata?.blurPath) continue;
     const metadata = await createAndStoreBlurredPreview(repository, item);
     const { error: updateError } = await repository.updateMedia(item.id, { metadata });
-    if (updateError) throw new PortfolioMediaError("Could not prepare protected photos", 500);
+    if (updateError) throw new PortfolioMediaError("Could not prepare photo previews", 500);
   }
 }
 

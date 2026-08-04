@@ -35,7 +35,7 @@ describe("PortfolioMediaRepository", () => {
     await repository.createMedia({ portfolio_id: "portfolio" });
     await repository.updateMedia("media", { visibility: "public" });
     await repository.findMedia("media");
-    await repository.findProtectedPortfolioPhotos("portfolio");
+    await repository.findPortfolioPhotos("portfolio");
     await repository.demoteOtherHeroPhotos("portfolio", "media");
     await repository.deleteMedia("media");
 
@@ -44,6 +44,7 @@ describe("PortfolioMediaRepository", () => {
     expect(upload).toHaveBeenCalledWith("path.webp", expect.any(Buffer), { contentType: "image/webp" });
     expect(remove).toHaveBeenCalledWith(["path.webp"]);
     expect(download).toHaveBeenCalledWith("path.webp");
+    expect(q.in).toHaveBeenCalledWith("media_type", ["hero", "gallery"]);
   });
 });
 

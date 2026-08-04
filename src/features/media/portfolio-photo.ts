@@ -3,6 +3,8 @@ import type {
   PortfolioPhotoOrientation,
 } from "@/types/portfolio";
 
+export const MAX_PORTFOLIO_PHOTOS = 8;
+
 export interface PortfolioPhoto {
   id: string;
   src: string;
