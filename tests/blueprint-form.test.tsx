@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { BlueprintForm } from "../src/components/portfolio/BlueprintForm";
 import type { PortfolioData } from "../src/types/portfolio";
@@ -24,7 +24,7 @@ const completeBlueprint: PortfolioData = {
   },
   vitals: { height: `5'5"`, gotra: "Kashyap" },
   education: { degree: "MS", institution: "Northeastern", location: "Boston" },
-  career: { title: "Engineer", company: "Nakshatra", location: "Boston" },
+  career: { title: "Engineer", company: "Nakshatra", location: "Boston", annual_income: "100k-125k", income_currency: "USD" },
   family: {
     father: { name: "Rao", occupation: "Engineer" },
     mother: { name: "Lakshmi", occupation: "Teacher" },
@@ -34,7 +34,7 @@ const completeBlueprint: PortfolioData = {
     siblings: [{ name: "Maya", occupation: "Designer" }],
   },
   lifestyle: { languages: "English, Telugu", hobbies: "Reading" },
-  preferences: { narrative: "A kind and curious partnership" },
+  preferences: { narrative: "A kind and curious partnership", age_range: "24–28", height_range: `5'0"–5'8"` },
   astrology: {
     rashi: "kanya",
     nakshatra: "Uttara Phalguni",
@@ -100,12 +100,12 @@ describe("blueprint form", () => {
     };
     render(<BlueprintForm data={minimal} onUpdate={onUpdate} />);
 
-    expect(screen.getByText(/Foundation 1 of 6/)).toBeInTheDocument();
+    expect(screen.getByText(/1 of 6 essentials complete/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Privacy & contact/ }));
     expect(screen.getByRole("button", { name: /Private/ })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "Light" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.queryByLabelText("Name of contact")).not.toBeInTheDocument();
-    expect(screen.getByText(/not shown in public or preview views/i)).toBeInTheDocument();
+    expect(screen.getByText(/Add a preferred contact only if you want one ready/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Family/ }));
     expect(screen.queryByText("Sibling 1")).not.toBeInTheDocument();
 
@@ -125,8 +125,14 @@ describe("blueprint form", () => {
     const onUpdate = vi.fn();
     const { rerender } = render(<BlueprintForm data={completeBlueprint} onUpdate={onUpdate} />);
 
-    expect(screen.getByText(/Exact birth information stays protected/i)).toBeInTheDocument();
-    expect(screen.getAllByText("Portfolio").length).toBeGreaterThan(0);
+    const sectionNavigation = screen.getByRole("navigation", { name: "Portfolio form sections" });
+    const sectionLabels = within(sectionNavigation).getAllByRole("button").map((button) => button.textContent);
+    expect(sectionLabels.slice(3, 6)).toEqual(["04Family", "05Astrology", "06Lifestyle"]);
+    expect(screen.queryByText("Optional")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Education & work/ }));
+    fireEvent.change(screen.getByLabelText("Annual income range"), { target: { value: "125k-150k" } });
+    expect(onUpdate).toHaveBeenCalledWith("career", expect.objectContaining({ annual_income: "125k-150k" }));
 
     fireEvent.click(screen.getByRole("button", { name: /Lifestyle/ }));
     fireEvent.change(screen.getByLabelText("Languages"), { target: { value: "Kannada" } });
@@ -134,8 +140,18 @@ describe("blueprint form", () => {
     expect(onUpdate).toHaveBeenCalledWith("lifestyle", expect.objectContaining({
       languages: "English, Telugu, Kannada",
     }));
+    fireEvent.focus(screen.getByLabelText("Interests and hobbies"));
+    expect(screen.getByRole("listbox", { name: "Interests and hobbies suggestions" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("option", { name: "Photography" }));
+    expect(onUpdate).toHaveBeenCalledWith("lifestyle", expect.objectContaining({
+      hobbies: "Reading, Photography",
+    }));
 
     fireEvent.click(screen.getByRole("button", { name: /Preferences/ }));
+    fireEvent.change(screen.getByLabelText("Minimum age"), { target: { value: "25" } });
+    fireEvent.change(screen.getByLabelText("Maximum height"), { target: { value: `5'10"` } });
+    expect(onUpdate).toHaveBeenCalledWith("preferences", expect.objectContaining({ age_range: "25–28" }));
+    expect(onUpdate).toHaveBeenCalledWith("preferences", expect.objectContaining({ height_range: `5'0"–5'10"` }));
     expect(screen.queryByLabelText("Specific communities")).not.toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Community preference"), { target: { value: "specific" } });
     expect(onUpdate).toHaveBeenCalledWith("preferences", expect.objectContaining({ caste_preference: "specific" }));

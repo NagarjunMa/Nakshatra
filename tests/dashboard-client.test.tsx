@@ -84,7 +84,7 @@ describe("dashboard client", () => {
   it("opens the canonical editor when requested by an editing route", () => {
     renderDashboard({ initialEditorOpen: true });
     expect(screen.getByRole("heading", { name: "Portfolio details" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "A portfolio worth previewing" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Portfolio essentials" })).toBeInTheDocument();
     expect(screen.queryByText("Rashi palette")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Music")).not.toBeInTheDocument();
   });

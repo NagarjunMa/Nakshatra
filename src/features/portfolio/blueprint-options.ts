@@ -37,6 +37,11 @@ export const HEIGHT_OPTIONS = [
   }),
 ];
 
+export const AGE_OPTIONS = [
+  option("", "Select age"),
+  ...Array.from({ length: 63 }, (_, index) => option(String(18 + index))),
+];
+
 export const COUNTRY_OPTIONS = [
   option("", "Select country"),
   option("India"),
@@ -126,6 +131,21 @@ export const CURRENCY_OPTIONS = [
   option("AED"),
   option("SGD"),
   option("Other"),
+];
+
+export const INCOME_RANGE_OPTIONS = [
+  option("", "Select an income range"),
+  option("Under 25k"),
+  option("25k-50k"),
+  option("50k-75k"),
+  option("75k-100k"),
+  option("100k-125k"),
+  option("125k-150k"),
+  option("150k-200k"),
+  option("200k-250k"),
+  option("250k-500k"),
+  option("500k+"),
+  option("Prefer not to say"),
 ];
 
 export const WEALTH_STAGE_OPTIONS = [

@@ -61,6 +61,11 @@ test("public portfolio renders sanitized data and adaptive media", async ({ page
     (element) => getComputedStyle(element).columnCount
   );
   expect(galleryColumns).toBe((page.viewportSize()?.width || 0) <= 720 ? "1" : "2");
+  const galleryBeforePreferences = await page.locator(".portfolio-gallery").evaluate((gallery) => {
+    const preferences = document.querySelector("#preferences");
+    return Boolean(preferences && (gallery.compareDocumentPosition(preferences) & Node.DOCUMENT_POSITION_FOLLOWING));
+  });
+  expect(galleryBeforePreferences).toBe(true);
   await expect(page.getByRole("button", { name: "Show next photo" })).toHaveCount(0);
 });
 
@@ -102,13 +107,14 @@ test("public portfolio exposes production-ready metadata and distinct accent rol
     });
     expect(chapterStyles).toEqual({ display: "grid", columns: 3 });
 
-    const pairedStyles = await page.locator(".portfolio-chapter-pairs").evaluate((element) => {
+    const pairedStyles = await page.locator(".portfolio-chapter-pair").first().evaluate((element) => {
       const styles = getComputedStyle(element);
       return { display: styles.display, columns: styles.gridTemplateColumns.split(" ").length };
     });
     expect(pairedStyles).toEqual({ display: "grid", columns: 2 });
+    await expect(page.locator(".portfolio-chapter-pair")).toHaveCount(2);
   } else {
-    await expect(page.locator(".portfolio-chapter-pairs")).toHaveCSS("display", "block");
+    await expect(page.locator(".portfolio-chapter-pair").first()).toHaveCSS("display", "block");
   }
 });
 

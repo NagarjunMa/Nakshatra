@@ -1293,6 +1293,10 @@ body {
 }
 
 [data-template="celestial-union"] .portfolio-chapter-pairs {
+  display: block;
+}
+
+[data-template="celestial-union"] .portfolio-chapter-pair {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   border-bottom: 1px solid var(--portfolio-border);
@@ -1307,7 +1311,7 @@ body {
   scroll-margin-top: 86px;
 }
 
-[data-template="celestial-union"] .portfolio-chapter-pairs .portfolio-chapter {
+[data-template="celestial-union"] .portfolio-chapter-pair .portfolio-chapter {
   grid-template-columns: 36px minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr);
   align-content: start;
@@ -1315,33 +1319,27 @@ body {
   gap: 22px 20px;
   padding: clamp(42px, 5vw, 64px);
   border-right: 1px solid var(--portfolio-border);
-  border-bottom: 1px solid var(--portfolio-border);
-}
-
-[data-template="celestial-union"] .portfolio-chapter-pairs .portfolio-chapter:nth-child(even) {
-  border-right: 0;
-}
-
-[data-template="celestial-union"] .portfolio-chapter-pairs .portfolio-chapter:nth-child(odd):nth-last-child(-n + 2),
-[data-template="celestial-union"] .portfolio-chapter-pairs .portfolio-chapter:nth-child(even):last-child {
   border-bottom: 0;
 }
 
-[data-template="celestial-union"] .portfolio-chapter-pairs .portfolio-chapter:last-child:nth-child(odd) {
+[data-template="celestial-union"] .portfolio-chapter-pair .portfolio-chapter:last-child {
+  border-right: 0;
+}
+
+[data-template="celestial-union"] .portfolio-chapter-pair[data-chapter-count="1"] .portfolio-chapter {
   grid-column: 1 / -1;
   border-right: 0;
-  border-bottom: 0;
 }
 
-[data-template="celestial-union"] .portfolio-chapter-pairs .portfolio-section-heading {
+[data-template="celestial-union"] .portfolio-chapter-pair .portfolio-section-heading {
   grid-column: 2;
 }
 
-[data-template="celestial-union"] .portfolio-chapter-pairs .portfolio-section-heading h2 {
+[data-template="celestial-union"] .portfolio-chapter-pair .portfolio-section-heading h2 {
   font-size: clamp(28px, 3vw, 38px);
 }
 
-[data-template="celestial-union"] .portfolio-chapter-pairs .portfolio-chapter-content {
+[data-template="celestial-union"] .portfolio-chapter-pair .portfolio-chapter-content {
   grid-column: 1 / -1;
 }
 
@@ -1860,7 +1858,12 @@ body {
     border-bottom: 0;
   }
 
-  [data-template="celestial-union"] .portfolio-chapter-pairs .portfolio-chapter {
+  [data-template="celestial-union"] .portfolio-chapter-pair {
+    display: block;
+    border-bottom: 0;
+  }
+
+  [data-template="celestial-union"] .portfolio-chapter-pair .portfolio-chapter {
     display: grid;
     grid-template-columns: 1fr;
     grid-template-rows: auto;
@@ -1871,12 +1874,12 @@ body {
     border-bottom: 1px solid var(--portfolio-border);
   }
 
-  [data-template="celestial-union"] .portfolio-chapter-pairs .portfolio-chapter:last-child:nth-child(odd) {
+  [data-template="celestial-union"] .portfolio-chapter-pair[data-chapter-count="1"] .portfolio-chapter {
     grid-column: auto;
   }
 
-  [data-template="celestial-union"] .portfolio-chapter-pairs .portfolio-section-heading,
-  [data-template="celestial-union"] .portfolio-chapter-pairs .portfolio-chapter-content {
+  [data-template="celestial-union"] .portfolio-chapter-pair .portfolio-section-heading,
+  [data-template="celestial-union"] .portfolio-chapter-pair .portfolio-chapter-content {
     grid-column: auto;
   }
 

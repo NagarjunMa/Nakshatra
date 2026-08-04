@@ -118,7 +118,15 @@ describe("celestial union portfolio", () => {
     expect(screen.queryByText(/Ramesh Rao/)).not.toBeInTheDocument();
     expect(screen.queryByText("family@example.com")).not.toBeInTheDocument();
     expect(screen.getByAltText("Landscape")).toBeInTheDocument();
-    expect(document.querySelector(".portfolio-chapter-pairs")?.children).toHaveLength(4);
+    const pairedRows = document.querySelectorAll(".portfolio-chapter-pair");
+    expect(pairedRows).toHaveLength(2);
+    expect(pairedRows[0].children).toHaveLength(2);
+    expect(pairedRows[1].children).toHaveLength(2);
+    const gallery = document.querySelector(".portfolio-gallery");
+    const preferences = document.getElementById("preferences");
+    expect(gallery).toBeTruthy();
+    expect(preferences).toBeTruthy();
+    expect(gallery!.compareDocumentPosition(preferences!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("shows the separate horoscope attachment only in an approved projection", () => {

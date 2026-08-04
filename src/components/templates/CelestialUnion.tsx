@@ -315,7 +315,10 @@ export default function CelestialUnion({
   }));
   const pairedChapterIds = new Set(["journey", "lifestyle", "family", "astrology"]);
   const leadingChapters = numberedChapters.filter((chapter) => chapter.id === "personal-story");
-  const pairedChapters = numberedChapters.filter((chapter) => pairedChapterIds.has(chapter.id));
+  const pairedChapterRows = [
+    ["journey", "lifestyle"],
+    ["family", "astrology"],
+  ].map((row) => row.map((id) => numberedChapters.find((chapter) => chapter.id === id)).filter((chapter): chapter is typeof numberedChapters[number] => Boolean(chapter))).filter((row) => row.length > 0);
   const trailingChapters = numberedChapters.filter(
     (chapter) => chapter.id !== "personal-story" && !pairedChapterIds.has(chapter.id)
   );
@@ -392,15 +395,24 @@ export default function CelestialUnion({
           {leadingChapters.map((chapter) => (
             <Chapter key={chapter.id} {...chapter} />
           ))}
-          {pairedChapters.length > 0 && (
+          {pairedChapterRows.length > 0 && (
             <div className="portfolio-chapter-pairs">
-              {pairedChapters.map((chapter) => <Chapter key={chapter.id} {...chapter} />)}
+              {pairedChapterRows.map((row) => (
+                <div key={row.map((chapter) => chapter.id).join("-")} className="portfolio-chapter-pair" data-chapter-count={row.length}>
+                  {row.map((chapter) => <Chapter key={chapter.id} {...chapter} />)}
+                </div>
+              ))}
             </div>
           )}
-          {trailingChapters.map((chapter) => <Chapter key={chapter.id} {...chapter} />)}
         </div>
 
         <AdaptivePortfolioGallery photos={galleryPhotos} />
+
+        {trailingChapters.length > 0 && (
+          <div className="portfolio-chapters portfolio-chapters-trailing">
+            {trailingChapters.map((chapter) => <Chapter key={chapter.id} {...chapter} />)}
+          </div>
+        )}
 
         {sharedLifeStatement && (
           <section className="portfolio-emotional" aria-labelledby="shared-life-title">
