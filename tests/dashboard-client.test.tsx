@@ -145,6 +145,9 @@ describe("dashboard client", () => {
     const { container } = renderDashboard();
     fireEvent.click(screen.getByRole("button", { name: /edit biodata/i }));
     expect(screen.getByText("1/8")).toBeInTheDocument();
+    expect(screen.getByRole("article", { name: "Profile photo" })).toHaveClass("w-36", "sm:w-40");
+    expect((await screen.findByAltText("Portrait")).parentElement).toHaveClass("h-36", "sm:h-40");
+    expect(screen.getByRole("button", { name: /add photos/i })).toHaveClass("h-36", "w-36", "sm:h-40", "sm:w-40");
     fireEvent.change(screen.getByLabelText("Photo visibility"), { target: { value: "hidden" } });
     await waitFor(() => expect(mocks.update).toHaveBeenCalledWith("media-1", { visibility: "hidden" }));
     fireEvent.click(screen.getByRole("button", { name: /make hero/i }));

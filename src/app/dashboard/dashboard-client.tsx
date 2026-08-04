@@ -832,10 +832,14 @@ function PhotoManager({
         onChange={(event) => onUpload(event.target.files)}
       />
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <div className="flex flex-wrap gap-3">
         {media.map((item) => (
-          <article key={item.id} className="overflow-hidden rounded-lg border border-white/10 bg-black/15">
-            <div className="relative aspect-[4/5] bg-white/5">
+          <article
+            key={item.id}
+            aria-label={item.media_type === "hero" ? "Hero photo" : "Profile photo"}
+            className="w-36 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-black/15 sm:w-40"
+          >
+            <div className="relative h-36 bg-white/5 sm:h-40">
               {urls[item.id] ? (
                 // Signed URLs are created client-side for the portfolio owner only.
                 // eslint-disable-next-line @next/next/no-img-element -- Signed Supabase URLs cannot use Next's static optimizer.
@@ -890,7 +894,7 @@ function PhotoManager({
             type="button"
             onClick={() => inputRef.current?.click()}
             disabled={uploading}
-            className="flex aspect-[4/5] flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-[#f4d98f]/35 bg-[#f4d98f]/5 px-3 text-center text-xs font-medium text-[#f4d98f] transition-colors hover:bg-[#f4d98f]/10 disabled:opacity-50"
+            className="flex h-36 w-36 shrink-0 flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-[#f4d98f]/35 bg-[#f4d98f]/5 px-3 text-center text-xs font-medium text-[#f4d98f] transition-colors hover:bg-[#f4d98f]/10 disabled:opacity-50 sm:h-40 sm:w-40"
           >
             {uploading ? <Upload className="h-5 w-5 animate-pulse" /> : <ImagePlus className="h-5 w-5" />}
             {uploading ? "Uploading" : "Add photos"}
