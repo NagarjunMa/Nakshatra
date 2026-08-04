@@ -144,7 +144,8 @@ export function mapCandidateDetails(data: PortfolioData) {
       drinking: nullable(data.lifestyle?.drinking),
       languages: commaSeparatedList(data.lifestyle?.languages),
       hobbies: commaSeparatedList(data.lifestyle?.hobbies),
-      music: nullable(data.lifestyle?.music),
+      // Retired from the product. Clear any legacy relational value on the next save.
+      music: null,
       lifestyle_payload: {
         credit_score_band: data.lifestyle?.credit_score_band || null,
       },

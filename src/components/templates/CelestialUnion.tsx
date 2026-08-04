@@ -92,7 +92,6 @@ export default function CelestialUnion({
   const visibleCareerTitle = journeyVisible ? careerTitle : undefined;
   const lifestyle = lifestyleVisible ? splitValues([
     data.lifestyle?.hobbies,
-    data.lifestyle?.music,
     data.lifestyle?.diet,
     data.lifestyle?.languages,
   ]) : [];

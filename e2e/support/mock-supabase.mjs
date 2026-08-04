@@ -24,7 +24,7 @@ const publicSnapshot = {
     astrology: { rashi: "kanya", nakshatra: "Uttara Phalguni", pada: "2" },
     education: { degree: "MS", institution: "Northeastern", year: "2020" },
     career: { title: "Engineer", company: "Nakshatra", location: "Boston" },
-    lifestyle: { hobbies: "Reading, Travel", diet: "Vegetarian", music: "Classical" },
+    lifestyle: { hobbies: "Reading, Travel", diet: "Vegetarian" },
     preferences: { narrative: "A kind and curious partnership" },
     style: {
       appearance: "light",

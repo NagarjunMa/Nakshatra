@@ -46,6 +46,7 @@ interface Props {
   daysLeft: number | null;
   media: PortfolioMedia[];
   horoscope?: PortfolioHoroscope | null;
+  initialEditorOpen?: boolean;
 }
 
 export default function DashboardClient({
@@ -57,10 +58,11 @@ export default function DashboardClient({
   daysLeft,
   media,
   horoscope = null,
+  initialEditorOpen = false,
 }: Props) {
   const [copied, setCopied] = useState(false);
   const [renewing, setRenewing] = useState(false);
-  const [formOpen, setFormOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(initialEditorOpen);
   const [draftData, setDraftData] = useState<PortfolioData>(() =>
     normalizePortfolioData(portfolio?.draft_data, portfolio?.privacy_mode)
   );

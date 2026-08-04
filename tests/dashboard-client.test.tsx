@@ -81,6 +81,14 @@ beforeEach(() => {
 });
 
 describe("dashboard client", () => {
+  it("opens the canonical editor when requested by an editing route", () => {
+    renderDashboard({ initialEditorOpen: true });
+    expect(screen.getByRole("heading", { name: "Portfolio details" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "A portfolio worth previewing" })).toBeInTheDocument();
+    expect(screen.queryByText("Rashi palette")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Music")).not.toBeInTheDocument();
+  });
+
   it("opens a new private draft, edits it, saves it, and publishes it", async () => {
     renderDashboard({ portfolio: null, shareUrl: null, media: [] });
     expect(screen.getByText(/biodata is waiting/i)).toBeInTheDocument();

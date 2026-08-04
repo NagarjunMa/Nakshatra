@@ -48,7 +48,6 @@ export function createPublicPortfolioSnapshot(data: PortfolioData): PortfolioDat
     data.lifestyle?.diet,
     data.lifestyle?.smoking,
     data.lifestyle?.drinking,
-    data.lifestyle?.music,
     data.lifestyle?.values_statement,
   ]);
   const hasPreferences = hasAny([
@@ -166,7 +165,6 @@ export function createPublicPortfolioSnapshot(data: PortfolioData): PortfolioDat
             diet: data.lifestyle?.diet,
             smoking: data.lifestyle?.smoking,
             drinking: data.lifestyle?.drinking,
-            music: data.lifestyle?.music,
             values_statement: data.lifestyle?.values_statement,
           },
           preferences: {

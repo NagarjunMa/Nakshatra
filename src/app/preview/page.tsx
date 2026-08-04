@@ -21,7 +21,7 @@ export default async function PreviewPage() {
     .eq("user_id", user.id)
     .single();
 
-  if (!portfolio) redirect("/edit");
+  if (!portfolio) redirect("/dashboard?edit=1");
 
   const data = createPublicPortfolioSnapshot(portfolio.draft_data as PortfolioData);
   const themeColor = portfolio.theme_color || "#6366f1";
@@ -45,7 +45,7 @@ export default async function PreviewPage() {
           <span className="text-sm font-medium">Preview Mode (Draft)</span>
           <div className="flex gap-2">
             <Link
-              href="/edit"
+              href="/dashboard?edit=1"
               className="rounded-lg border border-border px-3 py-1 text-sm transition-colors hover:bg-background"
             >
               Back to editing

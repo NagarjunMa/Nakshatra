@@ -42,7 +42,7 @@ const complete: PortfolioData = {
     current_country: "India",
     family_note: "Close-knit",
   },
-  lifestyle: { hobbies: "Reading, Travel", diet: "Vegetarian", music: "Classical" },
+  lifestyle: { hobbies: "Reading, Travel", diet: "Vegetarian" },
   preferences: { narrative: "A kind and curious partnership" },
   contact: {
     contact_person: "Ramesh Rao",

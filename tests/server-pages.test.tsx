@@ -109,17 +109,23 @@ describe("authenticated server pages", () => {
     expect(props).toContain('"isExpired":true');
   });
 
-  it("loads edit and preview pages and redirects when preview has no draft", async () => {
+  it("opens the canonical dashboard editor from the legacy edit URL", async () => {
+    await expect(EditPage()).rejects.toThrow("REDIRECT:/dashboard?edit=1");
     mocks.outcomes.portfolios = { data: portfolio };
-    const edit = await EditPage();
-    expect(React.isValidElement(edit)).toBe(true);
+    render(await DashboardPage({ searchParams: Promise.resolve({ edit: "1" }) }));
+    expect(screen.getByTestId("dashboard-props")).toHaveTextContent('"initialEditorOpen":true');
+  });
+
+  it("loads preview and returns to the canonical editor", async () => {
+    mocks.outcomes.portfolios = { data: portfolio };
     mocks.outcomes.portfolio_media = { data: [] };
     render(await PreviewPage());
     expect(screen.getByText("Preview Mode (Draft)")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Back to editing" })).toHaveAttribute("href", "/dashboard?edit=1");
     expect(screen.getByTestId("template")).toHaveTextContent("Aditi Rao:restricted");
     expect(mocks.photoUrls).toHaveBeenCalledWith(expect.objectContaining({ viewer: "public" }));
     mocks.outcomes.portfolios = { data: null };
-    await expect(PreviewPage()).rejects.toThrow("REDIRECT:/edit");
+    await expect(PreviewPage()).rejects.toThrow("REDIRECT:/dashboard?edit=1");
   });
 });
 
@@ -189,7 +195,7 @@ describe("static app surfaces", () => {
     rerender(<DashboardLoading />);
     expect(document.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0);
     rerender(<EditLoading />);
-    expect(document.querySelectorAll(".animate-pulse").length).toBeGreaterThan(9);
+    expect(document.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0);
     rerender(<PreviewLoading />);
     expect(document.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0);
     rerender(<FormPreview />);

@@ -135,7 +135,6 @@ export const lifestyleSchema = z.object({
   diet: z.string().max(100).optional(),
   smoking: z.string().max(100).optional(),
   drinking: z.string().max(100).optional(),
-  music: z.string().max(300).optional(),
   values_statement: z.string().max(1200).optional(),
   credit_score_band: z.string().max(100).optional(),
 });
@@ -321,22 +320,6 @@ export interface PortfolioHoroscopeAttachment {
   languageLabel: string | null;
   pageCount: number | null;
 }
-
-// --- Form Steps Config ---
-
-export const FORM_STEPS = [
-  { key: "personal", label: "Personal", icon: "User" },
-  { key: "vitals", label: "Vitals", icon: "Heart" },
-  { key: "astrology", label: "Astrology", icon: "Star" },
-  { key: "education", label: "Education", icon: "GraduationCap" },
-  { key: "career", label: "Career", icon: "Briefcase" },
-  { key: "family", label: "Family", icon: "Users" },
-  { key: "lifestyle", label: "Lifestyle", icon: "Music" },
-  { key: "contact", label: "Contact", icon: "Phone" },
-  { key: "style", label: "Style", icon: "Palette" },
-] as const;
-
-export type FormStepKey = (typeof FORM_STEPS)[number]["key"];
 
 // --- Database Row Type ---
 

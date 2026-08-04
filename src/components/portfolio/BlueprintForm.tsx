@@ -142,7 +142,7 @@ export function BlueprintForm({
           phone: data.contact.phone,
           email: data.contact.email,
         }]
-      : [{ relationship: "self", name: "", phone: "", email: "" }];
+      : [];
 
   function updatePersonal(changes: Partial<PortfolioData["personal"]>) {
     const next = { ...data.personal, ...changes };
@@ -393,10 +393,11 @@ export function BlueprintForm({
         )}
 
         {activeSection === "privacy" && (
-          <FormSection eyebrow="Before publishing" title="Privacy, appearance, and protected contact" description="Balanced is the recommended starting point. Contact information stays protected in every mode.">
+          <FormSection eyebrow="Before publishing" title="Privacy and sharing" description="Choose the Celestial Union appearance and decide how much context the public portfolio reveals. Balanced is the recommended starting point.">
             <InfoCard title="Your public link is an introduction, not a complete matrimonial record" audience="Always protected" text="Exact birth details, direct contact, income, and the horoscope attachment do not become public when you choose Open." />
             <div>
-              <p className="mb-3 text-sm font-medium text-white">Appearance</p>
+              <p className="mb-1 text-sm font-medium text-white">Celestial Union appearance</p>
+              <p className="mb-3 text-xs leading-5 text-white/45">This changes only light or dark presentation. There are no legacy palettes or separate templates.</p>
               <div className="grid gap-3 sm:grid-cols-2">
                 {(["light", "dark"] as const).map((appearance) => {
                   const selected = (data.style?.appearance || "light") === appearance;
@@ -416,22 +417,22 @@ export function BlueprintForm({
               </div>
             </div>
             <div className="space-y-4 border-t border-white/10 pt-5">
-              <div><p className="text-sm font-semibold text-white">Protected contact</p><p className="mt-1 text-xs leading-5 text-white/50">Optional. Add a contact only when you are comfortable receiving approved introductions.</p></div>
+              <InfoCard title="Who should an approved introduction contact?" audience="Optional · Never public" text="Add yourself, a parent, guardian, or relative only if you want Nakshatra to keep a preferred contact ready. It is not shown in public or preview views. When approved-access requests are enabled, you will still decide whether to share it." />
               {contacts.map((contact, index) => (
                 <div key={index} className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
                   <div className="mb-3 flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold text-white">Contact {index + 1}</p>
-                    {contacts.length > 1 && <button type="button" onClick={() => updateContacts(contacts.filter((_, itemIndex) => itemIndex !== index))} className="inline-flex min-h-10 items-center gap-2 rounded-lg px-3 text-xs text-white/65 hover:bg-white/5 hover:text-white"><Trash2 className="h-4 w-4" /> Remove</button>}
+                    <p className="text-sm font-semibold text-white">Protected contact {index + 1}</p>
+                    <button type="button" onClick={() => updateContacts(contacts.filter((_, itemIndex) => itemIndex !== index))} className="inline-flex min-h-10 items-center gap-2 rounded-lg px-3 text-xs text-white/65 hover:bg-white/5 hover:text-white"><Trash2 className="h-4 w-4" /> Remove</button>
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <SelectInput label="Relationship" value={contact.relationship || "self"} options={CONTACT_RELATIONSHIPS} onChange={(value) => updateContacts(contacts.map((item, itemIndex) => itemIndex === index ? { ...item, relationship: value } : item))} audience="Protected" />
-                    <TextInput label="Contact name" value={contact.name || ""} onChange={(value) => updateContacts(contacts.map((item, itemIndex) => itemIndex === index ? { ...item, name: value } : item))} audience="Protected" />
+                    <SelectInput label="Who is this?" value={contact.relationship || "self"} options={CONTACT_RELATIONSHIPS} onChange={(value) => updateContacts(contacts.map((item, itemIndex) => itemIndex === index ? { ...item, relationship: value } : item))} audience="Protected" />
+                    <TextInput label="Name of contact" value={contact.name || ""} onChange={(value) => updateContacts(contacts.map((item, itemIndex) => itemIndex === index ? { ...item, name: value } : item))} audience="Protected" />
                     <TextInput label="Phone" type="tel" value={contact.phone || ""} onChange={(value) => updateContacts(contacts.map((item, itemIndex) => itemIndex === index ? { ...item, phone: value } : item))} audience="Protected" hint="Provide a phone number, an email, or both." />
                     <TextInput label="Email" type="email" value={contact.email || ""} onChange={(value) => updateContacts(contacts.map((item, itemIndex) => itemIndex === index ? { ...item, email: value } : item))} audience="Protected" />
                   </div>
                 </div>
               ))}
-              {contacts.length < 5 && <button type="button" onClick={() => updateContacts([...contacts, { relationship: "other", name: "", phone: "", email: "" }])} className="min-h-11 rounded-lg border border-white/15 px-4 text-sm font-semibold text-white hover:border-white/35">Add another contact</button>}
+              {contacts.length < 5 && <button type="button" onClick={() => updateContacts([...contacts, { relationship: contacts.length ? "other" : "self", name: "", phone: "", email: "" }])} className="min-h-11 rounded-lg border border-white/15 px-4 text-sm font-semibold text-white hover:border-white/35">{contacts.length ? "Add another protected contact" : "Add a protected contact"}</button>}
             </div>
           </FormSection>
         )}

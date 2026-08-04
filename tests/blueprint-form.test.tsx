@@ -71,7 +71,7 @@ describe("blueprint form", () => {
     fireEvent.click(screen.getByRole("button", { name: /Family/ }));
     fireEvent.change(screen.getByLabelText("Number of siblings"), { target: { value: "2" } });
     fireEvent.click(screen.getByRole("button", { name: /Privacy & contact/ }));
-    fireEvent.change(screen.getAllByLabelText("Contact name")[0], { target: { value: "Updated Contact" } });
+    fireEvent.change(screen.getAllByLabelText("Name of contact")[0], { target: { value: "Updated Contact" } });
     fireEvent.click(screen.getByRole("button", { name: "Dark" }));
     fireEvent.click(screen.getByRole("button", { name: /Open/ }));
 
@@ -101,7 +101,8 @@ describe("blueprint form", () => {
     fireEvent.click(screen.getByRole("button", { name: /Privacy & contact/ }));
     expect(screen.getByRole("button", { name: /Private/ })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "Light" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getAllByLabelText("Contact name")).toHaveLength(1);
+    expect(screen.queryByLabelText("Name of contact")).not.toBeInTheDocument();
+    expect(screen.getByText(/not shown in public or preview views/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Family/ }));
     expect(screen.queryByText("Sibling 1")).not.toBeInTheDocument();
 
@@ -111,9 +112,9 @@ describe("blueprint form", () => {
       siblings: [{}],
     }));
     fireEvent.click(screen.getByRole("button", { name: /Privacy & contact/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Add another contact" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add a protected contact" }));
     expect(onUpdate).toHaveBeenCalledWith("contact", expect.objectContaining({
-      contacts: expect.arrayContaining([expect.objectContaining({ relationship: "other" })]),
+      contacts: [expect.objectContaining({ relationship: "self" })],
     }));
   });
 

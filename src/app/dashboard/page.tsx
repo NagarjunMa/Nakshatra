@@ -8,7 +8,12 @@ export const metadata: Metadata = {
   title: "Dashboard",
 };
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams = Promise.resolve({}),
+}: {
+  searchParams?: Promise<{ edit?: string | string[] }>;
+} = {}) {
+  const query = await searchParams;
   const { supabase, user } = await getAuthenticatedUser();
 
   const { data: portfolio } = await supabase
@@ -71,6 +76,7 @@ export default async function DashboardPage() {
       daysLeft={daysLeft}
       media={media}
       horoscope={horoscope}
+      initialEditorOpen={query.edit === "1"}
     />
   );
 }
