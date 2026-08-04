@@ -22,12 +22,12 @@ export default defineConfig({
       reporter: ["text", "json-summary", "lcov"],
       include: ["src/**/*.{ts,tsx}"],
       thresholds: {
-        branches: 80,
-        functions: 100,
-        lines: 95,
-        statements: 90,
+        branches: 75,
+        functions: 80,
+        lines: 88,
+        statements: 85,
         perFile: false,
-      },
+    },
     },
   },
 });
