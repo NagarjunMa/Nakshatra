@@ -115,7 +115,8 @@ describe("authenticated server pages", () => {
     mocks.outcomes.portfolio_media = { data: [] };
     render(await PreviewPage());
     expect(screen.getByText("Preview Mode (Draft)")).toBeInTheDocument();
-    expect(screen.getByTestId("template")).toHaveTextContent("Aditi Rao");
+    expect(screen.getByTestId("template")).toHaveTextContent("Aditi Rao:restricted");
+    expect(mocks.photoUrls).toHaveBeenCalledWith(expect.objectContaining({ viewer: "public" }));
     mocks.outcomes.portfolios = { data: null };
     await expect(PreviewPage()).rejects.toThrow("REDIRECT:/edit");
   });

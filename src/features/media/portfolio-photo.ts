@@ -12,6 +12,7 @@ export interface PortfolioPhoto {
   height?: number;
   aspectRatio?: number;
   orientation: PortfolioPhotoOrientation;
+  presentation?: "clear" | "blurred";
 }
 
 /**

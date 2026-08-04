@@ -27,14 +27,16 @@ const publicSnapshot = {
     lifestyle: { hobbies: "Reading, Travel", diet: "Vegetarian", music: "Classical" },
     preferences: { narrative: "A kind and curious partnership" },
     style: {
+      appearance: "light",
       template_name: "Celestial Union",
       theme_color: "#f2c6a7",
       rashi_palette: "kanya-peach",
     },
     visibility: {
       family: "restricted",
+      family_details: "restricted",
+      astrology: "public",
       astrology_details: "restricted",
-      gallery: "public",
       contact: "restricted",
     },
   },

@@ -215,9 +215,16 @@ export const accessSchema = z.object({
 });
 
 export const visibilitySchema = z.object({
+  personal_story: z.enum(["public", "restricted"]).optional(),
+  journey: z.enum(["public", "restricted"]).optional(),
+  lifestyle: z.enum(["public", "restricted"]).optional(),
   family: z.enum(["public", "restricted"]).optional(),
+  family_details: z.enum(["public", "restricted"]).optional(),
+  astrology: z.enum(["public", "restricted"]).optional(),
   astrology_details: z.enum(["public", "restricted"]).optional(),
   gallery: z.enum(["public", "restricted"]).optional(),
+  preferences: z.enum(["public", "restricted"]).optional(),
+  future_plans: z.enum(["public", "restricted"]).optional(),
   contact: z.enum(["public", "restricted"]).optional(),
 });
 
@@ -285,6 +292,8 @@ export interface PortfolioMediaMetadata {
   height?: number;
   aspectRatio?: number;
   orientation?: PortfolioPhotoOrientation;
+  /** A deliberately low-detail derivative that is safe to show before approval. */
+  blurPath?: string;
 }
 
 // --- Form Steps Config ---

@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, LockKeyhole } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   classifyPhotoOrientation,
@@ -85,34 +85,27 @@ export function AdaptivePortfolioHero({
     <div
       className="portfolio-hero-media"
       data-orientation={activeOrientation}
+      data-presentation={activePhoto.presentation || "clear"}
     >
-      {/* The ambient layer fills the stage; the sharp image remains fully visible above it. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={activePhoto.src}
-        alt=""
-        aria-hidden="true"
-        className="portfolio-hero-ambient"
+        alt={activePhoto.alt}
+        width={activePhoto.width}
+        height={activePhoto.height}
+        className="portfolio-hero-photo"
+        onLoad={(event) => {
+          if (activePhoto.orientation === "unknown") {
+            detectLegacyOrientation(
+              activePhoto.id,
+              event.currentTarget.naturalWidth,
+              event.currentTarget.naturalHeight
+            );
+          }
+        }}
       />
-      <div className="portfolio-hero-photo-frame">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={activePhoto.src}
-          alt={activePhoto.alt}
-          width={activePhoto.width}
-          height={activePhoto.height}
-          className="portfolio-hero-photo"
-          onLoad={(event) => {
-            if (activePhoto.orientation === "unknown") {
-              detectLegacyOrientation(
-                activePhoto.id,
-                event.currentTarget.naturalWidth,
-                event.currentTarget.naturalHeight
-              );
-            }
-          }}
-        />
-      </div>
+
+      {activePhoto.presentation === "blurred" && <ProtectedPhotoLabel />}
 
       {photos.length > 1 && (
         <div className="portfolio-hero-controls">
@@ -177,7 +170,7 @@ export function AdaptivePortfolioGallery({
         <p>Captured moments</p>
         <h2 id="portfolio-gallery-title">Gallery</h2>
       </div>
-      <div className="portfolio-gallery-grid">
+      <div className="portfolio-gallery-grid" data-photo-count={Math.min(photos.length, 6)}>
         {photos.map((photo) => {
           const orientation =
             photo.orientation === "unknown"
@@ -189,6 +182,7 @@ export function AdaptivePortfolioGallery({
               key={photo.id}
               className="portfolio-gallery-item"
               data-orientation={orientation}
+              data-presentation={photo.presentation || "clear"}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -207,10 +201,20 @@ export function AdaptivePortfolioGallery({
                   }
                 }}
               />
+              {photo.presentation === "blurred" && <ProtectedPhotoLabel />}
             </figure>
           );
         })}
       </div>
     </section>
+  );
+}
+
+function ProtectedPhotoLabel() {
+  return (
+    <span className="portfolio-protected-photo-label">
+      <LockKeyhole aria-hidden="true" />
+      <span>Photo shared after approval</span>
+    </span>
   );
 }

@@ -15,16 +15,23 @@ import type { PortfolioMedia } from "../../../types/portfolio";
 export async function createPortfolioPhotoUrls({
   supabase,
   media,
+  viewer = "owner",
 }: {
   supabase: SupabaseClient;
   media: PortfolioMedia[];
+  viewer?: "owner" | "public";
 }): Promise<PortfolioPhoto[]> {
   const orderedMedia = orderPortfolioPhotos(media);
   const signedPhotos = await Promise.all(
     orderedMedia.map(async (item): Promise<PortfolioPhoto | null> => {
+      const protectedPresentation =
+        viewer === "public" &&
+        (item.visibility === "blurred" || item.visibility === "interest_required");
+      const path = protectedPresentation ? item.metadata?.blurPath : item.storage_path;
+      if (!path) return null;
       const { data } = await supabase.storage
         .from("photos")
-        .createSignedUrl(item.storage_path, 60 * 60);
+        .createSignedUrl(path, 60 * 60);
 
       if (!data?.signedUrl) return null;
       const width = item.metadata?.width;
@@ -41,6 +48,7 @@ export async function createPortfolioPhotoUrls({
           (width && height ? width / height : undefined),
         orientation:
           item.metadata?.orientation || classifyPhotoOrientation(width, height),
+        ...(protectedPresentation ? { presentation: "blurred" as const } : {}),
       };
       return photo;
     })

@@ -9,6 +9,7 @@ const repository = vi.hoisted(() => ({
   updatePublicSnapshot: vi.fn(),
   renewPortfolioLink: vi.fn(),
 }));
+const ensureProtectedPortfolioPhotoPreviews = vi.hoisted(() => vi.fn());
 
 vi.mock("../src/features/portfolio/server/dashboard.repository", () => ({
   DashboardRepository: class {
@@ -16,6 +17,10 @@ vi.mock("../src/features/portfolio/server/dashboard.repository", () => ({
       return repository;
     }
   },
+}));
+
+vi.mock("../src/features/media/server/media.service", () => ({
+  ensureProtectedPortfolioPhotoPreviews,
 }));
 
 import {
@@ -64,6 +69,7 @@ const draft: PortfolioData = {
 describe("portfolio lifecycle services", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    ensureProtectedPortfolioPhotoPreviews.mockResolvedValue(undefined);
     repository.findPortfolioForUser.mockResolvedValue({
       data: { id: "portfolio-id", is_published: false, share_token: null, expires_at: null },
       error: null,

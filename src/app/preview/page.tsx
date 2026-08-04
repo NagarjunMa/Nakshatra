@@ -6,6 +6,7 @@ import type { PortfolioData } from "@/types/portfolio";
 import type { PortfolioMedia } from "@/types/portfolio";
 import Link from "next/link";
 import { createPortfolioPhotoUrls } from "@/features/media/server/photo-url.service";
+import { createPublicPortfolioSnapshot } from "@/features/portfolio/server/public-snapshot.service";
 
 export const metadata: Metadata = {
   title: "Preview Biodata",
@@ -22,7 +23,7 @@ export default async function PreviewPage() {
 
   if (!portfolio) redirect("/edit");
 
-  const data = portfolio.draft_data as PortfolioData;
+  const data = createPublicPortfolioSnapshot(portfolio.draft_data as PortfolioData);
   const themeColor = portfolio.theme_color || "#6366f1";
   const sunSign = portfolio.sun_sign;
   const { data: media } = await supabase
@@ -33,6 +34,7 @@ export default async function PreviewPage() {
   const photos = await createPortfolioPhotoUrls({
     supabase,
     media: (media ?? []) as PortfolioMedia[],
+    viewer: "public",
   });
 
   return (
@@ -64,6 +66,7 @@ export default async function PreviewPage() {
           data={data}
           themeColor={themeColor}
           sunSign={sunSign}
+          accessMode="restricted"
           photos={photos}
         />
       </div>

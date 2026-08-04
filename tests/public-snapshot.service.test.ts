@@ -91,8 +91,9 @@ describe("public portfolio snapshot", () => {
     expect(snapshot.astrology).not.toHaveProperty("maternal_gotra");
     expect(snapshot.visibility).toEqual({
       family: "restricted",
+      family_details: "restricted",
+      astrology: "public",
       astrology_details: "restricted",
-      gallery: "restricted",
       contact: "restricted",
     });
   });
@@ -126,9 +127,47 @@ describe("public portfolio snapshot", () => {
     expect(openSnapshot).not.toHaveProperty("contact");
     expect(openSnapshot.visibility).toEqual({
       family: "public",
-      astrology_details: "public",
-      gallery: "public",
+      family_details: "restricted",
+      astrology: "public",
+      astrology_details: "restricted",
       contact: "restricted",
     });
   });
+
+  it("records protected previews only when meaningful information exists", () => {
+    const minimal = createPublicPortfolioSnapshot({
+      privacy_mode: "private",
+      personal: { name: "Minimal", gender: "prefer_not_to_say" },
+    });
+    expect(minimal.visibility).toBeUndefined();
+
+    const privateSnapshot = createPublicPortfolioSnapshot({
+      ...portfolio,
+      privacy_mode: "private",
+      personal: {
+        ...portfolio.personal,
+        profile_summary: "A ".repeat(200),
+        shared_life_plans: "A thoughtful shared life.",
+      },
+      education: { degree: "MS" },
+      lifestyle: { hobbies: "Reading" },
+    });
+    expect(privateSnapshot.visibility).toMatchObject({
+      personal_story: "restricted",
+      journey: "restricted",
+      lifestyle: "restricted",
+      preferences: "restricted",
+      future_plans: "restricted",
+      family: "restricted",
+      astrology: "restricted",
+      contact: "restricted",
+    });
+    expect(privateSnapshot.personal.profile_summary?.length).toBeLessThan(
+      portfolioDataStoryLength({ ...portfolio, personal: { ...portfolio.personal, profile_summary: "A ".repeat(200) } })
+    );
+  });
 });
+
+function portfolioDataStoryLength(data: PortfolioData) {
+  return data.personal.profile_summary?.length ?? 0;
+}

@@ -9,6 +9,7 @@ import {
 import { BiodataTemplate } from "../src/components/templates";
 import CelestialUnion from "../src/components/templates/CelestialUnion";
 import type { PortfolioPhoto } from "../src/features/media/portfolio-photo";
+import { createPublicPortfolioSnapshot } from "../src/features/portfolio/server/public-snapshot.service";
 import type { PortfolioData } from "../src/types/portfolio";
 
 const complete: PortfolioData = {
@@ -88,10 +89,11 @@ describe("celestial union portfolio", () => {
     expect(container.querySelector('[data-template="celestial-union"]')).toBeTruthy();
   });
 
-  it("renders the new hierarchy without leaking protected values", () => {
+  it("renders the approved hierarchy without leaking protected values", () => {
+    const publicData = createPublicPortfolioSnapshot(complete);
     render(
       <CelestialUnion
-        data={complete}
+        data={publicData}
         themeColor="#17151c"
         sunSign="kanya"
         accessMode="restricted"
@@ -101,9 +103,9 @@ describe("celestial union portfolio", () => {
 
     expect(screen.getByRole("heading", { name: "Aditi Rao" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Education and career" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Personal details" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Some information is shared after approval" })).toBeInTheDocument();
-    expect(screen.getByAltText("Kanya (Virgo) zodiac")).toHaveAttribute("src", "/zodiac/kanya-light.svg");
+    expect(screen.getByRole("heading", { name: "Family" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "More can be shared after approval." })).toBeInTheDocument();
+    expect(screen.getByLabelText("Rashi: Kanya (Virgo)")).toHaveTextContent("Kanya");
     expect(screen.queryByText("1996-08-12")).not.toBeInTheDocument();
     expect(screen.queryByText("Fair")).not.toBeInTheDocument();
     expect(screen.queryByText("Kashyap")).not.toBeInTheDocument();
@@ -126,17 +128,17 @@ describe("celestial union portfolio", () => {
     expect(screen.getByText("Meera Rao · Teacher")).toBeInTheDocument();
     expect(screen.getByText("Kiran Rao · Doctor")).toBeInTheDocument();
     expect(screen.getByText("Bengaluru · Karnataka · India")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Protected contact preview" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Protected information preview" })).toBeInTheDocument();
     expect(screen.getByText("+91 90000 00000")).toBeInTheDocument();
     expect(screen.getByText("family@example.com")).toBeInTheDocument();
   });
 
-  it("uses the dark zodiac artwork and fixed dark design tokens", () => {
+  it("uses the accessible zodiac badge and fixed dark design tokens", () => {
     const { container } = render(
       <CelestialUnion data={{ ...complete, style: { appearance: "dark" } }} themeColor="#ffffff" sunSign="kanya" photos={photos} />
     );
     expect(container.querySelector('[data-appearance="dark"]')).toBeTruthy();
-    expect(screen.getByAltText("Kanya (Virgo) zodiac")).toHaveAttribute("src", "/zodiac/kanya-dark.svg");
+    expect(screen.getByLabelText("Rashi: Kanya (Virgo)")).toHaveTextContent("Kanya");
     expect(container.querySelector(".portfolio-root")).toHaveStyle({ "--portfolio-background": "#121a21" });
   });
 
@@ -162,7 +164,7 @@ describe("celestial union portfolio", () => {
     );
   });
 
-  it("renders malformed persisted dates without crashing the portfolio", () => {
+  it("ignores malformed persisted dates without inventing an age", () => {
     render(
       <CelestialUnion
         data={{
@@ -174,7 +176,8 @@ describe("celestial union portfolio", () => {
       />
     );
 
-    expect(screen.getByText("2026-13-01")).toBeInTheDocument();
+    expect(screen.queryByText("2026-13-01")).not.toBeInTheDocument();
+    expect(screen.queryByText(/NaN/)).not.toBeInTheDocument();
   });
 
   it("renders minimal data without optional sections", () => {
@@ -187,6 +190,47 @@ describe("celestial union portfolio", () => {
       />
     );
     expect(screen.getByRole("heading", { name: "Minimal" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Education and career" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Family" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "More can be shared after approval." })).not.toBeInTheDocument();
+  });
+
+  it("clears stale fields while rerendering Private, Balanced, and Open modes", () => {
+    const privateData = createPublicPortfolioSnapshot({ ...complete, privacy_mode: "private" });
+    const balancedData = createPublicPortfolioSnapshot({ ...complete, privacy_mode: "progressive" });
+    const openData = createPublicPortfolioSnapshot({
+      ...complete,
+      privacy_mode: "open",
+      family: {
+        ...complete.family,
+        public_summary: "A close-knit family with roots in Karnataka.",
+        paternal_origin: "Mysuru",
+        maternal_origin: "Bengaluru",
+      },
+    });
+    const { container, rerender } = render(
+      <CelestialUnion data={privateData} themeColor="" sunSign="kanya" accessMode="restricted" photos={photos} />
+    );
+
+    expect(container.querySelector('[data-privacy-mode="private"]')).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Education and career" })).toBeInTheDocument();
+    expect(screen.getByText(/Education and career information exists/)).toBeInTheDocument();
+    expect(screen.queryByText("Northeastern · 2020")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Rashi: Kanya (Virgo)")).not.toBeInTheDocument();
+
+    rerender(<CelestialUnion data={balancedData} themeColor="" sunSign="kanya" accessMode="restricted" photos={photos} />);
+    expect(container.querySelector('[data-privacy-mode="progressive"]')).toBeTruthy();
+    expect(screen.getByText("Northeastern · 2020")).toBeInTheDocument();
+    expect(screen.getByLabelText("Rashi: Kanya (Virgo)")).toBeInTheDocument();
+    expect(screen.queryByText("A close-knit family with roots in Karnataka.")).not.toBeInTheDocument();
+
+    rerender(<CelestialUnion data={openData} themeColor="" sunSign="kanya" accessMode="restricted" photos={photos} />);
+    expect(container.querySelector('[data-privacy-mode="open"]')).toBeTruthy();
+    expect(screen.getByText("A close-knit family with roots in Karnataka.")).toBeInTheDocument();
+
+    rerender(<CelestialUnion data={privateData} themeColor="" sunSign="kanya" accessMode="restricted" photos={photos} />);
+    expect(screen.queryByText("A close-knit family with roots in Karnataka.")).not.toBeInTheDocument();
+    expect(screen.queryByText("Northeastern · 2020")).not.toBeInTheDocument();
   });
 });
 
@@ -215,6 +259,20 @@ describe("adaptive portfolio media", () => {
   it("omits an empty gallery", () => {
     const { container } = render(<AdaptivePortfolioGallery photos={[]} />);
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it("labels protected gallery derivatives without hiding the photo slot", () => {
+    const protectedPhoto: PortfolioPhoto = {
+      ...photos[1],
+      presentation: "blurred",
+    };
+    const { container } = render(<AdaptivePortfolioGallery photos={[protectedPhoto]} />);
+
+    expect(screen.getByAltText(protectedPhoto.alt)).toBeInTheDocument();
+    expect(screen.getByText("Photo shared after approval")).toBeInTheDocument();
+    expect(
+      container.querySelector('.portfolio-gallery-item[data-presentation="blurred"]')
+    ).toBeTruthy();
   });
 
   it("detects orientation for legacy photos without stored dimensions", () => {

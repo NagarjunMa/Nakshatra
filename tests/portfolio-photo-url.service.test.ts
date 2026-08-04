@@ -69,4 +69,56 @@ describe("portfolio hero photo URLs", () => {
     expect(createSignedUrl).toHaveBeenNthCalledWith(1, "owner/portfolio/hero.webp", 3600);
     expect(createSignedUrl).toHaveBeenNthCalledWith(2, "owner/portfolio/gallery.webp", 3600);
   });
+
+  it("signs only the safe derivative for a protected public photo", async () => {
+    const protectedMedia: PortfolioMedia = {
+      ...media[0],
+      visibility: "interest_required",
+      metadata: {
+        width: 1200,
+        height: 800,
+        orientation: "landscape",
+        blurPath: "owner/portfolio/gallery-blur.webp",
+      },
+    };
+    const createSignedUrl = vi.fn().mockResolvedValue({
+      data: { signedUrl: "https://photos.test/gallery-blur" },
+    });
+    const supabase = {
+      storage: { from: vi.fn(() => ({ createSignedUrl })) },
+    } as never;
+
+    await expect(
+      createPortfolioPhotoUrls({ supabase, media: [protectedMedia], viewer: "public" })
+    ).resolves.toEqual([
+      expect.objectContaining({
+        src: "https://photos.test/gallery-blur",
+        presentation: "blurred",
+      }),
+    ]);
+    expect(createSignedUrl).toHaveBeenCalledWith(
+      "owner/portfolio/gallery-blur.webp",
+      3600
+    );
+    expect(createSignedUrl).not.toHaveBeenCalledWith(
+      "owner/portfolio/gallery.webp",
+      expect.anything()
+    );
+  });
+
+  it("omits legacy protected photos until a safe derivative exists", async () => {
+    const createSignedUrl = vi.fn();
+    const supabase = {
+      storage: { from: vi.fn(() => ({ createSignedUrl })) },
+    } as never;
+
+    await expect(
+      createPortfolioPhotoUrls({
+        supabase,
+        media: [{ ...media[0], visibility: "interest_required" }],
+        viewer: "public",
+      })
+    ).resolves.toEqual([]);
+    expect(createSignedUrl).not.toHaveBeenCalled();
+  });
 });

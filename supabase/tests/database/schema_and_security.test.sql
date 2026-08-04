@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(32);
+select plan(34);
 
 select has_schema('app_private', 'private helper schema exists');
 select has_table('public', 'portfolios', 'owner portfolios table exists');
@@ -34,6 +34,8 @@ select ok(not exists(select 1 from pg_policies where schemaname = 'public' and t
 select ok(exists(select 1 from pg_policies where schemaname = 'public' and tablename = 'public_portfolio_snapshots' and policyname = 'Public can read active sanitized portfolio snapshots'), 'sanitized snapshot read policy exists');
 select ok(exists(select 1 from pg_policies where schemaname = 'public' and tablename = 'public_portfolio_snapshots' and policyname = 'Portfolio managers can manage sanitized portfolio snapshots'), 'snapshot manager policy exists');
 select ok(exists(select 1 from pg_policies where schemaname = 'storage' and tablename = 'objects' and policyname = 'Users can upload own photos'), 'owner-scoped photo upload policy exists');
+select ok(exists(select 1 from pg_policies where schemaname = 'public' and tablename = 'portfolio_media' and policyname = 'Public can read published protected media descriptors'), 'protected public media descriptors require a safe blur derivative');
+select ok(exists(select 1 from pg_policies where schemaname = 'storage' and tablename = 'objects' and policyname = 'Published protected photo previews are readable'), 'only generated protected photo previews are publicly readable');
 
 select has_trigger('public', 'portfolios', 'portfolios_updated_at', 'portfolio timestamp trigger exists');
 select has_trigger('public', 'public_portfolio_snapshots', 'public_portfolio_snapshots_updated_at', 'snapshot timestamp trigger exists');

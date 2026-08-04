@@ -6,6 +6,7 @@ export const CELESTIAL_THEME_COLORS = {
   light: {
     background: "#f7f5ef",
     surface: "#fffdf9",
+    surfaceSoft: "#e9e2d5",
     ink: "#1c2936",
     muted: "#59636e",
     primary: "#213f59",
@@ -16,6 +17,7 @@ export const CELESTIAL_THEME_COLORS = {
   dark: {
     background: "#121a21",
     surface: "#1b252e",
+    surfaceSoft: "#24333d",
     ink: "#f4f1e9",
     muted: "#c0c8ce",
     primary: "#b8d2e8",

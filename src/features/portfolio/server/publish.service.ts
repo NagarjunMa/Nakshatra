@@ -15,6 +15,7 @@ import {
 } from "./publish-readiness.service";
 import { getCelestialBackground } from "@/features/portfolio/celestial-theme";
 import { createShareUrl } from "./share-url.service";
+import { ensureProtectedPortfolioPhotoPreviews } from "@/features/media/server/media.service";
 
 export class PortfolioPublishError extends Error {
   constructor(
@@ -67,6 +68,15 @@ export async function publishPortfolio({
     ...data,
     style: withCanonicalTemplate(data.style),
   } as PortfolioData;
+
+  try {
+    await ensureProtectedPortfolioPhotoPreviews({ supabase, portfolioId: portfolio.id });
+  } catch {
+    throw new PortfolioPublishError(
+      "We could not safely prepare your protected photos. Please try again.",
+      "PROTECTED_PHOTO_PREVIEW_FAILED"
+    );
+  }
 
   const updates: Record<string, unknown> = {
     draft_data: canonicalData,
