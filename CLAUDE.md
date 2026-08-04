@@ -152,7 +152,7 @@ src/
 │   │   ├── auth/callback/route.ts   # OAuth + magic link callback
 │   │   └── upload/route.ts          # Photo upload (sharp processing)
 │   ├── dashboard/                    # Status, link, views, expiry
-│   ├── edit/                         # Multi-step wizard form
+│   ├── edit/                         # Redirect to the canonical dashboard editor
 │   ├── login/                        # Google OAuth + magic link
 │   ├── signup/                       # Same auth, different copy
 │   ├── p/[token]/                    # Public biodata view
@@ -211,7 +211,7 @@ supabase/
 | `/login` | No | Google OAuth + Magic link sign-in |
 | `/signup` | No | New account |
 | `/dashboard` | Yes | Biodata status, link, views, expiry |
-| `/edit` | Yes | Multi-step wizard form |
+| `/edit` | Yes | Compatibility redirect to the canonical dashboard editor |
 | `/preview` | Yes | Owner preview before publish |
 | `/p/[token]` | No | Public biodata view (CelestialUnion template) |
 | `/api/auth/callback` | No | OAuth/magic link callback |
@@ -272,7 +272,7 @@ supabase/
 4. **Education** — degree, institution, year
 5. **Career** — title, company
 6. **Family** — father, mother, siblings (name + occupation each, max 10)
-7. **Lifestyle** — hobbies, languages, diet, music
+7. **Lifestyle** — hobbies, languages, diet, smoking, and drinking preferences
 8. **Contact** — contact person, phone, email
 9. **Style** — theme color (suggested by rashi), constellation preview
 

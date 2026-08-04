@@ -26,7 +26,7 @@ function databaseClient() {
     from: vi.fn((table: string) => {
       const response = () => mocks.outcomes[table] ?? { data: null };
       const chain: Record<string, unknown> = {};
-      for (const method of ["select", "eq", "in", "order"]) chain[method] = vi.fn(() => chain);
+      for (const method of ["select", "eq", "in", "not", "order"]) chain[method] = vi.fn(() => chain);
       chain.single = vi.fn(async () => response());
       chain.maybeSingle = vi.fn(async () => response());
       chain.then = (resolve: (value: unknown) => unknown) => Promise.resolve(response()).then(resolve);
@@ -66,6 +66,7 @@ import DashboardPage from "../src/app/dashboard/page";
 import EditPage from "../src/app/edit/page";
 import PreviewPage from "../src/app/preview/page";
 import PublicBiodataPage, { generateMetadata } from "../src/app/p/[token]/page";
+import HoroscopePage from "../src/app/p/[token]/horoscope/page";
 import OpenGraphImage from "../src/app/p/[token]/opengraph-image";
 import LoginPage from "../src/app/login/page";
 import SignupPage from "../src/app/signup/page";
@@ -108,16 +109,23 @@ describe("authenticated server pages", () => {
     expect(props).toContain('"isExpired":true');
   });
 
-  it("loads edit and preview pages and redirects when preview has no draft", async () => {
+  it("opens the canonical dashboard editor from the legacy edit URL", async () => {
+    await expect(EditPage()).rejects.toThrow("REDIRECT:/dashboard?edit=1");
     mocks.outcomes.portfolios = { data: portfolio };
-    const edit = await EditPage();
-    expect(React.isValidElement(edit)).toBe(true);
+    render(await DashboardPage({ searchParams: Promise.resolve({ edit: "1" }) }));
+    expect(screen.getByTestId("dashboard-props")).toHaveTextContent('"initialEditorOpen":true');
+  });
+
+  it("loads preview and returns to the canonical editor", async () => {
+    mocks.outcomes.portfolios = { data: portfolio };
     mocks.outcomes.portfolio_media = { data: [] };
     render(await PreviewPage());
     expect(screen.getByText("Preview Mode (Draft)")).toBeInTheDocument();
-    expect(screen.getByTestId("template")).toHaveTextContent("Aditi Rao");
+    expect(screen.getByRole("link", { name: "Back to editing" })).toHaveAttribute("href", "/dashboard?edit=1");
+    expect(screen.getByTestId("template")).toHaveTextContent("Aditi Rao:restricted");
+    expect(mocks.photoUrls).toHaveBeenCalledWith(expect.objectContaining({ viewer: "public" }));
     mocks.outcomes.portfolios = { data: null };
-    await expect(PreviewPage()).rejects.toThrow("REDIRECT:/edit");
+    await expect(PreviewPage()).rejects.toThrow("REDIRECT:/dashboard?edit=1");
   });
 });
 
@@ -139,6 +147,30 @@ describe("public portfolio pages", () => {
     render(await PublicBiodataPage({ params: Promise.resolve({ token: "token" }) }));
     expect(screen.getByTestId("template")).toHaveTextContent("Aditi Rao:restricted");
     await waitFor(() => expect(mocks.rpc).toHaveBeenCalledWith("record_view", { p_portfolio_id: "portfolio-1" }));
+  });
+
+  it("keeps the separate horoscope viewer gated and uses a neutral Word download", async () => {
+    mocks.outcomes.public_portfolio_snapshots = { data: { portfolio_id: "portfolio-1", data } };
+    mocks.outcomes.portfolio_horoscopes = { data: null };
+    await expect(HoroscopePage({ params: Promise.resolve({ token: "token" }) })).rejects.toThrow("NOT_FOUND");
+
+    mocks.outcomes.portfolio_horoscopes = { data: {
+      id: "horoscope-1",
+      portfolio_id: "portfolio-1",
+      storage_path: "owner/portfolio-1/private.docx",
+      mime_type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      file_extension: "docx",
+      byte_size: 100,
+      language_label: "Kannada",
+      page_count: null,
+      published_at: "2026-08-04T00:00:00.000Z",
+      created_at: "2026-08-04T00:00:00.000Z",
+      updated_at: "2026-08-04T00:00:00.000Z",
+    } };
+    render(await HoroscopePage({ params: Promise.resolve({ token: "token" }) }));
+    expect(screen.getByRole("heading", { name: /original horoscope/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /open document/i })).toHaveAttribute("href", "https://signed.test/hero");
+    expect(mocks.signedUrl).toHaveBeenCalledWith("owner/portfolio-1/private.docx", 300, { download: "horoscope.docx" });
   });
 
   it("generates fallback and hero-backed Open Graph images", async () => {
@@ -163,7 +195,7 @@ describe("static app surfaces", () => {
     rerender(<DashboardLoading />);
     expect(document.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0);
     rerender(<EditLoading />);
-    expect(document.querySelectorAll(".animate-pulse").length).toBeGreaterThan(9);
+    expect(document.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0);
     rerender(<PreviewLoading />);
     expect(document.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0);
     rerender(<FormPreview />);

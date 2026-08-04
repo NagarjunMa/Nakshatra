@@ -1,4 +1,4 @@
-import type { PortfolioData, PortfolioMedia } from "@/types/portfolio";
+import type { PortfolioData, PortfolioHoroscope, PortfolioMedia } from "@/types/portfolio";
 
 export type PortfolioApiFailure = {
   ok: false;
@@ -97,6 +97,22 @@ export function updatePortfolioPhotoRequest(
 export function deletePortfolioPhotoRequest(mediaId: string) {
   return requestPortfolioApi<{ ok: true }>(
     `/api/portfolio-media?mediaId=${encodeURIComponent(mediaId)}`,
+    { method: "DELETE" }
+  );
+}
+
+/** Uploads or safely replaces the owner's single approved-viewer horoscope attachment. */
+export function uploadHoroscopeRequest(formData: FormData) {
+  return requestPortfolioApi<{ horoscope: PortfolioHoroscope }>("/api/portfolio-horoscope", {
+    method: "POST",
+    body: formData,
+  });
+}
+
+/** Revokes and deletes the owner's horoscope attachment. */
+export function deleteHoroscopeRequest(horoscopeId: string) {
+  return requestPortfolioApi<{ ok: true }>(
+    `/api/portfolio-horoscope?horoscopeId=${encodeURIComponent(horoscopeId)}`,
     { method: "DELETE" }
   );
 }

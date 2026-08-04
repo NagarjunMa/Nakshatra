@@ -13,7 +13,10 @@ import {
   PortfolioPublishReadinessError,
   requirePortfolioPublishReadiness,
 } from "./publish-readiness.service";
+import { getCelestialBackground } from "@/features/portfolio/celestial-theme";
 import { createShareUrl } from "./share-url.service";
+import { ensurePortfolioPhotoPreviews } from "@/features/media/server/media.service";
+import { publishHoroscope } from "@/features/horoscope/server/horoscope.service";
 
 export class PortfolioPublishError extends Error {
   constructor(
@@ -67,13 +70,23 @@ export async function publishPortfolio({
     style: withCanonicalTemplate(data.style),
   } as PortfolioData;
 
+  try {
+    await ensurePortfolioPhotoPreviews({ supabase, portfolioId: portfolio.id });
+  } catch {
+    throw new PortfolioPublishError(
+      "We could not safely prepare your protected photos. Please try again.",
+      "PROTECTED_PHOTO_PREVIEW_FAILED"
+    );
+  }
+
+  const publishedAt = new Date().toISOString();
   const updates: Record<string, unknown> = {
     draft_data: canonicalData,
     published_data: canonicalData,
     is_published: true,
-    published_at: new Date().toISOString(),
+    published_at: publishedAt,
     sun_sign: data.astrology?.rashi || null,
-    theme_color: data.style?.theme_color || null,
+    theme_color: getCelestialBackground(data.style),
     template_id: CELESTIAL_UNION_TEMPLATE_ID,
   };
 
@@ -105,6 +118,15 @@ export async function publishPortfolio({
   });
   if (snapshotError) {
     throw new PortfolioPublishError("We could not create the public portfolio safely. Please try again.", "PUBLIC_SNAPSHOT_PERSISTENCE_FAILED");
+  }
+
+  try {
+    await publishHoroscope({ supabase, portfolioId: portfolio.id, publishedAt });
+  } catch {
+    throw new PortfolioPublishError(
+      "Your portfolio was updated, but we could not publish its horoscope attachment. Please try again.",
+      "HOROSCOPE_PUBLISH_FAILED"
+    );
   }
 
   return {

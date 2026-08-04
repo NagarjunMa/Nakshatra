@@ -171,7 +171,13 @@ export class DashboardRepository {
 
   async replaceFamilyMembers(
     candidateId: string,
-    members: Array<{ relationship: string; name?: string; occupation?: string }>
+    members: Array<{
+      relationship: string;
+      name?: string;
+      occupation?: string;
+      location?: string;
+      marital_status?: string;
+    }>
   ) {
     const { error: deleteError } = await this.supabase
       .from("candidate_family_members")

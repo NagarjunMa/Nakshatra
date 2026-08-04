@@ -21,17 +21,21 @@ describe("PortfolioMediaRepository", () => {
     const q = query({ data: { id: "media" }, error: null, count: 2 });
     const upload = vi.fn().mockResolvedValue({ error: null });
     const remove = vi.fn().mockResolvedValue({ error: null });
+    const download = vi.fn().mockResolvedValue({ data: new Blob(), error: null });
     const from = vi.fn(() => q);
-    const supabase = { from, storage: { from: vi.fn(() => ({ upload, remove })) } } as never;
+    const supabase = { from, storage: { from: vi.fn(() => ({ upload, remove, download })) } } as never;
     const repository = new PortfolioMediaRepository(supabase);
 
     await repository.findOwnedPortfolio("portfolio", "owner");
     await repository.countProfilePhotos("portfolio");
     await repository.upload("path.webp", Buffer.from("image"));
+    await repository.download("path.webp");
     await repository.remove([]);
     await repository.remove(["path.webp"]);
     await repository.createMedia({ portfolio_id: "portfolio" });
     await repository.updateMedia("media", { visibility: "public" });
+    await repository.findMedia("media");
+    await repository.findPortfolioPhotos("portfolio");
     await repository.demoteOtherHeroPhotos("portfolio", "media");
     await repository.deleteMedia("media");
 
@@ -39,6 +43,8 @@ describe("PortfolioMediaRepository", () => {
     expect(from).toHaveBeenCalledWith("portfolio_media");
     expect(upload).toHaveBeenCalledWith("path.webp", expect.any(Buffer), { contentType: "image/webp" });
     expect(remove).toHaveBeenCalledWith(["path.webp"]);
+    expect(download).toHaveBeenCalledWith("path.webp");
+    expect(q.in).toHaveBeenCalledWith("media_type", ["hero", "gallery"]);
   });
 });
 

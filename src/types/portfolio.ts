@@ -29,15 +29,19 @@ export const personalSchema = z.object({
   photo_url: z.string().url().optional(),
   photo_thumb_url: z.string().url().optional(),
   dob: z
-    .string()
-    .min(1, "Date of birth is required")
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
+    .union([
+      z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
+      z.literal(""),
+    ])
+    .optional(),
+  age: z.number().int().min(18).max(120).optional(),
   place_of_birth: z.string().max(200).optional(),
   current_location: z.string().max(200).optional(),
   gender: z.enum(["male", "female", "non_binary", "prefer_not_to_say"]),
   marital_status: z.string().max(100).optional(),
   immigration_status: z.string().max(200).optional(),
   relocation_preference: z.string().max(200).optional(),
+  short_bio: z.string().max(240).optional(),
   profile_summary: z.string().max(1600).optional(),
   profile_for: z.string().max(50).optional(),
   country: z.string().max(100).optional(),
@@ -99,6 +103,8 @@ export const careerSchema = z.object({
 const familyMemberSchema = z.object({
   name: z.string().max(100).optional(),
   occupation: z.string().max(200).optional(),
+  location: z.string().max(200).optional(),
+  marital_status: z.string().max(100).optional(),
 });
 
 export const familySchema = z.object({
@@ -106,6 +112,9 @@ export const familySchema = z.object({
   mother: familyMemberSchema.optional(),
   siblings: z.array(familyMemberSchema).max(10, "Maximum 10 siblings").optional(),
   ancestral_origin: z.string().max(200).optional(),
+  paternal_origin: z.string().max(200).optional(),
+  maternal_origin: z.string().max(200).optional(),
+  public_summary: z.string().max(600).optional(),
   current_settlement: z.string().max(200).optional(),
   family_note: z.string().max(800).optional(),
   sibling_count: z.number().int().min(0).max(20).optional(),
@@ -126,9 +135,20 @@ export const lifestyleSchema = z.object({
   diet: z.string().max(100).optional(),
   smoking: z.string().max(100).optional(),
   drinking: z.string().max(100).optional(),
-  music: z.string().max(300).optional(),
   values_statement: z.string().max(1200).optional(),
   credit_score_band: z.string().max(100).optional(),
+});
+
+const contactEntrySchema = z.object({
+  relationship: z.string().max(50).optional(),
+  name: z.string().max(100).optional(),
+  phone: z
+    .union([
+      z.string().regex(/^[+\d\s()-]*$/, "Invalid phone number"),
+      z.literal(""),
+    ])
+    .optional(),
+  email: z.union([z.email("Invalid email"), z.literal("")]).optional(),
 });
 
 export const contactSchema = z.object({
@@ -141,9 +161,11 @@ export const contactSchema = z.object({
     .optional(),
   email: z.union([z.email("Invalid email"), z.literal("")]).optional(),
   secure_note: z.string().max(600).optional(),
+  contacts: z.array(contactEntrySchema).max(5, "Maximum 5 contacts").optional(),
 });
 
 export const styleSchema = z.object({
+  appearance: z.enum(["light", "dark"]).optional(),
   theme_color: z
     .union([
       z.string().regex(/^#[0-9a-fA-F]{6}$/, "Invalid color"),
@@ -193,9 +215,16 @@ export const accessSchema = z.object({
 });
 
 export const visibilitySchema = z.object({
+  personal_story: z.enum(["public", "restricted"]).optional(),
+  journey: z.enum(["public", "restricted"]).optional(),
+  lifestyle: z.enum(["public", "restricted"]).optional(),
   family: z.enum(["public", "restricted"]).optional(),
+  family_details: z.enum(["public", "restricted"]).optional(),
+  astrology: z.enum(["public", "restricted"]).optional(),
   astrology_details: z.enum(["public", "restricted"]).optional(),
   gallery: z.enum(["public", "restricted"]).optional(),
+  preferences: z.enum(["public", "restricted"]).optional(),
+  future_plans: z.enum(["public", "restricted"]).optional(),
   contact: z.enum(["public", "restricted"]).optional(),
 });
 
@@ -263,23 +292,34 @@ export interface PortfolioMediaMetadata {
   height?: number;
   aspectRatio?: number;
   orientation?: PortfolioPhotoOrientation;
+  /** A deliberately low-detail derivative that is safe to show before approval. */
+  blurPath?: string;
 }
 
-// --- Form Steps Config ---
+export interface PortfolioHoroscope {
+  id: string;
+  portfolio_id: string;
+  storage_path: string;
+  mime_type:
+    | "application/pdf"
+    | "application/msword"
+    | "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    | "image/webp";
+  file_extension: "pdf" | "doc" | "docx" | "webp";
+  byte_size: number;
+  language_label: string | null;
+  page_count: number | null;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
-export const FORM_STEPS = [
-  { key: "personal", label: "Personal", icon: "User" },
-  { key: "vitals", label: "Vitals", icon: "Heart" },
-  { key: "astrology", label: "Astrology", icon: "Star" },
-  { key: "education", label: "Education", icon: "GraduationCap" },
-  { key: "career", label: "Career", icon: "Briefcase" },
-  { key: "family", label: "Family", icon: "Users" },
-  { key: "lifestyle", label: "Lifestyle", icon: "Music" },
-  { key: "contact", label: "Contact", icon: "Phone" },
-  { key: "style", label: "Style", icon: "Palette" },
-] as const;
-
-export type FormStepKey = (typeof FORM_STEPS)[number]["key"];
+export interface PortfolioHoroscopeAttachment {
+  href: string;
+  formatLabel: string;
+  languageLabel: string | null;
+  pageCount: number | null;
+}
 
 // --- Database Row Type ---
 

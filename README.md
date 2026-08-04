@@ -94,7 +94,7 @@ Fill a form once. Get a shareable link. Update anytime — the link always shows
 | `/login` | No | Google OAuth + Magic link |
 | `/signup` | No | New account |
 | `/dashboard` | Yes | Status, link, views, expiry |
-| `/edit` | Yes | Multi-step wizard form |
+| `/edit` | Yes | Compatibility redirect to the canonical dashboard editor |
 | `/preview` | Yes | Draft preview |
 | `/p/[token]` | No | Public biodata view (CelestialUnion template) |
 | `/api/auth/callback` | No | OAuth/magic link callback |
@@ -109,7 +109,7 @@ src/
 │   │   ├── auth/callback/route.ts    # OAuth + magic link callback
 │   │   └── upload/route.ts           # Photo upload (sharp processing)
 │   ├── dashboard/                     # Status, link, views, expiry
-│   ├── edit/                          # Multi-step wizard form
+│   ├── edit/                          # Redirect to the canonical dashboard editor
 │   ├── login/                         # Auth entry
 │   ├── signup/                        # Same auth, different copy
 │   ├── p/[token]/                     # Public biodata view

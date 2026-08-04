@@ -6,6 +6,8 @@ import type { PortfolioData } from "@/types/portfolio";
 import type { PortfolioMedia } from "@/types/portfolio";
 import Link from "next/link";
 import { createPortfolioPhotoUrls } from "@/features/media/server/photo-url.service";
+import { createPublicPortfolioSnapshot } from "@/features/portfolio/server/public-snapshot.service";
+import { ensurePortfolioPhotoPreviews } from "@/features/media/server/media.service";
 
 export const metadata: Metadata = {
   title: "Preview Biodata",
@@ -20,11 +22,15 @@ export default async function PreviewPage() {
     .eq("user_id", user.id)
     .single();
 
-  if (!portfolio) redirect("/edit");
+  if (!portfolio) redirect("/dashboard?edit=1");
 
-  const data = portfolio.draft_data as PortfolioData;
+  const data = createPublicPortfolioSnapshot(portfolio.draft_data as PortfolioData);
   const themeColor = portfolio.theme_color || "#6366f1";
   const sunSign = portfolio.sun_sign;
+  await ensurePortfolioPhotoPreviews({
+    supabase,
+    portfolioId: portfolio.id,
+  });
   const { data: media } = await supabase
     .from("portfolio_media")
     .select("id, portfolio_id, storage_path, thumbnail_path, media_type, visibility, sort_order, alt_text, metadata")
@@ -33,6 +39,8 @@ export default async function PreviewPage() {
   const photos = await createPortfolioPhotoUrls({
     supabase,
     media: (media ?? []) as PortfolioMedia[],
+    viewer: "public",
+    privacyMode: data.privacy_mode,
   });
 
   return (
@@ -43,7 +51,7 @@ export default async function PreviewPage() {
           <span className="text-sm font-medium">Preview Mode (Draft)</span>
           <div className="flex gap-2">
             <Link
-              href="/edit"
+              href="/dashboard?edit=1"
               className="rounded-lg border border-border px-3 py-1 text-sm transition-colors hover:bg-background"
             >
               Back to editing
@@ -64,6 +72,7 @@ export default async function PreviewPage() {
           data={data}
           themeColor={themeColor}
           sunSign={sunSign}
+          accessMode="restricted"
           photos={photos}
         />
       </div>

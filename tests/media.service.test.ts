@@ -7,6 +7,9 @@ const repository = vi.hoisted(() => ({
   remove: vi.fn(),
   createMedia: vi.fn(),
   updateMedia: vi.fn(),
+  findMedia: vi.fn(),
+  findPortfolioPhotos: vi.fn(),
+  download: vi.fn(),
   demoteOtherHeroPhotos: vi.fn(),
   deleteMedia: vi.fn(),
 }));
@@ -24,6 +27,7 @@ vi.mock("sharp", () => ({ default: sharpMock }));
 
 import {
   deletePortfolioPhoto,
+  ensurePortfolioPhotoPreviews,
   PortfolioMediaError,
   updatePortfolioPhoto,
   uploadPortfolioPhoto,
@@ -53,6 +57,7 @@ function mockSharp() {
     const pipeline = {
       rotate: vi.fn(),
       resize: vi.fn(),
+      blur: vi.fn(),
       webp: vi.fn(),
       toBuffer: vi.fn((options?: { resolveWithObject?: boolean }) =>
         Promise.resolve(
@@ -67,6 +72,7 @@ function mockSharp() {
     };
     pipeline.rotate.mockReturnValue(pipeline);
     pipeline.resize.mockReturnValue(pipeline);
+    pipeline.blur.mockReturnValue(pipeline);
     pipeline.webp.mockReturnValue(pipeline);
     return pipeline;
   });
@@ -138,13 +144,13 @@ describe("portfolio media service", () => {
       uploadPortfolioPhoto({ supabase: {} as never, userId, portfolioId, file: photo(), visibility: "public" })
     ).rejects.toMatchObject({ status: 404 });
 
-    mockUploadSuccess(6);
+    mockUploadSuccess(8);
     await expect(
       uploadPortfolioPhoto({ supabase: {} as never, userId, portfolioId, file: photo(), visibility: "public" })
     ).rejects.toMatchObject({ status: 400 });
   });
 
-  it("processes an image, stores both renditions, and creates the hero metadata", async () => {
+  it("processes an image, stores owner and protected renditions, and creates the hero metadata", async () => {
     await expect(
       uploadPortfolioPhoto({
         supabase: {} as never,
@@ -154,7 +160,7 @@ describe("portfolio media service", () => {
         visibility: "interest_required",
       })
     ).resolves.toEqual(media);
-    expect(repository.upload).toHaveBeenCalledTimes(2);
+    expect(repository.upload).toHaveBeenCalledTimes(3);
     expect(repository.createMedia).toHaveBeenCalledWith(
       expect.objectContaining({
         media_type: "hero",
@@ -164,6 +170,9 @@ describe("portfolio media service", () => {
           height: 1200,
           aspectRatio: 0.75,
           orientation: "portrait",
+          blurPath: expect.stringMatching(
+            new RegExp(`^${userId}/${portfolioId}/[0-9a-f-]+-blur\\.webp$`)
+          ),
         },
       })
     );
@@ -215,6 +224,94 @@ describe("portfolio media service", () => {
         changes: { visibility: "public" },
       })
     ).rejects.toMatchObject({ status: 404 });
+  });
+
+  it("creates a safe derivative when an existing photo becomes protected", async () => {
+    repository.findMedia.mockResolvedValue({
+      data: { ...media, metadata: { width: 900, height: 1200 } },
+      error: null,
+    });
+    repository.download.mockResolvedValue({
+      data: new Blob([onePixelPng]),
+      error: null,
+    });
+
+    await updatePortfolioPhoto({
+      supabase: {} as never,
+      mediaId: media.id,
+      changes: { visibility: "interest_required" },
+    });
+
+    expect(repository.upload).toHaveBeenCalledWith(
+      `${userId}/${portfolioId}/photo-blur.webp`,
+      expect.any(Buffer)
+    );
+    expect(repository.updateMedia).toHaveBeenCalledWith(
+      media.id,
+      expect.objectContaining({
+        visibility: "interest_required",
+        metadata: expect.objectContaining({
+          blurPath: `${userId}/${portfolioId}/photo-blur.webp`,
+        }),
+      })
+    );
+  });
+
+  it("creates the same safe derivative for approved-interest-only photos", async () => {
+    repository.findMedia.mockResolvedValue({
+      data: { ...media, metadata: { width: 900, height: 1200 } },
+      error: null,
+    });
+    repository.download.mockResolvedValue({ data: new Blob([onePixelPng]), error: null });
+
+    await updatePortfolioPhoto({
+      supabase: {} as never,
+      mediaId: media.id,
+      changes: { visibility: "approved_only" },
+    });
+
+    expect(repository.updateMedia).toHaveBeenCalledWith(
+      media.id,
+      expect.objectContaining({
+        visibility: "approved_only",
+        metadata: expect.objectContaining({ blurPath: `${userId}/${portfolioId}/photo-blur.webp` }),
+      })
+    );
+  });
+
+  it("backfills missing photo derivatives before publishing", async () => {
+    repository.findPortfolioPhotos.mockResolvedValue({
+      data: [
+        { ...media, id: "already-safe", metadata: { blurPath: "already-blurred.webp" } },
+        { ...media, id: "legacy-public", visibility: "public", metadata: { width: 900, height: 1200 } },
+      ],
+      error: null,
+    });
+    repository.download.mockResolvedValue({ data: new Blob([onePixelPng]), error: null });
+    repository.updateMedia.mockResolvedValue({ data: media, error: null });
+
+    await expect(
+      ensurePortfolioPhotoPreviews({ supabase: {} as never, portfolioId })
+    ).resolves.toBeUndefined();
+    expect(repository.download).toHaveBeenCalledTimes(1);
+    expect(repository.updateMedia).toHaveBeenCalledWith(
+      "legacy-public",
+      { metadata: expect.objectContaining({ blurPath: `${userId}/${portfolioId}/photo-blur.webp` }) }
+    );
+  });
+
+  it("fails closed when photo derivatives cannot be safely prepared", async () => {
+    repository.findPortfolioPhotos.mockResolvedValue({ data: null, error: new Error("db") });
+    await expect(
+      ensurePortfolioPhotoPreviews({ supabase: {} as never, portfolioId })
+    ).rejects.toMatchObject({ status: 500 });
+
+    repository.findPortfolioPhotos.mockResolvedValue({ data: [{ ...media, metadata: {} }], error: null });
+    repository.download.mockResolvedValue({ data: new Blob([onePixelPng]), error: null });
+    repository.upload.mockResolvedValue({ error: new Error("storage") });
+    await expect(
+      ensurePortfolioPhotoPreviews({ supabase: {} as never, portfolioId })
+    ).rejects.toMatchObject({ status: 500 });
   });
 
   it("reports hero demotion and storage deletion failures", async () => {

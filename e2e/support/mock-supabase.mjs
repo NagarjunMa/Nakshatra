@@ -18,23 +18,26 @@ const publicSnapshot = {
       dob: "1996-08-12",
       gender: "female",
       current_location: "Boston",
+      short_bio: "Warm, grounded, and curious about the world.",
       profile_summary: "A thoughtful introduction",
     },
     vitals: { height: "5 ft 5 in", complexion: "Fair" },
     astrology: { rashi: "kanya", nakshatra: "Uttara Phalguni", pada: "2" },
     education: { degree: "MS", institution: "Northeastern", year: "2020" },
     career: { title: "Engineer", company: "Nakshatra", location: "Boston" },
-    lifestyle: { hobbies: "Reading, Travel", diet: "Vegetarian", music: "Classical" },
+    lifestyle: { hobbies: "Reading, Travel", diet: "Vegetarian" },
     preferences: { narrative: "A kind and curious partnership" },
     style: {
+      appearance: "light",
       template_name: "Celestial Union",
       theme_color: "#f2c6a7",
       rashi_palette: "kanya-peach",
     },
     visibility: {
       family: "restricted",
+      family_details: "restricted",
+      astrology: "public",
       astrology_details: "restricted",
-      gallery: "public",
       contact: "restricted",
     },
   },
@@ -63,7 +66,91 @@ const publicMedia = [
     alt_text: "Public landscape",
     metadata: { width: 1600, height: 900, aspectRatio: 16 / 9, orientation: "landscape" },
   },
+  {
+    id: "44444444-4444-4444-8444-444444444444",
+    portfolio_id: portfolioId,
+    storage_path: `${portfolioId}/protected-original.svg`,
+    thumbnail_path: null,
+    media_type: "gallery",
+    visibility: "approved_only",
+    sort_order: 2,
+    alt_text: "Protected portrait",
+    metadata: {
+      width: 900,
+      height: 1200,
+      aspectRatio: 0.75,
+      orientation: "portrait",
+      blurPath: `${portfolioId}/protected-blur.svg`,
+    },
+  },
+  {
+    id: "55555555-5555-4555-8555-555555555555",
+    portfolio_id: portfolioId,
+    storage_path: `${portfolioId}/square-one.svg`,
+    thumbnail_path: null,
+    media_type: "gallery",
+    visibility: "public",
+    sort_order: 3,
+    alt_text: "Public square moment",
+    metadata: { width: 1000, height: 1000, aspectRatio: 1, orientation: "square" },
+  },
+  {
+    id: "66666666-6666-4666-8666-666666666666",
+    portfolio_id: portfolioId,
+    storage_path: `${portfolioId}/portrait-two.svg`,
+    thumbnail_path: null,
+    media_type: "gallery",
+    visibility: "public",
+    sort_order: 4,
+    alt_text: "Public portrait moment",
+    metadata: { width: 900, height: 1200, aspectRatio: 0.75, orientation: "portrait" },
+  },
+  {
+    id: "77777777-7777-4777-8777-777777777777",
+    portfolio_id: portfolioId,
+    storage_path: `${portfolioId}/landscape-two.svg`,
+    thumbnail_path: null,
+    media_type: "gallery",
+    visibility: "public",
+    sort_order: 5,
+    alt_text: "Second public landscape",
+    metadata: { width: 1600, height: 900, aspectRatio: 16 / 9, orientation: "landscape" },
+  },
+  {
+    id: "88888888-8888-4888-8888-888888888888",
+    portfolio_id: portfolioId,
+    storage_path: `${portfolioId}/square-two.svg`,
+    thumbnail_path: null,
+    media_type: "gallery",
+    visibility: "public",
+    sort_order: 6,
+    alt_text: "Second public square moment",
+    metadata: { width: 1000, height: 1000, aspectRatio: 1, orientation: "square" },
+  },
+  {
+    id: "99999999-9999-4999-8999-999999999999",
+    portfolio_id: portfolioId,
+    storage_path: `${portfolioId}/portrait-three.svg`,
+    thumbnail_path: null,
+    media_type: "gallery",
+    visibility: "public",
+    sort_order: 7,
+    alt_text: "Third public portrait moment",
+    metadata: { width: 900, height: 1200, aspectRatio: 0.75, orientation: "portrait" },
+  },
 ];
+
+const publicMediaWithPreviews = publicMedia.map((item) =>
+  item.media_type === "gallery" && !item.metadata?.blurPath
+    ? {
+        ...item,
+        metadata: {
+          ...item.metadata,
+          blurPath: item.storage_path.replace(/\.svg$/, "-blur.svg"),
+        },
+      }
+    : item
+);
 
 function sendJson(response, status, value) {
   response.writeHead(status, {
@@ -73,10 +160,12 @@ function sendJson(response, status, value) {
   response.end(JSON.stringify(value));
 }
 
-function sendPortfolioImage(response, landscape) {
-  const width = landscape ? 1600 : 900;
-  const height = landscape ? 900 : 1200;
-  const label = landscape ? "PUBLIC GALLERY" : "PUBLIC HERO";
+function sendPortfolioImage(response, path) {
+  const landscape = path.includes("landscape");
+  const square = path.includes("square");
+  const width = landscape ? 1600 : square ? 1000 : 900;
+  const height = landscape ? 900 : square ? 1000 : 1200;
+  const label = path.includes("protected") ? "PROTECTED PREVIEW" : landscape ? "PUBLIC GALLERY" : "PUBLIC PORTRAIT";
   response.writeHead(200, {
     "Access-Control-Allow-Origin": "*",
     "Cache-Control": "no-store",
@@ -102,10 +191,17 @@ const server = createServer((request, response) => {
   if (url.pathname === "/health") return sendJson(response, 200, { ok: true });
   if (url.pathname === "/auth/v1/user") return sendJson(response, 401, { message: "Unauthorized" });
   if (url.pathname === "/rest/v1/public_portfolio_snapshots") {
-    return sendJson(response, 200, publicSnapshot);
+    const isPrivate = url.searchParams.get("share_token") === "eq.e2e-private-token";
+    return sendJson(response, 200, isPrivate
+      ? {
+          ...publicSnapshot,
+          share_token: "e2e-private-token",
+          data: { ...publicSnapshot.data, privacy_mode: "private" },
+        }
+      : publicSnapshot);
   }
   if (url.pathname === "/rest/v1/portfolio_media") {
-    return sendJson(response, 200, publicMedia);
+    return sendJson(response, 200, publicMediaWithPreviews);
   }
   if (url.pathname === "/rest/v1/rpc/record_view") {
     return sendJson(response, 200, null);
@@ -116,7 +212,7 @@ const server = createServer((request, response) => {
     });
   }
   if (request.method === "GET" && url.pathname.startsWith("/storage/v1/object/sign/photos/")) {
-    return sendPortfolioImage(response, url.pathname.endsWith("landscape.svg"));
+    return sendPortfolioImage(response, url.pathname);
   }
 
   return sendJson(response, 404, { message: "Not found" });

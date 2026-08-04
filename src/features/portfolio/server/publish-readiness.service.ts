@@ -16,21 +16,27 @@ export function requirePortfolioPublishReadiness({
   data: PortfolioData;
   hasPublicHeroPhoto: boolean;
 }) {
-  if (!data.personal.name || !data.personal.dob || !data.personal.gender) {
-    throw new PortfolioPublishReadinessError(
-      "Add your name, date of birth, and gender before generating your portfolio"
-    );
+  const missing: string[] = [];
+  const requireValue = (value: unknown, label: string) => {
+    if (typeof value === "string" ? !value.trim() : value === undefined || value === null) {
+      missing.push(label);
+    }
+  };
+
+  requireValue(data.personal.name, "full name");
+  requireValue(data.personal.dob, "date of birth");
+  requireValue(data.personal.gender, "gender");
+  requireValue(data.personal.current_location, "current location");
+  requireValue(data.career?.title, "profession or role");
+  if (!data.personal.short_bio?.trim() && !data.personal.profile_summary?.trim()) {
+    missing.push("short introduction");
   }
 
-  if (!data.astrology?.rashi) {
+  if (missing.length) {
+    const firstItems = missing.slice(0, 4).join(", ");
+    const remainder = missing.length > 4 ? ` and ${missing.length - 4} more` : "";
     throw new PortfolioPublishReadinessError(
-      "Choose your rashi before generating your portfolio"
-    );
-  }
-
-  if (!data.style?.theme_color && !data.style?.rashi_palette) {
-    throw new PortfolioPublishReadinessError(
-      "Choose a rashi colour theme before generating your portfolio"
+      `Complete these required details before generating: ${firstItems}${remainder}`
     );
   }
 

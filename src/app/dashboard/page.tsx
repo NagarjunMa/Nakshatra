@@ -2,13 +2,18 @@ import { headers } from "next/headers";
 import { getAuthenticatedUser } from "@/lib/auth";
 import type { Metadata } from "next";
 import DashboardClient from "./dashboard-client";
-import type { PortfolioMedia } from "@/types/portfolio";
+import type { PortfolioHoroscope, PortfolioMedia } from "@/types/portfolio";
 
 export const metadata: Metadata = {
   title: "Dashboard",
 };
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams = Promise.resolve({}),
+}: {
+  searchParams?: Promise<{ edit?: string | string[] }>;
+} = {}) {
+  const query = await searchParams;
   const { supabase, user } = await getAuthenticatedUser();
 
   const { data: portfolio } = await supabase
@@ -19,6 +24,7 @@ export default async function DashboardPage() {
 
   let viewCount = 0;
   let media: PortfolioMedia[] = [];
+  let horoscope: PortfolioHoroscope | null = null;
   if (portfolio) {
     const { count } = await supabase
       .from("portfolio_views")
@@ -33,6 +39,13 @@ export default async function DashboardPage() {
       .in("media_type", ["hero", "gallery"])
       .order("sort_order");
     media = (portfolioMedia ?? []) as PortfolioMedia[];
+
+    const { data: portfolioHoroscope } = await supabase
+      .from("portfolio_horoscopes")
+      .select("id, portfolio_id, storage_path, mime_type, file_extension, byte_size, language_label, page_count, published_at, created_at, updated_at")
+      .eq("portfolio_id", portfolio.id)
+      .maybeSingle();
+    horoscope = (portfolioHoroscope as PortfolioHoroscope | null) ?? null;
   }
 
   let shareUrl: string | null = null;
@@ -62,6 +75,8 @@ export default async function DashboardPage() {
       isExpired={isExpired}
       daysLeft={daysLeft}
       media={media}
+      horoscope={horoscope}
+      initialEditorOpen={query.edit === "1"}
     />
   );
 }

@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 
-import React from "react";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { BlueprintForm } from "../src/components/portfolio/BlueprintForm";
 import type { PortfolioData } from "../src/types/portfolio";
@@ -14,126 +13,41 @@ const completeBlueprint: PortfolioData = {
     dob: "1996-08-12",
     gender: "female",
     profile_for: "self",
+    short_bio: "Warm, grounded, and curious.",
     profile_summary: "A thoughtful introduction",
-    long_term_goals: "Build a meaningful life",
-    shared_life_plans: "Travel and create traditions",
-    marital_status: "Never Married",
+    place_of_birth: "Bengaluru",
+    current_location: "Boston, Massachusetts, United States",
     country: "United States",
     region: "Massachusetts",
     city: "Boston",
-    current_location: "Boston, Massachusetts, United States",
-    citizenship: "India",
     immigration_status: "H1B",
-    religion: "Hindu",
-    community: "Telugu",
-    sub_community: "Open",
-    relocation_preference: "Discuss and decide",
-    place_of_birth: "Bengaluru",
   },
-  vitals: {
-    height: `5'5"`,
-    gotra: "Kashyap",
-  },
-  education: {
-    qualification_level: "Master's Degree",
-    degree: "Computer Science",
-    institution: "Northeastern",
-    location: "Boston",
-  },
-  career: {
-    title: "Engineer",
-    company: "Nakshatra",
-    job_type: "Full-time",
-    location: "Boston",
-    annual_income: "150000",
-    income_currency: "USD",
-    wealth_stage: "Growing steadily",
-    career_goals: "Build humane technology",
-  },
+  vitals: { height: `5'5"`, gotra: "Kashyap" },
+  education: { degree: "MS", institution: "Northeastern", location: "Boston" },
+  career: { title: "Engineer", company: "Nakshatra", location: "Boston" },
   family: {
     father: { name: "Rao", occupation: "Engineer" },
     mother: { name: "Lakshmi", occupation: "Teacher" },
+    paternal_origin: "Mysuru",
+    maternal_origin: "Bengaluru",
     sibling_count: 1,
-    sibling_position: "Oldest",
-    parents_location: "Bengaluru",
-    current_country: "India",
-    current_country_code: "IN",
-    current_region: "Karnataka",
-    current_region_code: "19",
-    current_city: "Bengaluru",
-    current_city_geoname_id: 1277333,
-    ancestral_origin: "Mysuru",
-    current_settlement: "Bengaluru",
-    family_spread: "Across India and the US",
-    family_note: "A close-knit family",
+    siblings: [{ name: "Maya", occupation: "Designer" }],
   },
-  lifestyle: {
-    diet: "Vegetarian",
-    drinking: "Never",
-    smoking: "Never",
-    languages: "English, Telugu",
-    hobbies: "Reading, Traveling",
-    values_statement: "Kindness and curiosity",
-  },
-  preferences: {
-    narrative: "A kind and curious partnership",
-    age_range: "28-34",
-    height_range: `5'4"-5'10"`,
-    marital_status: "Never Married",
-    horoscope_preference: "Flexible",
-    caste_preference: "specific",
-    specific_communities: "Open",
-    location_preferences: "United States, India",
-    location_preference: "United States, India",
-    visa_preferences: "Citizen, H1B",
-    religion_preference: "Hindu",
-    lifestyle_expectations: "Kind and balanced",
-    education_expectations: "Open",
-    career_expectations: "Mutual support",
-    private_notes: "Discuss privately",
-    marriage_timeline: "Within the next 2 years",
-    children_preference: "Open to discussion",
-    wedding_expectations: "Discuss and decide together",
-    gift_expectations: "No gifts expected",
-    parent_support: "Discuss and decide together",
-  },
+  lifestyle: { languages: "English, Telugu", hobbies: "Reading" },
+  preferences: { narrative: "A kind and curious partnership" },
   astrology: {
     rashi: "kanya",
     nakshatra: "Uttara Phalguni",
+    pada: "2",
     time_of_birth: "09:15",
+    lagnam: "Mithuna",
     maternal_gotra: "Bharadwaj",
-    manglik_status: "No",
   },
-  style: {
-    template_name: "Royal Heritage",
-    rashi_palette: "kanya-peach",
-    theme_color: "#f2c6a7",
+  contact: {
+    contacts: [{ relationship: "father", name: "Rao", phone: "+91 90000 00000" }],
   },
-  visibility: {
-    family: "restricted",
-    astrology_details: "public",
-    gallery: "restricted",
-  },
-  access: {
-    journey: "public",
-    personal: "approved",
-    career: "public",
-    family: "approved",
-    lifestyle: "public",
-    preferences: "broker",
-    future_plans: "approved",
-    astrology: "approved",
-  },
+  style: { appearance: "light", template_name: "Celestial Union" },
 };
-
-function chooseDifferentOption(select: HTMLSelectElement) {
-  const next = Array.from(select.options).find(
-    (option) => option.value !== select.value
-  );
-  if (next) {
-    fireEvent.change(select, { target: { value: next.value } });
-  }
-}
 
 describe("blueprint form", () => {
   beforeEach(() => {
@@ -148,164 +62,84 @@ describe("blueprint form", () => {
     );
   });
 
-  it("routes every field, selector, palette, and privacy control to its section", () => {
+  it("routes required profile, family, contact, appearance, and privacy changes", () => {
     const onUpdate = vi.fn();
-    const { container } = render(
-      <BlueprintForm data={completeBlueprint} onUpdate={onUpdate} />
-    );
+    render(<BlueprintForm data={completeBlueprint} onUpdate={onUpdate} />);
 
-    const rashi = screen.getByLabelText("Rashi") as HTMLSelectElement;
-    fireEvent.change(rashi, { target: { value: "" } });
-    fireEvent.change(rashi, { target: { value: "mesha" } });
-    fireEvent.change(rashi, { target: { value: "kanya" } });
+    fireEvent.change(screen.getByLabelText("Full name"), { target: { value: "Updated Name" } });
+    fireEvent.change(screen.getByLabelText("Short introduction"), { target: { value: "A concise new bio" } });
+    fireEvent.click(screen.getByRole("button", { name: /Astrology/ }));
+    fireEvent.change(screen.getByLabelText("Rashi"), { target: { value: "kumbha" } });
+    fireEvent.click(screen.getByRole("button", { name: /Family/ }));
+    fireEvent.change(screen.getByLabelText("Number of siblings"), { target: { value: "2" } });
+    fireEvent.click(screen.getByRole("button", { name: /Privacy & contact/ }));
+    fireEvent.change(screen.getAllByLabelText("Name of contact")[0], { target: { value: "Updated Contact" } });
+    fireEvent.click(screen.getByRole("button", { name: "Dark" }));
+    fireEvent.click(screen.getByRole("button", { name: /Open/ }));
 
-    const siblingCount = screen.getByLabelText(
-      "Number of siblings"
-    ) as HTMLInputElement;
-    fireEvent.change(siblingCount, { target: { value: "" } });
-    fireEvent.change(siblingCount, { target: { value: "2" } });
-
-    for (const control of container.querySelectorAll<
-      HTMLInputElement | HTMLTextAreaElement
-    >('input:not([type="checkbox"]):not([type="search"]), textarea')) {
-      const value =
-        control instanceof HTMLInputElement && control.type === "date"
-          ? "1990-01-01"
-          : control instanceof HTMLInputElement && control.type === "time"
-            ? "08:30"
-            : control instanceof HTMLInputElement && control.type === "number"
-              ? "3"
-              : "Updated value";
-      fireEvent.change(control, { target: { value } });
-    }
-
-    const languageSearch = screen.getByLabelText("Search Languages");
-    fireEvent.change(languageSearch, { target: { value: "zzzz" } });
-    expect(screen.getByText(/No matches/)).toBeInTheDocument();
-    fireEvent.change(languageSearch, { target: { value: "" } });
-
-    const selects = screen
-      .getAllByRole("combobox")
-      .filter(
-        (control): control is HTMLSelectElement =>
-          control instanceof HTMLSelectElement
-      );
-    for (const select of selects.filter((control) => !control.disabled)) {
-      chooseDifferentOption(select);
-    }
-
-    for (const fieldset of screen.getAllByRole("group")) {
-      const checkboxes = within(fieldset).queryAllByRole("checkbox");
-      if (checkboxes.length > 0) {
-        const checked = checkboxes.find(
-          (checkbox) => (checkbox as HTMLInputElement).checked
-        );
-        const unchecked = checkboxes.find(
-          (checkbox) => !(checkbox as HTMLInputElement).checked
-        );
-        if (checked) fireEvent.click(checked);
-        if (unchecked) fireEvent.click(unchecked);
-      }
-    }
-
-    for (const checkbox of container.querySelectorAll<HTMLInputElement>(
-      'label > input[type="checkbox"]'
-    )) {
-      fireEvent.click(checkbox);
-    }
-
-    for (const button of screen.getAllByRole("button")) {
-      fireEvent.click(button);
-    }
-
-    const updatedSections = new Set(
-      onUpdate.mock.calls.map(([section]) => section)
-    );
-    expect(updatedSections).toEqual(
-      new Set([
-        "astrology",
-        "career",
-        "education",
-        "family",
-        "lifestyle",
-        "personal",
-        "preferences",
-        "privacy_mode",
-        "style",
-        "vitals",
-      ])
-    );
-    expect(onUpdate).toHaveBeenCalledWith(
-      "personal",
-      expect.objectContaining({
-        country: "",
-        current_location: "",
-      })
-    );
-    expect(onUpdate).toHaveBeenCalledWith(
-      "family",
-      expect.objectContaining({ sibling_count: undefined })
-    );
-    expect(onUpdate).toHaveBeenCalledWith(
-      "family",
-      expect.objectContaining({ sibling_count: 2 })
-    );
+    expect(onUpdate).toHaveBeenCalledWith("personal", expect.objectContaining({ name: "Updated Name" }));
+    expect(onUpdate).toHaveBeenCalledWith("personal", expect.objectContaining({ short_bio: "A concise new bio" }));
+    expect(onUpdate).toHaveBeenCalledWith("astrology", expect.objectContaining({ rashi: "kumbha" }));
+    expect(onUpdate).toHaveBeenCalledWith("family", expect.objectContaining({ sibling_count: 2 }));
+    expect(onUpdate).toHaveBeenCalledWith("contact", expect.objectContaining({
+      contacts: [expect.objectContaining({ name: "Updated Contact" })],
+    }));
+    expect(onUpdate).toHaveBeenCalledWith("style", expect.objectContaining({
+      appearance: "dark",
+      theme_color: "#121a21",
+      template_name: "Celestial Union",
+    }));
     expect(onUpdate).toHaveBeenCalledWith("privacy_mode", "open");
-  }, 10_000);
+  });
 
-  it("renders empty optional data and the legacy location preference fallback", () => {
+  it("renders a safe minimal draft and grows dynamic sibling and contact groups", () => {
     const onUpdate = vi.fn();
     const minimal: PortfolioData = {
       privacy_mode: "private",
-      personal: {
-        name: "",
-        dob: "",
-        gender: "prefer_not_to_say",
-      },
-      preferences: {
-        location_preference: "Canada",
-      },
-      visibility: {
-        family: "public",
-        astrology_details: "public",
-        gallery: "public",
-      },
+      personal: { name: "", dob: "", gender: "prefer_not_to_say" },
     };
+    render(<BlueprintForm data={minimal} onUpdate={onUpdate} />);
 
-    const { rerender } = render(
-      <BlueprintForm data={minimal} onUpdate={onUpdate} />
-    );
+    expect(screen.getByText(/Foundation 1 of 6/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Privacy & contact/ }));
+    expect(screen.getByRole("button", { name: /Private/ })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Light" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByLabelText("Name of contact")).not.toBeInTheDocument();
+    expect(screen.getByText(/not shown in public or preview views/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Family/ }));
+    expect(screen.queryByText("Sibling 1")).not.toBeInTheDocument();
 
-    expect(screen.getByText("Select a rashi to reveal its portfolio colors.")).toBeInTheDocument();
-    const preferredCountries = screen.getByRole("group", {
-      name: "Preferred countries",
-    });
-    expect(
-      within(preferredCountries).getByRole("checkbox", { name: "Canada" })
-    ).toBeChecked();
-    expect(screen.getAllByText("Choose one or more").length).toBeGreaterThan(0);
-    expect(screen.getByRole("button", { name: /Private/ })).toHaveAttribute(
-      "aria-pressed",
-      "true"
-    );
+    fireEvent.change(screen.getByLabelText("Number of siblings"), { target: { value: "1" } });
+    expect(onUpdate).toHaveBeenCalledWith("family", expect.objectContaining({
+      sibling_count: 1,
+      siblings: [{}],
+    }));
+    fireEvent.click(screen.getByRole("button", { name: /Privacy & contact/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Add a protected contact" }));
+    expect(onUpdate).toHaveBeenCalledWith("contact", expect.objectContaining({
+      contacts: [expect.objectContaining({ relationship: "self" })],
+    }));
+  });
 
-    rerender(
-      <BlueprintForm
-        data={{
-          ...minimal,
-          preferences: {
-            location_preference: "",
-            location_preferences: "",
-          },
-        }}
-        onUpdate={onUpdate}
-      />
-    );
+  it("explains audience, supports chips, and reveals conditional preferences", () => {
+    const onUpdate = vi.fn();
+    const { rerender } = render(<BlueprintForm data={completeBlueprint} onUpdate={onUpdate} />);
 
-    expect(
-      within(
-        screen.getByRole("group", { name: "Preferred countries" })
-      ).getByRole("checkbox", { name: "Canada" })
-    ).not.toBeChecked();
+    expect(screen.getByText(/Exact birth information stays protected/i)).toBeInTheDocument();
+    expect(screen.getAllByText("Portfolio").length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole("button", { name: /Lifestyle/ }));
+    fireEvent.change(screen.getByLabelText("Languages"), { target: { value: "Kannada" } });
+    fireEvent.click(screen.getAllByRole("button", { name: "Add" })[0]);
+    expect(onUpdate).toHaveBeenCalledWith("lifestyle", expect.objectContaining({
+      languages: "English, Telugu, Kannada",
+    }));
+
+    fireEvent.click(screen.getByRole("button", { name: /Preferences/ }));
+    expect(screen.queryByLabelText("Specific communities")).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Community preference"), { target: { value: "specific" } });
+    expect(onUpdate).toHaveBeenCalledWith("preferences", expect.objectContaining({ caste_preference: "specific" }));
+    rerender(<BlueprintForm data={{ ...completeBlueprint, preferences: { ...completeBlueprint.preferences, caste_preference: "specific" } }} onUpdate={onUpdate} />);
+    expect(screen.getByLabelText("Specific communities")).toBeInTheDocument();
   });
 });

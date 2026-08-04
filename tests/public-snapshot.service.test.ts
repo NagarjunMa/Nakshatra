@@ -13,6 +13,7 @@ const portfolio: PortfolioData = {
     current_location: "New York",
     gender: "female",
     immigration_status: "H-1B",
+    short_bio: "Warm, grounded, and curious about the world.",
     profile_summary: "A thoughtful public introduction.",
     long_term_goals: "Build a generous and grounded life.",
     religion: "Hindu",
@@ -59,14 +60,18 @@ describe("public portfolio snapshot", () => {
       name: "Aditi Rao",
       preferred_name: "Aditi",
       current_location: "New York",
+      short_bio: "Warm, grounded, and curious about the world.",
     });
     expect(snapshot.personal).not.toHaveProperty("photo_url");
     expect(snapshot.personal).not.toHaveProperty("photo_thumb_url");
+    expect(snapshot.personal).not.toHaveProperty("dob");
+    expect(snapshot.personal.age).toEqual(expect.any(Number));
     expect(snapshot.personal).not.toHaveProperty("place_of_birth");
     expect(snapshot.personal).not.toHaveProperty("immigration_status");
     expect(snapshot.personal).not.toHaveProperty("religion");
     expect(snapshot).not.toHaveProperty("family");
     expect(snapshot).not.toHaveProperty("contact");
+    expect(snapshot.vitals).not.toHaveProperty("complexion");
     expect(snapshot.career).not.toHaveProperty("annual_income");
     expect(snapshot.career).not.toHaveProperty("income_currency");
     expect(snapshot.career).not.toHaveProperty("wealth_stage");
@@ -88,8 +93,9 @@ describe("public portfolio snapshot", () => {
     expect(snapshot.astrology).not.toHaveProperty("maternal_gotra");
     expect(snapshot.visibility).toEqual({
       family: "restricted",
+      family_details: "restricted",
+      astrology: "public",
       astrology_details: "restricted",
-      gallery: "restricted",
       contact: "restricted",
     });
   });
@@ -108,21 +114,57 @@ describe("public portfolio snapshot", () => {
       privacy_mode: "open",
       family: {
         ...portfolio.family,
-        ancestral_origin: "Mysuru",
+        public_summary: "A close-knit family with roots in Karnataka.",
+        paternal_origin: "Mysuru",
+        maternal_origin: "Bengaluru",
         family_spread: "India and the US",
       },
     });
     expect(openSnapshot.family).toEqual({
-      ancestral_origin: "Mysuru",
-      family_note: "Private family note",
+      public_summary: "A close-knit family with roots in Karnataka.",
+      paternal_origin: "Mysuru",
+      maternal_origin: "Bengaluru",
       family_spread: "India and the US",
     });
     expect(openSnapshot).not.toHaveProperty("contact");
     expect(openSnapshot.visibility).toEqual({
       family: "public",
-      astrology_details: "public",
-      gallery: "public",
+      family_details: "restricted",
+      astrology: "public",
+      astrology_details: "restricted",
       contact: "restricted",
     });
+  });
+
+  it("records protected previews only when meaningful information exists", () => {
+    const minimal = createPublicPortfolioSnapshot({
+      privacy_mode: "private",
+      personal: { name: "Minimal", gender: "prefer_not_to_say" },
+    });
+    expect(minimal.visibility).toBeUndefined();
+
+    const privateSnapshot = createPublicPortfolioSnapshot({
+      ...portfolio,
+      privacy_mode: "private",
+      personal: {
+        ...portfolio.personal,
+        profile_summary: "A ".repeat(200),
+        shared_life_plans: "A thoughtful shared life.",
+      },
+      education: { degree: "MS" },
+      lifestyle: { hobbies: "Reading" },
+    });
+    expect(privateSnapshot.visibility).toMatchObject({
+      personal_story: "restricted",
+      journey: "restricted",
+      lifestyle: "restricted",
+      preferences: "restricted",
+      future_plans: "restricted",
+      family: "restricted",
+      astrology: "restricted",
+      contact: "restricted",
+    });
+    expect(privateSnapshot.personal.profile_summary).toBeUndefined();
+    expect(privateSnapshot.personal.short_bio).toBe("Warm, grounded, and curious about the world.");
   });
 });

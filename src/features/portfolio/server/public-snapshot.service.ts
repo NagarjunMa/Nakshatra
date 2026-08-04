@@ -2,6 +2,20 @@ import "server-only";
 
 import { portfolioDataSchema, type PortfolioData } from "@/types/portfolio";
 
+function ageFromDate(dateOfBirth?: string) {
+  if (!dateOfBirth) return undefined;
+  const birth = new Date(`${dateOfBirth}T00:00:00Z`);
+  if (Number.isNaN(birth.getTime())) return undefined;
+  const today = new Date();
+  let age = today.getUTCFullYear() - birth.getUTCFullYear();
+  const birthdayPassed =
+    today.getUTCMonth() > birth.getUTCMonth() ||
+    (today.getUTCMonth() === birth.getUTCMonth() &&
+      today.getUTCDate() >= birth.getUTCDate());
+  if (!birthdayPassed) age -= 1;
+  return age >= 18 && age <= 120 ? age : undefined;
+}
+
 /**
  * Builds the only data payload that may be exposed to an unauthenticated portfolio viewer.
  * Input: a validated owner portfolio. Output: a template-aware public snapshot that always
@@ -11,16 +25,100 @@ export function createPublicPortfolioSnapshot(data: PortfolioData): PortfolioDat
   const privacyMode = data.privacy_mode || "progressive";
   const privateMode = privacyMode === "private";
   const openMode = privacyMode === "open";
+  const shortBio = clean(data.personal.short_bio);
+  const originalStory = clean(data.personal.profile_summary);
+  const publicStory = privateMode ? undefined : originalStory;
+  const hasJourney = hasAny([
+    data.education?.degree,
+    data.education?.qualification_level,
+    data.education?.institution,
+    data.education?.year,
+    data.education?.location,
+    data.education?.summary,
+    data.career?.title,
+    data.career?.company,
+    data.career?.location,
+    data.career?.summary,
+    data.career?.job_type,
+    data.career?.career_goals,
+  ]);
+  const hasLifestyle = hasAny([
+    data.lifestyle?.hobbies,
+    data.lifestyle?.languages,
+    data.lifestyle?.diet,
+    data.lifestyle?.smoking,
+    data.lifestyle?.drinking,
+    data.lifestyle?.values_statement,
+  ]);
+  const hasPreferences = hasAny([
+    data.preferences?.narrative,
+    data.preferences?.age_range,
+    data.preferences?.height_range,
+    data.preferences?.location_preference,
+    data.preferences?.lifestyle_expectations,
+    data.preferences?.education_expectations,
+    data.preferences?.career_expectations,
+  ]);
+  const hasFuturePlans = hasAny([
+    data.personal.long_term_goals,
+    data.personal.shared_life_plans,
+  ]);
+  const hasPublicFamily = hasAny([
+    data.family?.public_summary,
+    data.family?.paternal_origin,
+    data.family?.maternal_origin,
+    data.family?.family_spread,
+  ]);
+  const hasDetailedFamily = Boolean(
+    clean(data.family?.father?.name)
+    || clean(data.family?.mother?.name)
+    || data.family?.siblings?.some((sibling) => hasAny([sibling.name, sibling.occupation, sibling.location]))
+    || hasAny([data.family?.parents_location, data.family?.family_note, data.family?.current_settlement])
+  );
+  const hasPublicAstrology = hasAny([
+    data.astrology?.rashi,
+    data.astrology?.nakshatra,
+    data.astrology?.pada,
+  ]);
+  const hasDetailedAstrology = hasAny([
+    data.astrology?.time_of_birth,
+    data.personal.place_of_birth,
+    data.astrology?.lagnam,
+    data.vitals?.gotra,
+    data.astrology?.maternal_gotra,
+    data.astrology?.manglik_status,
+  ]);
+  const hasContact = Boolean(
+    (clean(data.contact?.contact_person) && (clean(data.contact?.phone) || clean(data.contact?.email)))
+    || data.contact?.contacts?.some((contact) => clean(contact.name) && (clean(contact.phone) || clean(contact.email)))
+  );
+  const visibility = compactVisibility({
+    ...(privateMode && originalStory ? { personal_story: "restricted" as const } : {}),
+    ...(privateMode && hasJourney ? { journey: "restricted" as const } : {}),
+    ...(privateMode && hasLifestyle ? { lifestyle: "restricted" as const } : {}),
+    ...(hasPublicFamily || hasDetailedFamily
+      ? { family: openMode && hasPublicFamily ? "public" as const : "restricted" as const }
+      : {}),
+    ...(hasDetailedFamily ? { family_details: "restricted" as const } : {}),
+    ...(hasPublicAstrology
+      ? { astrology: privateMode ? "restricted" as const : "public" as const }
+      : {}),
+    ...(hasDetailedAstrology ? { astrology_details: "restricted" as const } : {}),
+    ...(privateMode && hasPreferences ? { preferences: "restricted" as const } : {}),
+    ...(privateMode && hasFuturePlans ? { future_plans: "restricted" as const } : {}),
+    ...(hasContact ? { contact: "restricted" as const } : {}),
+  });
 
   return portfolioDataSchema.parse({
     privacy_mode: privacyMode,
     personal: {
       name: data.personal.name,
       preferred_name: data.personal.preferred_name,
-      dob: data.personal.dob,
+      age: ageFromDate(data.personal.dob),
       current_location: data.personal.current_location,
       gender: data.personal.gender,
-      profile_summary: data.personal.profile_summary,
+      short_bio: shortBio,
+      profile_summary: publicStory,
       ...(privateMode
         ? {}
         : {
@@ -30,13 +128,15 @@ export function createPublicPortfolioSnapshot(data: PortfolioData): PortfolioDat
             shared_life_plans: data.personal.shared_life_plans,
           }),
     },
-    style: data.style,
+    style: {
+      appearance: data.style?.appearance || "light",
+      template_name: "Celestial Union",
+    },
     ...(privateMode
       ? {}
       : {
           vitals: {
             height: data.vitals?.height,
-            complexion: data.vitals?.complexion,
           },
           astrology: {
             rashi: data.astrology?.rashi,
@@ -65,7 +165,6 @@ export function createPublicPortfolioSnapshot(data: PortfolioData): PortfolioDat
             diet: data.lifestyle?.diet,
             smoking: data.lifestyle?.smoking,
             drinking: data.lifestyle?.drinking,
-            music: data.lifestyle?.music,
             values_statement: data.lifestyle?.values_statement,
           },
           preferences: {
@@ -75,17 +174,30 @@ export function createPublicPortfolioSnapshot(data: PortfolioData): PortfolioDat
     ...(openMode
       ? {
           family: {
-          ancestral_origin: data.family?.ancestral_origin,
-          family_note: data.family?.family_note,
-          family_spread: data.family?.family_spread,
+            public_summary: data.family?.public_summary,
+            paternal_origin: data.family?.paternal_origin,
+            maternal_origin: data.family?.maternal_origin,
+            family_spread: data.family?.family_spread,
           },
         }
       : {}),
-    visibility: {
-      family: openMode ? "public" : "restricted",
-      astrology_details: openMode ? "public" : "restricted",
-      gallery: openMode ? "public" : "restricted",
-      contact: "restricted",
-    },
+    ...(Object.keys(visibility).length ? { visibility } : {}),
   });
+}
+
+function compactVisibility(
+  values: NonNullable<PortfolioData["visibility"]>
+) {
+  return Object.fromEntries(
+    Object.entries(values).filter(([, value]) => Boolean(value))
+  ) as NonNullable<PortfolioData["visibility"]>;
+}
+
+function clean(value?: string | null) {
+  const trimmed = value?.trim();
+  return trimmed || undefined;
+}
+
+function hasAny(values: Array<string | null | undefined>) {
+  return values.some((value) => Boolean(clean(value)));
 }

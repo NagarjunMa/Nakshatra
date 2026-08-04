@@ -10,6 +10,7 @@ import {
 } from "./media.contract";
 import { classifyPhotoOrientation } from "../portfolio-photo";
 import { PortfolioMediaRepository } from "./media.repository";
+import type { PortfolioMedia, PortfolioMediaMetadata } from "@/types/portfolio";
 
 export class PortfolioMediaError extends Error {
   constructor(
@@ -21,6 +22,28 @@ export class PortfolioMediaError extends Error {
 }
 
 type MediaUpdate = Omit<ReturnType<typeof updatePortfolioMediaSchema.parse>, "mediaId">;
+
+const PROTECTED_VISIBILITIES = new Set(["blurred", "interest_required", "approved_only"]);
+
+/** Removes identifying facial detail while retaining enough color and shape to signal a protected photo. */
+async function createBlurredPreview(source: Buffer) {
+  const lowDetail = await sharp(source)
+    .rotate()
+    .resize(96, 96, { fit: "inside", withoutEnlargement: true })
+    .blur(10)
+    .webp({ quality: 52 })
+    .toBuffer();
+
+  return sharp(lowDetail)
+    .resize(640, 640, { fit: "inside", kernel: "nearest" })
+    .webp({ quality: 58 })
+    .toBuffer();
+}
+
+function blurPathFor(storagePath: string) {
+  const withoutExtension = storagePath.replace(/\.[^/.]+$/, "");
+  return `${withoutExtension}-blur.webp`;
+}
 
 /** Validates a user-selected upload before any database or storage access. Input: File. Output: nothing or PortfolioMediaError. */
 function requireSupportedPhoto(file: File) {
@@ -67,7 +90,7 @@ export async function uploadPortfolioPhoto({
 
   try {
     const source = Buffer.from(await file.arrayBuffer());
-    const [imageOutput, thumbnail] = await Promise.all([
+    const [imageOutput, thumbnail, blurredPreview] = await Promise.all([
       sharp(source)
         .rotate()
         .resize(1600, 1600, { fit: "inside", withoutEnlargement: true })
@@ -78,6 +101,7 @@ export async function uploadPortfolioPhoto({
         .resize(360, 360, { fit: "cover" })
         .webp({ quality: 80 })
         .toBuffer(),
+      createBlurredPreview(source),
     ]);
     const image = imageOutput.data;
     const width = imageOutput.info.width;
@@ -85,12 +109,14 @@ export async function uploadPortfolioPhoto({
     const id = crypto.randomUUID();
     const path = `${userId}/${portfolio.id}/${id}.webp`;
     const thumbnailPath = `${userId}/${portfolio.id}/${id}-thumb.webp`;
-    const [imageResult, thumbnailResult] = await Promise.all([
+    const blurredPreviewPath = `${userId}/${portfolio.id}/${id}-blur.webp`;
+    const [imageResult, thumbnailResult, blurredPreviewResult] = await Promise.all([
       repository.upload(path, image),
       repository.upload(thumbnailPath, thumbnail),
+      repository.upload(blurredPreviewPath, blurredPreview),
     ]);
-    if (imageResult.error || thumbnailResult.error) {
-      await repository.remove([path, thumbnailPath]);
+    if (imageResult.error || thumbnailResult.error || blurredPreviewResult.error) {
+      await repository.remove([path, thumbnailPath, blurredPreviewPath]);
       throw new PortfolioMediaError("Photo upload failed", 500);
     }
 
@@ -107,10 +133,11 @@ export async function uploadPortfolioPhoto({
         height,
         aspectRatio: width / height,
         orientation: classifyPhotoOrientation(width, height),
+        blurPath: blurredPreviewPath,
       },
     });
     if (error || !media) {
-      await repository.remove([path, thumbnailPath]);
+      await repository.remove([path, thumbnailPath, blurredPreviewPath]);
       throw new PortfolioMediaError("Could not save photo", 500);
     }
     return media;
@@ -134,7 +161,20 @@ export async function updatePortfolioPhoto({
   changes: MediaUpdate;
 }) {
   const repository = new PortfolioMediaRepository(supabase);
-  const { data: media, error } = await repository.updateMedia(mediaId, changes);
+  let safeChanges: Record<string, unknown> = changes;
+  if (changes.visibility && PROTECTED_VISIBILITIES.has(changes.visibility)) {
+    const { data: existing, error: findError } = await repository.findMedia(mediaId);
+    if (findError || !existing) throw new PortfolioMediaError("Photo not found", 404);
+    const metadata = (existing.metadata ?? {}) as PortfolioMediaMetadata;
+    if (!metadata.blurPath) {
+      safeChanges = {
+        ...changes,
+        metadata: await createAndStoreBlurredPreview(repository, existing as PortfolioMedia),
+      };
+    }
+  }
+
+  const { data: media, error } = await repository.updateMedia(mediaId, safeChanges);
   if (error || !media) {
     throw new PortfolioMediaError("Photo not found", 404);
   }
@@ -143,6 +183,41 @@ export async function updatePortfolioPhoto({
     if (demoteError) throw new PortfolioMediaError("Could not update the hero photo", 500);
   }
   return media;
+}
+
+/** Ensures every portfolio photo has a privacy-safe derivative before public rendering. */
+export async function ensurePortfolioPhotoPreviews({
+  supabase,
+  portfolioId,
+}: {
+  supabase: SupabaseClient;
+  portfolioId: string;
+}) {
+  const repository = new PortfolioMediaRepository(supabase);
+  const { data, error } = await repository.findPortfolioPhotos(portfolioId);
+  if (error) throw new PortfolioMediaError("Could not prepare photo previews", 500);
+
+  for (const item of (data ?? []) as PortfolioMedia[]) {
+    if (item.metadata?.blurPath) continue;
+    const metadata = await createAndStoreBlurredPreview(repository, item);
+    const { error: updateError } = await repository.updateMedia(item.id, { metadata });
+    if (updateError) throw new PortfolioMediaError("Could not prepare photo previews", 500);
+  }
+}
+
+async function createAndStoreBlurredPreview(
+  repository: PortfolioMediaRepository,
+  media: PortfolioMedia
+) {
+  const { data, error } = await repository.download(media.storage_path);
+  if (error || !data) throw new PortfolioMediaError("Could not prepare protected photo", 500);
+  const preview = await createBlurredPreview(Buffer.from(await data.arrayBuffer()));
+  const blurPath = blurPathFor(media.storage_path);
+  const { error: uploadError } = await repository.upload(blurPath, preview);
+  if (uploadError && !String(uploadError.message).toLowerCase().includes("already exists")) {
+    throw new PortfolioMediaError("Could not prepare protected photo", 500);
+  }
+  return { ...(media.metadata ?? {}), blurPath };
 }
 
 /**
@@ -161,7 +236,8 @@ export async function deletePortfolioPhoto({
   if (error || !media) {
     throw new PortfolioMediaError("Photo not found", 404);
   }
-  const paths = [media.storage_path, media.thumbnail_path].filter(
+  const blurPath = (media.metadata as PortfolioMediaMetadata | null)?.blurPath;
+  const paths = [media.storage_path, media.thumbnail_path, blurPath].filter(
     (path): path is string => Boolean(path)
   );
   const { error: storageError } = await repository.remove(paths);

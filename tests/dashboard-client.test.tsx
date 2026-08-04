@@ -81,13 +81,21 @@ beforeEach(() => {
 });
 
 describe("dashboard client", () => {
+  it("opens the canonical editor when requested by an editing route", () => {
+    renderDashboard({ initialEditorOpen: true });
+    expect(screen.getByRole("heading", { name: "Portfolio details" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "A portfolio worth previewing" })).toBeInTheDocument();
+    expect(screen.queryByText("Rashi palette")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Music")).not.toBeInTheDocument();
+  });
+
   it("opens a new private draft, edits it, saves it, and publishes it", async () => {
     renderDashboard({ portfolio: null, shareUrl: null, media: [] });
     expect(screen.getByText(/biodata is waiting/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /start your biodata/i }));
     fireEvent.change(screen.getByLabelText("Full name"), { target: { value: "New Name" } });
     fireEvent.change(
-      screen.getByLabelText("What would you like someone to understand about you?"),
+      screen.getByLabelText("Short introduction"),
       { target: { value: "A story" } }
     );
     fireEvent.change(screen.getByLabelText("Date of birth"), {
@@ -136,6 +144,7 @@ describe("dashboard client", () => {
   it("updates, deletes, and uploads owner photos", async () => {
     const { container } = renderDashboard();
     fireEvent.click(screen.getByRole("button", { name: /edit biodata/i }));
+    expect(screen.getByText("1/8")).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Photo visibility"), { target: { value: "hidden" } });
     await waitFor(() => expect(mocks.update).toHaveBeenCalledWith("media-1", { visibility: "hidden" }));
     fireEvent.click(screen.getByRole("button", { name: /make hero/i }));

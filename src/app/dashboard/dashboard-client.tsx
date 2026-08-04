@@ -7,10 +7,12 @@ import Link from "next/link";
 import {
   type Portfolio,
   type PortfolioData,
+  type PortfolioHoroscope,
   type PortfolioMedia,
   type PortfolioMediaVisibility,
 } from "@/types/portfolio";
 import type { PortfolioApiFailure } from "@/features/portfolio/client/portfolio-dashboard.api";
+import { MAX_PORTFOLIO_PHOTOS } from "@/features/media/portfolio-photo";
 import { BlueprintForm } from "@/components/portfolio/BlueprintForm";
 import { ShaderBackground } from "@/components/landing/ShaderBackground";
 import {
@@ -32,6 +34,8 @@ import {
   Trash2,
   Crown,
   Upload,
+  FileText,
+  ExternalLink,
 } from "lucide-react";
 
 interface Props {
@@ -42,6 +46,8 @@ interface Props {
   isExpired: boolean;
   daysLeft: number | null;
   media: PortfolioMedia[];
+  horoscope?: PortfolioHoroscope | null;
+  initialEditorOpen?: boolean;
 }
 
 export default function DashboardClient({
@@ -52,10 +58,12 @@ export default function DashboardClient({
   isExpired,
   daysLeft,
   media,
+  horoscope = null,
+  initialEditorOpen = false,
 }: Props) {
   const [copied, setCopied] = useState(false);
   const [renewing, setRenewing] = useState(false);
-  const [formOpen, setFormOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(initialEditorOpen);
   const [draftData, setDraftData] = useState<PortfolioData>(() =>
     normalizePortfolioData(portfolio?.draft_data, portfolio?.privacy_mode)
   );
@@ -67,8 +75,11 @@ export default function DashboardClient({
   const [portfolioMedia, setPortfolioMedia] = useState(media);
   const [mediaUrls, setMediaUrls] = useState<Record<string, string>>({});
   const [uploadingMedia, setUploadingMedia] = useState(false);
+  const [portfolioHoroscope, setPortfolioHoroscope] = useState(horoscope);
+  const [uploadingHoroscope, setUploadingHoroscope] = useState(false);
   const [activePortfolioId, setActivePortfolioId] = useState(portfolio?.id ?? null);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const horoscopeInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
 
@@ -234,10 +245,10 @@ export default function DashboardClient({
       return;
     }
 
-    const availableSlots = Math.max(0, 6 - portfolioMedia.length);
+    const availableSlots = Math.max(0, MAX_PORTFOLIO_PHOTOS - portfolioMedia.length);
     const selectedFiles = Array.from(files).slice(0, availableSlots);
     if (!selectedFiles.length) {
-      setDraftError("Your gallery already has the maximum of six photos.");
+      setDraftError("Your gallery already has the maximum of eight photos.");
       return;
     }
 
@@ -293,6 +304,59 @@ export default function DashboardClient({
     const result = await deletePortfolioPhotoRequest(mediaId);
     if (!result.ok) return void handlePortfolioApiFailure(result);
     setPortfolioMedia((current) => current.filter((item) => item.id !== mediaId));
+  }
+
+  async function uploadHoroscopeFile(file: File | null, language: string) {
+    if (!file) return;
+    if (!activePortfolioId) {
+      setDraftError("Save your profile details before attaching a horoscope.");
+      return;
+    }
+    setUploadingHoroscope(true);
+    setDraftError(null);
+    try {
+      const { uploadHoroscopeRequest } = await import(
+        "@/features/portfolio/client/portfolio-dashboard.api"
+      );
+      const formData = new FormData();
+      formData.append("horoscope", file);
+      formData.append("portfolioId", activePortfolioId);
+      formData.append("language", language);
+      const result = await uploadHoroscopeRequest(formData);
+      if (!result.ok) return void handlePortfolioApiFailure(result);
+      setPortfolioHoroscope(result.data.horoscope);
+      router.refresh();
+    } finally {
+      setUploadingHoroscope(false);
+      if (horoscopeInputRef.current) horoscopeInputRef.current.value = "";
+    }
+  }
+
+  async function reviewHoroscope() {
+    if (!portfolioHoroscope) return;
+    const downloadName = `horoscope.${portfolioHoroscope.file_extension}`;
+    const options = portfolioHoroscope.file_extension === "doc" || portfolioHoroscope.file_extension === "docx"
+      ? { download: downloadName }
+      : undefined;
+    const { data, error } = await supabase.storage
+      .from("horoscopes")
+      .createSignedUrl(portfolioHoroscope.storage_path, 5 * 60, options);
+    if (error || !data?.signedUrl) {
+      setDraftError("We could not open the horoscope attachment. Please try again.");
+      return;
+    }
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  }
+
+  async function removeHoroscope() {
+    if (!portfolioHoroscope || !confirm("Remove this horoscope attachment? Approved viewers will lose access immediately.")) return;
+    const { deleteHoroscopeRequest } = await import(
+      "@/features/portfolio/client/portfolio-dashboard.api"
+    );
+    const result = await deleteHoroscopeRequest(portfolioHoroscope.id);
+    if (!result.ok) return void handlePortfolioApiFailure(result);
+    setPortfolioHoroscope(null);
+    router.refresh();
   }
 
   return (
@@ -470,7 +534,7 @@ export default function DashboardClient({
 
       {formOpen && (
         <div className="fixed inset-0 z-50 bg-[#05050a]/70 backdrop-blur-sm">
-          <div className="absolute right-0 top-0 flex h-full w-full max-w-2xl flex-col overflow-hidden border-l border-white/10 bg-[#151622]/95 text-white shadow-2xl">
+          <div className="absolute inset-0 flex h-full w-full flex-col overflow-hidden bg-[#151622]/97 text-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
               <div>
                 <h2 className="text-lg font-semibold">Portfolio details</h2>
@@ -488,19 +552,31 @@ export default function DashboardClient({
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-5 py-5">
-              <PhotoManager
-                media={portfolioMedia}
-                urls={mediaUrls}
-                uploading={uploadingMedia}
-                inputRef={photoInputRef}
-                onUpload={uploadPhotos}
-                onUpdate={updatePhoto}
-                onDelete={deletePhoto}
-              />
+            <div className="flex-1 overflow-y-auto px-5 py-5 lg:px-8">
               <BlueprintForm
                 data={draftData}
                 onUpdate={updateSection}
+                photoManager={
+                  <PhotoManager
+                    media={portfolioMedia}
+                    urls={mediaUrls}
+                    uploading={uploadingMedia}
+                    inputRef={photoInputRef}
+                    onUpload={uploadPhotos}
+                    onUpdate={updatePhoto}
+                    onDelete={deletePhoto}
+                  />
+                }
+                horoscopeManager={
+                  <HoroscopeManager
+                    horoscope={portfolioHoroscope}
+                    uploading={uploadingHoroscope}
+                    inputRef={horoscopeInputRef}
+                    onUpload={uploadHoroscopeFile}
+                    onReview={reviewHoroscope}
+                    onDelete={removeHoroscope}
+                  />
+                }
               />
             </div>
 
@@ -547,9 +623,109 @@ export default function DashboardClient({
   );
 }
 
+function HoroscopeManager({
+  horoscope,
+  uploading,
+  inputRef,
+  onUpload,
+  onReview,
+  onDelete,
+}: {
+  horoscope: PortfolioHoroscope | null;
+  uploading: boolean;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  onUpload: (file: File | null, language: string) => void;
+  onReview: () => void;
+  onDelete: () => void;
+}) {
+  const [language, setLanguage] = useState(horoscope?.language_label || "");
+  const format = horoscope?.file_extension === "pdf"
+    ? "PDF document"
+    : horoscope?.file_extension === "doc" || horoscope?.file_extension === "docx"
+      ? "Word document"
+      : "Scanned image";
+
+  return (
+    <section className="mb-7 border-b border-white/10 pb-7">
+      <div className="mb-4">
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-white">
+          <FileText className="h-4 w-4 text-[#f4d98f]" />
+          Horoscope attachment
+        </h3>
+        <p className="mt-1 text-xs leading-5 text-white/55">
+          One private original document. It appears only to signed-in viewers you approve and opens separately from the portfolio.
+        </p>
+      </div>
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.heic,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png,image/heic"
+        className="sr-only"
+        onChange={(event) => onUpload(event.target.files?.[0] || null, language)}
+      />
+
+      {horoscope ? (
+        <article className="rounded-xl border border-[#f4d98f]/20 bg-[#f4d98f]/[0.06] p-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex min-w-0 items-start gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#f4d98f]/25 bg-black/15 text-[#f4d98f]">
+                <FileText className="h-5 w-5" />
+              </span>
+              <div className="min-w-0">
+                <p className="font-medium text-white">Original horoscope</p>
+                <p className="mt-1 text-xs text-white/55">
+                  {[format, horoscope.language_label, formatBytes(horoscope.byte_size)].filter(Boolean).join(" · ")}
+                </p>
+                <p className={`mt-2 text-xs ${horoscope.published_at ? "text-emerald-300" : "text-[#f4d98f]"}`}>
+                  {horoscope.published_at ? "Published for approved viewers" : "Ready — publish or update the portfolio to share it"}
+                </p>
+              </div>
+            </div>
+            <LockKeyhole className="h-4 w-4 shrink-0 text-white/45" aria-label="Approved viewers only" />
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button type="button" onClick={onReview} className="inline-flex h-9 items-center gap-2 rounded-lg border border-white/15 px-3 text-xs font-medium text-white hover:bg-white/10">
+              <ExternalLink className="h-3.5 w-3.5" /> Review
+            </button>
+            <button type="button" onClick={() => inputRef.current?.click()} disabled={uploading} className="inline-flex h-9 items-center gap-2 rounded-lg border border-white/15 px-3 text-xs font-medium text-white hover:bg-white/10 disabled:opacity-50">
+              <Upload className={`h-3.5 w-3.5 ${uploading ? "animate-pulse" : ""}`} /> Replace
+            </button>
+            <button type="button" onClick={onDelete} className="inline-flex h-9 items-center gap-2 rounded-lg border border-red-300/20 px-3 text-xs font-medium text-red-100 hover:bg-red-400/10">
+              <Trash2 className="h-3.5 w-3.5" /> Remove
+            </button>
+          </div>
+        </article>
+      ) : (
+        <div className="rounded-xl border border-dashed border-white/15 p-4">
+          <label className="block text-xs font-medium text-white/75" htmlFor="horoscope-language">Document language (optional)</label>
+          <input
+            id="horoscope-language"
+            value={language}
+            maxLength={80}
+            onChange={(event) => setLanguage(event.target.value)}
+            placeholder="For example, Kannada"
+            className="mt-2 h-10 w-full rounded-lg border border-white/10 bg-black/15 px-3 text-sm text-white outline-none placeholder:text-white/30 focus:border-[#f4d98f]/50"
+          />
+          <button type="button" onClick={() => inputRef.current?.click()} disabled={uploading} className="mt-3 inline-flex h-10 items-center gap-2 rounded-lg bg-[#f4d98f] px-4 text-sm font-semibold text-[#17151c] hover:bg-[#fff0b7] disabled:opacity-50">
+            <Upload className={`h-4 w-4 ${uploading ? "animate-pulse" : ""}`} />
+            {uploading ? "Checking attachment..." : "Attach horoscope"}
+          </button>
+          <p className="mt-2 text-[11px] leading-4 text-white/45">PDF, DOC, DOCX, JPG, PNG, or HEIC · up to 20MB</p>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function formatBytes(bytes: number) {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 const EMPTY_DATA: PortfolioData = {
   privacy_mode: "progressive",
-  personal: { name: "", dob: "", gender: "male" },
+  personal: { name: "", dob: "", gender: "prefer_not_to_say" },
   vitals: {},
   astrology: {},
   education: {},
@@ -557,7 +733,11 @@ const EMPTY_DATA: PortfolioData = {
   family: {},
   lifestyle: {},
   contact: {},
-  style: { template_name: "Celestial Union" },
+  style: {
+    appearance: "light",
+    template_name: "Celestial Union",
+    theme_color: "#f7f5ef",
+  },
   preferences: {},
   access: {
     journey: "public",
@@ -565,7 +745,7 @@ const EMPTY_DATA: PortfolioData = {
     career: "public",
     family: "approved",
     lifestyle: "public",
-    preferences: "broker",
+    preferences: "approved",
     future_plans: "approved",
     astrology: "approved",
     contact: "approved",
@@ -574,7 +754,7 @@ const EMPTY_DATA: PortfolioData = {
     family: "restricted",
     astrology_details: "restricted",
     gallery: "restricted",
-    contact: "public",
+    contact: "restricted",
   },
 };
 
@@ -637,10 +817,10 @@ function PhotoManager({
             Profile photos
           </h3>
           <p className="mt-1 text-xs leading-5 text-white/55">
-            Add up to six photos. Your originals remain in the private photos bucket.
+            Add up to eight photos. Your originals remain in the private photos bucket.
           </p>
         </div>
-        <span className="shrink-0 text-xs font-medium text-[#f4d98f]">{media.length}/6</span>
+        <span className="shrink-0 text-xs font-medium text-[#f4d98f]">{media.length}/{MAX_PORTFOLIO_PHOTOS}</span>
       </div>
 
       <input
@@ -705,7 +885,7 @@ function PhotoManager({
             </div>
           </article>
         ))}
-        {media.length < 6 && (
+        {media.length < MAX_PORTFOLIO_PHOTOS && (
           <button
             type="button"
             onClick={() => inputRef.current?.click()}

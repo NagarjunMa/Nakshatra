@@ -33,6 +33,10 @@ export class PortfolioMediaRepository {
     });
   }
 
+  async download(path: string) {
+    return this.supabase.storage.from("photos").download(path);
+  }
+
   async remove(paths: string[]) {
     if (!paths.length) return { error: null };
     return this.supabase.storage.from("photos").remove(paths);
@@ -55,6 +59,22 @@ export class PortfolioMediaRepository {
       .single();
   }
 
+  async findMedia(mediaId: string) {
+    return this.supabase
+      .from("portfolio_media")
+      .select("id, portfolio_id, storage_path, thumbnail_path, media_type, visibility, sort_order, alt_text, metadata")
+      .eq("id", mediaId)
+      .single();
+  }
+
+  async findPortfolioPhotos(portfolioId: string) {
+    return this.supabase
+      .from("portfolio_media")
+      .select("id, portfolio_id, storage_path, thumbnail_path, media_type, visibility, sort_order, alt_text, metadata")
+      .eq("portfolio_id", portfolioId)
+      .in("media_type", ["hero", "gallery"]);
+  }
+
   async demoteOtherHeroPhotos(portfolioId: string, mediaId: string) {
     return this.supabase
       .from("portfolio_media")
@@ -69,7 +89,7 @@ export class PortfolioMediaRepository {
       .from("portfolio_media")
       .delete()
       .eq("id", mediaId)
-      .select("storage_path, thumbnail_path")
+      .select("storage_path, thumbnail_path, metadata")
       .single();
   }
 }
