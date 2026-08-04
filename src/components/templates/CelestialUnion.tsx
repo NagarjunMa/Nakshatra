@@ -305,7 +305,16 @@ export default function CelestialUnion({
       id: "preferences",
       eyebrow: "Looking ahead",
       title: "Hopes for a partnership",
-      content: <p className="portfolio-partnership-copy">{data.preferences?.narrative || data.preferences?.lifestyle_expectations || data.preferences?.location_preference}</p>,
+      content: <p className="portfolio-long-copy">{data.preferences?.narrative || data.preferences?.lifestyle_expectations || data.preferences?.location_preference}</p>,
+    });
+  }
+
+  if (sharedLifeStatement) {
+    chapters.push({
+      id: "shared-life",
+      eyebrow: "Shared future",
+      title: "The life I hope to build",
+      content: <p className="portfolio-long-copy">{sharedLifeStatement}</p>,
     });
   }
 
@@ -322,8 +331,6 @@ export default function CelestialUnion({
   const trailingChapters = numberedChapters.filter(
     (chapter) => chapter.id !== "personal-story" && !pairedChapterIds.has(chapter.id)
   );
-  const relationshipChapter = trailingChapters.find((chapter) => chapter.id === "preferences");
-  const otherTrailingChapters = trailingChapters.filter((chapter) => chapter.id !== "preferences");
 
   const variables = {
     "--portfolio-background": theme.background,
@@ -410,26 +417,10 @@ export default function CelestialUnion({
 
         <AdaptivePortfolioGallery photos={galleryPhotos} />
 
-        {otherTrailingChapters.length > 0 && (
+        {trailingChapters.length > 0 && (
           <div className="portfolio-chapters portfolio-chapters-trailing">
-            {otherTrailingChapters.map((chapter) => <Chapter key={chapter.id} {...chapter} />)}
+            {trailingChapters.map((chapter) => <Chapter key={chapter.id} {...chapter} />)}
           </div>
-        )}
-
-        {relationshipChapter && sharedLifeStatement ? (
-          <div className="portfolio-relationship-block">
-            <Chapter {...relationshipChapter} />
-            <SharedLifeSection statement={sharedLifeStatement} />
-          </div>
-        ) : (
-          <>
-            {relationshipChapter && (
-              <div className="portfolio-chapters portfolio-chapters-trailing">
-                <Chapter {...relationshipChapter} />
-              </div>
-            )}
-            {sharedLifeStatement && <SharedLifeSection statement={sharedLifeStatement} />}
-          </>
         )}
 
         {showProtectedSection && (
@@ -484,15 +475,6 @@ function Chapter({ number, id, eyebrow, title, content }: ChapterDefinition & { 
         <h2 id={`${id}-title`}>{title}</h2>
       </div>
       <div className="portfolio-chapter-content">{content}</div>
-    </section>
-  );
-}
-
-function SharedLifeSection({ statement }: { statement: string }) {
-  return (
-    <section className="portfolio-emotional" aria-labelledby="shared-life-title">
-      <p className="portfolio-eyebrow">The life I hope to build</p>
-      <h2 id="shared-life-title">{statement}</h2>
     </section>
   );
 }

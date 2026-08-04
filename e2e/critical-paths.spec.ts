@@ -66,7 +66,8 @@ test("public portfolio renders sanitized data and adaptive media", async ({ page
     return Boolean(preferences && (gallery.compareDocumentPosition(preferences) & Node.DOCUMENT_POSITION_FOLLOWING));
   });
   expect(galleryBeforePreferences).toBe(true);
-  await expect(page.locator(".portfolio-relationship-block")).toBeVisible();
+  await expect(page.locator("#preferences")).toBeVisible();
+  await expect(page.locator("#shared-life")).toBeVisible();
   await expect(page.getByRole("button", { name: "Show next photo" })).toHaveCount(0);
 });
 
@@ -115,25 +116,33 @@ test("public portfolio exposes production-ready metadata and distinct accent rol
     expect(pairedStyles).toEqual({ display: "grid", columns: 2 });
     await expect(page.locator(".portfolio-chapter-pair")).toHaveCount(2);
 
-    const relationshipStyles = await page.locator(".portfolio-relationship-block").evaluate((element) => {
-      const styles = getComputedStyle(element);
-      const statement = element.querySelector(".portfolio-emotional h2");
-      return {
-        display: styles.display,
-        columns: styles.gridTemplateColumns.split(" ").length,
-        statementSize: statement ? Number.parseFloat(getComputedStyle(statement).fontSize) : 0,
-      };
-    });
-    expect(relationshipStyles.display).toBe("grid");
-    expect(relationshipStyles.columns).toBe(2);
-    expect(relationshipStyles.statementSize).toBeLessThanOrEqual(38);
+    const futureChapterStyles = await page.locator("#preferences, #shared-life").evaluateAll((elements) =>
+      elements.map((element) => {
+        const styles = getComputedStyle(element);
+        const copy = element.querySelector(".portfolio-long-copy");
+        return {
+          display: styles.display,
+          columns: styles.gridTemplateColumns.split(" ").length,
+          copySize: copy ? Number.parseFloat(getComputedStyle(copy).fontSize) : 0,
+        };
+      })
+    );
+    expect(futureChapterStyles).toEqual([
+      { display: "grid", columns: 3, copySize: 17 },
+      { display: "grid", columns: 3, copySize: 17 },
+    ]);
   } else {
     await expect(page.locator(".portfolio-chapter-pair").first()).toHaveCSS("display", "block");
-    await expect(page.locator(".portfolio-relationship-block")).toHaveCSS("display", "block");
-    const statementSize = await page.locator(".portfolio-emotional h2").evaluate(
-      (element) => Number.parseFloat(getComputedStyle(element).fontSize)
+    const futureChapterStyles = await page.locator("#preferences, #shared-life").evaluateAll((elements) =>
+      elements.map((element) => ({
+        display: getComputedStyle(element).display,
+        columns: getComputedStyle(element).gridTemplateColumns.split(" ").length,
+      }))
     );
-    expect(statementSize).toBeLessThanOrEqual(32);
+    expect(futureChapterStyles).toEqual([
+      { display: "grid", columns: 1 },
+      { display: "grid", columns: 1 },
+    ]);
   }
 });
 
