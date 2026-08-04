@@ -75,7 +75,9 @@ export default function CelestialUnion({
   const heroPhotos = heroPhoto ? [heroPhoto] : legacyOwnerPhoto ? [legacyOwnerPhoto] : [];
   const galleryPhotos = photos.filter((photo) => photo.mediaType === "gallery");
   const blurredPhotos = photos.filter((photo) => photo.presentation === "blurred");
+  const shortBio = clean(data.personal.short_bio);
   const profileSummary = clean(data.personal.profile_summary);
+  const heroSummary = shortBio || (profileSummary ? excerpt(profileSummary, 240) : undefined);
   const age = data.personal.age ?? ageFromDate(data.personal.dob);
   const currentLocation = clean(data.personal.current_location);
   const careerTitle = clean(data.career?.title);
@@ -369,7 +371,7 @@ export default function CelestialUnion({
             {joinValues([visibleCareerTitle, currentLocation, age ? String(age) : undefined]) && (
               <p className="portfolio-hero-line">{joinValues([visibleCareerTitle, currentLocation, age ? String(age) : undefined])}</p>
             )}
-            {profileSummary && <p className="portfolio-hero-summary">{excerpt(profileSummary, 260)}</p>}
+            {heroSummary && <p className="portfolio-hero-summary">{heroSummary}</p>}
             <div className="portfolio-hero-actions">
               {chapters.length > 0 && <a className="portfolio-button portfolio-button-primary" href={`#${chapters[0].id}`}>Explore profile</a>}
               {showProtectedSection && <a className="portfolio-button portfolio-button-secondary" href="#protected-details">How privacy works</a>}

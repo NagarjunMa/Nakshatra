@@ -17,7 +17,6 @@ export const PROFILE_FOR_OPTIONS = [
   option("daughter", "My daughter"),
   option("sibling", "My sibling"),
   option("relative", "A relative"),
-  option("client", "A matchmaking client"),
 ];
 
 export const MARITAL_STATUS_OPTIONS = [

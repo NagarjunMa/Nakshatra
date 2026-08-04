@@ -41,6 +41,7 @@ export const personalSchema = z.object({
   marital_status: z.string().max(100).optional(),
   immigration_status: z.string().max(200).optional(),
   relocation_preference: z.string().max(200).optional(),
+  short_bio: z.string().max(240).optional(),
   profile_summary: z.string().max(1600).optional(),
   profile_for: z.string().max(50).optional(),
   country: z.string().max(100).optional(),

@@ -66,8 +66,11 @@ describe("blueprint form", () => {
     render(<BlueprintForm data={completeBlueprint} onUpdate={onUpdate} />);
 
     fireEvent.change(screen.getByLabelText("Full name"), { target: { value: "Updated Name" } });
+    fireEvent.click(screen.getByRole("button", { name: /Astrology/ }));
     fireEvent.change(screen.getByLabelText("Rashi"), { target: { value: "kumbha" } });
+    fireEvent.click(screen.getByRole("button", { name: /Family/ }));
     fireEvent.change(screen.getByLabelText("Number of siblings"), { target: { value: "2" } });
+    fireEvent.click(screen.getByRole("button", { name: /Privacy & contact/ }));
     fireEvent.change(screen.getAllByLabelText("Contact name")[0], { target: { value: "Updated Contact" } });
     fireEvent.click(screen.getByRole("button", { name: "Dark" }));
     fireEvent.click(screen.getByRole("button", { name: /Open/ }));
@@ -94,9 +97,12 @@ describe("blueprint form", () => {
     };
     render(<BlueprintForm data={minimal} onUpdate={onUpdate} />);
 
+    expect(screen.getByText(/Foundation 1 of 6/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Privacy & contact/ }));
     expect(screen.getByRole("button", { name: /Private/ })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "Light" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getAllByLabelText("Contact name")).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: /Family/ }));
     expect(screen.queryByText("Sibling 1")).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("Number of siblings"), { target: { value: "1" } });
@@ -104,9 +110,32 @@ describe("blueprint form", () => {
       sibling_count: 1,
       siblings: [{}],
     }));
+    fireEvent.click(screen.getByRole("button", { name: /Privacy & contact/ }));
     fireEvent.click(screen.getByRole("button", { name: "Add another contact" }));
     expect(onUpdate).toHaveBeenCalledWith("contact", expect.objectContaining({
       contacts: expect.arrayContaining([expect.objectContaining({ relationship: "other" })]),
     }));
+  });
+
+  it("explains audience, supports chips, and reveals conditional preferences", () => {
+    const onUpdate = vi.fn();
+    const { rerender } = render(<BlueprintForm data={completeBlueprint} onUpdate={onUpdate} />);
+
+    expect(screen.getByText(/Exact birth information stays protected/i)).toBeInTheDocument();
+    expect(screen.getAllByText("Portfolio").length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole("button", { name: /Lifestyle/ }));
+    fireEvent.change(screen.getByLabelText("Languages"), { target: { value: "Kannada" } });
+    fireEvent.click(screen.getAllByRole("button", { name: "Add" })[0]);
+    expect(onUpdate).toHaveBeenCalledWith("lifestyle", expect.objectContaining({
+      languages: "English, Telugu, Kannada",
+    }));
+
+    fireEvent.click(screen.getByRole("button", { name: /Preferences/ }));
+    expect(screen.queryByLabelText("Specific communities")).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Community preference"), { target: { value: "specific" } });
+    expect(onUpdate).toHaveBeenCalledWith("preferences", expect.objectContaining({ caste_preference: "specific" }));
+    rerender(<BlueprintForm data={{ ...completeBlueprint, preferences: { ...completeBlueprint.preferences, caste_preference: "specific" } }} onUpdate={onUpdate} />);
+    expect(screen.getByLabelText("Specific communities")).toBeInTheDocument();
   });
 });

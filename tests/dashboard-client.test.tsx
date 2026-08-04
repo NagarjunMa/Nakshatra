@@ -87,7 +87,7 @@ describe("dashboard client", () => {
     fireEvent.click(screen.getByRole("button", { name: /start your biodata/i }));
     fireEvent.change(screen.getByLabelText("Full name"), { target: { value: "New Name" } });
     fireEvent.change(
-      screen.getByLabelText("Personal introduction"),
+      screen.getByLabelText("Short introduction"),
       { target: { value: "A story" } }
     );
     fireEvent.change(screen.getByLabelText("Date of birth"), {

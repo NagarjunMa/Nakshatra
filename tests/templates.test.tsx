@@ -19,6 +19,7 @@ const complete: PortfolioData = {
     dob: "1996-08-12",
     gender: "female",
     current_location: "Boston",
+    short_bio: "Warm, curious, and grounded.",
     profile_summary: "A thoughtful introduction",
   },
   vitals: { height: "5 ft 5 in", complexion: "Fair", gotra: "Kashyap" },
@@ -102,6 +103,7 @@ describe("celestial union portfolio", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Aditi Rao" })).toBeInTheDocument();
+    expect(screen.getByText("Warm, curious, and grounded.")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Education and career" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Family" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "More can be shared after approval." })).toBeInTheDocument();

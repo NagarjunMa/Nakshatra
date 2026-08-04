@@ -25,6 +25,7 @@ export function createPublicPortfolioSnapshot(data: PortfolioData): PortfolioDat
   const privacyMode = data.privacy_mode || "progressive";
   const privateMode = privacyMode === "private";
   const openMode = privacyMode === "open";
+  const shortBio = clean(data.personal.short_bio);
   const originalStory = clean(data.personal.profile_summary);
   const publicStory = privateMode && originalStory ? excerpt(originalStory, 280) : originalStory;
   const hasJourney = hasAny([
@@ -117,6 +118,7 @@ export function createPublicPortfolioSnapshot(data: PortfolioData): PortfolioDat
       age: ageFromDate(data.personal.dob),
       current_location: data.personal.current_location,
       gender: data.personal.gender,
+      short_bio: shortBio,
       profile_summary: publicStory,
       ...(privateMode
         ? {}

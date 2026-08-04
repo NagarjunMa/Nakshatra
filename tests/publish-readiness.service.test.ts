@@ -48,18 +48,26 @@ describe("portfolio publish readiness", () => {
 
   it.each([
     [{ ...readyPortfolio, personal: { ...readyPortfolio.personal, name: "" } }, true, "full name"],
-    [{ ...readyPortfolio, astrology: { ...readyPortfolio.astrology, rashi: "" } }, true, "rashi"],
-    [{ ...readyPortfolio, contact: {} }, true, "protected contact"],
+    [{ ...readyPortfolio, personal: { ...readyPortfolio.personal, current_location: "" } }, true, "current location"],
+    [{ ...readyPortfolio, career: { ...readyPortfolio.career, title: "" } }, true, "profession or role"],
+    [{ ...readyPortfolio, personal: { ...readyPortfolio.personal, profile_summary: "", short_bio: "" } }, true, "short introduction"],
     [readyPortfolio, false, "profile photo"],
   ] as const)("rejects incomplete generation state", (data, hasPublicHeroPhoto, message) => {
     expect(() => requirePortfolioPublishReadiness({ data, hasPublicHeroPhoto })).toThrow(PortfolioPublishReadinessError);
     expect(() => requirePortfolioPublishReadiness({ data, hasPublicHeroPhoto })).toThrow(message);
   });
 
-  it("requires detail rows for every declared sibling", () => {
+  it("allows detailed sections to remain incomplete", () => {
     expect(() => requirePortfolioPublishReadiness({
-      data: { ...readyPortfolio, family: { ...readyPortfolio.family, sibling_count: 1, siblings: [] } },
+      data: {
+        ...readyPortfolio,
+        astrology: {},
+        family: { sibling_count: 2, siblings: [] },
+        lifestyle: {},
+        preferences: {},
+        contact: {},
+      },
       hasPublicHeroPhoto: true,
-    })).toThrow("name and occupation for each sibling");
+    })).not.toThrow();
   });
 });

@@ -13,6 +13,7 @@ const portfolio: PortfolioData = {
     current_location: "New York",
     gender: "female",
     immigration_status: "H-1B",
+    short_bio: "Warm, curious, and grounded.",
     profile_summary: "A thoughtful public introduction.",
     long_term_goals: "Build a generous and grounded life.",
     religion: "Hindu",
@@ -59,6 +60,7 @@ describe("public portfolio snapshot", () => {
       name: "Aditi Rao",
       preferred_name: "Aditi",
       current_location: "New York",
+      short_bio: "Warm, curious, and grounded.",
     });
     expect(snapshot.personal).not.toHaveProperty("photo_url");
     expect(snapshot.personal).not.toHaveProperty("photo_thumb_url");

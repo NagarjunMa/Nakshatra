@@ -531,7 +531,7 @@ export default function DashboardClient({
 
       {formOpen && (
         <div className="fixed inset-0 z-50 bg-[#05050a]/70 backdrop-blur-sm">
-          <div className="absolute right-0 top-0 flex h-full w-full max-w-2xl flex-col overflow-hidden border-l border-white/10 bg-[#151622]/95 text-white shadow-2xl">
+          <div className="absolute inset-0 flex h-full w-full flex-col overflow-hidden bg-[#151622]/97 text-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
               <div>
                 <h2 className="text-lg font-semibold">Portfolio details</h2>
@@ -549,27 +549,31 @@ export default function DashboardClient({
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-5 py-5">
-              <PhotoManager
-                media={portfolioMedia}
-                urls={mediaUrls}
-                uploading={uploadingMedia}
-                inputRef={photoInputRef}
-                onUpload={uploadPhotos}
-                onUpdate={updatePhoto}
-                onDelete={deletePhoto}
-              />
-              <HoroscopeManager
-                horoscope={portfolioHoroscope}
-                uploading={uploadingHoroscope}
-                inputRef={horoscopeInputRef}
-                onUpload={uploadHoroscopeFile}
-                onReview={reviewHoroscope}
-                onDelete={removeHoroscope}
-              />
+            <div className="flex-1 overflow-y-auto px-5 py-5 lg:px-8">
               <BlueprintForm
                 data={draftData}
                 onUpdate={updateSection}
+                photoManager={
+                  <PhotoManager
+                    media={portfolioMedia}
+                    urls={mediaUrls}
+                    uploading={uploadingMedia}
+                    inputRef={photoInputRef}
+                    onUpload={uploadPhotos}
+                    onUpdate={updatePhoto}
+                    onDelete={deletePhoto}
+                  />
+                }
+                horoscopeManager={
+                  <HoroscopeManager
+                    horoscope={portfolioHoroscope}
+                    uploading={uploadingHoroscope}
+                    inputRef={horoscopeInputRef}
+                    onUpload={uploadHoroscopeFile}
+                    onReview={reviewHoroscope}
+                    onDelete={removeHoroscope}
+                  />
+                }
               />
             </div>
 
@@ -718,7 +722,7 @@ function formatBytes(bytes: number) {
 
 const EMPTY_DATA: PortfolioData = {
   privacy_mode: "progressive",
-  personal: { name: "", dob: "", gender: "male" },
+  personal: { name: "", dob: "", gender: "prefer_not_to_say" },
   vitals: {},
   astrology: {},
   education: {},
@@ -738,7 +742,7 @@ const EMPTY_DATA: PortfolioData = {
     career: "public",
     family: "approved",
     lifestyle: "public",
-    preferences: "broker",
+    preferences: "approved",
     future_plans: "approved",
     astrology: "approved",
     contact: "approved",
