@@ -21,6 +21,7 @@ const complete: PortfolioData = {
     current_location: "Boston",
     short_bio: "Warm, grounded, and curious about the world.",
     profile_summary: "A thoughtful introduction",
+    shared_life_plans: "A warm home, shared purpose, and room to grow together.",
   },
   vitals: { height: "5 ft 5 in", complexion: "Fair", gotra: "Kashyap" },
   astrology: {
@@ -122,6 +123,11 @@ describe("celestial union portfolio", () => {
     expect(pairedRows).toHaveLength(2);
     expect(pairedRows[0].children).toHaveLength(2);
     expect(pairedRows[1].children).toHaveLength(2);
+    const relationshipBlock = document.querySelector(".portfolio-relationship-block");
+    expect(relationshipBlock).toBeTruthy();
+    expect(relationshipBlock?.children).toHaveLength(2);
+    expect(relationshipBlock?.querySelector("#preferences")).toBeTruthy();
+    expect(relationshipBlock?.querySelector(".portfolio-emotional")).toBeTruthy();
     const gallery = document.querySelector(".portfolio-gallery");
     const preferences = document.getElementById("preferences");
     expect(gallery).toBeTruthy();

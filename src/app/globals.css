@@ -1630,20 +1630,58 @@ body {
   max-width: calc(100% - 24px);
 }
 
+[data-template="celestial-union"] .portfolio-relationship-block {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-bottom: 1px solid var(--portfolio-border);
+}
+
+[data-template="celestial-union"] .portfolio-relationship-block .portfolio-chapter {
+  grid-template-columns: 36px minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  align-content: start;
+  min-height: 100%;
+  gap: 22px 20px;
+  padding: clamp(42px, 5vw, 64px);
+  border-right: 1px solid var(--portfolio-border);
+  border-bottom: 0;
+}
+
+[data-template="celestial-union"] .portfolio-relationship-block .portfolio-section-heading {
+  grid-column: 2;
+}
+
+[data-template="celestial-union"] .portfolio-relationship-block .portfolio-section-heading h2 {
+  font-size: clamp(28px, 3vw, 38px);
+}
+
+[data-template="celestial-union"] .portfolio-relationship-block .portfolio-chapter-content {
+  grid-column: 1 / -1;
+}
+
 [data-template="celestial-union"] .portfolio-emotional {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   padding: clamp(48px, 7vw, 78px);
   border-bottom: 1px solid var(--portfolio-border);
-  background: color-mix(in srgb, var(--portfolio-gold) 8%, var(--portfolio-surface));
+  background: color-mix(in srgb, var(--portfolio-gold) 5%, var(--portfolio-surface));
+}
+
+[data-template="celestial-union"] .portfolio-relationship-block .portfolio-emotional {
+  min-height: 100%;
+  padding: clamp(42px, 5vw, 64px);
+  border-bottom: 0;
 }
 
 [data-template="celestial-union"] .portfolio-emotional h2 {
-  max-width: 900px;
+  max-width: 26ch;
   margin: 0;
   color: var(--portfolio-foreground);
   font-family: var(--font-portfolio-display), Georgia, serif;
-  font-size: clamp(30px, 4.2vw, 52px);
+  font-size: clamp(26px, 3vw, 38px);
   font-weight: 500;
-  line-height: 1.25;
+  line-height: 1.35;
 }
 
 [data-template="celestial-union"] .portfolio-protected-section {
@@ -1883,6 +1921,32 @@ body {
     grid-column: auto;
   }
 
+  [data-template="celestial-union"] .portfolio-relationship-block {
+    display: block;
+    border-bottom: 0;
+  }
+
+  [data-template="celestial-union"] .portfolio-relationship-block .portfolio-chapter {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    gap: 18px;
+    min-height: 0;
+    padding: 44px 20px;
+    border-right: 0;
+    border-bottom: 1px solid var(--portfolio-border);
+  }
+
+  [data-template="celestial-union"] .portfolio-relationship-block .portfolio-section-heading,
+  [data-template="celestial-union"] .portfolio-relationship-block .portfolio-chapter-content {
+    grid-column: auto;
+  }
+
+  [data-template="celestial-union"] .portfolio-relationship-block .portfolio-emotional {
+    min-height: 0;
+    border-bottom: 1px solid var(--portfolio-border);
+  }
+
   [data-template="celestial-union"] .portfolio-chapter-number {
     display: none;
   }
@@ -1904,6 +1968,11 @@ body {
   [data-template="celestial-union"] .portfolio-emotional,
   [data-template="celestial-union"] .portfolio-protected-section {
     padding: 44px 20px;
+  }
+
+  [data-template="celestial-union"] .portfolio-emotional h2 {
+    max-width: none;
+    font-size: clamp(25px, 8vw, 32px);
   }
 
   [data-template="celestial-union"] .portfolio-gallery-item,

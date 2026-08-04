@@ -20,6 +20,7 @@ const publicSnapshot = {
       current_location: "Boston",
       short_bio: "Warm, grounded, and curious about the world.",
       profile_summary: "A thoughtful introduction",
+      shared_life_plans: "A warm home, shared purpose, and room to grow together.",
     },
     vitals: { height: "5 ft 5 in", complexion: "Fair" },
     astrology: { rashi: "kanya", nakshatra: "Uttara Phalguni", pada: "2" },
