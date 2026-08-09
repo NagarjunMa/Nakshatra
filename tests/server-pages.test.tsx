@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   rpc: vi.fn(() => Promise.resolve({ data: null, error: null })),
   signedUrl: vi.fn(async () => ({ data: { signedUrl: "https://signed.test/hero" } })),
   imageResponse: vi.fn(),
+  authUser: null as { id: string } | null,
 }));
 
 function databaseClient() {
@@ -26,13 +27,14 @@ function databaseClient() {
     from: vi.fn((table: string) => {
       const response = () => mocks.outcomes[table] ?? { data: null };
       const chain: Record<string, unknown> = {};
-      for (const method of ["select", "eq", "in", "not", "order"]) chain[method] = vi.fn(() => chain);
+      for (const method of ["select", "eq", "in", "not", "is", "order", "limit"]) chain[method] = vi.fn(() => chain);
       chain.single = vi.fn(async () => response());
       chain.maybeSingle = vi.fn(async () => response());
       chain.then = (resolve: (value: unknown) => unknown) => Promise.resolve(response()).then(resolve);
       return chain;
     }),
     rpc: mocks.rpc,
+    auth: { getUser: vi.fn(async () => ({ data: { user: mocks.authUser }, error: null })) },
     storage: { from: () => ({ createSignedUrl: mocks.signedUrl }) },
   };
 }
@@ -90,6 +92,7 @@ const portfolio = {
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.outcomes = {};
+  mocks.authUser = null;
 });
 
 describe("authenticated server pages", () => {
@@ -161,13 +164,29 @@ describe("public portfolio pages", () => {
   });
 
   it("uses the approved projection only when row-level access returns an approved snapshot", async () => {
+    mocks.authUser = { id: "viewer-1" };
     mocks.outcomes.public_portfolio_snapshots = { data: { portfolio_id: "portfolio-1", data, template_id: 3, theme_color: null, sun_sign: "kanya" } };
+    mocks.outcomes.reveal_grants = { data: { id: "grant-1", expires_at: null } };
     mocks.outcomes.approved_portfolio_snapshots = { data: { data: { ...data, personal: { ...data.personal, name: "Approved Aditi" } }, template_id: 3, theme_color: null, sun_sign: "kanya" } };
     mocks.outcomes.portfolio_media = { data: [] };
     mocks.outcomes.portfolio_horoscopes = { data: null };
     render(await PublicBiodataPage({ params: Promise.resolve({ token: "token" }) }));
     expect(screen.getByTestId("template")).toHaveTextContent("Approved Aditi:approved");
     expect(mocks.photoUrls).toHaveBeenCalledWith(expect.objectContaining({ viewer: "approved" }));
+  });
+
+  it("keeps the published link public for a signed-in owner without a viewer grant", async () => {
+    mocks.authUser = { id: "user-1" };
+    mocks.outcomes.public_portfolio_snapshots = { data: { portfolio_id: "portfolio-1", data, template_id: 3, theme_color: null, sun_sign: "kanya" } };
+    mocks.outcomes.portfolios = { data: { id: "portfolio-1" } };
+    mocks.outcomes.approved_portfolio_snapshots = { data: { data: { ...data, personal: { ...data.personal, name: "Owner-only approved data" } } } };
+    mocks.outcomes.portfolio_media = { data: [] };
+
+    render(await PublicBiodataPage({ params: Promise.resolve({ token: "token" }) }));
+
+    expect(screen.getByTestId("template")).toHaveTextContent("Aditi Rao:public");
+    expect(screen.queryByText(/Owner-only approved data/)).not.toBeInTheDocument();
+    expect(mocks.photoUrls).toHaveBeenCalledWith(expect.objectContaining({ viewer: "public" }));
   });
 
   it("keeps the separate horoscope viewer gated and uses a neutral Word download", async () => {

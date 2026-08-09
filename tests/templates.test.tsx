@@ -20,6 +20,8 @@ const complete: PortfolioData = {
     dob: "1996-08-12",
     gender: "female",
     current_location: "Boston",
+    immigration_status: "H-1B",
+    community: "Brahmin",
     short_bio: "Warm, grounded, and curious about the world.",
     profile_summary: "A thoughtful introduction",
     shared_life_plans: "A warm home, shared purpose, and room to grow together.",
@@ -31,6 +33,8 @@ const complete: PortfolioData = {
     pada: "2",
     time_of_birth: "09:15",
     lagnam: "Mithuna",
+    maternal_gotra: "Bharadwaj",
+    manglik_status: "No",
   },
   education: { degree: "MS", institution: "Northeastern", year: "2020" },
   career: { title: "Engineer", company: "Nakshatra", location: "Boston" },
@@ -43,9 +47,18 @@ const complete: PortfolioData = {
     current_region: "Karnataka",
     current_country: "India",
     family_note: "Close-knit",
+    sibling_count: 1,
+    sibling_position: "Oldest",
   },
-  lifestyle: { hobbies: "Reading, Travel", languages: "English, Hindi", diet: "Vegetarian" },
-  preferences: { narrative: "A kind and curious partnership" },
+  lifestyle: { hobbies: "Reading, Travel", languages: "English, Hindi", diet: "Vegetarian", values_statement: "Kindness, Mutual respect" },
+  preferences: {
+    narrative: "A kind and curious partnership",
+    marriage_timeline: "Within 1–2 years",
+    children_preference: "Open and undecided",
+    career_after_marriage: "Both careers should be supported equally",
+    living_arrangement: "Near family, in a separate home",
+    family_responsibilities: "Shared equally as a couple",
+  },
   contact: {
     contact_person: "Ramesh Rao",
     phone: "+91 90000 00000",
@@ -112,11 +125,19 @@ describe("celestial union portfolio", () => {
     expect(within(screen.getByLabelText("At a glance")).getByText(/Kanya \(Virgo\)/)).toBeInTheDocument();
     expect(screen.getByText("Warm, grounded, and curious about the world.")).toBeInTheDocument();
     expect(screen.getAllByText("English")).toHaveLength(1);
+    expect(screen.getByText("Kindness")).toBeInTheDocument();
+    expect(screen.getByText("Mutual respect")).toBeInTheDocument();
+    expect(screen.getByText("H-1B")).toBeInTheDocument();
+    expect(screen.getByText("Brahmin")).toBeInTheDocument();
+    expect(screen.getByText("1")).toBeInTheDocument();
+    expect(screen.getByText("Oldest")).toBeInTheDocument();
+    expect(screen.getByText("Bharadwaj")).toBeInTheDocument();
+    expect(screen.getByText("No")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Explore profile" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "How privacy works" })).not.toBeInTheDocument();
     expect(screen.queryByText("1996-08-12")).not.toBeInTheDocument();
     expect(screen.queryByText("Fair")).not.toBeInTheDocument();
-    expect(screen.queryByText("Kashyap")).not.toBeInTheDocument();
+    expect(screen.getByText("Kashyap")).toBeInTheDocument();
     expect(screen.queryByText(/Ramesh Rao/)).not.toBeInTheDocument();
     expect(screen.queryByText("family@example.com")).not.toBeInTheDocument();
     expect(screen.getByAltText("Landscape")).toBeInTheDocument();
@@ -152,6 +173,8 @@ describe("celestial union portfolio", () => {
     expect(screen.getByText("PDF document · Kannada · 3 pages")).toBeInTheDocument();
     expect(screen.getByText("Ramesh Rao · Architect")).toBeInTheDocument();
     expect(screen.getByText("Kashyap")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Future plans" })).toBeInTheDocument();
+    expect(screen.getByText("Near family, in a separate home")).toBeInTheDocument();
     expect(screen.queryByText("family@example.com")).not.toBeInTheDocument();
 
     rerender(<CelestialUnion data={createPublicPortfolioSnapshot(complete)} themeColor="" sunSign="kanya" accessMode="public" />);
@@ -258,9 +281,12 @@ describe("celestial union portfolio", () => {
 
     expect(container.querySelector('[data-privacy-mode="private"]')).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Education and career" })).toBeInTheDocument();
-    expect(screen.getByText(/Education and career information exists/)).toBeInTheDocument();
+    expect(screen.queryByText(/Education and career information exists/)).not.toBeInTheDocument();
     expect(screen.queryByText("Northeastern · 2020")).not.toBeInTheDocument();
-    expect(within(screen.getByLabelText("At a glance")).queryByText(/Kanya \(Virgo\)/)).not.toBeInTheDocument();
+    expect(within(screen.getByLabelText("At a glance")).getByText(/Kanya \(Virgo\)/)).toBeInTheDocument();
+    expect(screen.getByText("Uttara Phalguni")).toBeInTheDocument();
+    expect(screen.queryByText("Kashyap")).not.toBeInTheDocument();
+    expect(screen.queryByText("Bharadwaj")).not.toBeInTheDocument();
 
     rerender(<CelestialUnion data={balancedData} themeColor="" sunSign="kanya" accessMode="public" photos={photos} />);
     expect(container.querySelector('[data-privacy-mode="balanced"]')).toBeTruthy();

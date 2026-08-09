@@ -22,7 +22,12 @@ const draft: PortfolioData = {
   vitals: { height: "5 ft 5 in" },
   astrology: { rashi: "kanya", nakshatra: "Uttara Phalguni" },
   lifestyle: { languages: "Telugu, English", hobbies: "Reading, Music" },
-  preferences: { age_range: "28-32" },
+  preferences: {
+    age_range: "28-32",
+    career_after_marriage: "Both careers should be supported equally",
+    living_arrangement: "Our own home",
+    family_responsibilities: "Shared equally as a couple",
+  },
   access: { journey: "public", family: "approved", preferences: "broker" },
   family: {
     father: { name: "Rao", occupation: "Engineer" },
@@ -53,7 +58,15 @@ describe("dashboard portfolio mapping", () => {
     expect(mapCandidateDetails(draft)).toMatchObject({
       personal: { immigration_status: "H-1B", height_text: "5 ft 5 in" },
       lifestyle: { languages: ["Telugu", "English"], hobbies: ["Reading", "Music"] },
-      preferences: { age_min: 28, age_max: 32 },
+      preferences: {
+        age_min: 28,
+        age_max: 32,
+        preferences_payload: expect.objectContaining({
+          career_after_marriage: "Both careers should be supported equally",
+          living_arrangement: "Our own home",
+          family_responsibilities: "Shared equally as a couple",
+        }),
+      },
     });
   });
 

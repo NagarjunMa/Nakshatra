@@ -178,6 +178,11 @@ export function mapCandidateDetails(data: PortfolioData) {
         wedding_expectations: data.preferences?.wedding_expectations || null,
         gift_expectations: data.preferences?.gift_expectations || null,
         parent_support: data.preferences?.parent_support || null,
+        career_after_marriage:
+          data.preferences?.career_after_marriage || null,
+        living_arrangement: data.preferences?.living_arrangement || null,
+        family_responsibilities:
+          data.preferences?.family_responsibilities || null,
         religion_preference: data.preferences?.religion_preference || null,
         lifestyle_expectations:
           data.preferences?.lifestyle_expectations || null,

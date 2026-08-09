@@ -6,6 +6,15 @@ import {
   type PortfolioData,
 } from "@/types/portfolio";
 
+const APPROVED_EXCLUDED_PREFERENCE_KEYS = new Set([
+  "private_notes",
+  "location_preference",
+  "location_preferences",
+  "wedding_expectations",
+  "gift_expectations",
+  "parent_support",
+]);
+
 /**
  * Builds the full blueprint that an authenticated, approved requester may see.
  * Direct contact, internal notes, legacy photo URLs, credit information, and
@@ -14,7 +23,9 @@ import {
 export function createApprovedPortfolioSnapshot(data: PortfolioData): PortfolioData {
   const approvedPreferences = data.preferences
     ? Object.fromEntries(
-        Object.entries(data.preferences).filter(([key]) => key !== "private_notes")
+        Object.entries(data.preferences).filter(
+          ([key]) => !APPROVED_EXCLUDED_PREFERENCE_KEYS.has(key)
+        )
       )
     : undefined;
   return portfolioDataSchema.parse({

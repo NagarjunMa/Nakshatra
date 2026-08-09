@@ -25,7 +25,15 @@ const complete: PortfolioData = {
   career: { title: "Engineer", company: "Example", annual_income: "$100k–$125k" },
   family: { father: { name: "Ramesh" }, mother: { name: "Meera" } },
   lifestyle: { hobbies: "Reading", credit_score_band: "Private", drinking: "Never" },
-  preferences: { age_range: "28–34", private_notes: "Never share this" },
+  preferences: {
+    age_range: "28–34",
+    private_notes: "Never share this",
+    location_preferences: "New York",
+    wedding_expectations: "Grand celebration",
+    gift_expectations: "Discuss later",
+    parent_support: "Discuss later",
+    living_arrangement: "Our own home",
+  },
   contact: { contact_person: "Ramesh", phone: "+1 555 0100", secure_note: "Owner only" },
   visibility: { family_details: "restricted", contact: "restricted" },
   access: { contact: "owner" },
@@ -47,9 +55,14 @@ describe("approved portfolio snapshot", () => {
     expect(snapshot.astrology?.maternal_gotra).toBe("Bharadwaj");
     expect(snapshot.career?.annual_income).toBe("$100k–$125k");
     expect(snapshot.preferences?.age_range).toBe("28–34");
+    expect(snapshot.preferences?.living_arrangement).toBe("Our own home");
 
     expect(snapshot).not.toHaveProperty("contact");
     expect(snapshot.preferences).not.toHaveProperty("private_notes");
+    expect(snapshot.preferences).not.toHaveProperty("location_preferences");
+    expect(snapshot.preferences).not.toHaveProperty("wedding_expectations");
+    expect(snapshot.preferences).not.toHaveProperty("gift_expectations");
+    expect(snapshot.preferences).not.toHaveProperty("parent_support");
     expect(snapshot.lifestyle).not.toHaveProperty("credit_score_band");
     expect(snapshot.personal).not.toHaveProperty("profile_for");
     expect(snapshot.personal).not.toHaveProperty("city_geoname_id");
