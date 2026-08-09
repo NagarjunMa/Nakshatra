@@ -15,6 +15,7 @@ import { LocationFields, type LocationValue } from "@/components/portfolio/Locat
 import { CELESTIAL_THEME_COLORS } from "@/features/portfolio/celestial-theme";
 import {
   AGE_OPTIONS,
+  CAREER_AFTER_MARRIAGE_OPTIONS,
   CASTE_PREFERENCE_OPTIONS,
   CHILDREN_OPTIONS,
   COMMUNITY_OPTIONS,
@@ -22,25 +23,25 @@ import {
   DIET_OPTIONS,
   FREQUENCY_OPTIONS,
   GENDER_OPTIONS,
-  GIFT_EXPECTATION_OPTIONS,
+  FAMILY_RESPONSIBILITY_OPTIONS,
   HEIGHT_OPTIONS,
   HOBBY_OPTIONS,
   HOROSCOPE_PREFERENCE_OPTIONS,
   INCOME_RANGE_OPTIONS,
   JOB_TYPE_OPTIONS,
   LANGUAGE_OPTIONS,
+  LIVING_ARRANGEMENT_OPTIONS,
   MANGLIK_OPTIONS,
   MARRIAGE_TIMELINE_OPTIONS,
   MARITAL_STATUS_OPTIONS,
   NAKSHATRA_OPTIONS,
-  PARENT_SUPPORT_OPTIONS,
   PROFILE_FOR_OPTIONS,
   QUALIFICATION_OPTIONS,
   RELOCATION_OPTIONS,
   RELIGION_OPTIONS,
   SIBLING_POSITION_OPTIONS,
   VISA_OPTIONS,
-  WEDDING_EXPECTATION_OPTIONS,
+  VALUE_OPTIONS,
   type BlueprintOption,
 } from "@/features/portfolio/blueprint-options";
 import { RASHI_OPTIONS, type PortfolioData } from "@/types/portfolio";
@@ -267,7 +268,7 @@ export function BlueprintForm({
               <SelectInput label="Work status" value={data.career?.job_type || ""} options={JOB_TYPE_OPTIONS} onChange={(value) => onUpdate("career", { ...(data.career || {}), job_type: value })} requirement="Optional" audience="Portfolio" />
               <TextInput label="Employer or organisation" value={data.career?.company || ""} onChange={(value) => onUpdate("career", { ...(data.career || {}), company: value })} audience="Approved people" />
               <TextInput label="Work location" value={data.career?.location || ""} onChange={(value) => onUpdate("career", { ...(data.career || {}), location: value })} requirement="Optional" audience="Portfolio" />
-              <SelectInput label="Visa or residency status" value={data.personal.immigration_status || ""} options={VISA_OPTIONS} onChange={(value) => updatePersonal({ immigration_status: value })} audience="Approved people" />
+              <SelectInput label="Visa or residency status" value={data.personal.immigration_status || ""} options={VISA_OPTIONS} onChange={(value) => updatePersonal({ immigration_status: value })} audience="Balanced portfolio" />
               <TextInput label="Citizenship" value={data.personal.citizenship || ""} onChange={(value) => updatePersonal({ citizenship: value })} requirement="Optional" audience="Approved people" />
               <SelectInput label="Annual income range" value={data.career?.annual_income || ""} options={INCOME_RANGE_OPTIONS} onChange={(value) => onUpdate("career", { ...(data.career || {}), annual_income: value })} audience="Approved people" hint="Never shown publicly." />
               {hasValue(data.career?.annual_income) && data.career?.annual_income !== "Prefer not to say" && <SelectInput label="Income currency" value={data.career?.income_currency || ""} options={CURRENCY_OPTIONS} onChange={(value) => onUpdate("career", { ...(data.career || {}), income_currency: value })} audience="Protected" />}
@@ -281,7 +282,7 @@ export function BlueprintForm({
             <TextArea label="How would you describe your family?" value={data.family?.public_summary || ""} onChange={(value) => updateFamily({ public_summary: value })} maxLength={600} requirement="Recommended" audience="Portfolio" hint="Describe the family without phone numbers, exact addresses, or private documents." />
             <div className="grid gap-4 sm:grid-cols-2">
               <SelectInput label="Religion or outlook" value={data.personal.religion || ""} options={RELIGION_OPTIONS} onChange={(value) => updatePersonal({ religion: value })} requirement="Optional" audience="Approved people" />
-              <TextInput label="Community" value={data.personal.community || ""} onChange={(value) => updatePersonal({ community: value })} list="community-options" requirement="Optional" audience="Approved people" />
+              <TextInput label="Community" value={data.personal.community || ""} onChange={(value) => updatePersonal({ community: value })} list="community-options" requirement="Optional" audience="Balanced portfolio" />
               <TextInput label="Sub-community" value={data.personal.sub_community || ""} onChange={(value) => updatePersonal({ sub_community: value })} requirement="Optional" audience="Approved people" />
               <TextInput label="Parents' current location" value={data.family?.parents_location || ""} onChange={(value) => updateFamily({ parents_location: value })} requirement="Optional" audience="Approved people" />
               <TextInput label="Father or guardian name" value={data.family?.father?.name || ""} onChange={(value) => updateFamily({ father: { ...(data.family?.father || {}), name: value } })} requirement="Optional" audience="Approved people" />
@@ -290,8 +291,8 @@ export function BlueprintForm({
               <TextInput label="Mother or guardian profession" value={data.family?.mother?.occupation || ""} onChange={(value) => updateFamily({ mother: { ...(data.family?.mother || {}), occupation: value } })} requirement="Optional" audience="Approved people" />
               <TextInput label="Paternal family origin" value={data.family?.paternal_origin || data.family?.ancestral_origin || ""} onChange={(value) => updateFamily({ paternal_origin: value })} requirement="Optional" audience="Portfolio" />
               <TextInput label="Maternal family origin" value={data.family?.maternal_origin || ""} onChange={(value) => updateFamily({ maternal_origin: value })} requirement="Optional" audience="Portfolio" />
-              <TextInput label="Number of siblings" type="number" min="0" max="10" value={String(data.family?.sibling_count ?? "")} onChange={setSiblingCount} requirement="Optional" audience="Approved people" />
-              <SelectInput label="Your position among siblings" value={data.family?.sibling_position || ""} options={SIBLING_POSITION_OPTIONS} onChange={(value) => updateFamily({ sibling_position: value })} requirement="Optional" audience="Approved people" />
+              <TextInput label="Number of siblings" type="number" min="0" max="10" value={String(data.family?.sibling_count ?? "")} onChange={setSiblingCount} requirement="Optional" audience="Balanced portfolio" />
+              <SelectInput label="Your position among siblings" value={data.family?.sibling_position || ""} options={SIBLING_POSITION_OPTIONS} onChange={(value) => updateFamily({ sibling_position: value })} requirement="Optional" audience="Balanced portfolio" />
             </div>
             {(data.family?.siblings || []).map((sibling, index) => (
               <div key={index} className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
@@ -317,7 +318,7 @@ export function BlueprintForm({
             </div>
             <MultiSelectInput label="Languages" value={data.lifestyle?.languages || ""} options={LANGUAGE_OPTIONS} onChange={(value) => onUpdate("lifestyle", { ...(data.lifestyle || {}), languages: value })} audience="Portfolio" />
             <MultiSelectInput label="Interests and hobbies" value={data.lifestyle?.hobbies || ""} options={HOBBY_OPTIONS} onChange={(value) => onUpdate("lifestyle", { ...(data.lifestyle || {}), hobbies: value })} audience="Portfolio" />
-            <TextArea label="Which values guide your everyday life?" value={data.lifestyle?.values_statement || ""} onChange={(value) => onUpdate("lifestyle", { ...(data.lifestyle || {}), values_statement: value })} maxLength={1200} requirement="Optional" audience="Portfolio" />
+            <MultiSelectInput label="Values that matter to you" value={data.lifestyle?.values_statement || ""} options={VALUE_OPTIONS} onChange={(value) => onUpdate("lifestyle", { ...(data.lifestyle || {}), values_statement: value })} audience="Portfolio" hint="Choose a few that genuinely guide your decisions and relationships." />
           </FormSection>
         )}
 
@@ -331,20 +332,19 @@ export function BlueprintForm({
               <SelectInput label="Horoscope matching preference" value={data.preferences?.horoscope_preference || ""} options={HOROSCOPE_PREFERENCE_OPTIONS} onChange={(value) => onUpdate("preferences", { ...(data.preferences || {}), horoscope_preference: value })} requirement="Optional" audience="Approved people" />
             </div>
             {data.preferences?.caste_preference === "specific" && <MultiSelectInput label="Specific communities" value={data.preferences?.specific_communities || ""} options={COMMUNITY_OPTIONS.filter((item) => item.value)} onChange={(value) => onUpdate("preferences", { ...(data.preferences || {}), specific_communities: value })} audience="Approved people" />}
-            <MultiSelectInput label="Preferred locations" value={data.preferences?.location_preferences || ""} options={[]} onChange={(value) => onUpdate("preferences", { ...(data.preferences || {}), location_preferences: value })} audience="Approved people" hint="Add cities, states, or countries that would work for you." allowCustom />
             <MultiSelectInput label="Preferred visa or residency statuses" value={data.preferences?.visa_preferences || ""} options={VISA_OPTIONS.filter((item) => item.value)} onChange={(value) => onUpdate("preferences", { ...(data.preferences || {}), visa_preferences: value })} audience="Approved people" hint="Useful only when international location compatibility matters." />
           </FormSection>
         )}
 
         {activeSection === "future" && (
-          <FormSection eyebrow="Looking ahead" title="Future plans" description="Simple conversation starters, not promises.">
+          <FormSection eyebrow="Looking ahead" title="Future plans" description="Six quick choices about building a life together. Choose “Discuss later” whenever you are unsure.">
             <div className="grid gap-4 sm:grid-cols-2">
-              <SelectInput label="When would you ideally like to marry?" value={data.preferences?.marriage_timeline || ""} options={MARRIAGE_TIMELINE_OPTIONS} onChange={(value) => onUpdate("preferences", { ...(data.preferences || {}), marriage_timeline: value })} requirement="Optional" audience="Approved people" />
-              <SelectInput label="How do you feel about having children?" value={data.preferences?.children_preference || ""} options={CHILDREN_OPTIONS} onChange={(value) => onUpdate("preferences", { ...(data.preferences || {}), children_preference: value })} requirement="Optional" audience="Approved people" />
-              <SelectInput label="Would you consider relocating after marriage?" value={data.personal.relocation_preference || ""} options={RELOCATION_OPTIONS} onChange={(value) => updatePersonal({ relocation_preference: value })} requirement="Optional" audience="Approved people" />
-              <SelectInput label="What kind of wedding feels right to you?" value={data.preferences?.wedding_expectations || ""} options={WEDDING_EXPECTATION_OPTIONS} onChange={(value) => onUpdate("preferences", { ...(data.preferences || {}), wedding_expectations: value })} requirement="Optional" audience="Approved people" />
-              <SelectInput label="Wedding expenses and gift expectations" value={data.preferences?.gift_expectations || ""} options={GIFT_EXPECTATION_OPTIONS} onChange={(value) => onUpdate("preferences", { ...(data.preferences || {}), gift_expectations: value })} requirement="Optional" audience="Protected" />
-              <SelectInput label="How do you imagine supporting parents after marriage?" value={data.preferences?.parent_support || ""} options={PARENT_SUPPORT_OPTIONS} onChange={(value) => onUpdate("preferences", { ...(data.preferences || {}), parent_support: value })} requirement="Optional" audience="Protected" />
+              <SelectInput label="When would you feel ready to marry?" value={data.preferences?.marriage_timeline || ""} options={MARRIAGE_TIMELINE_OPTIONS} onChange={(value) => onUpdate("preferences", { ...(data.preferences || {}), marriage_timeline: value })} requirement="Optional" audience="Approved people" />
+              <SelectInput label="What is your outlook on children?" value={data.preferences?.children_preference || ""} options={CHILDREN_OPTIONS} onChange={(value) => onUpdate("preferences", { ...(data.preferences || {}), children_preference: value })} requirement="Optional" audience="Approved people" />
+              <SelectInput label="How flexible are you about where you live?" value={data.personal.relocation_preference || ""} options={RELOCATION_OPTIONS} onChange={(value) => updatePersonal({ relocation_preference: value })} requirement="Optional" audience="Approved people" />
+              <SelectInput label="How should careers be supported after marriage?" value={data.preferences?.career_after_marriage || ""} options={CAREER_AFTER_MARRIAGE_OPTIONS} onChange={(value) => onUpdate("preferences", { ...(data.preferences || {}), career_after_marriage: value })} requirement="Optional" audience="Approved people" />
+              <SelectInput label="What living arrangement feels comfortable?" value={data.preferences?.living_arrangement || ""} options={LIVING_ARRANGEMENT_OPTIONS} onChange={(value) => onUpdate("preferences", { ...(data.preferences || {}), living_arrangement: value })} requirement="Optional" audience="Approved people" />
+              <SelectInput label="How should family responsibilities be handled?" value={data.preferences?.family_responsibilities || ""} options={FAMILY_RESPONSIBILITY_OPTIONS} onChange={(value) => onUpdate("preferences", { ...(data.preferences || {}), family_responsibilities: value })} requirement="Optional" audience="Approved people" />
             </div>
           </FormSection>
         )}
@@ -358,9 +358,9 @@ export function BlueprintForm({
               <SelectInput label="Nakshatra" value={data.astrology?.nakshatra || ""} options={NAKSHATRA_OPTIONS} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), nakshatra: value })} requirement="Optional" audience="Balanced portfolio" />
               <TextInput label="Pada" value={data.astrology?.pada || ""} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), pada: value })} requirement="Optional" audience="Balanced portfolio" />
               <TextInput label="Lagnam" value={data.astrology?.lagnam || ""} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), lagnam: value })} requirement="Optional" audience="Approved people" />
-              <TextInput label="Paternal gothram" value={data.vitals?.gotra || ""} onChange={(value) => onUpdate("vitals", { ...(data.vitals || {}), gotra: value })} requirement="Optional" audience="Approved people" />
-              <TextInput label="Maternal gothram" value={data.astrology?.maternal_gotra || ""} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), maternal_gotra: value })} requirement="Optional" audience="Approved people" />
-              <SelectInput label="Manglik status" value={data.astrology?.manglik_status || ""} options={MANGLIK_OPTIONS} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), manglik_status: value })} requirement="Optional" audience="Approved people" />
+              <TextInput label="Paternal gothram" value={data.vitals?.gotra || ""} onChange={(value) => onUpdate("vitals", { ...(data.vitals || {}), gotra: value })} requirement="Optional" audience="Balanced portfolio" />
+              <TextInput label="Maternal gothram" value={data.astrology?.maternal_gotra || ""} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), maternal_gotra: value })} requirement="Optional" audience="Balanced portfolio" />
+              <SelectInput label="Manglik status" value={data.astrology?.manglik_status || ""} options={MANGLIK_OPTIONS} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), manglik_status: value })} requirement="Optional" audience="Balanced portfolio" />
             </div>
             {horoscopeManager && <EmbeddedPanel title="Original horoscope attachment" description="Approved people can open it as a separate document.">{horoscopeManager}</EmbeddedPanel>}
           </FormSection>
@@ -508,8 +508,6 @@ function parseRange(value: string, options: BlueprintOption[]) {
 function updateRange(range: { minimum: string; maximum: string }, boundary: "minimum" | "maximum", nextValue: string, options: BlueprintOption[]) {
   let minimum = boundary === "minimum" ? nextValue : range.minimum;
   let maximum = boundary === "maximum" ? nextValue : range.maximum;
-  if (minimum && !maximum && boundary === "minimum") maximum = minimum;
-  if (maximum && !minimum && boundary === "maximum") minimum = maximum;
   const order = new Map(options.map((item, index) => [item.value, index]));
   if (minimum && maximum && (order.get(minimum) ?? 0) > (order.get(maximum) ?? 0)) {
     if (boundary === "minimum") maximum = minimum;

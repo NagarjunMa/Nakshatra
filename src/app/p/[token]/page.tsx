@@ -73,11 +73,35 @@ export default async function PublicBiodataPage({ params }: Props) {
     .then(() => {});
 
   const publicData = portfolio.data as PortfolioData;
-  const { data: approvedSnapshot } = await supabase
-    .from("approved_portfolio_snapshots")
-    .select("data, template_id, theme_color, sun_sign")
-    .eq("portfolio_id", portfolio.portfolio_id)
-    .maybeSingle();
+  const { data: authData } = await supabase.auth.getUser();
+  const viewerId = authData.user?.id;
+  const { data: ownedPortfolio } = viewerId
+    ? await supabase
+        .from("portfolios")
+        .select("id")
+        .eq("id", portfolio.portfolio_id)
+        .eq("user_id", viewerId)
+        .maybeSingle()
+    : { data: null };
+  const { data: grant } = viewerId && !ownedPortfolio
+    ? await supabase
+        .from("reveal_grants")
+        .select("id")
+        .eq("portfolio_id", portfolio.portfolio_id)
+        .eq("viewer_user_id", viewerId)
+        .eq("access_level", "full")
+        .is("revoked_at", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle()
+    : { data: null };
+  const { data: approvedSnapshot } = grant
+    ? await supabase
+        .from("approved_portfolio_snapshots")
+        .select("data, template_id, theme_color, sun_sign")
+        .eq("portfolio_id", portfolio.portfolio_id)
+        .maybeSingle()
+    : { data: null };
   const approvedAccess = Boolean(approvedSnapshot?.data);
   const data = (approvedSnapshot?.data || publicData) as PortfolioData;
   const themeColor = approvedSnapshot?.theme_color || portfolio.theme_color || "#6366f1";

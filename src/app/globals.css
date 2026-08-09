@@ -1432,6 +1432,11 @@ body {
   font-weight: 600;
 }
 
+[data-template="celestial-union"] .portfolio-value-tags span {
+  border-color: color-mix(in srgb, var(--portfolio-gold) 34%, var(--portfolio-border));
+  background: color-mix(in srgb, var(--portfolio-gold) 9%, transparent);
+}
+
 [data-template="celestial-union"] .portfolio-lifestyle-group .portfolio-detail-grid,
 [data-template="celestial-union"] .portfolio-timeline-details {
   margin-top: 0;

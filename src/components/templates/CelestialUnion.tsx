@@ -91,6 +91,7 @@ export default function CelestialUnion({
   const visibleRashi = astrologyVisible ? rashi : undefined;
   const hobbies = lifestyleVisible ? splitValues([data.lifestyle?.hobbies]) : [];
   const languages = lifestyleVisible ? splitValues([data.lifestyle?.languages]) : [];
+  const values = lifestyleVisible ? splitValues([data.lifestyle?.values_statement]) : [];
   const hasLifestyle = lifestyleVisible && (
     hobbies.length > 0 ||
     languages.length > 0 ||
@@ -123,12 +124,20 @@ export default function CelestialUnion({
     data.family?.maternal_origin,
     data.family?.ancestral_origin,
     data.family?.family_spread,
-  ]) || (hasApprovedAccess && hasDetailedFamily(data)));
+    data.personal.community,
+    data.family?.sibling_position,
+  ]) || data.family?.sibling_count !== undefined || (hasApprovedAccess && hasDetailedFamily(data)));
   const familyProtected = isRestricted(data, "family") || isRestricted(data, "family_details");
   const hasVisibleAstrology = Boolean(horoscopeAttachment) || (
     astrologyVisible && (
       Boolean(visibleRashi)
-      || hasAny([data.astrology?.nakshatra, data.astrology?.pada])
+      || hasAny([
+        data.astrology?.nakshatra,
+        data.astrology?.pada,
+        data.vitals?.gotra,
+        data.astrology?.maternal_gotra,
+        data.astrology?.manglik_status,
+      ])
       || (hasApprovedAccess && hasDetailedAstrology(data))
     )
   );
@@ -137,8 +146,6 @@ export default function CelestialUnion({
     data.preferences?.narrative,
     data.preferences?.age_range,
     data.preferences?.height_range,
-    data.preferences?.location_preference,
-    data.preferences?.location_preferences,
     data.preferences?.lifestyle_expectations,
     data.preferences?.caste_preference,
     data.preferences?.horoscope_preference,
@@ -146,24 +153,20 @@ export default function CelestialUnion({
   const hasApprovedPersonalDetails = hasApprovedAccess && hasAny([
     data.personal.marital_status,
     data.personal.citizenship,
-    data.personal.immigration_status,
-    data.personal.relocation_preference,
     data.personal.religion,
-    data.personal.community,
     data.personal.sub_community,
   ]);
   const hasStructuredFuturePlans = hasApprovedAccess && hasAny([
     data.preferences?.marriage_timeline,
     data.preferences?.children_preference,
     data.personal.relocation_preference,
-    data.preferences?.wedding_expectations,
-    data.preferences?.gift_expectations,
-    data.preferences?.parent_support,
+    data.preferences?.career_after_marriage,
+    data.preferences?.living_arrangement,
+    data.preferences?.family_responsibilities,
   ]);
   const sharedLifeStatement = futurePlansVisible
     ? clean(data.personal.shared_life_plans)
       || clean(data.personal.long_term_goals)
-      || clean(data.lifestyle?.values_statement)
     : undefined;
   const visibleCareerTitle = journeyVisible ? careerTitle : undefined;
   const heroLine = joinValues([
@@ -211,20 +214,24 @@ export default function CelestialUnion({
         <div className="portfolio-detail-grid">
           <DataPair label="Marital status" value={clean(data.personal.marital_status)} />
           <DataPair label="Citizenship" value={clean(data.personal.citizenship)} />
-          <DataPair label="Visa or residency" value={clean(data.personal.immigration_status)} />
-          <DataPair label="Relocation" value={clean(data.personal.relocation_preference)} />
           <DataPair label="Religion or outlook" value={clean(data.personal.religion)} />
-          <DataPair label="Community" value={joinValues([data.personal.community, data.personal.sub_community])} />
+          <DataPair label="Sub-community" value={clean(data.personal.sub_community)} />
         </div>
       ),
     });
   }
 
-  if (hasEducation || hasCareer) {
+  if (hasEducation || hasCareer || clean(data.personal.immigration_status)) {
     chapters.push({
       id: "journey",
       eyebrow: "Journey",
-      title: hasEducation && hasCareer ? "Education and career" : hasEducation ? "Education" : "Career",
+      title: hasEducation && hasCareer
+        ? "Education and career"
+        : hasEducation
+          ? "Education"
+          : hasCareer
+            ? "Career"
+            : "Work and residency",
       content: (
         <div className="portfolio-timeline">
           {hasEducation && (
@@ -245,12 +252,17 @@ export default function CelestialUnion({
                 meta={joinValues([data.career?.company, data.career?.location, data.career?.job_type])}
                 detail={clean(data.career?.summary) || clean(data.career?.career_goals)}
               />
-              {hasApprovedAccess && hasAny([data.career?.annual_income, data.career?.income_currency]) && (
-                <div className="portfolio-detail-grid portfolio-timeline-details">
-                  <DataPair label="Annual income range" value={joinValues([data.career?.annual_income, data.career?.income_currency])} />
-                </div>
-              )}
             </>
+          )}
+          {hasAny([
+            data.personal.immigration_status,
+            hasApprovedAccess ? data.career?.annual_income : undefined,
+            hasApprovedAccess ? data.career?.income_currency : undefined,
+          ]) && (
+            <div className="portfolio-detail-grid portfolio-timeline-details">
+              <DataPair label="Visa or residency" value={clean(data.personal.immigration_status)} />
+              {hasApprovedAccess && <DataPair label="Annual income range" value={joinValues([data.career?.annual_income, data.career?.income_currency])} />}
+            </div>
           )}
         </div>
       ),
@@ -293,10 +305,10 @@ export default function CelestialUnion({
               </div>
             </div>
           )}
-          {clean(data.lifestyle?.values_statement) && (
+          {values.length > 0 && (
             <div className="portfolio-lifestyle-group">
               <h3>Values</h3>
-              <p className="portfolio-section-copy">{data.lifestyle?.values_statement}</p>
+              <div className="portfolio-tags portfolio-value-tags">{values.map((value) => <span key={value}>{value}</span>)}</div>
             </div>
           )}
         </div>
@@ -317,16 +329,21 @@ export default function CelestialUnion({
             {hasApprovedAccess && <DataPair label="Mother or guardian" value={familyMemberValue(data.family?.mother)} />}
             <DataPair label="Paternal origin" value={clean(data.family?.paternal_origin) || clean(data.family?.ancestral_origin)} />
             <DataPair label="Maternal origin" value={clean(data.family?.maternal_origin)} />
+            <DataPair label="Community" value={clean(data.personal.community)} />
             <DataPair label="Family spread" value={clean(data.family?.family_spread)} />
             {hasApprovedAccess && <DataPair label="Parents live in" value={familyLocation(data.family)} />}
-            {hasApprovedAccess && <DataPair label="Siblings" value={data.family?.sibling_count !== undefined ? String(data.family.sibling_count) : undefined} />}
-            {hasApprovedAccess && <DataPair label="Position among siblings" value={clean(data.family?.sibling_position)} />}
+            <DataPair label="Number of siblings" value={data.family?.sibling_count !== undefined ? String(data.family.sibling_count) : undefined} />
+            <DataPair label="Position among siblings" value={clean(data.family?.sibling_position)} />
             {hasApprovedAccess && data.family?.siblings?.map((sibling, index) => (
               <DataPair key={`${sibling.name || "sibling"}-${index}`} label={`Sibling ${index + 1}`} value={familyMemberValue(sibling)} />
             ))}
           </div>
           {familyProtected && !hasApprovedAccess && (
-            <ProtectedInline>Names, occupations, and exact family locations remain protected.</ProtectedInline>
+            <ProtectedInline>
+              {privacyMode === "private"
+                ? "Additional family background, names, occupations, and exact locations remain protected."
+                : "Names, occupations, and exact family locations remain protected."}
+            </ProtectedInline>
           )}
         </>
       ),
@@ -355,12 +372,16 @@ export default function CelestialUnion({
             {hasApprovedAccess && <DataPair label="Time of birth" value={clean(data.astrology?.time_of_birth)} />}
             {hasApprovedAccess && <DataPair label="Place of birth" value={clean(data.personal.place_of_birth)} />}
             {hasApprovedAccess && <DataPair label="Lagnam" value={clean(data.astrology?.lagnam)} />}
-            {hasApprovedAccess && <DataPair label="Paternal gothram" value={clean(data.vitals?.gotra)} />}
-            {hasApprovedAccess && <DataPair label="Maternal gothram" value={clean(data.astrology?.maternal_gotra)} />}
-            {hasApprovedAccess && <DataPair label="Manglik status" value={clean(data.astrology?.manglik_status)} />}
+            <DataPair label="Paternal gothram" value={clean(data.vitals?.gotra)} />
+            <DataPair label="Maternal gothram" value={clean(data.astrology?.maternal_gotra)} />
+            <DataPair label="Manglik status" value={clean(data.astrology?.manglik_status)} />
           </div>
           {astrologyProtected && !hasApprovedAccess && (
-            <ProtectedInline>Exact birth time, place, chart, and gotra remain protected.</ProtectedInline>
+            <ProtectedInline>
+              {privacyMode === "private"
+                ? "Additional astrology and exact birth details remain protected."
+                : "Exact birth date, time, place, and chart remain protected."}
+            </ProtectedInline>
           )}
           {horoscopeAttachment && (
             <a className="portfolio-horoscope-attachment" href={horoscopeAttachment.href} target="_blank" rel="noreferrer">
@@ -401,7 +422,6 @@ export default function CelestialUnion({
             <div className="portfolio-detail-grid portfolio-preference-grid">
               <DataPair label="Preferred age" value={clean(data.preferences?.age_range)} />
               <DataPair label="Preferred height" value={clean(data.preferences?.height_range)} />
-              <DataPair label="Preferred locations" value={clean(data.preferences?.location_preferences) || clean(data.preferences?.location_preference)} />
               <DataPair label="Visa or residency" value={clean(data.preferences?.visa_preferences)} />
               <DataPair label="Community preference" value={preferenceCommunity(data.preferences)} />
               <DataPair label="Horoscope matching" value={clean(data.preferences?.horoscope_preference)} />
@@ -425,9 +445,9 @@ export default function CelestialUnion({
           <DataPair label="Marriage timeline" value={clean(data.preferences?.marriage_timeline)} />
           <DataPair label="Children" value={clean(data.preferences?.children_preference)} />
           <DataPair label="Relocation" value={clean(data.personal.relocation_preference)} />
-          <DataPair label="Wedding" value={clean(data.preferences?.wedding_expectations)} />
-          <DataPair label="Gifts and expenses" value={clean(data.preferences?.gift_expectations)} />
-          <DataPair label="Supporting parents" value={clean(data.preferences?.parent_support)} />
+          <DataPair label="Supporting both careers" value={clean(data.preferences?.career_after_marriage)} />
+          <DataPair label="Living arrangement" value={clean(data.preferences?.living_arrangement)} />
+          <DataPair label="Family responsibilities" value={clean(data.preferences?.family_responsibilities)} />
         </div>
       ),
     });
@@ -749,12 +769,10 @@ function hasDetailedFamily(data: PortfolioData) {
 
 function hasDetailedAstrology(data: PortfolioData) {
   return hasAny([
+    data.personal.dob,
     data.astrology?.time_of_birth,
     data.personal.place_of_birth,
     data.astrology?.lagnam,
-    data.vitals?.gotra,
-    data.astrology?.maternal_gotra,
-    data.astrology?.manglik_status,
   ]);
 }
 

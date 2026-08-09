@@ -146,16 +146,51 @@ describe("blueprint form", () => {
     expect(onUpdate).toHaveBeenCalledWith("lifestyle", expect.objectContaining({
       hobbies: "Reading, Photography",
     }));
+    fireEvent.focus(screen.getByLabelText("Values that matter to you"));
+    fireEvent.click(screen.getByRole("option", { name: "Kindness" }));
+    expect(onUpdate).toHaveBeenCalledWith("lifestyle", expect.objectContaining({
+      values_statement: "Kindness",
+    }));
 
     fireEvent.click(screen.getByRole("button", { name: /Preferences/ }));
     fireEvent.change(screen.getByLabelText("Minimum age"), { target: { value: "25" } });
     fireEvent.change(screen.getByLabelText("Maximum height"), { target: { value: `5'10"` } });
     expect(onUpdate).toHaveBeenCalledWith("preferences", expect.objectContaining({ age_range: "25–28" }));
     expect(onUpdate).toHaveBeenCalledWith("preferences", expect.objectContaining({ height_range: `5'0"–5'10"` }));
+    expect(screen.queryByLabelText("Preferred locations")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Specific communities")).not.toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Community preference"), { target: { value: "specific" } });
     expect(onUpdate).toHaveBeenCalledWith("preferences", expect.objectContaining({ caste_preference: "specific" }));
     rerender(<BlueprintForm data={{ ...completeBlueprint, preferences: { ...completeBlueprint.preferences, caste_preference: "specific" } }} onUpdate={onUpdate} />);
     expect(screen.getByLabelText("Specific communities")).toBeInTheDocument();
+  });
+
+  it("keeps an independently selected maximum height from changing the minimum", () => {
+    const onUpdate = vi.fn();
+    render(<BlueprintForm data={{ ...completeBlueprint, preferences: {} }} onUpdate={onUpdate} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Preferences/ }));
+    fireEvent.change(screen.getByLabelText("Maximum height"), { target: { value: `5'10"` } });
+
+    expect(onUpdate).toHaveBeenCalledWith("preferences", expect.objectContaining({
+      height_range: `–5'10"`,
+    }));
+  });
+
+  it("uses concise future-plan choices and retires wedding transaction questions", () => {
+    const onUpdate = vi.fn();
+    render(<BlueprintForm data={completeBlueprint} onUpdate={onUpdate} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Future plans/ }));
+    expect(screen.getByLabelText("How should careers be supported after marriage?")).toBeInTheDocument();
+    expect(screen.getByLabelText("What living arrangement feels comfortable?")).toBeInTheDocument();
+    expect(screen.getByLabelText("How should family responsibilities be handled?")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Wedding expenses and gift expectations")).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("What living arrangement feels comfortable?"), {
+      target: { value: "Near family, in a separate home" },
+    });
+    expect(onUpdate).toHaveBeenCalledWith("preferences", expect.objectContaining({
+      living_arrangement: "Near family, in a separate home",
+    }));
   });
 });

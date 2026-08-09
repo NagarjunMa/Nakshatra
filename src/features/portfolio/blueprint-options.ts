@@ -189,6 +189,14 @@ export const HOBBY_OPTIONS = [
   "Fashion & style", "Podcasting", "Blogging", "Pet care",
 ].map((value) => option(value));
 
+export const VALUE_OPTIONS = [
+  "Kindness", "Honesty", "Trust", "Mutual respect", "Empathy", "Compassion",
+  "Open communication", "Family", "Loyalty", "Responsibility", "Personal growth", "Spirituality",
+  "Patience", "Humility", "Generosity", "Curiosity", "Optimism",
+  "Independence", "Stability", "Adventure", "Community", "Health",
+  "Creativity", "Ambition", "Balance", "Resilience", "Fairness", "Tradition",
+].map((value) => option(value));
+
 export const LANGUAGE_OPTIONS = [
   "Assamese", "Arabic", "Bengali", "Bhojpuri", "English", "French", "German",
   "Gujarati", "Hindi", "Kannada", "Kashmiri", "Konkani", "Malayalam",
@@ -224,29 +232,61 @@ export const SIBLING_POSITION_OPTIONS = [
 ];
 
 export const MARRIAGE_TIMELINE_OPTIONS = [
-  option("", "Select a timeline"),
-  option("ASAP to within 1 year"),
-  option("Within the next 2 years"),
-  option("Within the next 3–5 years"),
-  option("Just seeing who's out there"),
-  option("I am not sure yet"),
+  option("", "Choose what feels closest"),
+  option("Ready within 6–12 months"),
+  option("Within 1–2 years"),
+  option("Open, without a fixed timeline"),
+  option("Still exploring"),
+  option("Discuss later"),
+  option("Prefer not to say"),
 ];
 
 export const CHILDREN_OPTIONS = [
-  option("", "Select your outlook"),
-  option("Wants kids"),
-  option("Doesn't want kids"),
-  option("Open to discussion"),
+  option("", "Choose what feels closest"),
+  option("Would like children"),
+  option("Would not like children"),
+  option("Open and undecided"),
+  option("Discuss later"),
   option("Prefer not to say"),
 ];
 
 export const RELOCATION_OPTIONS = [
-  option("", "Select relocation preference"),
-  option("Yes"),
-  option("No"),
-  option("Discuss and decide"),
+  option("", "Choose what feels closest"),
+  option("Open to relocating"),
+  option("Prefer to stay where I am"),
+  option("Depends on both careers and family"),
   option("Open to returning to India"),
-  option("Depends on the opportunity"),
+  option("Discuss later"),
+];
+
+export const CAREER_AFTER_MARRIAGE_OPTIONS = [
+  option("", "Choose what feels closest"),
+  option("Both careers should be supported equally"),
+  option("We can adapt as life changes"),
+  option("One partner may pause by mutual choice"),
+  option("Career is flexible for the right family plan"),
+  option("Discuss later"),
+  option("Prefer not to say"),
+];
+
+export const LIVING_ARRANGEMENT_OPTIONS = [
+  option("", "Choose what feels closest"),
+  option("Our own home"),
+  option("With parents or extended family"),
+  option("Near family, in a separate home"),
+  option("Flexible depending on circumstances"),
+  option("Discuss later"),
+  option("Prefer not to say"),
+];
+
+export const FAMILY_RESPONSIBILITY_OPTIONS = [
+  option("", "Choose what feels closest"),
+  option("Shared equally as a couple"),
+  option("Based on each person's strengths and availability"),
+  option("Family support is an important shared priority"),
+  option("Flexible as needs change"),
+  option("Discuss later"),
+  option("Prefer not to say"),
 ];
 
 export const HOROSCOPE_PREFERENCE_OPTIONS = [
