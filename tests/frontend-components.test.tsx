@@ -64,7 +64,6 @@ vi.mock("shaders/react", () => {
 import Home from "../src/app/page";
 import ErrorPage from "../src/app/error";
 import NotFound from "../src/app/not-found";
-import { NewsletterForm } from "../src/components/landing/NewsletterForm";
 import { RashiPalettePicker } from "../src/components/portfolio/RashiPalettePicker";
 import { getRashiPalettes } from "../src/features/portfolio/rashi-theme";
 
@@ -79,14 +78,6 @@ describe("landing and shared frontend components", () => {
     expect(screen.getByRole("heading", { name: /balanced mode/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /private mode/i })).toBeInTheDocument();
     expect(screen.getAllByText(/identity verified/i).length).toBeGreaterThan(0);
-  });
-
-  it("submits the newsletter form", async () => {
-    const user = userEvent.setup();
-    render(<NewsletterForm />);
-    await user.type(screen.getByRole("textbox"), "reader@example.com");
-    await user.click(screen.getByRole("button"));
-    expect(screen.getByText(/thank/i)).toBeInTheDocument();
   });
 
   it("handles empty, selected, disabled, and selectable rashi palettes", async () => {

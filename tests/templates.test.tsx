@@ -383,6 +383,34 @@ describe("adaptive portfolio media", () => {
     expect(screen.queryByRole("dialog", { name: "Gallery photo viewer" })).not.toBeInTheDocument();
   });
 
+  it("supports buttons, thumbnails, keyboard controls, and mobile swipes", () => {
+    const { container } = render(<AdaptivePortfolioGallery photos={photos} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Show next gallery photo" }));
+    expect(screen.getByText("2 of 2")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Show previous gallery photo" }));
+    expect(screen.getByText("1 of 2")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Show photo 2" }));
+    expect(screen.getByText("2 of 2")).toBeInTheDocument();
+
+    const feature = container.querySelector(".portfolio-gallery-feature");
+    expect(feature).toBeTruthy();
+    fireEvent.touchStart(feature!, { changedTouches: [{ clientX: 220 }] });
+    fireEvent.touchEnd(feature!, { changedTouches: [{ clientX: 100 }] });
+    expect(screen.getByText("1 of 2")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Open Portrait full screen" }));
+    const dialog = screen.getByRole("dialog", { name: "Gallery photo viewer" });
+    expect(dialog).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: "ArrowRight" });
+    expect(within(dialog).getByText("2 of 2")).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: "ArrowLeft" });
+    expect(within(dialog).getByText("1 of 2")).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(screen.queryByRole("dialog", { name: "Gallery photo viewer" })).not.toBeInTheDocument();
+  });
+
   it("labels protected gallery derivatives without hiding the photo slot", () => {
     const protectedPhoto: PortfolioPhoto = {
       ...photos[1],

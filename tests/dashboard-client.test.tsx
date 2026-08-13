@@ -27,7 +27,6 @@ vi.mock("@/lib/supabase/client", () => ({
     storage: { from: () => ({ createSignedUrl: mocks.createSignedUrl }) },
   }),
 }));
-vi.mock("@/components/landing/ShaderBackground", () => ({ ShaderBackground: () => <div data-testid="shader" /> }));
 vi.mock("@/features/portfolio/client/portfolio-dashboard.api", () => ({
   saveDashboardDraftRequest: mocks.save,
   publishPortfolioRequest: mocks.publish,
