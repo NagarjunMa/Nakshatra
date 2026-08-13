@@ -24,7 +24,7 @@ export function createPublicPortfolioSnapshot(data: PortfolioData): PortfolioDat
   const privacyMode = normalizePortfolioPrivacyMode(data.privacy_mode);
   const privateMode = privacyMode === "private";
   const originalStory = clean(data.personal.profile_summary);
-  const publicStory = privateMode && originalStory ? excerpt(originalStory, 280) : originalStory;
+  const publicStory = originalStory;
   const hasJourney = hasAny([
     data.education?.degree,
     data.education?.qualification_level,
@@ -140,9 +140,6 @@ export function createPublicPortfolioSnapshot(data: PortfolioData): PortfolioDat
     ? clean(data.personal.preferred_name) || firstName(data.personal.name)
     : clean(data.personal.name);
   const visibility = compactVisibility({
-    ...(privateMode && originalStory && publicStory !== originalStory
-      ? { personal_story: "restricted" as const }
-      : {}),
     ...(privateMode && hasJourney && !hasPrivateJourney ? { journey: "restricted" as const } : {}),
     ...(privateMode && hasLifestyle && !hasPrivateLifestyle ? { lifestyle: "restricted" as const } : {}),
     ...(hasPublicFamily || hasDetailedFamily
@@ -182,9 +179,12 @@ export function createPublicPortfolioSnapshot(data: PortfolioData): PortfolioDat
       gender: data.personal.gender,
       short_bio: clean(data.personal.short_bio),
       profile_summary: publicStory,
+      marital_status: data.personal.marital_status,
+      citizenship: data.personal.citizenship,
+      religion: data.personal.religion,
+      sub_community: data.personal.sub_community,
       ...(!privateMode
         ? {
-            marital_status: data.personal.marital_status,
             immigration_status: data.personal.immigration_status,
             community: data.personal.community,
             long_term_goals: data.personal.long_term_goals,
@@ -194,7 +194,7 @@ export function createPublicPortfolioSnapshot(data: PortfolioData): PortfolioDat
     },
     style: {
       appearance: data.style?.appearance || "light",
-      template_name: "Celestial Union",
+      template_name: "Nakshatra Portfolio",
     },
     career: {
       title: data.career?.title,
@@ -239,6 +239,12 @@ export function createPublicPortfolioSnapshot(data: PortfolioData): PortfolioDat
       languages: data.lifestyle?.languages,
       diet: data.lifestyle?.diet,
       values_statement: data.lifestyle?.values_statement,
+      ...(!privateMode
+        ? {
+            drinking: data.lifestyle?.drinking,
+            smoking: data.lifestyle?.smoking,
+          }
+        : {}),
     },
     preferences: {
       narrative: privateMode && privatePreferenceIntroduction

@@ -4,8 +4,7 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Mail, Sparkles } from "lucide-react";
-import { ShaderBackground } from "@/components/landing/ShaderBackground";
+import { ArrowLeft, ArrowRight, Mail } from "lucide-react";
 
 type Mode = "login" | "signup";
 
@@ -26,7 +25,7 @@ const COPY: Record<Mode, Copy> = {
     eyebrow: "Welcome back",
     title: "Sign in to",
     titleAccent: "Nakshatra.",
-    body: "Continue building your wedding biodata. Sign in with Google, or get a magic link in your inbox.",
+    body: "Continue to your wedding portfolio with Google or a secure email link.",
     googleAction: "Sign in with Google",
     primaryAction: "Email me a sign-in link",
     altPrompt: "New to Nakshatra?",
@@ -34,10 +33,10 @@ const COPY: Record<Mode, Copy> = {
     altHref: "/signup",
   },
   signup: {
-    eyebrow: "Begin",
-    title: "Create your",
-    titleAccent: "biodata.",
-    body: "Ten minutes to fill. Forever yours to update. Your rashi becomes the design.",
+    eyebrow: "Create account",
+    title: "Start your",
+    titleAccent: "wedding portfolio.",
+    body: "Save your work, continue later, and publish when your portfolio is ready.",
     googleAction: "Sign up with Google",
     primaryAction: "Email me a sign-in link",
     altPrompt: "Already have an account?",
@@ -76,6 +75,10 @@ export function AuthForm({ mode }: { mode: Mode }) {
 
   async function handleMagicLink(e: React.FormEvent) {
     e.preventDefault();
+    await sendMagicLink();
+  }
+
+  async function sendMagicLink() {
     setPendingAction("email");
     setError("");
     const { error } = await supabase.auth.signInWithOtp({
@@ -93,69 +96,45 @@ export function AuthForm({ mode }: { mode: Mode }) {
   }
 
   return (
-    <div className="auth-shell min-h-screen relative isolate overflow-hidden">
-      <ShaderBackground />
-      <div aria-hidden className="auth-atmosphere" />
-
-      <header className="relative z-10 flex items-center justify-between px-6 py-6 sm:px-10 sm:py-8">
+    <div className="account-shell">
+      <header className="account-header">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-white/80 transition-colors hover:text-white"
-          style={{ fontFamily: "var(--font-ranade)", fontWeight: 600 }}
+          className="account-back"
         >
           <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
-          <span className="text-[11px] tracking-[0.24em] uppercase">Nakshatra</span>
+          <span>NAKSHATRA</span>
         </Link>
-        <span
-          className="text-[10px] tracking-[0.28em] uppercase text-white/45"
-          style={{ fontFamily: "var(--font-ranade)" }}
-        >
-          Wedding biodata · India
-        </span>
+        <Link href="/" className="account-home">Back to home</Link>
       </header>
 
-      <main className="relative z-10 flex min-h-[calc(100vh-84px)] items-center justify-center px-5 pb-12 sm:px-6 sm:pb-20">
-        <section className="auth-glass-panel w-full max-w-[430px] p-6 sm:p-8">
+      <main className="account-main">
+        <section className="account-panel">
           {sent ? (
-            <SentState email={email} />
+            <SentState
+              email={email}
+              pending={pendingAction === "email"}
+              error={error}
+              onResend={() => void sendMagicLink()}
+              onChangeEmail={() => {
+                setSent(false);
+                setError("");
+              }}
+            />
           ) : (
             <>
-              <div className="mb-8 flex items-center gap-3">
-                <div className="auth-icon-orbit">
-                  <Sparkles className="w-4 h-4" strokeWidth={1.5} />
-                </div>
-                <div>
-                  <p
-                    className="text-[10px] tracking-[0.28em] uppercase text-[color:var(--landing-accent)]"
-                    style={{ fontFamily: "var(--font-ranade)", fontWeight: 600 }}
-                  >
-                    {copy.eyebrow}
-                  </p>
-                  <p
-                    className="mt-1 text-[12px] text-white/50"
-                    style={{ fontFamily: "var(--font-ranade)" }}
-                  >
-                    Your biodata, on one link.
-                  </p>
-                </div>
-              </div>
+              <p className="account-eyebrow">{copy.eyebrow}</p>
 
               <h1
-                className="text-[34px] sm:text-[40px] leading-[1.05] text-white mb-3"
-                style={{
-                  fontFamily: "var(--font-harmond)",
-                  fontWeight: 600,
-                  letterSpacing: "-0.02em",
-                }}
+                className="account-title"
               >
                 {copy.title}{" "}
-                <span className="italic text-[color:var(--landing-accent)]">
+                <span>
                   {copy.titleAccent}
                 </span>
               </h1>
               <p
-                className="text-[14px] sm:text-[15px] text-white/65 leading-[1.65] mb-8"
-                style={{ fontFamily: "var(--font-ranade)" }}
+                className="account-copy"
               >
                 {copy.body}
               </p>
@@ -170,22 +149,16 @@ export function AuthForm({ mode }: { mode: Mode }) {
                 <span>{pendingAction === "google" ? "Connecting..." : copy.googleAction}</span>
               </button>
 
-              <div className="flex items-center gap-4 my-6" aria-hidden>
-                <div className="flex-1 h-px bg-white/10" />
-                <span
-                  className="text-[10px] tracking-[0.28em] uppercase text-white/40"
-                  style={{ fontFamily: "var(--font-ranade)" }}
-                >
-                  or email
-                </span>
-                <div className="flex-1 h-px bg-white/10" />
+              <div className="account-divider" aria-hidden>
+                <span />
+                <small>or</small>
+                <span />
               </div>
 
-              <form onSubmit={handleMagicLink} className="flex flex-col gap-3">
+              <form onSubmit={handleMagicLink} className="account-form">
                 <label
                   htmlFor={`${mode}-email`}
-                  className="text-[10px] tracking-[0.28em] uppercase text-white/55"
-                  style={{ fontFamily: "var(--font-ranade)", fontWeight: 600 }}
+                  className="account-label"
                 >
                   Email address
                 </label>
@@ -219,22 +192,20 @@ export function AuthForm({ mode }: { mode: Mode }) {
 
               {(error || authFailed) && (
                 <p
-                  className="mt-4 text-[13px] text-red-200/90"
+                  className="account-error"
                   role="alert"
-                  style={{ fontFamily: "var(--font-ranade)" }}
                 >
                   {error || "We could not complete the sign-in. Please try again."}
                 </p>
               )}
 
               <p
-                className="mt-8 text-[13px] text-white/55 text-center"
-                style={{ fontFamily: "var(--font-ranade)" }}
+                className="account-alt"
               >
                 {copy.altPrompt}{" "}
                 <Link
                   href={copy.altHref}
-                  className="text-[color:var(--landing-accent)] hover:text-white transition-colors font-medium"
+                  className="account-link"
                 >
                   {copy.altCta}
                 </Link>
@@ -247,33 +218,41 @@ export function AuthForm({ mode }: { mode: Mode }) {
   );
 }
 
-function SentState({ email }: { email: string }) {
+function SentState({
+  email,
+  pending,
+  error,
+  onResend,
+  onChangeEmail,
+}: {
+  email: string;
+  pending: boolean;
+  error: string;
+  onResend: () => void;
+  onChangeEmail: () => void;
+}) {
   return (
-    <div className="text-center">
-      <div className="auth-icon-orbit mx-auto mb-6">
-        <Mail
-          className="w-5 h-5"
-          strokeWidth={1.5}
-        />
+    <div className="account-sent">
+      <div className="account-mail-icon">
+        <Mail aria-hidden="true" />
       </div>
-      <h1
-        className="text-[32px] text-white leading-[1.1] mb-3"
-        style={{
-          fontFamily: "var(--font-hkgrotesk)",
-          fontWeight: 700,
-          letterSpacing: "-0.02em",
-        }}
-      >
-        Check your inbox.
-      </h1>
-      <p
-        className="text-[15px] text-white/65 leading-[1.6]"
-        style={{ fontFamily: "var(--font-ranade)" }}
-      >
-        We sent a magic link to{" "}
-        <span className="text-white font-medium">{email}</span>. Open it on this
-        device to continue.
+      <h1>Check your inbox.</h1>
+      <p>
+        We sent a secure sign-in link to <strong>{email}</strong>. Open it on this
+        device to continue to Nakshatra.
       </p>
+      <p className="account-link-note">
+        The link can be used once and may expire. If it does, request a new one below.
+      </p>
+      {error && <p className="account-error" role="alert">{error}</p>}
+      <div className="account-sent-actions">
+        <button type="button" className="auth-primary-btn" onClick={onResend} disabled={pending}>
+          {pending ? "Sending another link..." : "Send another link"}
+        </button>
+        <button type="button" className="account-change-email" onClick={onChangeEmail}>
+          Use a different email
+        </button>
+      </div>
     </div>
   );
 }

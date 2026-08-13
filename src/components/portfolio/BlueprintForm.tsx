@@ -180,7 +180,7 @@ export function BlueprintForm({
     onUpdate("style", {
       ...(data.style || {}),
       appearance,
-      template_name: "Celestial Union",
+      template_name: "Nakshatra Portfolio",
       theme_color: CELESTIAL_THEME_COLORS[appearance].background,
     });
   }
@@ -218,7 +218,7 @@ export function BlueprintForm({
                     selected ? "bg-[#f4d98f]/12 text-white" : "text-white/55 hover:bg-white/5 hover:text-white"
                   }`}
                 >
-                  <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] ${selected ? "border-[#f4d98f] text-[#f4d98f]" : "border-white/15"}`}>
+                  <span className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs ${selected ? "border-[#f4d98f] text-[#f4d98f]" : "border-white/15"}`}>
                     {String(index + 1).padStart(2, "0")}
                   </span>
                   <span className="text-sm font-semibold">{section.label}</span>
@@ -230,6 +230,9 @@ export function BlueprintForm({
       </aside>
 
       <div id="blueprint-stage" className="min-w-0 scroll-mt-4">
+        <p className="mb-3 text-sm font-semibold text-white/60" aria-live="polite">
+          Step {activeIndex + 1} of {SECTIONS.length} · {SECTIONS[activeIndex].label}
+        </p>
         {activeSection === "foundation" && (
           <FormSection eyebrow="Start here" title="Portfolio essentials" description="Complete these first; everything else can wait.">
             <SelectInput label="Who is creating this profile?" value={data.personal.profile_for || ""} options={PROFILE_FOR_OPTIONS} onChange={(value) => updatePersonal({ profile_for: value })} requirement="Recommended" audience="Only you" />
@@ -370,8 +373,8 @@ export function BlueprintForm({
           <FormSection eyebrow="Before publishing" title="Privacy and sharing" description="Choose the appearance and how much the public introduction reveals.">
             <InfoCard title="Sensitive details stay protected" audience="Always protected" text="Exact birth details, contact, income, and the horoscope remain outside the public portfolio." />
             <div>
-              <p className="mb-1 text-sm font-medium text-white">Celestial Union appearance</p>
-              <p className="mb-3 text-xs text-white/45">Choose light or dark.</p>
+              <p className="mb-1 text-sm font-medium text-white">Portfolio appearance</p>
+              <p className="mb-3 text-xs text-white/45">This changes the published portfolio only. Nakshatra stays in the same light workspace.</p>
               <div className="grid gap-3 sm:grid-cols-2">
                 {(["light", "dark"] as const).map((appearance) => {
                   const selected = (data.style?.appearance || "light") === appearance;
@@ -386,7 +389,7 @@ export function BlueprintForm({
                 {PRIVACY_PRESETS.map((preset) => {
                   const selected = (data.privacy_mode || "balanced") === preset.value;
                   const Icon = preset.icon;
-                  return <button key={preset.value} type="button" aria-pressed={selected} onClick={() => onUpdate("privacy_mode", preset.value)} className={`rounded-xl border p-4 text-left transition ${selected ? "border-[#f4d98f] bg-[#f4d98f]/12" : "border-white/10 bg-white/[0.03] hover:border-white/30"}`}><span className="flex items-center gap-2 text-sm font-semibold text-white"><Icon className="h-4 w-4 text-[#f4d98f]" />{preset.label}{preset.value === "balanced" && <span className="rounded-full bg-[#f4d98f]/15 px-2 py-0.5 text-[9px] uppercase tracking-wide text-[#f4d98f]">Recommended</span>}</span><span className="mt-2 block text-xs leading-5 text-white/55">{preset.description}</span></button>;
+                  return <button key={preset.value} type="button" aria-pressed={selected} onClick={() => onUpdate("privacy_mode", preset.value)} className={`rounded-xl border p-4 text-left transition ${selected ? "border-[#f4d98f] bg-[#f4d98f]/12" : "border-white/10 bg-white/[0.03] hover:border-white/30"}`}><span className="flex items-center gap-2 text-sm font-semibold text-white"><Icon className="h-4 w-4 text-[#f4d98f]" />{preset.label}{preset.value === "balanced" && <span className="rounded-full bg-[#f4d98f]/15 px-2 py-0.5 text-xs uppercase tracking-wide text-[#f4d98f]">Recommended</span>}</span><span className="mt-2 block text-sm leading-6 text-white/55">{preset.description}</span></button>;
                 })}
               </div>
               <p className="mt-3 text-xs leading-5 text-white/50">Both modes support Approved Requests. Approved people sign in and receive revocable access to the full blueprint; direct contact always stays protected.</p>
@@ -414,7 +417,7 @@ export function BlueprintForm({
 
         <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/10 pt-5">
           <button type="button" disabled={activeIndex === 0} onClick={() => goTo(SECTIONS[activeIndex - 1].id)} className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-white/15 px-4 text-sm font-semibold text-white disabled:invisible"><ArrowLeft className="h-4 w-4" /> Previous</button>
-          <p className="hidden text-xs text-white/40 sm:block">Saved answers can be changed any time.</p>
+          <p className="hidden text-sm text-white/45 sm:block">Your answers can be changed any time.</p>
           {activeIndex < SECTIONS.length - 1 ? (
             <button type="button" onClick={() => goTo(SECTIONS[activeIndex + 1].id)} className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-[#f4d98f] px-4 text-sm font-semibold text-[#17151c]">{SECTIONS[activeIndex + 1].optional ? "Continue" : "Review privacy"}<ArrowRight className="h-4 w-4" /></button>
           ) : <span className="inline-flex items-center gap-2 text-sm font-semibold text-[#f4d98f]"><Check className="h-4 w-4" /> Ready to save</span>}
@@ -429,7 +432,7 @@ function FormSection({ eyebrow, title, description, children }: { eyebrow: strin
 }
 
 function InfoCard({ title, text, audience }: { title: string; text: string; audience: string }) {
-  return <div className="rounded-xl border border-[#78a9a1]/20 bg-[#78a9a1]/8 p-4"><div className="flex items-start gap-3"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#9fc9c1]" /><div><p className="text-sm font-semibold text-white">{title}</p><p className="mt-1 text-xs leading-5 text-white/55">{text}</p><span className="mt-2 inline-flex rounded-full border border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white/45">{audience}</span></div></div></div>;
+  return <div className="rounded-xl border border-[#78a9a1]/20 bg-[#78a9a1]/8 p-4"><div className="flex items-start gap-3"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#9fc9c1]" /><div><p className="text-sm font-semibold text-white">{title}</p><p className="mt-1 text-sm leading-6 text-white/55">{text}</p><span className="mt-2 inline-flex rounded-full border border-white/10 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-white/45">{audience}</span></div></div></div>;
 }
 
 function EmbeddedPanel({ title, description, children }: { title: string; description: string; children: ReactNode }) {
@@ -439,22 +442,31 @@ function EmbeddedPanel({ title, description, children }: { title: string; descri
 function FieldLabel({ label, hint, required, requirement, audience }: { label: string; hint?: string; required?: boolean; requirement?: string; audience?: string }) {
   const visibleRequirement = requirement && requirement !== "Optional" ? requirement : undefined;
   const visibleAudience = audience && audience !== "Portfolio" ? audience : undefined;
-  return <span><span className="flex flex-wrap items-center gap-1.5"><span>{label}{required && <span className="ml-1 text-[#f4d98f]">*</span>}</span>{visibleRequirement && <span className="rounded-full border border-white/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white/40">{visibleRequirement}</span>}{visibleAudience && <span className="rounded-full bg-[#78a9a1]/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[#9fc9c1]">{visibleAudience}</span>}</span>{hint && <span className="mt-1 block text-xs font-normal leading-5 text-white/45">{hint}</span>}</span>;
+  return <span><span className="flex flex-wrap items-center gap-1.5"><span>{label}{required && <span className="ml-1 text-[#f4d98f]">*</span>}</span>{visibleRequirement && <span className="rounded-full border border-white/10 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-white/45">{visibleRequirement}</span>}{visibleAudience && <span className="rounded-full bg-[#78a9a1]/10 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-[#9fc9c1]">{visibleAudience}</span>}</span>{hint && <span className="mt-1 block text-sm font-normal leading-6 text-white/50">{hint}</span>}</span>;
 }
 
 function TextInput({ label, value, onChange, type = "text", placeholder, hint, required, min, max, requirement, audience, list }: { label: string; value: string; onChange: (value: string) => void; type?: HTMLInputTypeAttribute; placeholder?: string; hint?: string; required?: boolean; min?: string; max?: string; requirement?: string; audience?: string; list?: string }) {
-  return <label className="flex flex-col gap-1.5 text-sm font-medium text-white/85"><FieldLabel label={label} hint={hint} required={required} requirement={requirement} audience={audience} /><input aria-label={label} type={type} value={value} placeholder={placeholder} required={required} min={min} max={max} list={list} onChange={(event) => onChange(event.target.value)} className="h-11 rounded-lg border border-white/10 bg-white/[0.06] px-3 text-sm font-normal text-white outline-none placeholder:text-white/30 focus:border-[#f4d98f]/60 focus:ring-2 focus:ring-[#f4d98f]/20" /></label>;
+  const [touched, setTouched] = useState(false);
+  const errorId = useId();
+  const invalid = Boolean(required && touched && !value.trim());
+  return <label className="flex flex-col gap-1.5 text-sm font-medium text-white/85"><FieldLabel label={label} hint={hint} required={required} requirement={requirement} audience={audience} /><input aria-label={label} aria-invalid={invalid} aria-describedby={invalid ? errorId : undefined} type={type} value={value} placeholder={placeholder} required={required} min={min} max={max} list={list} onBlur={() => setTouched(true)} onChange={(event) => onChange(event.target.value)} className={`h-11 rounded-lg border bg-white/[0.06] px-3 text-base font-normal text-white outline-none placeholder:text-white/30 focus:ring-2 ${invalid ? "border-red-300/70 focus:border-red-300 focus:ring-red-300/15" : "border-white/10 focus:border-[#f4d98f]/60 focus:ring-[#f4d98f]/20"}`} />{invalid && <span id={errorId} role="alert" className="text-sm font-normal text-red-200">This field is required.</span>}</label>;
 }
 
 function TextArea({ label, value, onChange, hint, required, maxLength, requirement, audience }: { label: string; value: string; onChange: (value: string) => void; hint?: string; required?: boolean; maxLength?: number; requirement?: string; audience?: string }) {
-  return <label className="flex flex-col gap-1.5 text-sm font-medium text-white/85"><FieldLabel label={label} hint={hint} required={required} requirement={requirement} audience={audience} /><textarea aria-label={label} value={value} required={required} maxLength={maxLength} onChange={(event) => onChange(event.target.value)} rows={4} className="resize-y rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2 text-sm font-normal leading-6 text-white outline-none placeholder:text-white/30 focus:border-[#f4d98f]/60 focus:ring-2 focus:ring-[#f4d98f]/20" />{maxLength && <span className="self-end text-[10px] font-normal text-white/35">{value.length}/{maxLength}</span>}</label>;
+  const [touched, setTouched] = useState(false);
+  const errorId = useId();
+  const invalid = Boolean(required && touched && !value.trim());
+  return <label className="flex flex-col gap-1.5 text-sm font-medium text-white/85"><FieldLabel label={label} hint={hint} required={required} requirement={requirement} audience={audience} /><textarea aria-label={label} aria-invalid={invalid} aria-describedby={invalid ? errorId : undefined} value={value} required={required} maxLength={maxLength} onBlur={() => setTouched(true)} onChange={(event) => onChange(event.target.value)} rows={4} className={`resize-y rounded-lg border bg-white/[0.06] px-3 py-2 text-base font-normal leading-6 text-white outline-none placeholder:text-white/30 focus:ring-2 ${invalid ? "border-red-300/70 focus:border-red-300 focus:ring-red-300/15" : "border-white/10 focus:border-[#f4d98f]/60 focus:ring-[#f4d98f]/20"}`} />{invalid && <span id={errorId} role="alert" className="text-sm font-normal text-red-200">This field is required.</span>}{maxLength && <span className="self-end text-xs font-normal text-white/40">{value.length}/{maxLength}</span>}</label>;
 }
 
 function SelectInput({ label, value, options, onChange, required, requirement, audience, hint }: { label: string; value: string; options: BlueprintOption[]; onChange: (value: string) => void; required?: boolean; requirement?: string; audience?: string; hint?: string }) {
+  const [touched, setTouched] = useState(false);
+  const errorId = useId();
+  const invalid = Boolean(required && touched && !value.trim());
   const resolvedOptions = value && !options.some((item) => item.value === value)
     ? [{ value, label: `${value} (current)` }, ...options]
     : options;
-  return <label className="flex flex-col gap-1.5 text-sm font-medium text-white/85"><FieldLabel label={label} hint={hint} required={required} requirement={requirement} audience={audience} /><select aria-label={label} value={value} required={required} onChange={(event) => onChange(event.target.value)} className="h-11 rounded-lg border border-white/10 bg-[#20212e] px-3 text-sm font-normal text-white outline-none focus:border-[#f4d98f]/60 focus:ring-2 focus:ring-[#f4d98f]/20">{resolvedOptions.map((item) => <option key={`${item.value}-${item.label}`} value={item.value}>{item.label}</option>)}</select></label>;
+  return <label className="flex flex-col gap-1.5 text-sm font-medium text-white/85"><FieldLabel label={label} hint={hint} required={required} requirement={requirement} audience={audience} /><select aria-label={label} aria-invalid={invalid} aria-describedby={invalid ? errorId : undefined} value={value} required={required} onBlur={() => setTouched(true)} onChange={(event) => onChange(event.target.value)} className={`h-11 rounded-lg border bg-[#20212e] px-3 text-base font-normal text-white outline-none focus:ring-2 ${invalid ? "border-red-300/70 focus:border-red-300 focus:ring-red-300/15" : "border-white/10 focus:border-[#f4d98f]/60 focus:ring-[#f4d98f]/20"}`}>{resolvedOptions.map((item) => <option key={`${item.value}-${item.label}`} value={item.value}>{item.label}</option>)}</select>{invalid && <span id={errorId} role="alert" className="text-sm font-normal text-red-200">Choose an option to continue.</span>}</label>;
 }
 
 function RangeSelectInput({ label, value, options, onChange, audience }: { label: string; value: string; options: BlueprintOption[]; onChange: (value: string) => void; audience?: string }) {

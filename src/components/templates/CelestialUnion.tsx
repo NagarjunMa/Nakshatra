@@ -23,6 +23,7 @@ interface CelestialUnionProps {
   accessMode?: "owner" | "approved" | "public";
   photos?: PortfolioPhoto[];
   horoscopeAttachment?: PortfolioHoroscopeAttachment;
+  interestAction?: ReactNode;
 }
 
 interface ChapterDefinition {
@@ -53,6 +54,7 @@ export default function CelestialUnion({
   accessMode = "owner",
   photos = [],
   horoscopeAttachment,
+  interestAction,
 }: CelestialUnionProps) {
   const appearance = getCelestialAppearance(data.style);
   const theme = CELESTIAL_THEME_COLORS[appearance];
@@ -90,16 +92,20 @@ export default function CelestialUnion({
   const futurePlansVisible = hasApprovedAccess || !isRestricted(data, "future_plans");
   const visibleRashi = astrologyVisible ? rashi : undefined;
   const hobbies = lifestyleVisible ? splitValues([data.lifestyle?.hobbies]) : [];
-  const languages = lifestyleVisible ? splitValues([data.lifestyle?.languages]) : [];
-  const values = lifestyleVisible ? splitValues([data.lifestyle?.values_statement]) : [];
+  const languages = splitValues([data.lifestyle?.languages]);
+  const values = splitValues([data.lifestyle?.values_statement]);
+  const hasPersonalDetails = hasAny([
+    data.personal.marital_status,
+    data.personal.citizenship,
+    data.personal.religion,
+    data.personal.sub_community,
+  ]);
   const hasLifestyle = lifestyleVisible && (
     hobbies.length > 0 ||
-    languages.length > 0 ||
     hasAny([
       data.lifestyle?.diet,
       data.lifestyle?.drinking,
       data.lifestyle?.smoking,
-      data.lifestyle?.values_statement,
     ])
   );
   const hasEducation = journeyVisible && hasAny([
@@ -150,12 +156,6 @@ export default function CelestialUnion({
     data.preferences?.caste_preference,
     data.preferences?.horoscope_preference,
   ]);
-  const hasApprovedPersonalDetails = hasApprovedAccess && hasAny([
-    data.personal.marital_status,
-    data.personal.citizenship,
-    data.personal.religion,
-    data.personal.sub_community,
-  ]);
   const hasStructuredFuturePlans = hasApprovedAccess && hasAny([
     data.preferences?.marriage_timeline,
     data.preferences?.children_preference,
@@ -189,33 +189,33 @@ export default function CelestialUnion({
   const showProtectedSection = protectedItems.length > 0 || (ownerPreview && contactEntries.length > 0);
   const chapters: ChapterDefinition[] = [];
 
-  if (profileSummary) {
+  if (profileSummary || hasPersonalDetails || languages.length > 0 || values.length > 0) {
     chapters.push({
       id: "personal-story",
       eyebrow: `Meet ${firstName(data.personal.name)}`,
       title: "Personal story",
       content: (
-        <>
-          <p className="portfolio-long-copy">{profileSummary}</p>
-          {isRestricted(data, "personal_story") && (
-            <ProtectedInline>More of this personal story can be shared after approval.</ProtectedInline>
+        <div className="portfolio-personal-content">
+          {profileSummary && <p className="portfolio-long-copy">{profileSummary}</p>}
+          {hasPersonalDetails && (
+            <div className="portfolio-detail-grid portfolio-personal-details">
+              <DataPair label="Marital status" value={clean(data.personal.marital_status)} />
+              <DataPair label="Citizenship" value={clean(data.personal.citizenship)} />
+              <DataPair label="Religion or outlook" value={clean(data.personal.religion)} />
+              <DataPair label="Sub-community" value={clean(data.personal.sub_community)} />
+              <DataPair label="Languages spoken" value={languages.join(", ")} />
+            </div>
           )}
-        </>
-      ),
-    });
-  }
-
-  if (hasApprovedPersonalDetails) {
-    chapters.push({
-      id: "personal-details",
-      eyebrow: "Approved blueprint",
-      title: "Personal details",
-      content: (
-        <div className="portfolio-detail-grid">
-          <DataPair label="Marital status" value={clean(data.personal.marital_status)} />
-          <DataPair label="Citizenship" value={clean(data.personal.citizenship)} />
-          <DataPair label="Religion or outlook" value={clean(data.personal.religion)} />
-          <DataPair label="Sub-community" value={clean(data.personal.sub_community)} />
+          {!hasPersonalDetails && (languages.length > 0 || values.length > 0) && (
+            <div className="portfolio-detail-grid portfolio-personal-details">
+              <DataPair label="Languages spoken" value={languages.join(", ")} />
+            </div>
+          )}
+          {values.length > 0 && (
+            <div className="portfolio-personal-values">
+              <DataPair label="Values" value={values.join(", ")} />
+            </div>
+          )}
         </div>
       ),
     });
@@ -280,35 +280,20 @@ export default function CelestialUnion({
     chapters.push({
       id: "lifestyle",
       eyebrow: "Everyday life",
-      title: "Interests and lifestyle",
+      title: "Lifestyle and interests",
       content: (
         <div className="portfolio-lifestyle-groups">
+          {hasAny([data.lifestyle?.diet, data.lifestyle?.drinking, data.lifestyle?.smoking]) && (
+            <div className="portfolio-detail-grid portfolio-lifestyle-details">
+              <DataPair label="Diet" value={clean(data.lifestyle?.diet)} />
+              {(hasApprovedAccess || privacyMode === "balanced") && <DataPair label="Drinking" value={clean(data.lifestyle?.drinking)} />}
+              {(hasApprovedAccess || privacyMode === "balanced") && <DataPair label="Smoking" value={clean(data.lifestyle?.smoking)} />}
+            </div>
+          )}
           {hobbies.length > 0 && (
             <div className="portfolio-lifestyle-group">
               <h3>Interests</h3>
               <div className="portfolio-tags">{hobbies.map((value) => <span key={value}>{value}</span>)}</div>
-            </div>
-          )}
-          {languages.length > 0 && (
-            <div className="portfolio-lifestyle-group">
-              <h3>Languages spoken</h3>
-              <div className="portfolio-tags portfolio-tags-muted">{languages.map((value) => <span key={value}>{value}</span>)}</div>
-            </div>
-          )}
-          {hasAny([data.lifestyle?.diet, data.lifestyle?.drinking, data.lifestyle?.smoking]) && (
-            <div className="portfolio-lifestyle-group">
-              <h3>Lifestyle</h3>
-              <div className="portfolio-detail-grid">
-                <DataPair label="Diet" value={clean(data.lifestyle?.diet)} />
-                {hasApprovedAccess && <DataPair label="Drinking" value={clean(data.lifestyle?.drinking)} />}
-                {hasApprovedAccess && <DataPair label="Smoking" value={clean(data.lifestyle?.smoking)} />}
-              </div>
-            </div>
-          )}
-          {values.length > 0 && (
-            <div className="portfolio-lifestyle-group">
-              <h3>Values</h3>
-              <div className="portfolio-tags portfolio-value-tags">{values.map((value) => <span key={value}>{value}</span>)}</div>
             </div>
           )}
         </div>
@@ -467,7 +452,7 @@ export default function CelestialUnion({
     number: index + 1,
   }));
   const pairedChapterIds = new Set(["journey", "lifestyle", "family", "astrology"]);
-  const leadingChapterIds = new Set(["personal-story", "personal-details"]);
+  const leadingChapterIds = new Set(["personal-story"]);
   const leadingChapters = numberedChapters.filter((chapter) => leadingChapterIds.has(chapter.id));
   const pairedChapterRows = [
     ["journey", "lifestyle"],
@@ -512,7 +497,7 @@ export default function CelestialUnion({
             </nav>
           )}
           <span className="portfolio-mode-label">
-            <ShieldCheck aria-hidden="true" /> {ownerPreview ? "Owner view" : approvedViewer ? "Full Approved Request view" : `${privacyLabel(privacyMode)} view`}
+            <ShieldCheck aria-hidden="true" /> {ownerPreview ? "Owner view" : approvedViewer ? "Full Approved View" : `${privacyLabel(privacyMode)} view`}
           </span>
         </div>
       </header>
@@ -533,9 +518,6 @@ export default function CelestialUnion({
             </div>
             {heroLine && <p className="portfolio-hero-line">{heroLine}</p>}
             {shortBio && <p className="portfolio-hero-summary">{shortBio}</p>}
-            <p className="portfolio-contact-assurance">
-              <LockKeyhole aria-hidden="true" /> Direct contact is protected in every mode.
-            </p>
           </div>
         </section>
 
@@ -594,10 +576,8 @@ export default function CelestialUnion({
                   </div>
                 ))}
               </div>
-            ) : !ownerPreview ? (
-              <span className="portfolio-button portfolio-button-primary" aria-disabled="true">
-                Interest requests coming soon
-              </span>
+            ) : !ownerPreview && interestAction ? (
+              interestAction
             ) : null}
           </section>
         )}
@@ -605,7 +585,7 @@ export default function CelestialUnion({
 
       <footer className="portfolio-footer">
         <div><Sparkles aria-hidden="true" /><strong>Nakshatra</strong></div>
-        <p>Privacy-first matrimonial portfolios, presented with care.</p>
+        <p>One clear wedding portfolio.</p>
       </footer>
     </div>
   );
@@ -668,7 +648,6 @@ function protectedSectionLabels({
 }) {
   if (hasApprovedAccess) return [];
   const labels: string[] = [];
-  if (isRestricted(data, "personal_story")) labels.push("Complete personal story");
   if (isRestricted(data, "journey")) labels.push("Education and career details");
   if (isRestricted(data, "lifestyle")) labels.push("Lifestyle details");
   if (isRestricted(data, "family") || isRestricted(data, "family_details")) labels.push("Family details");

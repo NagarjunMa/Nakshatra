@@ -87,7 +87,7 @@ describe("blueprint form", () => {
     expect(onUpdate).toHaveBeenCalledWith("style", expect.objectContaining({
       appearance: "dark",
       theme_color: "#121a21",
-      template_name: "Celestial Union",
+      template_name: "Nakshatra Portfolio",
     }));
     expect(onUpdate).toHaveBeenCalledWith("privacy_mode", "balanced");
   });
@@ -101,6 +101,10 @@ describe("blueprint form", () => {
     render(<BlueprintForm data={minimal} onUpdate={onUpdate} />);
 
     expect(screen.getByText(/1 of 6 essentials complete/)).toBeInTheDocument();
+    expect(screen.getByText("Step 1 of 9 · Foundation")).toBeInTheDocument();
+    fireEvent.blur(screen.getByLabelText("Full name"));
+    expect(screen.getByText("This field is required.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Full name")).toHaveAttribute("aria-invalid", "true");
     fireEvent.click(screen.getByRole("button", { name: /Privacy & contact/ }));
     expect(screen.getByRole("button", { name: /Private/ })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "Light" })).toHaveAttribute("aria-pressed", "true");

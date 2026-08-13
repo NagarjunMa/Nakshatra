@@ -77,7 +77,6 @@ import RootLayout from "../src/app/layout";
 import DashboardLoading from "../src/app/dashboard/loading";
 import EditLoading from "../src/app/edit/loading";
 import PreviewLoading from "../src/app/preview/loading";
-import { FormPreview } from "../src/components/landing/FormPreview";
 
 const data: PortfolioData = {
   personal: { name: "Aditi Rao", dob: "1996-08-12", gender: "female" },
@@ -137,7 +136,7 @@ describe("authenticated server pages", () => {
     mocks.outcomes.portfolio_media = { data: [] };
     mocks.outcomes.portfolio_horoscopes = { data: null };
     render(await ApprovedPreviewPage());
-    expect(screen.getByText(/Full Approved Request view · Owner preview/)).toBeInTheDocument();
+    expect(screen.getByText(/Full Approved View · Owner preview/)).toBeInTheDocument();
     expect(screen.getByTestId("template")).toHaveTextContent("Aditi Rao:approved");
     expect(mocks.photoUrls).toHaveBeenCalledWith(expect.objectContaining({ viewer: "approved" }));
   });
@@ -225,7 +224,7 @@ describe("public portfolio pages", () => {
 });
 
 describe("static app surfaces", () => {
-  it("renders auth pages, layout, loading states, and the form preview", () => {
+  it("renders auth pages, layout, and loading states", () => {
     const layout = RootLayout({ children: <main>child</main> });
     expect(layout.props.lang).toBe("en");
     const { rerender } = render(<LoginPage />);
@@ -238,7 +237,5 @@ describe("static app surfaces", () => {
     expect(document.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0);
     rerender(<PreviewLoading />);
     expect(document.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0);
-    rerender(<FormPreview />);
-    expect(screen.getByText("Education + Career")).toBeInTheDocument();
   });
 });

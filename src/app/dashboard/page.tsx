@@ -66,6 +66,15 @@ export default async function DashboardPage({
     daysLeft = Math.max(0, Math.ceil((expiresAt - now) / 86_400_000));
   }
 
+  const { data: interestRows } = portfolio
+    ? await supabase
+        .from("interest_requests")
+        .select("id, viewer_name, viewer_phone, viewer_email, viewer_family_context, message, status, requester_user_id, metadata, created_at")
+        .eq("portfolio_id", portfolio.id)
+        .order("created_at", { ascending: false })
+        .limit(12)
+    : { data: [] };
+
   return (
     <DashboardClient
       portfolio={portfolio}
@@ -77,6 +86,7 @@ export default async function DashboardPage({
       media={media}
       horoscope={horoscope}
       initialEditorOpen={query.edit === "1"}
+      interests={interestRows ?? []}
     />
   );
 }

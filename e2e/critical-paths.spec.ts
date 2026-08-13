@@ -2,14 +2,13 @@ import { expect, test } from "@playwright/test";
 
 test("landing page presents the product and reaches account creation", async ({ page }) => {
   await page.goto("/");
-  await expect(page).toHaveTitle(/Nakshatra.*Wedding Biodata/i);
-  await expect(page.getByRole("heading", { name: "Nakshatra", exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: /wedding biodata.*designs itself/i })).toBeVisible();
-  const primaryCta = page.locator("[data-hero-cta]");
+  await expect(page).toHaveTitle("Nakshatra - One Digital Wedding Portfolio");
+  await expect(page.getByRole("heading", { name: /your wedding story, clearly together/i })).toBeVisible();
+  const primaryCta = page.locator(".site-hero-v2").getByRole("link", { name: /create your portfolio/i });
   await expect(primaryCta).toHaveAttribute("href", "/signup");
   await page.goto("/signup");
   await expect(page).toHaveURL(/\/signup$/);
-  await expect(page.getByRole("heading", { name: /create your biodata/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /start your wedding portfolio/i })).toBeVisible();
 });
 
 test("sign-in form preserves a safe post-auth destination", async ({ page }) => {
@@ -30,8 +29,9 @@ test("unauthenticated owners are redirected away from protected screens", async 
 test("landing page remains usable with reduced motion", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
-  await expect(page.locator("[data-hero-cta]")).toBeVisible();
-  await expect(page.getByRole("link", { name: /see a sample/i })).toBeVisible();
+  const hero = page.locator(".site-hero-v2");
+  await expect(hero.getByRole("link", { name: /create your portfolio/i })).toBeVisible();
+  await expect(hero.getByRole("link", { name: /see what families receive/i })).toBeVisible();
 });
 
 test("public portfolio renders sanitized data and adaptive media", async ({ page }) => {
@@ -52,18 +52,21 @@ test("public portfolio renders sanitized data and adaptive media", async ({ page
     return Number((bounds.width / bounds.height).toFixed(2));
   });
   expect(heroFrame).toBe(0.75);
-  await expect(page.locator('.portfolio-gallery-item[data-orientation="landscape"]')).toHaveCount(2);
-  await expect(page.getByAltText("Public landscape", { exact: true })).toBeVisible();
-  await expect(page.getByAltText("Protected portrait")).toBeVisible();
-  await expect(page.getByAltText("Protected portrait").locator("..")).toHaveAttribute("data-presentation", "blurred");
-  await expect(page.locator(".portfolio-gallery-item")).toHaveCount(7);
-  const galleryColumns = await page.locator(".portfolio-gallery-grid").evaluate(
-    (element) => getComputedStyle(element).columnCount
+  const gallery = page.locator(".portfolio-gallery");
+  await expect(gallery.locator('.portfolio-gallery-feature img[data-orientation="landscape"]')).toBeVisible();
+  await expect(gallery.getByAltText("Public landscape", { exact: true })).toBeVisible();
+  await expect(gallery.locator(".portfolio-gallery-thumbnail")).toHaveCount(7);
+  await expect(gallery.locator('.portfolio-gallery-thumbnail:not([data-presentation="blurred"])')).toHaveCount(6);
+  await expect(gallery.locator('.portfolio-gallery-thumbnail[data-presentation="blurred"]')).toHaveCount(1);
+  await expect(gallery.getByRole("button", { name: "Photo 7, shared after approval" })).toBeVisible();
+  await expect(gallery.getByAltText("Protected portrait")).toHaveCount(0);
+  const galleryColumns = await gallery.locator(".portfolio-gallery-viewer").evaluate(
+    (element) => getComputedStyle(element).gridTemplateColumns.split(" ").length
   );
-  expect(galleryColumns).toBe((page.viewportSize()?.width || 0) <= 720 ? "1" : "2");
-  const galleryBeforePreferences = await page.locator(".portfolio-gallery").evaluate((gallery) => {
+  expect(galleryColumns).toBe((page.viewportSize()?.width || 0) <= 720 ? 1 : 2);
+  const galleryBeforePreferences = await gallery.evaluate((galleryElement) => {
     const preferences = document.querySelector("#preferences");
-    return Boolean(preferences && (gallery.compareDocumentPosition(preferences) & Node.DOCUMENT_POSITION_FOLLOWING));
+    return Boolean(preferences && (galleryElement.compareDocumentPosition(preferences) & Node.DOCUMENT_POSITION_FOLLOWING));
   });
   expect(galleryBeforePreferences).toBe(true);
   await expect(page.locator("#preferences")).toBeVisible();
@@ -150,7 +153,9 @@ test("Private portfolio keeps one gallery photo clear and safely blurs the rest"
   await page.goto("/p/e2e-private-token");
 
   await expect(page.locator('.portfolio-root[data-privacy-mode="private"]')).toBeVisible();
-  await expect(page.locator(".portfolio-gallery-item")).toHaveCount(7);
-  await expect(page.locator('.portfolio-gallery-item:not([data-presentation="blurred"])')).toHaveCount(1);
-  await expect(page.locator('.portfolio-gallery-item[data-presentation="blurred"]')).toHaveCount(6);
+  const gallery = page.locator(".portfolio-gallery");
+  await expect(gallery.locator(".portfolio-gallery-thumbnail")).toHaveCount(7);
+  await expect(gallery.locator('.portfolio-gallery-thumbnail:not([data-presentation="blurred"])')).toHaveCount(1);
+  await expect(gallery.locator('.portfolio-gallery-thumbnail[data-presentation="blurred"]')).toHaveCount(6);
+  await expect(gallery.locator('.portfolio-gallery-feature[data-presentation="clear"]')).toBeVisible();
 });

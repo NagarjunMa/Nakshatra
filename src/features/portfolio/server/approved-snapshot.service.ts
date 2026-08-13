@@ -93,7 +93,7 @@ export function createApprovedPortfolioSnapshot(data: PortfolioData): PortfolioD
     preferences: approvedPreferences,
     style: {
       appearance: data.style?.appearance || "light",
-      template_name: "Celestial Union",
+      template_name: "Nakshatra Portfolio",
     },
   });
 }

@@ -21,6 +21,10 @@ const complete: PortfolioData = {
     gender: "female",
     current_location: "Boston",
     immigration_status: "H-1B",
+    marital_status: "Never Married",
+    citizenship: "India",
+    religion: "Hindu",
+    sub_community: "Smartha",
     community: "Brahmin",
     short_bio: "Warm, grounded, and curious about the world.",
     profile_summary: "A thoughtful introduction",
@@ -50,7 +54,7 @@ const complete: PortfolioData = {
     sibling_count: 1,
     sibling_position: "Oldest",
   },
-  lifestyle: { hobbies: "Reading, Travel", languages: "English, Hindi", diet: "Vegetarian", values_statement: "Kindness, Mutual respect" },
+  lifestyle: { hobbies: "Reading, Travel", languages: "English, Hindi", diet: "Vegetarian", drinking: "Never", smoking: "Never", values_statement: "Kindness, Mutual respect" },
   preferences: {
     narrative: "A kind and curious partnership",
     marriage_timeline: "Within 1–2 years",
@@ -121,12 +125,34 @@ describe("celestial union portfolio", () => {
     expect(screen.getByRole("heading", { name: "Education and career" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Family" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "More can be shared after approval." })).toBeInTheDocument();
-    expect(screen.getByText(/Engineer.*Boston.*29/)).toBeInTheDocument();
+    expect(screen.getByText(/Engineer.*Boston.*\d+/)).toBeInTheDocument();
     expect(within(screen.getByLabelText("At a glance")).getByText(/Kanya \(Virgo\)/)).toBeInTheDocument();
     expect(screen.getByText("Warm, grounded, and curious about the world.")).toBeInTheDocument();
-    expect(screen.getAllByText("English")).toHaveLength(1);
-    expect(screen.getByText("Kindness")).toBeInTheDocument();
-    expect(screen.getByText("Mutual respect")).toBeInTheDocument();
+    expect(screen.getByText("English, Hindi")).toBeInTheDocument();
+    expect(screen.getByText("Kindness, Mutual respect")).toBeInTheDocument();
+    expect(screen.getByText("Never Married")).toBeInTheDocument();
+    expect(screen.getByText("India")).toBeInTheDocument();
+    expect(screen.getByText("Hindu")).toBeInTheDocument();
+    expect(screen.getByText("Smartha")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Personal details" })).not.toBeInTheDocument();
+    const personalStory = document.getElementById("personal-story");
+    const lifestyle = document.getElementById("lifestyle");
+    expect(personalStory).toBeTruthy();
+    expect(lifestyle).toBeTruthy();
+    expect(within(personalStory!).getByText("Languages spoken")).toBeInTheDocument();
+    expect(within(personalStory!).getByText("Values")).toBeInTheDocument();
+    expect(within(personalStory!).getByText("Values").closest(".portfolio-personal-values")).toBeTruthy();
+    expect(within(lifestyle!).queryByText("Languages spoken")).not.toBeInTheDocument();
+    expect(within(lifestyle!).queryByText("Values")).not.toBeInTheDocument();
+    expect(within(lifestyle!).getByText("Diet")).toBeInTheDocument();
+    expect(within(lifestyle!).getByText("Drinking")).toBeInTheDocument();
+    expect(within(lifestyle!).getByText("Smoking")).toBeInTheDocument();
+    expect(within(lifestyle!).queryByRole("heading", { name: "Lifestyle" })).not.toBeInTheDocument();
+    const lifestyleDetails = lifestyle!.querySelector(".portfolio-lifestyle-details");
+    const interests = within(lifestyle!).getByRole("heading", { name: "Interests" });
+    expect(lifestyleDetails).toBeTruthy();
+    expect(lifestyleDetails!.compareDocumentPosition(interests) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(document.querySelector(".portfolio-contact-assurance")).not.toBeInTheDocument();
     expect(screen.getByText("H-1B")).toBeInTheDocument();
     expect(screen.getByText("Brahmin")).toBeInTheDocument();
     expect(screen.getByText("1")).toBeInTheDocument();
@@ -168,7 +194,13 @@ describe("celestial union portfolio", () => {
     const { rerender } = render(
       <CelestialUnion data={createApprovedPortfolioSnapshot(complete)} themeColor="" sunSign="kanya" accessMode="approved" horoscopeAttachment={attachment} />
     );
-    expect(screen.getByText("Full Approved Request view")).toBeInTheDocument();
+    expect(screen.getByText("Full Approved View")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Personal details" })).not.toBeInTheDocument();
+    const approvedPersonalStory = document.getElementById("personal-story");
+    expect(approvedPersonalStory).toBeTruthy();
+    expect(within(approvedPersonalStory!).getByText("Never Married")).toBeInTheDocument();
+    expect(within(approvedPersonalStory!).getByText("Languages spoken")).toBeInTheDocument();
+    expect(within(approvedPersonalStory!).getByText("Values")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /original horoscope/i })).toHaveAttribute("href", "/p/token/horoscope");
     expect(screen.getByText("PDF document · Kannada · 3 pages")).toBeInTheDocument();
     expect(screen.getByText("Ramesh Rao · Architect")).toBeInTheDocument();
@@ -287,10 +319,22 @@ describe("celestial union portfolio", () => {
     expect(screen.getByText("Uttara Phalguni")).toBeInTheDocument();
     expect(screen.queryByText("Kashyap")).not.toBeInTheDocument();
     expect(screen.queryByText("Bharadwaj")).not.toBeInTheDocument();
+    expect(screen.getByText("Never Married")).toBeInTheDocument();
+    expect(screen.getByText("India")).toBeInTheDocument();
+    expect(screen.getByText("Hindu")).toBeInTheDocument();
+    expect(screen.getByText("Smartha")).toBeInTheDocument();
+    expect(screen.queryByText("Drinking")).not.toBeInTheDocument();
+    expect(screen.queryByText("Smoking")).not.toBeInTheDocument();
 
     rerender(<CelestialUnion data={balancedData} themeColor="" sunSign="kanya" accessMode="public" photos={photos} />);
     expect(container.querySelector('[data-privacy-mode="balanced"]')).toBeTruthy();
+    expect(screen.getByText("Never Married")).toBeInTheDocument();
+    expect(screen.getByText("India")).toBeInTheDocument();
+    expect(screen.getByText("Hindu")).toBeInTheDocument();
+    expect(screen.getByText("Smartha")).toBeInTheDocument();
     expect(screen.getByText("Northeastern · 2020")).toBeInTheDocument();
+    expect(screen.getByText("Drinking")).toBeInTheDocument();
+    expect(screen.getByText("Smoking")).toBeInTheDocument();
     expect(within(screen.getByLabelText("At a glance")).getByText(/Kanya \(Virgo\)/)).toBeInTheDocument();
     expect(screen.queryByText("A close-knit family with roots in Karnataka.")).not.toBeInTheDocument();
 
@@ -312,10 +356,10 @@ describe("adaptive portfolio media", () => {
       <CelestialUnion data={complete} themeColor="#17151c" sunSign="kanya" photos={photos} />
     );
     expect(container.querySelector('.portfolio-hero-media[data-orientation="portrait"]')).toBeTruthy();
-    expect(container.querySelector('.portfolio-gallery-item[data-orientation="landscape"]')).toBeTruthy();
+    expect(container.querySelector('.portfolio-gallery-feature img[data-orientation="landscape"]')).toBeTruthy();
   });
 
-  it("navigates, wraps, and advances the adaptive hero slideshow component", () => {
+  it("navigates and wraps the adaptive hero slideshow without autoplay", () => {
     vi.useFakeTimers();
     render(<AdaptivePortfolioHero photos={photos} />);
     fireEvent.click(screen.getByRole("button", { name: /next photo/i }));
@@ -323,12 +367,48 @@ describe("adaptive portfolio media", () => {
     fireEvent.click(screen.getByRole("button", { name: /previous photo/i }));
     expect(screen.getByText("1 / 2")).toBeInTheDocument();
     act(() => vi.advanceTimersByTime(6000));
-    expect(screen.getByText("2 / 2")).toBeInTheDocument();
+    expect(screen.getByText("1 / 2")).toBeInTheDocument();
   });
 
   it("omits an empty gallery", () => {
     const { container } = render(<AdaptivePortfolioGallery photos={[]} />);
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it("opens and closes a clear gallery photo in the full-screen viewer", () => {
+    render(<AdaptivePortfolioGallery photos={[photos[1]]} />);
+    fireEvent.click(screen.getByRole("button", { name: "Open Landscape full screen" }));
+    expect(screen.getByRole("dialog", { name: "Gallery photo viewer" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Close full-screen photo" }));
+    expect(screen.queryByRole("dialog", { name: "Gallery photo viewer" })).not.toBeInTheDocument();
+  });
+
+  it("supports buttons, thumbnails, keyboard controls, and mobile swipes", () => {
+    const { container } = render(<AdaptivePortfolioGallery photos={photos} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Show next gallery photo" }));
+    expect(screen.getByText("2 of 2")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Show previous gallery photo" }));
+    expect(screen.getByText("1 of 2")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Show photo 2" }));
+    expect(screen.getByText("2 of 2")).toBeInTheDocument();
+
+    const feature = container.querySelector(".portfolio-gallery-feature");
+    expect(feature).toBeTruthy();
+    fireEvent.touchStart(feature!, { changedTouches: [{ clientX: 220 }] });
+    fireEvent.touchEnd(feature!, { changedTouches: [{ clientX: 100 }] });
+    expect(screen.getByText("1 of 2")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Open Portrait full screen" }));
+    const dialog = screen.getByRole("dialog", { name: "Gallery photo viewer" });
+    expect(dialog).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: "ArrowRight" });
+    expect(within(dialog).getByText("2 of 2")).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: "ArrowLeft" });
+    expect(within(dialog).getByText("1 of 2")).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(screen.queryByRole("dialog", { name: "Gallery photo viewer" })).not.toBeInTheDocument();
   });
 
   it("labels protected gallery derivatives without hiding the photo slot", () => {
@@ -338,11 +418,40 @@ describe("adaptive portfolio media", () => {
     };
     const { container } = render(<AdaptivePortfolioGallery photos={[protectedPhoto]} />);
 
-    expect(screen.getByAltText(protectedPhoto.alt)).toBeInTheDocument();
+    expect(screen.queryByAltText(protectedPhoto.alt)).not.toBeInTheDocument();
     expect(screen.getByText("Photo shared after approval")).toBeInTheDocument();
     expect(
-      container.querySelector('.portfolio-gallery-item[data-presentation="blurred"]')
+      container.querySelector('.portfolio-gallery-feature[data-presentation="blurred"]')
     ).toBeTruthy();
+  });
+
+  it("shows visible-to-all photos before protected photos while preserving each group order", () => {
+    const protectedFirst: PortfolioPhoto = {
+      ...photos[1],
+      id: "protected-first",
+      alt: "Protected first",
+      presentation: "blurred",
+    };
+    const visibleSecond: PortfolioPhoto = {
+      ...photos[1],
+      id: "visible-second",
+      alt: "Visible second",
+      presentation: "clear",
+    };
+    const visibleThird: PortfolioPhoto = {
+      ...photos[1],
+      id: "visible-third",
+      alt: "Visible third",
+      presentation: "clear",
+    };
+
+    render(<AdaptivePortfolioGallery photos={[protectedFirst, visibleSecond, visibleThird]} />);
+
+    expect(screen.getByAltText("Visible second")).toBeInTheDocument();
+    expect(screen.getByText("1 of 3")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Show photo 1" })).toHaveAttribute("aria-current", "true");
+    expect(screen.getByRole("button", { name: "Show photo 2" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Photo 3, shared after approval" })).toBeInTheDocument();
   });
 
   it("detects orientation for legacy photos without stored dimensions", () => {
@@ -382,6 +491,6 @@ describe("adaptive portfolio media", () => {
     fireEvent.load(galleryImage);
 
     expect(container.querySelector('.portfolio-hero-media[data-orientation="portrait"]')).toBeTruthy();
-    expect(container.querySelector('.portfolio-gallery-item[data-orientation="landscape"]')).toBeTruthy();
+    expect(container.querySelector('.portfolio-gallery-feature img[data-orientation="landscape"]')).toBeTruthy();
   });
 });

@@ -27,7 +27,6 @@ vi.mock("@/lib/supabase/client", () => ({
     storage: { from: () => ({ createSignedUrl: mocks.createSignedUrl }) },
   }),
 }));
-vi.mock("@/components/landing/ShaderBackground", () => ({ ShaderBackground: () => <div data-testid="shader" /> }));
 vi.mock("@/features/portfolio/client/portfolio-dashboard.api", () => ({
   saveDashboardDraftRequest: mocks.save,
   publishPortfolioRequest: mocks.publish,
@@ -91,8 +90,8 @@ describe("dashboard client", () => {
 
   it("opens a new private draft, edits it, saves it, and publishes it", async () => {
     renderDashboard({ portfolio: null, shareUrl: null, media: [] });
-    expect(screen.getByText(/biodata is waiting/i)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /start your biodata/i }));
+    expect(screen.getByText(/one clear introduction/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /start with the basics/i }));
     fireEvent.change(screen.getByLabelText("Full name"), { target: { value: "New Name" } });
     fireEvent.change(
       screen.getByLabelText("Short introduction"),
@@ -118,14 +117,14 @@ describe("dashboard client", () => {
     fireEvent.click(screen.getByRole("button", { name: /portfolio details/i }));
     fireEvent.click(screen.getByRole("button", { name: /save draft/i }));
     await waitFor(() => expect(mocks.save).toHaveBeenCalled());
-    fireEvent.click(screen.getByRole("button", { name: /generate portfolio/i }));
+    fireEvent.click(screen.getByRole("button", { name: /review and publish/i }));
     await waitFor(() => expect(mocks.publish).toHaveBeenCalled());
     expect(mocks.refresh).toHaveBeenCalledTimes(2);
   }, 10_000);
 
   it("operates published-link controls and signs out", async () => {
     renderDashboard();
-    expect(screen.getByRole("link", { name: /full approved request view/i })).toHaveAttribute("href", "/approved-preview");
+    expect(screen.getByRole("link", { name: /full approved view/i })).toHaveAttribute("href", "/approved-preview");
     await waitFor(() => expect(mocks.createSignedUrl).toHaveBeenCalledWith("one-thumb.webp", 3600));
     fireEvent.click(screen.getByRole("button", { name: "Copy" }));
     await waitFor(() => expect(navigator.clipboard.writeText).toHaveBeenCalled());
@@ -142,16 +141,46 @@ describe("dashboard client", () => {
     expect(mocks.push).toHaveBeenCalledWith("/");
   });
 
+  it("lets an owner approve a signed-in interest from the dashboard", async () => {
+    const decisionFetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ ok: true, status: "approved" }), { status: 200 })
+    );
+    vi.stubGlobal("fetch", decisionFetch);
+    renderDashboard({
+      interests: [{
+        id: "interest-1",
+        viewer_name: "Rohan Mehta",
+        viewer_phone: "+1 555 010 2200",
+        viewer_email: "rohan@example.com",
+        viewer_family_context: "Our family is based in Toronto and Bengaluru.",
+        message: "We would be glad to introduce our families.",
+        status: "new",
+        requester_user_id: "viewer-1",
+        metadata: { profile_for: "self", location: "Toronto, Canada" },
+        created_at: "2026-08-09T12:00:00.000Z",
+      }],
+    });
+
+    fireEvent.click(screen.getByText("Rohan Mehta"));
+    fireEvent.click(screen.getByRole("button", { name: "Approve Full View" }));
+
+    await waitFor(() => expect(decisionFetch).toHaveBeenCalledWith(
+      "/api/interest/interest-1",
+      expect.objectContaining({ method: "PATCH" })
+    ));
+    expect(await screen.findByText("0 waiting")).toBeInTheDocument();
+  });
+
   it("updates, deletes, and uploads owner photos", async () => {
     const { container } = renderDashboard();
-    fireEvent.click(screen.getByRole("button", { name: /edit biodata/i }));
+    fireEvent.click(screen.getByRole("button", { name: /edit portfolio/i }));
     expect(screen.getByText("1/8")).toBeInTheDocument();
     expect(screen.getByRole("article", { name: "Profile photo" })).toHaveClass("w-36", "sm:w-40");
     expect((await screen.findByAltText("Portrait")).parentElement).toHaveClass("h-36", "sm:h-40");
     expect(screen.getByRole("button", { name: /add photos/i })).toHaveClass("h-36", "w-36", "sm:h-40", "sm:w-40");
     fireEvent.change(screen.getByLabelText("Photo visibility"), { target: { value: "hidden" } });
     await waitFor(() => expect(mocks.update).toHaveBeenCalledWith("media-1", { visibility: "hidden" }));
-    fireEvent.click(screen.getByRole("button", { name: /make hero/i }));
+    fireEvent.click(screen.getByRole("button", { name: /make primary photo/i }));
     await waitFor(() => expect(mocks.update).toHaveBeenCalledWith("media-1", { media_type: "hero" }));
     fireEvent.click(screen.getByRole("button", { name: /delete photo/i }));
     await waitFor(() => expect(mocks.remove).toHaveBeenCalledWith("media-1"));
@@ -164,7 +193,7 @@ describe("dashboard client", () => {
     mocks.save.mockResolvedValueOnce({ ok: false, error: { code: "AUTH_SESSION_MISSING", message: "Sign in" } });
     mocks.publish.mockResolvedValueOnce({ ok: false, error: { code: "PUBLISH_FAILED", message: "Complete required fields" } });
     renderDashboard();
-    fireEvent.click(screen.getByRole("button", { name: /edit biodata/i }));
+    fireEvent.click(screen.getByRole("button", { name: /edit portfolio/i }));
     fireEvent.click(screen.getByRole("button", { name: /save draft/i }));
     await waitFor(() => expect(mocks.push).toHaveBeenCalledWith("/login?error=session_expired"));
     fireEvent.click(screen.getByRole("button", { name: /update published/i }));

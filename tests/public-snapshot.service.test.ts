@@ -17,7 +17,10 @@ const portfolio: PortfolioData = {
     short_bio: "Warm, grounded, and curious about the world.",
     profile_summary: "A thoughtful public introduction.",
     long_term_goals: "Build a generous and grounded life.",
+    marital_status: "Never Married",
+    citizenship: "India",
     religion: "Hindu",
+    sub_community: "Smartha",
   },
   vitals: { height: "5 ft 5 in", complexion: "Fair", gotra: "Kashyap" },
   astrology: {
@@ -54,6 +57,14 @@ const portfolio: PortfolioData = {
     marriage_timeline: "Within the next 2 years",
     visa_preferences: "H1B, Citizen",
   },
+  lifestyle: {
+    hobbies: "Reading, Travel",
+    languages: "English, Hindi",
+    diet: "Vegetarian",
+    drinking: "Never",
+    smoking: "Never",
+    values_statement: "Kindness, Mutual respect",
+  },
 };
 
 describe("public portfolio snapshot", () => {
@@ -73,7 +84,19 @@ describe("public portfolio snapshot", () => {
     expect(snapshot.personal).not.toHaveProperty("place_of_birth");
     expect(snapshot.personal.immigration_status).toBe("H-1B");
     expect(snapshot.personal.community).toBe("Brahmin");
-    expect(snapshot.personal).not.toHaveProperty("religion");
+    expect(snapshot.personal).toMatchObject({
+      marital_status: "Never Married",
+      citizenship: "India",
+      religion: "Hindu",
+      sub_community: "Smartha",
+    });
+    expect(snapshot.lifestyle).toMatchObject({
+      languages: "English, Hindi",
+      values_statement: "Kindness, Mutual respect",
+      diet: "Vegetarian",
+      drinking: "Never",
+      smoking: "Never",
+    });
     expect(snapshot.family).toEqual({ sibling_count: 1, sibling_position: "Oldest" });
     expect(snapshot).not.toHaveProperty("contact");
     expect(snapshot.vitals).not.toHaveProperty("complexion");
@@ -123,6 +146,19 @@ describe("public portfolio snapshot", () => {
     expect(privateSnapshot.personal).not.toHaveProperty("long_term_goals");
     expect(privateSnapshot.personal).not.toHaveProperty("immigration_status");
     expect(privateSnapshot.personal).not.toHaveProperty("community");
+    expect(privateSnapshot.personal).toMatchObject({
+      marital_status: "Never Married",
+      citizenship: "India",
+      religion: "Hindu",
+      sub_community: "Smartha",
+    });
+    expect(privateSnapshot.lifestyle).toMatchObject({
+      languages: "English, Hindi",
+      values_statement: "Kindness, Mutual respect",
+      diet: "Vegetarian",
+    });
+    expect(privateSnapshot.lifestyle).not.toHaveProperty("drinking");
+    expect(privateSnapshot.lifestyle).not.toHaveProperty("smoking");
     expect(privateSnapshot.vitals).not.toHaveProperty("gotra");
 
     const balancedSnapshot = createPublicPortfolioSnapshot({
@@ -137,6 +173,19 @@ describe("public portfolio snapshot", () => {
         sibling_count: 1,
         sibling_position: "Oldest",
       },
+    });
+    expect(balancedSnapshot.personal).toMatchObject({
+      marital_status: "Never Married",
+      citizenship: "India",
+      religion: "Hindu",
+      sub_community: "Smartha",
+    });
+    expect(balancedSnapshot.lifestyle).toMatchObject({
+      languages: "English, Hindi",
+      values_statement: "Kindness, Mutual respect",
+      diet: "Vegetarian",
+      drinking: "Never",
+      smoking: "Never",
     });
     expect(balancedSnapshot.family).toEqual({
       public_summary: "A close-knit family with roots in Karnataka.",
@@ -175,7 +224,6 @@ describe("public portfolio snapshot", () => {
       lifestyle: { hobbies: "Reading" },
     });
     expect(privateSnapshot.visibility).toMatchObject({
-      personal_story: "restricted",
       future_plans: "restricted",
       family: "restricted",
       family_details: "restricted",
@@ -192,7 +240,7 @@ describe("public portfolio snapshot", () => {
       rashi: "kanya",
       nakshatra: "Uttara Phalguni",
     });
-    expect(privateSnapshot.personal.profile_summary).toMatch(/…$/);
+    expect(privateSnapshot.personal.profile_summary).toBe("A ".repeat(200).trim());
     expect(privateSnapshot.personal.short_bio).toBe("Warm, grounded, and curious about the world.");
   });
 });

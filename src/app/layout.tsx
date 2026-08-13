@@ -39,15 +39,11 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
   ),
   title: {
-    default: "Nakshatra — Wedding Biodata",
+    default: "Nakshatra — Digital Wedding Portfolio",
     template: "%s | Nakshatra",
   },
   description:
-    "Create a beautiful, shareable wedding biodata with one link that always stays updated.",
-  robots: {
-    index: false,
-    follow: false,
-  },
+    "Create one clear wedding portfolio for your profile, photos, family details, and horoscope.",
 };
 
 export default function RootLayout({
