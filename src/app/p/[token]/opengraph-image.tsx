@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 import { createClient } from "@/lib/supabase/server";
 import type { PortfolioData, PortfolioMedia } from "@/types/portfolio";
 
-export const alt = "Nakshatra wedding biodata";
+export const alt = "Nakshatra wedding portfolio";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -64,6 +64,7 @@ export default async function OpenGraphImage({
       >
         {heroUrl ? (
           // Image comes from the portfolio's explicitly public hero media only.
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             alt=""
             src={heroUrl}

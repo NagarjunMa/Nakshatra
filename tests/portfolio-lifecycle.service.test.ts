@@ -99,7 +99,7 @@ describe("portfolio lifecycle services", () => {
         template_id: 1,
         theme_color: "#f7f5ef",
         draft_data: expect.objectContaining({
-          style: expect.objectContaining({ template_name: "Celestial Union" }),
+          style: expect.objectContaining({ template_name: "Nakshatra Portfolio" }),
         }),
       })
     );
@@ -126,7 +126,7 @@ describe("portfolio lifecycle services", () => {
     expect(publishHoroscope).toHaveBeenCalledWith(expect.objectContaining({ portfolioId: "portfolio-id" }));
   });
 
-  it("normalizes legacy template labels to Celestial Union", async () => {
+  it("normalizes legacy template labels to the Nakshatra portfolio", async () => {
     await publishPortfolio({
       supabase: {} as never,
       userId: "user-id",
@@ -148,7 +148,7 @@ describe("portfolio lifecycle services", () => {
     expect(repository.publishPortfolio.mock.calls[0][1]).toMatchObject({
       template_id: 1,
       draft_data: expect.objectContaining({
-        style: expect.objectContaining({ template_name: "Celestial Union" }),
+        style: expect.objectContaining({ template_name: "Nakshatra Portfolio" }),
       }),
     });
   });

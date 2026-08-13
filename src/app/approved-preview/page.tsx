@@ -14,7 +14,7 @@ import type {
 } from "@/types/portfolio";
 
 export const metadata: Metadata = {
-  title: "Full Approved Request Preview",
+  title: "Full Approved View Preview",
   robots: { index: false, follow: false },
 };
 
@@ -60,9 +60,9 @@ export default async function ApprovedPreviewPage() {
     <div className="flex flex-1 flex-col">
       <div data-preview-bar="" className="border-b border-border bg-muted px-4 py-2">
         <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-2">
-          <span className="text-sm font-medium">Full Approved Request view · Owner preview</span>
+          <span className="text-sm font-medium">Full Approved View · Owner preview</span>
           <div className="flex gap-2">
-            <Link href="/dashboard?edit=1" className="rounded-lg border border-border px-3 py-1 text-sm transition-colors hover:bg-background">Edit biodata</Link>
+            <Link href="/dashboard?edit=1" className="rounded-lg border border-border px-3 py-1 text-sm transition-colors hover:bg-background">Edit portfolio</Link>
             <Link href="/dashboard" className="rounded-lg border border-border px-3 py-1 text-sm transition-colors hover:bg-background">Dashboard</Link>
           </div>
         </div>

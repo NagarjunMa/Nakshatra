@@ -137,7 +137,7 @@ describe("authenticated server pages", () => {
     mocks.outcomes.portfolio_media = { data: [] };
     mocks.outcomes.portfolio_horoscopes = { data: null };
     render(await ApprovedPreviewPage());
-    expect(screen.getByText(/Full Approved Request view · Owner preview/)).toBeInTheDocument();
+    expect(screen.getByText(/Full Approved View · Owner preview/)).toBeInTheDocument();
     expect(screen.getByTestId("template")).toHaveTextContent("Aditi Rao:approved");
     expect(mocks.photoUrls).toHaveBeenCalledWith(expect.objectContaining({ viewer: "approved" }));
   });

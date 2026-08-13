@@ -43,6 +43,9 @@ describe("AuthForm", () => {
     await userEvent.click(screen.getByRole("button", { name: /sign-in link/i }));
     expect(signInWithOtp).toHaveBeenCalledWith(expect.objectContaining({ email: "new@example.com" }));
     expect(screen.getByRole("heading", { name: /check your inbox/i })).toBeInTheDocument();
+    expect(screen.getByText(/may expire/i)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /send another link/i }));
+    expect(signInWithOtp).toHaveBeenCalledTimes(2);
   });
 
   it.each([

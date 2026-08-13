@@ -6,7 +6,7 @@ export class PortfolioPublishReadinessError extends Error {}
 
 /**
  * Validates the minimum content required for a public portfolio generation.
- * Input: validated portfolio data and whether the owner has an explicitly public hero photo.
+ * Input: validated portfolio data and whether the owner has an explicitly public primary photo.
  * Output: resolves when ready or throws a user-safe readiness error.
  */
 export function requirePortfolioPublishReadiness({
@@ -42,7 +42,7 @@ export function requirePortfolioPublishReadiness({
 
   if (!hasPublicHeroPhoto) {
     throw new PortfolioPublishReadinessError(
-      "Choose one profile photo as your public hero photo before generating your portfolio"
+      "Choose one profile photo as your public primary photo before publishing your portfolio"
     );
   }
 }

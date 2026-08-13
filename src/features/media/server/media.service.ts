@@ -180,7 +180,7 @@ export async function updatePortfolioPhoto({
   }
   if (changes.media_type === "hero") {
     const { error: demoteError } = await repository.demoteOtherHeroPhotos(media.portfolio_id, media.id);
-    if (demoteError) throw new PortfolioMediaError("Could not update the hero photo", 500);
+    if (demoteError) throw new PortfolioMediaError("Could not update the primary photo", 500);
   }
   return media;
 }

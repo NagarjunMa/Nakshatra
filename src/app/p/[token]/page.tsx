@@ -6,6 +6,7 @@ import type { PortfolioData } from "@/types/portfolio";
 import type { PortfolioHoroscope, PortfolioHoroscopeAttachment, PortfolioMedia } from "@/types/portfolio";
 import { createPortfolioPhotoUrls } from "@/features/media/server/photo-url.service";
 import { horoscopeFormatLabel } from "@/features/horoscope/server/horoscope.contract";
+import { InterestRequestModal } from "@/components/portfolio/InterestRequestModal";
 
 interface Props {
   params: Promise<{ token: string }>;
@@ -46,7 +47,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         url: `/p/${token}/opengraph-image`,
         width: 1200,
         height: 630,
-        alt: `${name}'s wedding biodata`,
+        alt: `${name}'s wedding portfolio`,
       }],
     },
   };
@@ -145,6 +146,7 @@ export default async function PublicBiodataPage({ params }: Props) {
       accessMode={approvedAccess ? "approved" : "public"}
       photos={photos}
       horoscopeAttachment={horoscopeAttachment}
+      interestAction={!approvedAccess ? <InterestRequestModal portfolioToken={token} profileName={data.personal.name || "the profile owner"} /> : undefined}
     />
   );
 }

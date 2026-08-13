@@ -54,7 +54,7 @@ export async function publishPortfolio({
   const { data: publicHeroPhoto, error: publicHeroPhotoError } =
     await repository.findPublicHeroPhoto(portfolio.id);
   if (publicHeroPhotoError) {
-    throw new PortfolioPublishError("We could not verify your public hero photo. Please try again.", "PUBLIC_HERO_CHECK_FAILED");
+    throw new PortfolioPublishError("We could not verify your public primary photo. Please try again.", "PUBLIC_HERO_CHECK_FAILED");
   }
 
   try {

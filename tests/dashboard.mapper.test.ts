@@ -40,7 +40,7 @@ describe("dashboard portfolio mapping", () => {
   it("preserves the dashboard draft while deriving relational details", () => {
     expect(mapPortfolioDraft(draft, "#123456")).toMatchObject({
       draft_data: expect.objectContaining({
-        style: { template_name: "Celestial Union" },
+        style: { template_name: "Nakshatra Portfolio" },
       }),
       theme_color: "#f7f5ef",
       sun_sign: "kanya",

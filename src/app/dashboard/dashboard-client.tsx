@@ -15,10 +15,8 @@ import {
 import type { PortfolioApiFailure } from "@/features/portfolio/client/portfolio-dashboard.api";
 import { MAX_PORTFOLIO_PHOTOS } from "@/features/media/portfolio-photo";
 import { BlueprintForm } from "@/components/portfolio/BlueprintForm";
-import { ShaderBackground } from "@/components/landing/ShaderBackground";
 import {
   Eye,
-  Link as LinkIcon,
   Clock,
   Edit3,
   Share2,
@@ -38,6 +36,7 @@ import {
   FileText,
   ExternalLink,
   ShieldCheck,
+  Inbox,
 } from "lucide-react";
 
 interface Props {
@@ -50,6 +49,20 @@ interface Props {
   media: PortfolioMedia[];
   horoscope?: PortfolioHoroscope | null;
   initialEditorOpen?: boolean;
+  interests?: InterestSummary[];
+}
+
+interface InterestSummary {
+  id: string;
+  viewer_name: string | null;
+  viewer_phone: string | null;
+  viewer_email: string | null;
+  viewer_family_context: string | null;
+  message: string | null;
+  status: string;
+  requester_user_id: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
 }
 
 export default function DashboardClient({
@@ -62,6 +75,7 @@ export default function DashboardClient({
   media,
   horoscope = null,
   initialEditorOpen = false,
+  interests = [],
 }: Props) {
   const [copied, setCopied] = useState(false);
   const [renewing, setRenewing] = useState(false);
@@ -70,6 +84,7 @@ export default function DashboardClient({
     normalizePortfolioData(portfolio?.draft_data, portfolio?.privacy_mode)
   );
   const [savingDraft, setSavingDraft] = useState(false);
+  const [draftSaveState, setDraftSaveState] = useState<"saved" | "unsaved" | "saving">("saved");
   const [publishing, setPublishing] = useState(false);
   const [rotatingLink, setRotatingLink] = useState(false);
   const [unpublishing, setUnpublishing] = useState(false);
@@ -80,6 +95,7 @@ export default function DashboardClient({
   const [portfolioHoroscope, setPortfolioHoroscope] = useState(horoscope);
   const [uploadingHoroscope, setUploadingHoroscope] = useState(false);
   const [activePortfolioId, setActivePortfolioId] = useState(portfolio?.id ?? null);
+  const [interestItems, setInterestItems] = useState(interests);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const horoscopeInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -123,7 +139,7 @@ export default function DashboardClient({
 
   async function shareWhatsApp() {
     if (!shareUrl) return;
-    const text = encodeURIComponent(`Check out this biodata: ${shareUrl}`);
+    const text = encodeURIComponent(`View this wedding portfolio: ${shareUrl}`);
     window.open(`https://wa.me/?text=${text}`, "_blank");
   }
 
@@ -222,19 +238,28 @@ export default function DashboardClient({
     value: PortfolioData[K]
   ) {
     setDraftData((current) => ({ ...current, [key]: value }));
+    setDraftSaveState("unsaved");
   }
 
   async function saveDashboardDraft() {
     setSavingDraft(true);
+    setDraftSaveState("saving");
     setDraftError(null);
     try {
       const { saveDashboardDraftRequest } = await import(
         "@/features/portfolio/client/portfolio-dashboard.api"
       );
       const result = await saveDashboardDraftRequest(draftData);
-      if (!result.ok) return void handlePortfolioApiFailure(result);
+      if (!result.ok) {
+        setDraftSaveState("unsaved");
+        return void handlePortfolioApiFailure(result);
+      }
       setActivePortfolioId(result.data.portfolioId);
+      setDraftSaveState("saved");
       router.refresh();
+    } catch {
+      setDraftSaveState("unsaved");
+      setDraftError("Your changes could not be saved. Please check your connection and try again.");
     } finally {
       setSavingDraft(false);
     }
@@ -363,17 +388,16 @@ export default function DashboardClient({
 
   return (
     <div className="dashboard-shell flex flex-1 flex-col">
-      <ShaderBackground />
-      <header className="relative z-10 border-b border-white/10 bg-[#090a13]/55 px-4 py-3 backdrop-blur-xl">
+      <header className="dashboard-header px-4 py-3">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
-          <h1 className="text-lg font-bold tracking-[0.12em] text-white">NAKSHATRA</h1>
+          <h1 className="text-lg font-bold tracking-[0.12em]">NAKSHATRA</h1>
           <div className="flex items-center gap-3">
-            <span className="hidden text-sm text-white/60 sm:inline">
+            <span className="hidden text-sm text-slate-500 sm:inline">
               {userEmail}
             </span>
             <button
               onClick={handleSignOut}
-              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-white/70 transition-colors hover:bg-white/10"
+              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-slate-600 transition-colors hover:bg-slate-100"
             >
               <LogOut className="h-4 w-4" />
               <span className="hidden sm:inline">Sign out</span>
@@ -385,63 +409,75 @@ export default function DashboardClient({
       <main className="relative z-10 flex-1 px-4 py-8 sm:py-12">
         <div className="mx-auto max-w-5xl">
           {!portfolio?.is_published ? (
-            <div className="dashboard-glass flex flex-col items-center gap-6 px-6 py-16 text-center sm:px-12">
-              <div className="rounded-lg border border-[#e9c46a]/30 bg-[#e9c46a]/10 p-4">
-                <Edit3 className="h-8 w-8 text-[#f4d98f]" />
+            <div className="dashboard-glass dashboard-onboarding flex flex-col items-center gap-6 px-6 py-12 text-center sm:px-12">
+              <div className="rounded-full bg-[#dcebe5] p-4">
+                <Edit3 className="h-7 w-7 text-[#315f57]" />
               </div>
               <div>
-                <p className="text-xs font-medium uppercase tracking-[0.18em] text-[#f4d98f]">
-                  Your private workspace
+                <p className="text-xs font-medium uppercase tracking-[0.18em] text-[#477b77]">
+                  Start your portfolio
                 </p>
-                <h2 className="mt-2 text-2xl font-semibold text-white">
-                  Your biodata is waiting
+                <h2 className="mt-2 text-3xl font-medium text-[#18272e]">
+                  Let&apos;s build one clear introduction.
                 </h2>
-                <p className="mx-auto mt-2 max-w-md text-white/65">
-                  Add the details and photos that will shape your portfolio.
+                <p className="mx-auto mt-3 max-w-lg text-slate-600">
+                  Begin with the main details. Add photos, family information, and your horoscope when you are ready.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setFormOpen(true)}
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#f4d98f] px-5 text-sm font-semibold text-[#15141b] transition-colors hover:bg-[#fff0b7]"
+                className="dashboard-primary-action"
               >
                 <PanelRightOpen className="h-4 w-4" />
-                {portfolio ? "Continue editing" : "Start your biodata"}
+                {portfolio ? "Continue portfolio" : "Start with the basics"}
               </button>
+              <p className="text-sm text-slate-500">Save your work and continue later. Nothing is published until you complete the final review.</p>
             </div>
           ) : (
             <div className="flex flex-col gap-6">
+              <section className="dashboard-welcome">
+                <div>
+                  <span className={`dashboard-status ${isExpired ? "is-expired" : ""}`}>{isExpired ? "Link expired" : "Portfolio active"}</span>
+                  <h2>Your portfolio is ready to share.</h2>
+                  <p>Review new interests, see recent activity, or update your portfolio.</p>
+                </div>
+                {!isExpired && <button onClick={shareWhatsApp} className="dashboard-primary-action"><Share2 className="h-4 w-4" /> Share portfolio</button>}
+              </section>
+
+              <InterestInbox
+                interests={interestItems}
+                onDecision={(id, status) =>
+                  setInterestItems((current) =>
+                    current.map((interest) =>
+                      interest.id === id ? { ...interest, status } : interest
+                    )
+                  )
+                }
+              />
+
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="dashboard-glass p-4">
-                  <div className="flex items-center gap-2 text-white/55">
+                  <div className="flex items-center gap-2 text-slate-500">
                     <Eye className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">Views</span>
+                    <span className="text-sm font-medium">Portfolio views</span>
                   </div>
-                  <p className="mt-2 text-2xl font-bold text-white">{viewCount}</p>
+                  <p className="mt-2 text-2xl font-bold text-[#18272e]">{viewCount}</p>
                 </div>
                 <div className="dashboard-glass p-4">
-                  <div className="flex items-center gap-2 text-white/55">
-                    <LinkIcon className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">
-                      Status
-                    </span>
+                  <div className="flex items-center gap-2 text-slate-500">
+                    <Inbox className="h-4 w-4" />
+                    <span className="text-sm font-medium">Interests received</span>
                   </div>
-                  <p className="mt-2 text-sm font-semibold">
-                    {isExpired ? (
-                      <span className="text-red-300">Expired</span>
-                    ) : (
-                      <span className="text-emerald-300">Active</span>
-                    )}
-                  </p>
+                  <p className="mt-2 text-2xl font-bold text-[#18272e]">{interests.length}</p>
+                  <p className="mt-1 text-sm text-slate-500">{interestItems.filter((item) => item.status === "new" || item.status === "pending_review").length} need a response</p>
                 </div>
                 <div className="dashboard-glass p-4">
-                  <div className="flex items-center gap-2 text-white/55">
+                  <div className="flex items-center gap-2 text-slate-500">
                     <Clock className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">
-                      Expires
-                    </span>
+                    <span className="text-sm font-medium">Link expires</span>
                   </div>
-                  <p className="mt-2 text-sm font-semibold text-white">
+                  <p className="mt-2 text-lg font-semibold text-[#18272e]">
                     {daysLeft !== null
                       ? `${daysLeft} day${daysLeft !== 1 ? "s" : ""}`
                       : "—"}
@@ -451,22 +487,22 @@ export default function DashboardClient({
 
               {shareUrl && (
                 <div className="dashboard-glass p-4">
-                  <p className="mb-3 text-sm font-medium text-white">Your biodata link</p>
+                  <p className="mb-3 text-sm font-semibold text-[#18272e]">Portfolio link</p>
                   <div className="flex items-center gap-2">
-                    <code className="flex-1 overflow-x-auto rounded-lg bg-black/25 px-3 py-2 text-sm text-white/75">
+                    <code className="flex-1 overflow-x-auto rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-600">
                       {shareUrl}
                     </code>
                     <button
                       onClick={copyLink}
-                      className="shrink-0 rounded-lg border border-white/15 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-white/10"
+                      className="dashboard-secondary-action"
                     >
                       {copied ? "Copied!" : "Copy"}
                     </button>
                   </div>
-                  <div className="mt-3 flex gap-2">
+                  <div className="mt-3 flex flex-wrap gap-2">
                     <button
                       onClick={shareWhatsApp}
-                      className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700"
+                      className="dashboard-primary-action"
                     >
                       <Share2 className="h-4 w-4" />
                       Share on WhatsApp
@@ -475,7 +511,7 @@ export default function DashboardClient({
                       <button
                         onClick={renewLink}
                         disabled={renewing}
-                        className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/10 disabled:opacity-50"
+                        className="dashboard-secondary-action"
                       >
                         <RefreshCw
                           className={`h-4 w-4 ${renewing ? "animate-spin" : ""}`}
@@ -486,7 +522,7 @@ export default function DashboardClient({
                     <button
                       onClick={rotateLink}
                       disabled={rotatingLink}
-                      className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/10 disabled:opacity-50"
+                      className="dashboard-secondary-action"
                     >
                       <RotateCcw className={`h-4 w-4 ${rotatingLink ? "animate-spin" : ""}`} />
                       Rotate link
@@ -494,7 +530,7 @@ export default function DashboardClient({
                     <button
                       onClick={unpublishPortfolio}
                       disabled={unpublishing}
-                      className="inline-flex items-center gap-2 rounded-lg border border-red-300/25 px-4 py-2 text-sm font-medium text-red-100 transition-colors hover:bg-red-400/10 disabled:opacity-50"
+                      className="dashboard-danger-action"
                     >
                       <LockKeyhole className="h-4 w-4" />
                       {unpublishing ? "Unpublishing..." : "Unpublish"}
@@ -507,24 +543,24 @@ export default function DashboardClient({
                 <button
                   type="button"
                   onClick={() => setFormOpen(true)}
-                  className="inline-flex h-10 items-center justify-center rounded-lg border border-white/15 px-4 text-sm font-medium text-white transition-colors hover:bg-white/10"
+                  className="dashboard-secondary-action"
                 >
                   <Edit3 className="mr-2 h-4 w-4" />
-                  Edit biodata
+                  Edit portfolio
                 </button>
                 <Link
                   href="/preview"
-                  className="inline-flex h-10 items-center justify-center rounded-lg border border-white/15 px-4 text-sm font-medium text-white transition-colors hover:bg-white/10"
+                  className="dashboard-secondary-action"
                 >
                   <Eye className="mr-2 h-4 w-4" />
-                  Preview
+                  Preview Balanced / Private view
                 </Link>
                 <Link
                   href="/approved-preview"
-                  className="inline-flex h-10 items-center justify-center rounded-lg border border-[#f4d98f]/35 bg-[#f4d98f]/10 px-4 text-sm font-medium text-[#f7dda0] transition-colors hover:bg-[#f4d98f]/15"
+                  className="dashboard-secondary-action"
                 >
                   <ShieldCheck className="mr-2 h-4 w-4" />
-                  Full Approved Request view
+                  Full Approved View
                 </Link>
               </div>
             </div>
@@ -535,26 +571,31 @@ export default function DashboardClient({
       <button
         type="button"
         onClick={() => setFormOpen(true)}
-        className="fixed bottom-5 right-5 z-40 inline-flex h-12 items-center gap-2 rounded-lg border border-[#f4d98f]/30 bg-[#f4d98f] px-5 text-sm font-semibold text-[#17151c] shadow-lg transition-transform hover:scale-[1.02]"
+        className="dashboard-primary-action fixed bottom-5 right-5 z-40 shadow-lg"
       >
         <PanelRightOpen className="h-4 w-4" />
         Portfolio details
       </button>
 
       {formOpen && (
-        <div className="fixed inset-0 z-50 bg-[#05050a]/70 backdrop-blur-sm">
-          <div className="absolute inset-0 flex h-full w-full flex-col overflow-hidden bg-[#151622]/97 text-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+        <div className="dashboard-editor fixed inset-0 z-50 bg-[#18272e]/45 backdrop-blur-sm">
+          <div className="dashboard-editor-surface absolute inset-0 flex h-full w-full flex-col overflow-hidden shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
               <div>
-                <h2 className="text-lg font-semibold">Portfolio details</h2>
-                <p className="text-sm text-white/55">
-                  Your profile stays private until you publish it.
+                <div className="flex flex-wrap items-center gap-3">
+                  <h2 className="text-lg font-semibold">Portfolio details</h2>
+                  <span className={`dashboard-save-state is-${draftSaveState}`} aria-live="polite">
+                    {draftSaveState === "saving" ? "Saving..." : draftSaveState === "saved" ? "Saved" : "Changes not saved"}
+                  </span>
+                </div>
+                <p className="text-sm text-slate-500">
+                  Complete what you know. Save your work and continue later.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setFormOpen(false)}
-                className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/15 text-white transition-colors hover:bg-white/10"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition-colors hover:bg-slate-100"
                 aria-label="Close portfolio details"
               >
                 <X className="h-4 w-4" />
@@ -589,22 +630,22 @@ export default function DashboardClient({
               />
             </div>
 
-            <div className="border-t border-white/10 bg-[#11121c] px-5 py-4">
+            <div className="border-t border-slate-200 bg-[#f3f0e8] px-5 py-4">
               {draftError && (
                 <p className="mb-3 rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-2 text-sm text-red-200">
                   Save failed: {draftError}
                 </p>
               )}
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-xs text-white/50">
-                  Draft edits stay private until you update the published portfolio.
+                <p className="text-sm leading-6 text-slate-500">
+                  Saving keeps your changes. Publishing updates the portfolio people can view.
                 </p>
                 <div className="flex gap-2">
                   <button
                     type="button"
                     onClick={saveDashboardDraft}
                     disabled={savingDraft}
-                    className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#f4d98f] px-4 text-sm font-semibold text-[#17151c] transition-colors hover:bg-[#fff0b7] disabled:opacity-50"
+                    className="dashboard-secondary-action"
                   >
                     <Save className="h-4 w-4" />
                     {savingDraft ? "Saving..." : "Save draft"}
@@ -613,14 +654,14 @@ export default function DashboardClient({
                     type="button"
                     onClick={publishPortfolio}
                     disabled={publishing}
-                    className="inline-flex h-10 items-center gap-2 rounded-lg border border-[#f4d98f]/30 bg-[#f4d98f]/10 px-4 text-sm font-semibold text-[#f4d98f] transition-colors hover:bg-[#f4d98f]/20 disabled:opacity-50"
+                    className="dashboard-primary-action"
                   >
                     <Send className={`h-4 w-4 ${publishing ? "animate-pulse" : ""}`} />
                     {publishing
                       ? "Generating..."
                       : portfolio?.is_published
                         ? "Update published"
-                        : "Generate portfolio"}
+                        : "Review and publish"}
                   </button>
                 </div>
               </div>
@@ -720,7 +761,7 @@ function HoroscopeManager({
             <Upload className={`h-4 w-4 ${uploading ? "animate-pulse" : ""}`} />
             {uploading ? "Checking attachment..." : "Attach horoscope"}
           </button>
-          <p className="mt-2 text-[11px] leading-4 text-white/45">PDF, DOC, DOCX, JPG, PNG, or HEIC · up to 20MB</p>
+          <p className="mt-2 text-xs leading-5 text-white/50">PDF, DOC, DOCX, JPG, PNG, or HEIC · up to 20MB</p>
         </div>
       )}
     </section>
@@ -730,6 +771,93 @@ function HoroscopeManager({
 function formatBytes(bytes: number) {
   if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function InterestInbox({
+  interests,
+  onDecision,
+}: {
+  interests: InterestSummary[];
+  onDecision: (id: string, status: "approved" | "rejected") => void;
+}) {
+  const newInterests = interests.filter((interest) => interest.status === "new" || interest.status === "pending_review");
+  const [workingId, setWorkingId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  async function decide(interest: InterestSummary, decision: "approved" | "rejected") {
+    setWorkingId(interest.id);
+    setActionError(null);
+    try {
+      const response = await fetch(`/api/interest/${interest.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ decision }),
+      });
+      const result = (await response.json()) as { error?: string };
+      if (!response.ok) {
+        setActionError(result.error || "This interest could not be updated.");
+        return;
+      }
+      onDecision(interest.id, decision);
+    } catch {
+      setActionError("This interest could not be updated. Please try again.");
+    } finally {
+      setWorkingId(null);
+    }
+  }
+
+  return (
+    <section className="dashboard-glass dashboard-interest-inbox">
+      <div className="dashboard-section-heading">
+        <div>
+          <h2>Interests to review</h2>
+          <p>Read each introduction before deciding what to do next.</p>
+        </div>
+        <span>{newInterests.length} waiting</span>
+      </div>
+      {newInterests.length === 0 ? (
+        <p className="dashboard-empty-state">New interests will appear here after viewers introduce themselves.</p>
+      ) : (
+        <div>
+          {actionError && <p className="dashboard-action-error" role="alert">{actionError}</p>}
+          {newInterests.slice(0, 5).map((interest) => {
+            const profileFor = typeof interest.metadata?.profile_for === "string" ? interest.metadata.profile_for : "self";
+            const location = typeof interest.metadata?.location === "string" ? interest.metadata.location : "";
+            const portfolioUrl = typeof interest.metadata?.portfolio_url === "string" ? interest.metadata.portfolio_url : "";
+            return (
+              <details key={interest.id} className="dashboard-interest-row">
+                <summary>
+                  <span><strong>{interest.viewer_name || "Unnamed viewer"}</strong><small>For {profileFor} {location ? `· ${location}` : ""} · {formatInterestDate(interest.created_at)}</small></span>
+                  <span className="dashboard-interest-status">New</span>
+                </summary>
+                <div className="dashboard-interest-details">
+                  {interest.viewer_family_context && <p><strong>Family introduction</strong>{interest.viewer_family_context}</p>}
+                  {interest.message && <p><strong>Message</strong>{interest.message}</p>}
+                  <div className="dashboard-interest-actions">
+                    {interest.viewer_phone && <a href={`tel:${interest.viewer_phone}`} className="dashboard-secondary-action">Call</a>}
+                    {interest.viewer_email && <a href={`mailto:${interest.viewer_email}`} className="dashboard-secondary-action">Email</a>}
+                    {portfolioUrl && <a href={portfolioUrl} target="_blank" rel="noreferrer" className="dashboard-secondary-action">Open their portfolio</a>}
+                    <button type="button" className="dashboard-secondary-action" disabled={workingId === interest.id} onClick={() => void decide(interest, "rejected")}>Decline</button>
+                    {interest.requester_user_id ? (
+                      <button type="button" className="dashboard-primary-action" disabled={workingId === interest.id} onClick={() => void decide(interest, "approved")}>{workingId === interest.id ? "Saving..." : "Approve Full View"}</button>
+                    ) : (
+                      <span className="dashboard-action-note">Ask the viewer to sign in before approving Full View.</span>
+                    )}
+                  </div>
+                </div>
+              </details>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function formatInterestDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Recently";
+  return new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(date);
 }
 
 const EMPTY_DATA: PortfolioData = {
@@ -744,7 +872,7 @@ const EMPTY_DATA: PortfolioData = {
   contact: {},
   style: {
     appearance: "light",
-    template_name: "Celestial Union",
+    template_name: "Nakshatra Portfolio",
     theme_color: "#f7f5ef",
   },
   preferences: {},
@@ -845,7 +973,7 @@ function PhotoManager({
         {media.map((item) => (
           <article
             key={item.id}
-            aria-label={item.media_type === "hero" ? "Hero photo" : "Profile photo"}
+            aria-label={item.media_type === "hero" ? "Primary photo" : "Profile photo"}
             className="w-36 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-black/15 sm:w-40"
           >
             <div className="relative h-36 bg-white/5 sm:h-40">
@@ -857,7 +985,7 @@ function PhotoManager({
                 <div className="flex h-full items-center justify-center text-xs text-white/35">Loading...</div>
               )}
               {item.media_type === "hero" && (
-                <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-md bg-[#f4d98f] px-2 py-1 text-[10px] font-semibold text-[#17151c]">
+                <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-md bg-[#f4d98f] px-2 py-1 text-xs font-semibold text-[#17151c]">
                   <Crown className="h-3 w-3" /> Hero
                 </span>
               )}
@@ -877,7 +1005,7 @@ function PhotoManager({
                 onChange={(event) =>
                   onUpdate(item.id, { visibility: event.target.value as PortfolioMediaVisibility })
                 }
-                className="h-8 w-full rounded-md border border-white/10 bg-white/[0.06] px-2 text-[11px] text-white outline-none"
+                className="h-10 w-full rounded-md border border-white/10 bg-white/[0.06] px-2 text-xs text-white outline-none"
                 aria-label="Photo visibility"
               >
                 {visibilityLabels.map((option) => (
@@ -890,9 +1018,9 @@ function PhotoManager({
                 <button
                   type="button"
                   onClick={() => onUpdate(item.id, { media_type: "hero" })}
-                  className="w-full rounded-md border border-white/10 px-2 py-1.5 text-[11px] font-medium text-white/75 transition-colors hover:bg-white/10"
+                  className="min-h-10 w-full rounded-md border border-white/10 px-2 py-2 text-xs font-medium text-white/75 transition-colors hover:bg-white/10"
                 >
-                  Make hero photo
+                  Make primary photo
                 </button>
               )}
             </div>
