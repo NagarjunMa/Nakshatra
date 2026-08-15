@@ -194,13 +194,16 @@ vercel --prod            # Production deploy
 
 ### Importing location reference data
 
-The profile form uses GeoNames reference tables for dependent Country → State/Region → City suggestions. After applying Supabase migrations, add the server-only `SUPABASE_SERVICE_ROLE_KEY` to `.env.local`, then run:
+The profile form uses GeoNames reference tables for dependent Country → State/Region → City suggestions. After applying Supabase migrations, load the service-role key only for the one-off import process. Do not add it to `.env.example`, GitHub Actions, or any `NEXT_PUBLIC_` variable:
 
 ```bash
+read -rsp "Supabase service-role key: " SUPABASE_SERVICE_ROLE_KEY && echo
+export SUPABASE_SERVICE_ROLE_KEY
 node --env-file=.env.local scripts/import-geonames.mjs
+unset SUPABASE_SERVICE_ROLE_KEY
 ```
 
-The importer downloads `countryInfo.txt`, `admin1CodesASCII.txt`, and `cities500.zip` directly from [GeoNames](https://www.geonames.org/), then safely upserts the records. The form retains manual state/region and city entry when reference data is unavailable or incomplete. Never prefix the service-role key with `NEXT_PUBLIC_` or commit it.
+The importer downloads `countryInfo.txt`, `admin1CodesASCII.txt`, and `cities500.zip` directly from [GeoNames](https://www.geonames.org/), then safely upserts the records. The form retains manual state/region and city entry when reference data is unavailable or incomplete. If the import fails, run `unset SUPABASE_SERVICE_ROLE_KEY` before troubleshooting so the credential does not remain in the shell environment.
 
 ## Landing Page
 

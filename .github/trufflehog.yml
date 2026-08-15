@@ -1,0 +1,9 @@
+detectors:
+  - name: GoogleStitchAPIKey
+    keywords:
+      - AQ.
+      - X-Goog-Api-Key
+      - stitch
+    regex:
+      api_key: '(?:^|[^A-Za-z0-9_-])(AQ\.[A-Za-z0-9_-]{40,})(?:$|[^A-Za-z0-9_-])'
+    entropy: 3.5
