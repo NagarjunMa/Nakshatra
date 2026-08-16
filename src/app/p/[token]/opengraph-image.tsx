@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import { createClient } from "@/lib/supabase/server";
-import type { PortfolioData, PortfolioMedia } from "@/types/portfolio";
+import { PublicPortfolioRepository } from "@/features/portfolio/server/public-portfolio.repository";
+import { resolvePublicPortfolio } from "@/features/portfolio/server/public-portfolio.service";
 
 export const alt = "Nakshatra wedding portfolio";
 export const size = { width: 1200, height: 630 };
@@ -17,37 +18,23 @@ export default async function OpenGraphImage({
 }) {
   const { token } = await params;
   const supabase = await createClient();
-  const { data: snapshot } = await supabase
-    .from("public_portfolio_snapshots")
-    .select("portfolio_id, data, theme_color, sun_sign")
-    .eq("share_token", token)
-    .eq("is_active", true)
-    .maybeSingle();
-
-  const data = snapshot?.data as PortfolioData | undefined;
-  const foreground = isLightColor(snapshot?.theme_color) ? "#17151c" : "#fffdf8";
+  const snapshot = await resolvePublicPortfolio(supabase, token);
+  const data = snapshot?.data;
+  const foreground = isLightColor(snapshot?.themeColor) ? "#17151c" : "#fffdf8";
   let heroUrl: string | undefined;
 
   if (snapshot) {
-    const { data: media } = await supabase
-      .from("portfolio_media")
-      .select("id, portfolio_id, storage_path, thumbnail_path, media_type, visibility, sort_order, alt_text")
-      .eq("portfolio_id", snapshot.portfolio_id)
-      .eq("media_type", "hero")
-      .eq("visibility", "public")
-      .maybeSingle();
-    const hero = media as PortfolioMedia | null;
+    const hero = snapshot.media.find((item) => item.mediaType === "hero" && item.presentation === "clear");
     if (hero) {
-      const { data: signedUrl } = await supabase.storage
-        .from("photos")
-        .createSignedUrl(hero.storage_path, 60 * 10);
+      const { data: signedUrl } = await new PublicPortfolioRepository(supabase)
+        .createPhotoUrl(hero.accessPath, 60 * 10);
       heroUrl = signedUrl?.signedUrl;
     }
   }
 
   const name = data?.personal?.name || "Wedding Biodata";
-  const rashi = data?.astrology?.rashi || snapshot?.sun_sign || "";
-  const background = snapshot?.theme_color || "#17151c";
+  const rashi = data?.astrology?.rashi || snapshot?.sunSign || "";
+  const background = snapshot?.themeColor || "#17151c";
 
   return new ImageResponse(
     (
@@ -64,7 +51,6 @@ export default async function OpenGraphImage({
       >
         {heroUrl ? (
           // Image comes from the portfolio's explicitly public hero media only.
-          // eslint-disable-next-line @next/next/no-img-element
           <img
             alt=""
             src={heroUrl}

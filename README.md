@@ -98,7 +98,7 @@ Fill a form once. Get a shareable link. Update anytime — the link always shows
 | `/preview` | Yes | Draft preview |
 | `/p/[token]` | No | Public biodata view (CelestialUnion template) |
 | `/api/auth/callback` | No | OAuth/magic link callback |
-| `/api/upload` | Yes | Photo upload (sharp → Supabase Storage) |
+| `/api/portfolio-media` | Yes | Owner-scoped photo upload and gallery management |
 
 ## Project Structure
 
@@ -107,7 +107,7 @@ src/
 ├── app/
 │   ├── api/
 │   │   ├── auth/callback/route.ts    # OAuth + magic link callback
-│   │   └── upload/route.ts           # Photo upload (sharp processing)
+│   │   └── portfolio-media/route.ts  # Owner-scoped photo operations
 │   ├── dashboard/                     # Status, link, views, expiry
 │   ├── edit/                          # Redirect to the canonical dashboard editor
 │   ├── login/                         # Auth entry
