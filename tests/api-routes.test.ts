@@ -12,7 +12,6 @@ const updatePortfolioPhoto = vi.hoisted(() => vi.fn());
 const deletePortfolioPhoto = vi.hoisted(() => vi.fn());
 const uploadHoroscope = vi.hoisted(() => vi.fn());
 const deleteHoroscope = vi.hoisted(() => vi.fn());
-const sharp = vi.hoisted(() => vi.fn());
 
 vi.mock("../src/lib/auth", () => ({ getApiUser }));
 vi.mock("../src/lib/supabase/server", () => ({ createClient }));
@@ -40,7 +39,6 @@ vi.mock("../src/features/horoscope/server/horoscope.service", async (importOrigi
   const actual = await importOriginal<typeof import("../src/features/horoscope/server/horoscope.service")>();
   return { ...actual, uploadHoroscope, deleteHoroscope };
 });
-vi.mock("sharp", () => ({ default: sharp }));
 
 import { GET as authCallback } from "../src/app/api/auth/callback/route";
 import { PUT as dashboardPut } from "../src/app/api/dashboard/route";
@@ -51,7 +49,6 @@ import { POST as publishPost } from "../src/app/api/portfolio/publish/route";
 import { POST as renewPost } from "../src/app/api/portfolio/renew/route";
 import { POST as rotatePost } from "../src/app/api/portfolio/share/rotate/route";
 import { POST as unpublishPost } from "../src/app/api/portfolio/share/unpublish/route";
-import { POST as legacyUploadPost } from "../src/app/api/upload/route";
 import { DashboardSaveError } from "../src/features/portfolio/server/dashboard.service";
 import { PortfolioMediaError } from "../src/features/media/server/media.service";
 import { HoroscopeError } from "../src/features/horoscope/server/horoscope.service";
@@ -292,41 +289,5 @@ describe("authentication callback", () => {
     const response = await authCallback(new Request("http://local/api/auth/callback?code=ok&next=/edit"));
     expect(response.headers.get("location")).toBe("http://local/edit");
     expect(insert).toHaveBeenCalled();
-  });
-});
-
-describe("legacy upload route", () => {
-  const storage = {
-    from: vi.fn(() => ({
-      upload: vi.fn().mockResolvedValue({ error: null }),
-      getPublicUrl: vi.fn((path: string) => ({ data: { publicUrl: `https://photos.test/${path}` } })),
-    })),
-  };
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    getApiUser.mockResolvedValue({ ...actor, supabase: { storage } });
-    const pipeline = { resize: vi.fn(), webp: vi.fn(), toBuffer: vi.fn().mockResolvedValue(Buffer.from("webp")) };
-    pipeline.resize.mockReturnValue(pipeline);
-    pipeline.webp.mockReturnValue(pipeline);
-    sharp.mockReturnValue(pipeline);
-  });
-
-  it("validates missing, oversized, and unsupported files", async () => {
-    expect((await legacyUploadPost(new Request("http://local/api/upload", { method: "POST", body: new FormData() }))).status).toBe(400);
-    const oversized = new FormData();
-    oversized.set("photo", new File([new Uint8Array(10 * 1024 * 1024 + 1)], "large.png", { type: "image/png" }));
-    expect((await legacyUploadPost(new Request("http://local/api/upload", { method: "POST", body: oversized }))).status).toBe(413);
-    const unsupported = new FormData();
-    unsupported.set("photo", new File(["x"], "file.pdf", { type: "application/pdf" }));
-    expect((await legacyUploadPost(new Request("http://local/api/upload", { method: "POST", body: unsupported }))).status).toBe(415);
-  });
-
-  it("processes a supported upload", async () => {
-    const form = new FormData();
-    form.set("photo", new File(["image"], "photo.png", { type: "image/png" }));
-    const response = await legacyUploadPost(new Request("http://local/api/upload", { method: "POST", body: form }));
-    expect(response.status).toBe(200);
-    expect(await response.json()).toMatchObject({ photo_url: expect.stringContaining("photo.webp"), photo_thumb_url: expect.stringContaining("thumb.webp") });
   });
 });

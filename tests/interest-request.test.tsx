@@ -33,14 +33,9 @@ describe("interest request flow", () => {
   });
 
   it("validates and stores an interest for an active portfolio", async () => {
-    const insert = vi.fn().mockResolvedValue({ error: null });
-    const single = vi.fn().mockResolvedValue({ data: { portfolio_id: "portfolio-1" } });
-    const eqActive = vi.fn(() => ({ single }));
-    const eqToken = vi.fn(() => ({ eq: eqActive }));
-    const select = vi.fn(() => ({ eq: eqToken }));
+    const rpc = vi.fn().mockResolvedValue({ data: true, error: null });
     createClient.mockResolvedValue({
-      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null } }) },
-      from: vi.fn((table: string) => table === "public_portfolio_snapshots" ? { select } : { insert }),
+      rpc,
     });
 
     const response = await POST(new Request("http://local/api/interest", {
@@ -60,11 +55,10 @@ describe("interest request flow", () => {
     }));
 
     expect(response.status).toBe(201);
-    expect(insert).toHaveBeenCalledWith(expect.objectContaining({
-      portfolio_id: "portfolio-1",
-      viewer_name: "Rohan Mehta",
-      viewer_email: "rohan@example.com",
-      requested_sections: ["full"],
+    expect(rpc).toHaveBeenCalledWith("submit_public_interest", expect.objectContaining({
+      p_share_token: "portfolio-token",
+      p_name: "Rohan Mehta",
+      p_email: "rohan@example.com",
     }));
   });
 });

@@ -75,13 +75,8 @@ export class PortfolioMediaRepository {
       .in("media_type", ["hero", "gallery"]);
   }
 
-  async demoteOtherHeroPhotos(portfolioId: string, mediaId: string) {
-    return this.supabase
-      .from("portfolio_media")
-      .update({ media_type: "gallery" })
-      .eq("portfolio_id", portfolioId)
-      .neq("id", mediaId)
-      .eq("media_type", "hero");
+  async setPrimaryHero(mediaId: string) {
+    return this.supabase.rpc("set_portfolio_hero", { p_media_id: mediaId });
   }
 
   async deleteMedia(mediaId: string) {

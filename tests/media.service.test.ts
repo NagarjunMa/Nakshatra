@@ -10,7 +10,7 @@ const repository = vi.hoisted(() => ({
   findMedia: vi.fn(),
   findPortfolioPhotos: vi.fn(),
   download: vi.fn(),
-  demoteOtherHeroPhotos: vi.fn(),
+  setPrimaryHero: vi.fn(),
   deleteMedia: vi.fn(),
 }));
 const sharpMock = vi.hoisted(() => vi.fn());
@@ -111,7 +111,8 @@ describe("portfolio media service", () => {
     mockSharp();
     mockUploadSuccess();
     repository.updateMedia.mockResolvedValue({ data: media, error: null });
-    repository.demoteOtherHeroPhotos.mockResolvedValue({ error: null });
+    repository.findMedia.mockResolvedValue({ data: media, error: null });
+    repository.setPrimaryHero.mockResolvedValue({ data: true, error: null });
     repository.deleteMedia.mockResolvedValue({ data: media, error: null });
   });
 
@@ -214,7 +215,7 @@ describe("portfolio media service", () => {
         changes: { media_type: "hero" },
       })
     ).resolves.toEqual(media);
-    expect(repository.demoteOtherHeroPhotos).toHaveBeenCalledWith(portfolioId, media.id);
+    expect(repository.setPrimaryHero).toHaveBeenCalledWith(media.id);
 
     repository.updateMedia.mockResolvedValue({ data: null, error: null });
     await expect(
@@ -314,8 +315,8 @@ describe("portfolio media service", () => {
     ).rejects.toMatchObject({ status: 500 });
   });
 
-  it("reports hero demotion and storage deletion failures", async () => {
-    repository.demoteOtherHeroPhotos.mockResolvedValue({ error: new Error("db") });
+  it("reports atomic hero promotion and storage deletion failures", async () => {
+    repository.setPrimaryHero.mockResolvedValue({ data: null, error: new Error("db") });
     await expect(
       updatePortfolioPhoto({
         supabase: {} as never,

@@ -16,13 +16,16 @@ const mocks = vi.hoisted(() => ({
     mediaType: "hero" as const,
     orientation: "portrait" as const,
   }]),
-  rpc: vi.fn(() => Promise.resolve({ data: null, error: null })),
+  rpc: vi.fn(),
   signedUrl: vi.fn(async () => ({ data: { signedUrl: "https://signed.test/hero" } })),
   imageResponse: vi.fn(),
   authUser: null as { id: string } | null,
 }));
 
 function databaseClient() {
+  mocks.rpc.mockImplementation((name: string) =>
+    Promise.resolve(mocks.outcomes[name] ?? { data: null, error: null })
+  );
   return {
     from: vi.fn((table: string) => {
       const response = () => mocks.outcomes[table] ?? { data: null };
@@ -143,68 +146,65 @@ describe("authenticated server pages", () => {
 });
 
 describe("public portfolio pages", () => {
+  const publicPayload = {
+    data,
+    templateId: 3,
+    themeColor: "#17151c",
+    sunSign: "kanya",
+    media: [],
+  };
+
   it("builds missing and complete metadata", async () => {
-    mocks.outcomes.public_portfolio_snapshots = { data: null };
+    mocks.outcomes.resolve_public_portfolio = { data: null };
     await expect(generateMetadata({ params: Promise.resolve({ token: "missing" }) })).resolves.toEqual({ title: "Biodata Not Found" });
-    mocks.outcomes.public_portfolio_snapshots = { data: { data, theme_color: "#17151c", sun_sign: "kanya", share_token: "token" } };
+    mocks.outcomes.resolve_public_portfolio = { data: publicPayload };
     const metadata = await generateMetadata({ params: Promise.resolve({ token: "token" }) });
     expect(metadata.title).toBe("Aditi Rao — Wedding Biodata");
     expect(metadata.description).toContain("Kanya");
   });
 
   it("rejects inactive tokens and renders sanitized public snapshots", async () => {
-    mocks.outcomes.public_portfolio_snapshots = { data: null };
+    mocks.outcomes.resolve_public_portfolio = { data: null };
     await expect(PublicBiodataPage({ params: Promise.resolve({ token: "missing" }) })).rejects.toThrow("NOT_FOUND");
-    mocks.outcomes.public_portfolio_snapshots = { data: { portfolio_id: "portfolio-1", data, template_id: 3, theme_color: null, sun_sign: "kanya" } };
-    mocks.outcomes.portfolio_media = { data: [] };
+    mocks.outcomes.resolve_public_portfolio = { data: publicPayload };
+    mocks.outcomes.record_public_portfolio_view = { data: true };
     render(await PublicBiodataPage({ params: Promise.resolve({ token: "token" }) }));
     expect(screen.getByTestId("template")).toHaveTextContent("Aditi Rao:public");
-    await waitFor(() => expect(mocks.rpc).toHaveBeenCalledWith("record_view", { p_portfolio_id: "portfolio-1" }));
+    await waitFor(() => expect(mocks.rpc).toHaveBeenCalledWith("record_public_portfolio_view", { p_share_token: "token" }));
   });
 
   it("uses the approved projection only when row-level access returns an approved snapshot", async () => {
     mocks.authUser = { id: "viewer-1" };
-    mocks.outcomes.public_portfolio_snapshots = { data: { portfolio_id: "portfolio-1", data, template_id: 3, theme_color: null, sun_sign: "kanya" } };
-    mocks.outcomes.reveal_grants = { data: { id: "grant-1", expires_at: null } };
-    mocks.outcomes.approved_portfolio_snapshots = { data: { data: { ...data, personal: { ...data.personal, name: "Approved Aditi" } }, template_id: 3, theme_color: null, sun_sign: "kanya" } };
-    mocks.outcomes.portfolio_media = { data: [] };
-    mocks.outcomes.portfolio_horoscopes = { data: null };
+    mocks.outcomes.resolve_public_portfolio = { data: publicPayload };
+    mocks.outcomes.resolve_approved_portfolio = { data: { ...publicPayload, data: { ...data, personal: { ...data.personal, name: "Approved Aditi" } } } };
     render(await PublicBiodataPage({ params: Promise.resolve({ token: "token" }) }));
     expect(screen.getByTestId("template")).toHaveTextContent("Approved Aditi:approved");
-    expect(mocks.photoUrls).toHaveBeenCalledWith(expect.objectContaining({ viewer: "approved" }));
+    expect(mocks.rpc).toHaveBeenCalledWith("resolve_approved_portfolio", { p_share_token: "token" });
   });
 
   it("keeps the published link public for a signed-in owner without a viewer grant", async () => {
     mocks.authUser = { id: "user-1" };
-    mocks.outcomes.public_portfolio_snapshots = { data: { portfolio_id: "portfolio-1", data, template_id: 3, theme_color: null, sun_sign: "kanya" } };
-    mocks.outcomes.portfolios = { data: { id: "portfolio-1" } };
-    mocks.outcomes.approved_portfolio_snapshots = { data: { data: { ...data, personal: { ...data.personal, name: "Owner-only approved data" } } } };
-    mocks.outcomes.portfolio_media = { data: [] };
+    mocks.outcomes.resolve_public_portfolio = { data: publicPayload };
+    mocks.outcomes.resolve_approved_portfolio = { data: null };
 
     render(await PublicBiodataPage({ params: Promise.resolve({ token: "token" }) }));
 
     expect(screen.getByTestId("template")).toHaveTextContent("Aditi Rao:public");
     expect(screen.queryByText(/Owner-only approved data/)).not.toBeInTheDocument();
-    expect(mocks.photoUrls).toHaveBeenCalledWith(expect.objectContaining({ viewer: "public" }));
+    expect(mocks.rpc).toHaveBeenCalledWith("resolve_approved_portfolio", { p_share_token: "token" });
   });
 
   it("keeps the separate horoscope viewer gated and uses a neutral Word download", async () => {
-    mocks.outcomes.public_portfolio_snapshots = { data: { portfolio_id: "portfolio-1", data } };
-    mocks.outcomes.portfolio_horoscopes = { data: null };
+    mocks.outcomes.resolve_approved_horoscope = { data: null };
     await expect(HoroscopePage({ params: Promise.resolve({ token: "token" }) })).rejects.toThrow("NOT_FOUND");
 
-    mocks.outcomes.portfolio_horoscopes = { data: {
-      id: "horoscope-1",
-      portfolio_id: "portfolio-1",
-      storage_path: "owner/portfolio-1/private.docx",
-      mime_type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      file_extension: "docx",
-      byte_size: 100,
-      language_label: "Kannada",
-      page_count: null,
-      published_at: "2026-08-04T00:00:00.000Z",
-      created_at: "2026-08-04T00:00:00.000Z",
-      updated_at: "2026-08-04T00:00:00.000Z",
+    mocks.outcomes.resolve_approved_horoscope = { data: {
+      accessPath: "owner/portfolio-1/private.docx",
+      mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      fileExtension: "docx",
+      languageLabel: "Kannada",
+      pageCount: null,
+      profileName: "Aditi Rao",
     } };
     render(await HoroscopePage({ params: Promise.resolve({ token: "token" }) }));
     expect(screen.getByRole("heading", { name: /original horoscope/i })).toBeInTheDocument();
@@ -213,11 +213,10 @@ describe("public portfolio pages", () => {
   });
 
   it("generates fallback and hero-backed Open Graph images", async () => {
-    mocks.outcomes.public_portfolio_snapshots = { data: null };
+    mocks.outcomes.resolve_public_portfolio = { data: null };
     await OpenGraphImage({ params: Promise.resolve({ token: "missing" }) });
     expect(mocks.imageResponse).toHaveBeenLastCalledWith(expect.anything(), { width: 1200, height: 630 });
-    mocks.outcomes.public_portfolio_snapshots = { data: { portfolio_id: "portfolio-1", data, theme_color: "#ffffff", sun_sign: "kanya" } };
-    mocks.outcomes.portfolio_media = { data: { storage_path: "hero.webp" } };
+    mocks.outcomes.resolve_public_portfolio = { data: { ...publicPayload, themeColor: "#ffffff", media: [{ key: "hero", accessPath: "hero.webp", mediaType: "hero", sortOrder: 0, presentation: "clear" }] } };
     await OpenGraphImage({ params: Promise.resolve({ token: "token" }) });
     expect(mocks.signedUrl).toHaveBeenCalledWith("hero.webp", 600);
   });

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getApiUser } from "@/lib/auth";
 import { apiAuthFailureResponse } from "@/lib/api/auth-response";
+import { decideInterestRequest } from "@/features/interest/server/interest-decision.service";
 
 const decisionSchema = z.object({
   decision: z.enum(["approved", "rejected"]),
@@ -21,59 +22,28 @@ export async function PATCH(
   }
 
   const { id } = await context.params;
-  const { data: interest, error: interestError } = await auth.supabase
-    .from("interest_requests")
-    .select("id, portfolio_id, requester_user_id, status")
-    .eq("id", id)
-    .single();
-
-  if (interestError || !interest) {
+  const requestId = z.string().uuid().safeParse(id);
+  if (!requestId.success) {
     return NextResponse.json({ error: "This interest could not be found." }, { status: 404 });
   }
+  const result = await decideInterestRequest(auth.supabase, requestId.data, parsed.data.decision)
+    .catch(() => "failed" as const);
 
-  if (parsed.data.decision === "approved" && !interest.requester_user_id) {
+  if (result === "not_found") {
+    return NextResponse.json({ error: "This interest could not be found." }, { status: 404 });
+  }
+  if (result === "signin_required") {
     return NextResponse.json(
       { error: "Ask this viewer to sign in before approving Full View." },
       { status: 409 }
     );
   }
-
-  if (parsed.data.decision === "approved") {
-    const { data: existingGrant } = await auth.supabase
-      .from("reveal_grants")
-      .select("id")
-      .eq("interest_request_id", interest.id)
-      .eq("viewer_user_id", interest.requester_user_id)
-      .is("revoked_at", null)
-      .maybeSingle();
-
-    if (!existingGrant) {
-      const { error: grantError } = await auth.supabase.from("reveal_grants").insert({
-        interest_request_id: interest.id,
-        portfolio_id: interest.portfolio_id,
-        viewer_user_id: interest.requester_user_id,
-        access_level: "full",
-        granted_sections: ["full"],
-        granted_by: auth.user.id,
-      });
-      if (grantError) {
-        return NextResponse.json({ error: "Full View access could not be created." }, { status: 500 });
-      }
-    }
+  if (result === "unauthorized") {
+    return NextResponse.json({ error: "You cannot manage this interest." }, { status: 403 });
   }
-
-  const { error: updateError } = await auth.supabase
-    .from("interest_requests")
-    .update({
-      status: parsed.data.decision,
-      decided_at: new Date().toISOString(),
-      decided_by: auth.user.id,
-    })
-    .eq("id", interest.id);
-
-  if (updateError) {
+  if (result === "failed") {
     return NextResponse.json({ error: "This interest could not be updated." }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true, status: parsed.data.decision });
+  return NextResponse.json({ ok: true, status: result });
 }

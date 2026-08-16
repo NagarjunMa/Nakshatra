@@ -174,13 +174,29 @@ export async function updatePortfolioPhoto({
     }
   }
 
-  const { data: media, error } = await repository.updateMedia(mediaId, safeChanges);
+  const promoteToHero = changes.media_type === "hero";
+  if (promoteToHero) {
+    safeChanges = Object.fromEntries(
+      Object.entries(safeChanges).filter(([key]) => key !== "media_type")
+    );
+  }
+  const mutation = Object.keys(safeChanges).length
+    ? await repository.updateMedia(mediaId, safeChanges)
+    : await repository.findMedia(mediaId);
+  const { data: media, error } = mutation;
   if (error || !media) {
     throw new PortfolioMediaError("Photo not found", 404);
   }
-  if (changes.media_type === "hero") {
-    const { error: demoteError } = await repository.demoteOtherHeroPhotos(media.portfolio_id, media.id);
-    if (demoteError) throw new PortfolioMediaError("Could not update the primary photo", 500);
+  if (promoteToHero) {
+    const { data: promoted, error: promotionError } = await repository.setPrimaryHero(media.id);
+    if (promotionError || !promoted) {
+      throw new PortfolioMediaError("Could not update the primary photo", 500);
+    }
+    const refreshed = await repository.findMedia(media.id);
+    if (refreshed.error || !refreshed.data) {
+      throw new PortfolioMediaError("Could not load the primary photo", 500);
+    }
+    return refreshed.data;
   }
   return media;
 }
