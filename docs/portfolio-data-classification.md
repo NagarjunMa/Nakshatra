@@ -29,3 +29,24 @@ snapshot builders, token-scoped database functions, RLS, and Storage policies.
    first public gallery original; every later item uses a generated derivative.
 6. Missing, malformed, expired, rotated, and unpublished links all resolve to
    the same unavailable result.
+
+## Full View Lifecycle
+
+1. A viewer must sign in before submitting an access request. Requests are
+   permanently bound to that verified Supabase user ID.
+2. Owners may approve or reject a new request. A rejected request must be
+   explicitly reopened before it can be approved later.
+3. Full View grants expire after 30 days. Owners can renew an active or expired
+   grant for another 30 days, or revoke it immediately.
+4. Rotating a link or unpublishing a portfolio revokes every active grant and
+   closes its approved requests. Republishing requires a fresh request and
+   approval; ordinary published-data updates preserve still-valid grants.
+5. Portfolio expiry blocks public and approved access. Renewing the portfolio
+   link restores access only for grants that are themselves still active.
+6. Full View includes the approved identity, astrology, family, education,
+   career, lifestyle, preference, photo-original, and horoscope projections.
+   Contact details, secure notes, credit/internal values, and private
+   preference notes remain owner-only.
+7. Grant creation, renewal, use, rejection, revocation, expiry, rotation, and
+   unpublish events are immutable and contain no request message, contact data,
+   share token, signed URL, or storage path.

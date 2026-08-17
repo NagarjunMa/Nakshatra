@@ -2,6 +2,7 @@ import "server-only";
 
 import { nanoid } from "nanoid";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { z } from "zod/v4";
 import {
   normalizePortfolioPrivacyMode,
   type PortfolioData,
@@ -20,7 +21,13 @@ import {
 import { getCelestialBackground } from "@/features/portfolio/celestial-theme";
 import { createShareUrl } from "./share-url.service";
 import { ensurePortfolioPhotoPreviews } from "@/features/media/server/media.service";
-import { publishHoroscope } from "@/features/horoscope/server/horoscope.service";
+
+const publishTransactionResultSchema = z.object({
+  status: z.enum(["ok", "unauthorized", "not_found", "not_ready"]),
+  action: z.enum(["created", "updated"]).optional(),
+  shareToken: z.string().optional(),
+  expiresAt: z.string().optional(),
+});
 
 export class PortfolioPublishError extends Error {
   constructor(
@@ -84,17 +91,6 @@ export async function publishPortfolio({
     );
   }
 
-  const publishedAt = new Date().toISOString();
-  const updates: Record<string, unknown> = {
-    draft_data: canonicalData,
-    published_data: canonicalData,
-    is_published: true,
-    published_at: publishedAt,
-    sun_sign: data.astrology?.rashi || null,
-    theme_color: getCelestialBackground(data.style),
-    template_id: CELESTIAL_UNION_TEMPLATE_ID,
-  };
-
   const shareToken = portfolio.share_token || nanoid(21);
   const expiresAt = portfolio.expires_at ?? (() => {
     const expiry = new Date();
@@ -102,57 +98,34 @@ export async function publishPortfolio({
     return expiry.toISOString();
   })();
 
-  if (!portfolio.is_published || !portfolio.share_token) {
-    updates.share_token = shareToken;
-    updates.expires_at = expiresAt;
+  const themeColor = getCelestialBackground(data.style);
+  const { data: transactionData, error: transactionError } =
+    await repository.publishPortfolioTransaction({
+      portfolioId: portfolio.id,
+      draftData: canonicalData,
+      publicData: createPublicPortfolioSnapshot(canonicalData),
+      approvedData: createApprovedPortfolioSnapshot(canonicalData),
+      shareToken,
+      expiresAt,
+      templateId: CELESTIAL_UNION_TEMPLATE_ID,
+      themeColor,
+      sunSign: data.astrology?.rashi || null,
+    });
+  const transaction = publishTransactionResultSchema.safeParse(transactionData);
+  if (transactionError || !transaction.success) {
+    throw new PortfolioPublishError("We could not publish your portfolio. Please try again.", "PORTFOLIO_TRANSACTION_FAILED");
   }
-
-  const { error } = await repository.publishPortfolio(userId, updates);
-  if (error) throw new PortfolioPublishError("We could not publish your portfolio. Please try again.", "PORTFOLIO_PERSISTENCE_FAILED");
-
-  const { error: snapshotError } = await repository.savePublicSnapshot({
-    portfolio_id: portfolio.id,
-    share_token: shareToken,
-    data: createPublicPortfolioSnapshot(canonicalData),
-    template_id: updates.template_id,
-    theme_color: updates.theme_color,
-    sun_sign: updates.sun_sign,
-    expires_at: expiresAt,
-    published_at: updates.published_at,
-    is_active: true,
-  });
-  if (snapshotError) {
-    throw new PortfolioPublishError("We could not create the public portfolio safely. Please try again.", "PUBLIC_SNAPSHOT_PERSISTENCE_FAILED");
+  if (transaction.data.status === "not_ready") {
+    throw new PortfolioPublishError("Choose one public primary photo before publishing.", "PORTFOLIO_NOT_READY", 400);
   }
-
-  const { error: approvedSnapshotError } = await repository.saveApprovedSnapshot({
-    portfolio_id: portfolio.id,
-    data: createApprovedPortfolioSnapshot(canonicalData),
-    template_id: updates.template_id,
-    theme_color: updates.theme_color,
-    sun_sign: updates.sun_sign,
-    published_at: updates.published_at,
-  });
-  if (approvedSnapshotError) {
-    throw new PortfolioPublishError(
-      "We could not prepare the approved-request view safely. Please try again.",
-      "APPROVED_SNAPSHOT_PERSISTENCE_FAILED"
-    );
-  }
-
-  try {
-    await publishHoroscope({ supabase, portfolioId: portfolio.id, publishedAt });
-  } catch {
-    throw new PortfolioPublishError(
-      "Your portfolio was updated, but we could not publish its horoscope attachment. Please try again.",
-      "HOROSCOPE_PUBLISH_FAILED"
-    );
+  if (transaction.data.status !== "ok" || !transaction.data.action || !transaction.data.shareToken || !transaction.data.expiresAt) {
+    throw new PortfolioPublishError("We could not authorize this portfolio update.", "PORTFOLIO_NOT_FOUND", 404);
   }
 
   return {
-    action: portfolio.is_published ? "updated" : "created",
-    expiresAt,
-    shareToken,
-    shareUrl: createShareUrl(shareToken),
+    action: transaction.data.action,
+    expiresAt: transaction.data.expiresAt,
+    shareToken: transaction.data.shareToken,
+    shareUrl: createShareUrl(transaction.data.shareToken),
   } as const;
 }

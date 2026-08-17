@@ -11,8 +11,7 @@ export async function POST() {
   if (auth.status !== "authenticated") return apiAuthFailureResponse(auth);
 
   try {
-    await renewPortfolioLink({ supabase: auth.supabase, userId: auth.user.id });
-    return NextResponse.json({ ok: true });
+    return NextResponse.json(await renewPortfolioLink({ supabase: auth.supabase }));
   } catch (error) {
     const renewalError = error instanceof PortfolioRenewalError ? error : null;
     return NextResponse.json(

@@ -4,8 +4,9 @@ import React from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const createClient = vi.hoisted(() => vi.fn());
-vi.mock("@/lib/supabase/server", () => ({ createClient }));
+const getApiUser = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/auth", () => ({ getApiUser }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 import { InterestRequestModal } from "../src/components/portfolio/InterestRequestModal";
 import { POST } from "../src/app/api/interest/route";
@@ -15,7 +16,7 @@ describe("interest request flow", () => {
 
   it("submits from a modal and returns to the portfolio confirmation state", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 201 })));
-    render(<InterestRequestModal portfolioToken="portfolio-token" profileName="Ananya Rao" />);
+    render(<InterestRequestModal portfolioToken="portfolio-token" profileName="Ananya Rao" authenticated />);
 
     fireEvent.click(screen.getByRole("button", { name: "Show interest" }));
     expect(screen.getByRole("dialog")).toBeInTheDocument();
@@ -34,8 +35,10 @@ describe("interest request flow", () => {
 
   it("validates and stores an interest for an active portfolio", async () => {
     const rpc = vi.fn().mockResolvedValue({ data: true, error: null });
-    createClient.mockResolvedValue({
-      rpc,
+    getApiUser.mockResolvedValue({
+      status: "authenticated",
+      user: { id: "viewer-1" },
+      supabase: { rpc },
     });
 
     const response = await POST(new Request("http://local/api/interest", {
@@ -60,5 +63,21 @@ describe("interest request flow", () => {
       p_name: "Rohan Mehta",
       p_email: "rohan@example.com",
     }));
+  });
+
+  it("requires sign-in before showing or accepting an interest request", async () => {
+    render(<InterestRequestModal portfolioToken="portfolio-token" profileName="Ananya Rao" authenticated={false} />);
+    expect(screen.getByRole("link", { name: "Sign in to show interest" })).toHaveAttribute(
+      "href",
+      "/login?redirect=%2Fp%2Fportfolio-token"
+    );
+
+    getApiUser.mockResolvedValue({ status: "missing_session" });
+    const response = await POST(new Request("http://local/api/interest", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    }));
+    expect(response.status).toBe(401);
   });
 });

@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(21);
+select plan(22);
 
 insert into auth.users (id, aud, role, email, created_at, updated_at)
 values
@@ -49,7 +49,7 @@ insert into public.approved_portfolio_snapshots (
   portfolio_id, data, template_id, theme_color, sun_sign, published_at
 ) values (
   '33333333-3333-4333-8333-333333333333',
-  '{"privacy_mode":"private","personal":{"name":"Aditi Approved","dob":"1996-08-12","gender":"female"},"contact":{"phone":"private"}}'::jsonb,
+  '{"privacy_mode":"private","personal":{"name":"Aditi Approved","dob":"1996-08-12","gender":"female"},"family":{"father":{"name":"Private Parent"}}}'::jsonb,
   3,
   '#17151c',
   'kanya',
@@ -109,6 +109,23 @@ select ok(
     and public.resolve_public_portfolio('phase1_secure_token_1')::text like '%protected-blur.webp%',
   'approved-only originals never enter the public response'
 );
+select throws_ok(
+  $$select public.submit_public_interest(
+    'phase1_secure_token_1', 'Rohan Mehta', 'self', '+1 555 010 2200',
+    'viewer@perimeter.test', 'Toronto, Canada',
+    'A family introduction with sufficient detail.',
+    'We would be glad to introduce our families.', null
+  )$$,
+  '42501', null,
+  'anonymous visitors cannot submit identity-free access requests'
+);
+select ok(
+  public.record_public_portfolio_view('phase1_secure_token_1'),
+  'the token-scoped view command accepts an active portfolio'
+);
+
+set local role authenticated;
+set local request.jwt.claim.sub = '22222222-2222-4222-8222-222222222222';
 select ok(
   public.submit_public_interest(
     'phase1_secure_token_1', 'Rohan Mehta', 'self', '+1 555 010 2200',
@@ -116,11 +133,7 @@ select ok(
     'A family introduction with sufficient detail.',
     'We would be glad to introduce our families.', null
   ),
-  'the constrained interest command accepts valid input'
-);
-select ok(
-  public.record_public_portfolio_view('phase1_secure_token_1'),
-  'the token-scoped view command accepts an active portfolio'
+  'an authenticated viewer can submit an identity-bound request'
 );
 
 reset role;
@@ -133,9 +146,6 @@ select throws_ok(
   '23514', null,
   'database rejects restricted fields in a public snapshot'
 );
-
-update public.interest_requests
-set requester_user_id = '22222222-2222-4222-8222-222222222222';
 
 set local role authenticated;
 set local request.jwt.claim.sub = '11111111-1111-4111-8111-111111111111';

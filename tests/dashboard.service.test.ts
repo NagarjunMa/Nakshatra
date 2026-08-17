@@ -8,8 +8,7 @@ const repository = vi.hoisted(() => ({
   linkCandidate: vi.fn(),
   saveCandidateDetails: vi.fn(),
   saveVisibilityRules: vi.fn(),
-  replaceFamilyMembers: vi.fn(),
-  replaceEducationAndCareer: vi.fn(),
+  replaceCandidateRelationshipsAndTimeline: vi.fn(),
 }));
 
 vi.mock("../src/features/portfolio/server/dashboard.repository", () => ({
@@ -42,8 +41,10 @@ function mockSuccessfulWrites() {
   repository.linkCandidate.mockResolvedValue({ error: null });
   repository.saveCandidateDetails.mockResolvedValue([{ error: null }]);
   repository.saveVisibilityRules.mockResolvedValue({ error: null });
-  repository.replaceFamilyMembers.mockResolvedValue({ error: null });
-  repository.replaceEducationAndCareer.mockResolvedValue({ error: null });
+  repository.replaceCandidateRelationshipsAndTimeline.mockResolvedValue({
+    data: "updated",
+    error: null,
+  });
 }
 
 describe("saveDashboardDraft", () => {
@@ -60,7 +61,7 @@ describe("saveDashboardDraft", () => {
     expect(repository.saveCandidate).toHaveBeenCalledOnce();
     expect(repository.linkCandidate).toHaveBeenCalledWith("portfolio-id", "candidate-id");
     expect(repository.saveCandidateDetails).toHaveBeenCalledOnce();
-    expect(repository.replaceEducationAndCareer).toHaveBeenCalledOnce();
+    expect(repository.replaceCandidateRelationshipsAndTimeline).toHaveBeenCalledOnce();
   });
 
   it("creates an empty portfolio draft without a candidate record", async () => {
@@ -104,7 +105,10 @@ describe("saveDashboardDraft", () => {
     ).rejects.toThrow("Could not save portfolio details");
 
     mockSuccessfulWrites();
-    repository.replaceEducationAndCareer.mockResolvedValue({ error: new Error("db") });
+    repository.replaceCandidateRelationshipsAndTimeline.mockResolvedValue({
+      data: null,
+      error: new Error("db"),
+    });
     await expect(
       saveDashboardDraft({ supabase: {} as never, userId: "user-id", data: baseDraft })
     ).rejects.toThrow("Could not save portfolio history");

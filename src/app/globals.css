@@ -55,6 +55,18 @@
 .dashboard-interest-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 0.55rem; }
 .dashboard-action-note { max-width: 44ch; color: #6a777b; font-size: 0.78rem; line-height: 1.45; }
 .dashboard-action-error { margin-bottom: 0.65rem; border-radius: 8px; padding: 0.65rem 0.75rem; background: #fbeceb; color: #873a3a; font-size: 0.82rem; }
+.dashboard-past-interests { margin-top: 1rem; border-top: 1px solid #dde0db; padding-top: 1rem; }
+.dashboard-past-interests h3 { margin-bottom: 0.35rem; color: #30464e; font-size: 0.86rem; font-weight: 700; }
+.dashboard-access-controls { padding: 1rem; }
+.dashboard-access-list { border-top: 1px solid #dde0db; }
+.dashboard-access-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.85rem 0.2rem; border-bottom: 1px solid #e5e7e2; }
+.dashboard-access-row > span { display: grid; gap: 0.2rem; color: #243940; }
+.dashboard-access-row small { color: #69767a; font-size: 0.8rem; line-height: 1.45; }
+.dashboard-access-history { margin-top: 1rem; border-top: 1px solid #dde0db; padding-top: 0.9rem; }
+.dashboard-access-history summary { display: inline-flex; align-items: center; gap: 0.45rem; color: #30464e; font-size: 0.86rem; font-weight: 700; cursor: pointer; }
+.dashboard-access-history ol { margin-top: 0.75rem; }
+.dashboard-access-history li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.55rem 0; color: #4f6065; font-size: 0.8rem; }
+.dashboard-access-history time { flex: 0 0 auto; color: #78868a; }
 
 .dashboard-editor-surface { background: #f8f6f0; color: #18272e; }
 .dashboard-editor [class*="text-white"] { color: #33474f !important; }
@@ -76,6 +88,8 @@
   .dashboard-welcome { flex-direction: column; }
   .dashboard-welcome .dashboard-primary-action { width: 100%; }
   .dashboard-interest-actions > a { flex: 1; }
+  .dashboard-access-row { align-items: flex-start; flex-direction: column; }
+  .dashboard-access-history li { flex-direction: column; gap: 0.15rem; }
   .dashboard-editor .fixed.bottom-5 { left: 0.75rem; right: 0.75rem; width: calc(100% - 1.5rem); }
 }
 

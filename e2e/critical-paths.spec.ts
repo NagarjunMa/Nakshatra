@@ -43,6 +43,10 @@ test("public portfolio renders sanitized data and adaptive media", async ({ page
   await expect(page.getByText("Direct contact", { exact: true })).toBeVisible();
   await expect(page.getByText("Ramesh Rao", { exact: true })).toHaveCount(0);
   await expect(page.getByText("family@example.com", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Sign in to show interest" })).toHaveAttribute(
+    "href",
+    "/login?redirect=%2Fp%2Fe2e-portfolio-token"
+  );
 
   const hero = page.locator('.portfolio-hero-media[data-orientation="portrait"]');
   await expect(hero).toBeVisible();

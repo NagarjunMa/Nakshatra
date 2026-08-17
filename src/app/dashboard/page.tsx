@@ -3,6 +3,7 @@ import { getAuthenticatedUser } from "@/lib/auth";
 import type { Metadata } from "next";
 import DashboardClient from "./dashboard-client";
 import type { PortfolioHoroscope, PortfolioMedia } from "@/types/portfolio";
+import { getPortfolioAccessSummary } from "@/features/access/server/access.service";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -22,31 +23,37 @@ export default async function DashboardPage({
     .eq("user_id", user.id)
     .single();
 
-  let viewCount = 0;
-  let media: PortfolioMedia[] = [];
-  let horoscope: PortfolioHoroscope | null = null;
-  if (portfolio) {
-    const { count } = await supabase
-      .from("portfolio_views")
-      .select("*", { count: "exact", head: true })
-      .eq("portfolio_id", portfolio.id);
-    viewCount = count ?? 0;
-
-    const { data: portfolioMedia } = await supabase
-      .from("portfolio_media")
-      .select("id, portfolio_id, storage_path, thumbnail_path, media_type, visibility, sort_order, alt_text, metadata")
-      .eq("portfolio_id", portfolio.id)
-      .in("media_type", ["hero", "gallery"])
-      .order("sort_order");
-    media = (portfolioMedia ?? []) as PortfolioMedia[];
-
-    const { data: portfolioHoroscope } = await supabase
-      .from("portfolio_horoscopes")
-      .select("id, portfolio_id, storage_path, mime_type, file_extension, byte_size, language_label, page_count, published_at, created_at, updated_at")
-      .eq("portfolio_id", portfolio.id)
-      .maybeSingle();
-    horoscope = (portfolioHoroscope as PortfolioHoroscope | null) ?? null;
-  }
+  const dashboardData = portfolio
+    ? await Promise.all([
+      supabase
+        .from("portfolio_views")
+        .select("*", { count: "exact", head: true })
+        .eq("portfolio_id", portfolio.id),
+      supabase
+        .from("portfolio_media")
+        .select("id, portfolio_id, storage_path, thumbnail_path, media_type, visibility, sort_order, alt_text, metadata")
+        .eq("portfolio_id", portfolio.id)
+        .in("media_type", ["hero", "gallery"])
+        .order("sort_order"),
+      supabase
+        .from("portfolio_horoscopes")
+        .select("id, portfolio_id, storage_path, mime_type, file_extension, byte_size, language_label, page_count, published_at, created_at, updated_at")
+        .eq("portfolio_id", portfolio.id)
+        .maybeSingle(),
+      supabase
+        .from("interest_requests")
+        .select("id, viewer_name, viewer_phone, viewer_email, viewer_family_context, message, status, requester_user_id, metadata, created_at")
+        .eq("portfolio_id", portfolio.id)
+        .order("created_at", { ascending: false })
+        .limit(12),
+      getPortfolioAccessSummary(supabase),
+    ])
+    : null;
+  const viewCount = dashboardData?.[0].count ?? 0;
+  const media = (dashboardData?.[1].data ?? []) as PortfolioMedia[];
+  const horoscope = (dashboardData?.[2].data as PortfolioHoroscope | null) ?? null;
+  const interestRows = dashboardData?.[3].data ?? [];
+  const accessSummary = dashboardData?.[4] ?? { grants: [], events: [] };
 
   let shareUrl: string | null = null;
   if (portfolio?.share_token) {
@@ -66,17 +73,15 @@ export default async function DashboardPage({
     daysLeft = Math.max(0, Math.ceil((expiresAt - now) / 86_400_000));
   }
 
-  const { data: interestRows } = portfolio
-    ? await supabase
-        .from("interest_requests")
-        .select("id, viewer_name, viewer_phone, viewer_email, viewer_family_context, message, status, requester_user_id, metadata, created_at")
-        .eq("portfolio_id", portfolio.id)
-        .order("created_at", { ascending: false })
-        .limit(12)
-    : { data: [] };
+  const dashboardRevision = [
+    portfolio?.updated_at ?? "new",
+    interestRows?.[0]?.id ?? "no-interest",
+    accessSummary.events[0]?.id ?? "no-access-event",
+  ].join(":");
 
   return (
     <DashboardClient
+      key={dashboardRevision}
       portfolio={portfolio}
       viewCount={viewCount}
       userEmail={user.email ?? ""}
@@ -86,7 +91,8 @@ export default async function DashboardPage({
       media={media}
       horoscope={horoscope}
       initialEditorOpen={query.edit === "1"}
-      interests={interestRows ?? []}
+      interests={interestRows}
+      accessSummary={accessSummary}
     />
   );
 }
