@@ -216,6 +216,9 @@ const server = createServer((request, response) => {
 
   if (url.pathname === "/health") return sendJson(response, 200, { ok: true });
   if (url.pathname === "/auth/v1/user") return sendJson(response, 401, { message: "Unauthorized" });
+  if (request.method === "POST" && url.pathname === "/auth/v1/otp") {
+    return sendJson(response, 200, {});
+  }
   if (url.pathname === "/rest/v1/public_portfolio_snapshots" || url.pathname === "/rest/v1/portfolio_media") {
     return sendJson(response, 403, { message: "Direct public table access is disabled" });
   }
@@ -233,6 +236,9 @@ const server = createServer((request, response) => {
   }
   if (request.method === "POST" && url.pathname === "/rest/v1/rpc/record_public_portfolio_view") {
     return sendJson(response, 200, true);
+  }
+  if (request.method === "POST" && url.pathname === "/rest/v1/rpc/consume_api_rate_limit") {
+    return sendJson(response, 200, { allowed: true, retryAfter: 0 });
   }
   if (request.method === "POST" && url.pathname.startsWith("/storage/v1/object/sign/photos/")) {
     return sendJson(response, 200, {

@@ -5,11 +5,20 @@ import {
   PortfolioShareLifecycleError,
   unpublishPortfolio,
 } from "@/features/portfolio/server/share-lifecycle.service";
+import { requestSecurityErrorResponse, requireSameOrigin } from "@/lib/api/request-security";
+import { enforceRateLimit } from "@/features/security/server/rate-limit.service";
 
 /** Disables public access to the authenticated owner's portfolio without removing its private draft. */
-export async function POST() {
+export async function POST(request: Request) {
+  try {
+    requireSameOrigin(request);
+  } catch (error) {
+    return requestSecurityErrorResponse(error);
+  }
   const auth = await getApiUser();
   if (auth.status !== "authenticated") return apiAuthFailureResponse(auth);
+  const rateLimited = await enforceRateLimit(auth.supabase, request, "portfolio_unpublish");
+  if (rateLimited) return rateLimited;
 
   try {
     return NextResponse.json(await unpublishPortfolio({ supabase: auth.supabase }));

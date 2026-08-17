@@ -7,12 +7,26 @@ import {
   publishPortfolio,
 } from "@/features/portfolio/server/publish.service";
 import { saveDashboardDraft } from "@/features/portfolio/server/dashboard.service";
+import { readJsonBody, requestSecurityErrorResponse, requireSameOrigin } from "@/lib/api/request-security";
+import { enforceRateLimit } from "@/features/security/server/rate-limit.service";
 
 export async function POST(request: Request) {
+  try {
+    requireSameOrigin(request);
+  } catch (error) {
+    return requestSecurityErrorResponse(error);
+  }
   const auth = await getApiUser();
   if (auth.status !== "authenticated") return apiAuthFailureResponse(auth);
+  const rateLimited = await enforceRateLimit(auth.supabase, request, "portfolio_publish");
+  if (rateLimited) return rateLimited;
 
-  const payload = await request.json().catch(() => null);
+  let payload: { data?: unknown } | null;
+  try {
+    payload = await readJsonBody(request) as { data?: unknown } | null;
+  } catch (error) {
+    return requestSecurityErrorResponse(error);
+  }
   const parsed = portfolioDataSchema.safeParse(payload?.data);
   if (!parsed.success) {
     return NextResponse.json({ code: "PORTFOLIO_DATA_INVALID", error: "Some portfolio details are invalid." }, { status: 400 });

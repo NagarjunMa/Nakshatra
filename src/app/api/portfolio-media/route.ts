@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getApiUser } from "@/lib/auth";
 import { apiAuthFailureResponse } from "@/lib/api/auth-response";
 import {
+  MAX_PHOTO_BYTES,
   mediaVisibilitySchema,
   updatePortfolioMediaSchema,
 } from "@/features/media/server/media.contract";
@@ -11,19 +12,50 @@ import {
   updatePortfolioPhoto,
   uploadPortfolioPhoto,
 } from "@/features/media/server/media.service";
+import {
+  readFormDataBody,
+  readJsonBody,
+  requestSecurityErrorResponse,
+  requireSameOrigin,
+} from "@/lib/api/request-security";
+import { enforceRateLimit } from "@/features/security/server/rate-limit.service";
+
+const PHOTO_FORM_LIMIT = MAX_PHOTO_BYTES + 1024 * 1024;
 
 function errorResponse(error: unknown) {
   if (error instanceof PortfolioMediaError) {
-    return NextResponse.json({ error: error.message }, { status: error.status });
+    const code = error.status === 413
+      ? "PHOTO_TOO_LARGE"
+      : error.status === 415
+        ? "PHOTO_TYPE_INVALID"
+        : error.status === 404
+          ? "PHOTO_NOT_FOUND"
+          : "PHOTO_OPERATION_FAILED";
+    return NextResponse.json({ code, error: error.message }, { status: error.status });
   }
-  return NextResponse.json({ error: "Unable to manage photo" }, { status: 500 });
+  return NextResponse.json(
+    { code: "PHOTO_OPERATION_FAILED", error: "Unable to manage photo" },
+    { status: 500 }
+  );
 }
 
 export async function POST(request: Request) {
+  try {
+    requireSameOrigin(request);
+  } catch (error) {
+    return requestSecurityErrorResponse(error);
+  }
   const auth = await getApiUser();
   if (auth.status !== "authenticated") return apiAuthFailureResponse(auth);
+  const rateLimited = await enforceRateLimit(auth.supabase, request, "photo_upload");
+  if (rateLimited) return rateLimited;
 
-  const formData = await request.formData();
+  let formData: FormData;
+  try {
+    formData = await readFormDataBody(request, PHOTO_FORM_LIMIT);
+  } catch (error) {
+    return requestSecurityErrorResponse(error);
+  }
   const file = formData.get("photo");
   const portfolioId = formData.get("portfolioId");
   const visibility = mediaVisibilitySchema.safeParse(
@@ -52,10 +84,22 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+  try {
+    requireSameOrigin(request);
+  } catch (error) {
+    return requestSecurityErrorResponse(error);
+  }
   const auth = await getApiUser();
   if (auth.status !== "authenticated") return apiAuthFailureResponse(auth);
+  const rateLimited = await enforceRateLimit(auth.supabase, request, "photo_mutation");
+  if (rateLimited) return rateLimited;
 
-  const payload = await request.json().catch(() => null);
+  let payload: unknown;
+  try {
+    payload = await readJsonBody(request);
+  } catch (error) {
+    return requestSecurityErrorResponse(error);
+  }
   const parsed = updatePortfolioMediaSchema.safeParse(payload);
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid photo update" }, { status: 400 });
@@ -71,8 +115,15 @@ export async function PATCH(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  try {
+    requireSameOrigin(request);
+  } catch (error) {
+    return requestSecurityErrorResponse(error);
+  }
   const auth = await getApiUser();
   if (auth.status !== "authenticated") return apiAuthFailureResponse(auth);
+  const rateLimited = await enforceRateLimit(auth.supabase, request, "photo_mutation");
+  if (rateLimited) return rateLimited;
 
   const mediaId = new URL(request.url).searchParams.get("mediaId");
   if (!mediaId) return NextResponse.json({ error: "Photo is required" }, { status: 400 });

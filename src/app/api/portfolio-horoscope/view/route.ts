@@ -2,10 +2,13 @@ import { NextResponse } from "next/server";
 import { getApiUser } from "@/lib/auth";
 import { apiAuthFailureResponse } from "@/lib/api/auth-response";
 import type { PortfolioHoroscope } from "@/types/portfolio";
+import { enforceRateLimit } from "@/features/security/server/rate-limit.service";
 
-export async function GET() {
+export async function GET(request: Request) {
   const auth = await getApiUser();
   if (auth.status !== "authenticated") return apiAuthFailureResponse(auth);
+  const rateLimited = await enforceRateLimit(auth.supabase, request, "horoscope_view");
+  if (rateLimited) return rateLimited;
 
   const { data: portfolio } = await auth.supabase
     .from("portfolios")

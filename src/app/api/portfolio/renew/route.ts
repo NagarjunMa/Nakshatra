@@ -5,10 +5,19 @@ import {
   PortfolioRenewalError,
   renewPortfolioLink,
 } from "@/features/portfolio/server/renew.service";
+import { requestSecurityErrorResponse, requireSameOrigin } from "@/lib/api/request-security";
+import { enforceRateLimit } from "@/features/security/server/rate-limit.service";
 
-export async function POST() {
+export async function POST(request: Request) {
+  try {
+    requireSameOrigin(request);
+  } catch (error) {
+    return requestSecurityErrorResponse(error);
+  }
   const auth = await getApiUser();
   if (auth.status !== "authenticated") return apiAuthFailureResponse(auth);
+  const rateLimited = await enforceRateLimit(auth.supabase, request, "portfolio_renew");
+  if (rateLimited) return rateLimited;
 
   try {
     return NextResponse.json(await renewPortfolioLink({ supabase: auth.supabase }));

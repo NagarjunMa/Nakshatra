@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(64);
+select plan(65);
 
 insert into auth.users (id, aud, role, email, created_at, updated_at)
 values
@@ -145,6 +145,10 @@ select is(public.resolve_approved_portfolio('phase2_secure_token_1'), null, 'ano
 
 set local request.jwt.claim.sub = 'a1000000-0000-4000-8000-000000000002';
 select is(public.resolve_approved_portfolio('phase2_secure_token_1') #>> '{data,personal,name}', 'Aditi Full', 'the approved viewer receives the Full View projection');
+select ok(
+  (public.resolve_approved_portfolio('phase2_secure_token_1') ->> 'accessExpiresAt')::timestamptz > now(),
+  'the approved projection includes the grant expiry used to bound signed capabilities'
+);
 reset role;
 select is((select count(*)::integer from public.access_audit_events where event_type = 'grant_accessed'), 1, 'approved access is recorded without sensitive payload data');
 set local role authenticated;

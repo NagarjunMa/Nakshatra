@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createCanonicalAppUrl, sanitizeInternalRedirect } from "@/lib/security/redirect";
+import { getRequestId, logServerError } from "@/lib/security/logging";
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
+  const requestId = getRequestId(request);
+  const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/dashboard";
+  const next = sanitizeInternalRedirect(searchParams.get("next"));
 
   if (code) {
     const supabase = await createClient();
@@ -38,17 +41,18 @@ export async function GET(request: Request) {
               });
 
             if (insertError) {
-              console.error("Portfolio creation failed:", insertError);
+              logServerError("auth.portfolio.bootstrap_failed", requestId, insertError);
             }
           }
         } catch (err) {
-          console.error("Portfolio check/create error:", err);
+          logServerError("auth.portfolio.bootstrap_failed", requestId, err);
         }
       }
 
-      return NextResponse.redirect(`${origin}${next}`);
+      return NextResponse.redirect(createCanonicalAppUrl(next, request.url));
     }
   }
 
-  return NextResponse.redirect(`${origin}/login?error=auth_failed`);
+  logServerError("auth.callback.failed", requestId);
+  return NextResponse.redirect(createCanonicalAppUrl("/login?error=auth_failed", request.url));
 }

@@ -3,6 +3,12 @@ import { z } from "zod";
 import { getApiUser } from "@/lib/auth";
 import { apiAuthFailureResponse } from "@/lib/api/auth-response";
 import { decideInterestRequest } from "@/features/interest/server/interest-decision.service";
+import {
+  readJsonBody,
+  requestSecurityErrorResponse,
+  requireSameOrigin,
+} from "@/lib/api/request-security";
+import { enforceRateLimit } from "@/features/security/server/rate-limit.service";
 
 const decisionSchema = z.object({
   decision: z.enum(["approved", "rejected", "reopened"]),
@@ -13,10 +19,23 @@ export async function PATCH(
   request: Request,
   context: { params: Promise<{ id: string }> }
 ) {
+  try {
+    requireSameOrigin(request);
+  } catch (error) {
+    return requestSecurityErrorResponse(error);
+  }
   const auth = await getApiUser();
   if (auth.status !== "authenticated") return apiAuthFailureResponse(auth);
+  const rateLimited = await enforceRateLimit(auth.supabase, request, "interest_decision");
+  if (rateLimited) return rateLimited;
 
-  const parsed = decisionSchema.safeParse(await request.json().catch(() => null));
+  let payload: unknown;
+  try {
+    payload = await readJsonBody(request);
+  } catch (error) {
+    return requestSecurityErrorResponse(error);
+  }
+  const parsed = decisionSchema.safeParse(payload);
   if (!parsed.success) {
     return NextResponse.json(
       { code: "INTEREST_DECISION_INVALID", error: "Choose approve, decline, or reopen." },

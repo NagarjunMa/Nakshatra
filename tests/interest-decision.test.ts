@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const getApiUser = vi.hoisted(() => vi.fn());
+const enforceRateLimit = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/auth", () => ({ getApiUser }));
+vi.mock("@/features/security/server/rate-limit.service", () => ({ enforceRateLimit }));
 
 import { PATCH } from "../src/app/api/interest/[id]/route";
 
@@ -18,13 +20,16 @@ function authenticatedClient(result: string = "approved", error: unknown = null)
 function patch(decision: unknown, id = "11111111-1111-4111-8111-111111111111") {
   return PATCH(new Request("http://local/api/interest/request", {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", Origin: "http://local" },
     body: JSON.stringify({ decision }),
   }), { params: Promise.resolve({ id }) });
 }
 
 describe("interest decision endpoint", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    enforceRateLimit.mockResolvedValue(null);
+  });
 
   it("rejects requests without an authenticated owner", async () => {
     getApiUser.mockResolvedValue({ status: "missing_session" });

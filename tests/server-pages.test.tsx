@@ -80,6 +80,7 @@ import RootLayout from "../src/app/layout";
 import DashboardLoading from "../src/app/dashboard/loading";
 import EditLoading from "../src/app/edit/loading";
 import PreviewLoading from "../src/app/preview/loading";
+import AppError from "../src/app/error";
 
 const data: PortfolioData = {
   personal: { name: "Aditi Rao", dob: "1996-08-12", gender: "female" },
@@ -176,7 +177,7 @@ describe("public portfolio pages", () => {
   it("uses the approved projection only when row-level access returns an approved snapshot", async () => {
     mocks.authUser = { id: "viewer-1" };
     mocks.outcomes.resolve_public_portfolio = { data: publicPayload };
-    mocks.outcomes.resolve_approved_portfolio = { data: { ...publicPayload, data: { ...data, personal: { ...data.personal, name: "Approved Aditi" } } } };
+    mocks.outcomes.resolve_approved_portfolio = { data: { ...publicPayload, accessExpiresAt: new Date(Date.now() + 600_000).toISOString(), data: { ...data, personal: { ...data.personal, name: "Approved Aditi" } } } };
     render(await PublicBiodataPage({ params: Promise.resolve({ token: "token" }) }));
     expect(screen.getByTestId("template")).toHaveTextContent("Approved Aditi:approved");
     expect(mocks.rpc).toHaveBeenCalledWith("resolve_approved_portfolio", { p_share_token: "token" });
@@ -194,22 +195,23 @@ describe("public portfolio pages", () => {
     expect(mocks.rpc).toHaveBeenCalledWith("resolve_approved_portfolio", { p_share_token: "token" });
   });
 
-  it("keeps the separate horoscope viewer gated and uses a neutral Word download", async () => {
+  it("keeps the separate horoscope image viewer gated with a grant-bounded URL", async () => {
     mocks.outcomes.resolve_approved_horoscope = { data: null };
     await expect(HoroscopePage({ params: Promise.resolve({ token: "token" }) })).rejects.toThrow("NOT_FOUND");
 
     mocks.outcomes.resolve_approved_horoscope = { data: {
-      accessPath: "owner/portfolio-1/private.docx",
-      mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      fileExtension: "docx",
+      accessPath: "owner/portfolio-1/private.webp",
+      mimeType: "image/webp",
+      fileExtension: "webp",
       languageLabel: "Kannada",
       pageCount: null,
       profileName: "Aditi Rao",
+      accessExpiresAt: new Date(Date.now() + 600_000).toISOString(),
     } };
     render(await HoroscopePage({ params: Promise.resolve({ token: "token" }) }));
     expect(screen.getByRole("heading", { name: /original horoscope/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /open document/i })).toHaveAttribute("href", "https://signed.test/hero");
-    expect(mocks.signedUrl).toHaveBeenCalledWith("owner/portfolio-1/private.docx", 300, { download: "horoscope.docx" });
+    expect(screen.getByRole("img", { name: /scanned original horoscope/i })).toHaveAttribute("src", "https://signed.test/hero");
+    expect(mocks.signedUrl).toHaveBeenCalledWith("owner/portfolio-1/private.webp", expect.any(Number), undefined);
   });
 
   it("generates fallback and hero-backed Open Graph images", async () => {
@@ -236,5 +238,12 @@ describe("static app surfaces", () => {
     expect(document.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0);
     rerender(<PreviewLoading />);
     expect(document.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0);
+  });
+
+  it("never renders raw server error details", () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    render(<AppError error={Object.assign(new Error("database password leaked"), { digest: "safe-digest" })} reset={vi.fn()} />);
+    expect(screen.getByText(/could not complete this request/i)).toBeInTheDocument();
+    expect(screen.queryByText(/database password/i)).not.toBeInTheDocument();
   });
 });

@@ -13,6 +13,7 @@ const updatePortfolioPhoto = vi.hoisted(() => vi.fn());
 const deletePortfolioPhoto = vi.hoisted(() => vi.fn());
 const uploadHoroscope = vi.hoisted(() => vi.fn());
 const deleteHoroscope = vi.hoisted(() => vi.fn());
+const enforceRateLimit = vi.hoisted(() => vi.fn());
 
 vi.mock("../src/lib/auth", () => ({ getApiUser }));
 vi.mock("../src/lib/supabase/server", () => ({ createClient }));
@@ -44,6 +45,7 @@ vi.mock("../src/features/horoscope/server/horoscope.service", async (importOrigi
   const actual = await importOriginal<typeof import("../src/features/horoscope/server/horoscope.service")>();
   return { ...actual, uploadHoroscope, deleteHoroscope };
 });
+vi.mock("../src/features/security/server/rate-limit.service", () => ({ enforceRateLimit }));
 
 import { GET as authCallback } from "../src/app/api/auth/callback/route";
 import { PUT as dashboardPut } from "../src/app/api/dashboard/route";
@@ -72,12 +74,25 @@ const data = {
 };
 
 function jsonRequest(url: string, method: string, body: unknown) {
-  return new Request(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  return new Request(url, {
+    method,
+    headers: { "Content-Type": "application/json", Origin: new URL(url).origin },
+    body: JSON.stringify(body),
+  });
+}
+
+function mutationRequest(url: string, method = "POST", body?: BodyInit) {
+  return new Request(url, {
+    method,
+    headers: { Origin: new URL(url).origin },
+    body,
+  });
 }
 
 describe("API route authentication", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    enforceRateLimit.mockResolvedValue(null);
     getApiUser.mockResolvedValue(actor);
     saveDashboardDraft.mockResolvedValue({ portfolioId: "portfolio" });
     publishPortfolio.mockResolvedValue({ shareUrl: "https://example.test/p/token", expiresAt: "2099-01-01", action: "created" });
@@ -90,14 +105,14 @@ describe("API route authentication", () => {
   it.each([
     ["dashboard", () => dashboardPut(jsonRequest("http://local/api/dashboard", "PUT", { data }))],
     ["publish", () => publishPost(jsonRequest("http://local/api/portfolio/publish", "POST", { data }))],
-    ["renew", () => renewPost()],
-    ["rotate", () => rotatePost()],
-    ["unpublish", () => unpublishPost()],
+    ["renew", () => renewPost(mutationRequest("http://local/api/portfolio/renew"))],
+    ["rotate", () => rotatePost(mutationRequest("http://local/api/portfolio/share/rotate"))],
+    ["unpublish", () => unpublishPost(mutationRequest("http://local/api/portfolio/share/unpublish"))],
     ["access grant", () => accessGrantPatch(
       jsonRequest(`http://local/api/access-grants/${accessGrantId}`, "PATCH", { action: "renew" }),
       { params: Promise.resolve({ id: accessGrantId }) }
     )],
-    ["owner horoscope view", () => horoscopeView()],
+    ["owner horoscope view", () => horoscopeView(new Request("http://local/api/portfolio-horoscope/view"))],
   ])("rejects missing sessions on %s", async (_name, call) => {
     getApiUser.mockResolvedValueOnce({ status: "missing_session" });
     expect((await call()).status).toBe(401);
@@ -107,6 +122,7 @@ describe("API route authentication", () => {
 describe("dashboard and portfolio lifecycle routes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    enforceRateLimit.mockResolvedValue(null);
     getApiUser.mockResolvedValue(actor);
     saveDashboardDraft.mockResolvedValue({ portfolioId: "portfolio" });
     publishPortfolio.mockResolvedValue({ shareUrl: "https://example.test/p/token", expiresAt: "2099-01-01", action: "created" });
@@ -117,7 +133,7 @@ describe("dashboard and portfolio lifecycle routes", () => {
   });
 
   it("validates and saves dashboard drafts", async () => {
-    expect((await dashboardPut(new Request("http://local/api/dashboard", { method: "PUT", body: "{" }))).status).toBe(400);
+    expect((await dashboardPut(mutationRequest("http://local/api/dashboard", "PUT", "{"))).status).toBe(400);
     expect((await dashboardPut(jsonRequest("http://local/api/dashboard", "PUT", { data: { personal: { gender: "other" } } }))).status).toBe(400);
     const response = await dashboardPut(jsonRequest("http://local/api/dashboard", "PUT", { data }));
     expect(response.status).toBe(200);
@@ -132,7 +148,7 @@ describe("dashboard and portfolio lifecycle routes", () => {
   });
 
   it("publishes valid data and reports validation and domain errors", async () => {
-    expect((await publishPost(new Request("http://local/api/portfolio/publish", { method: "POST", body: "{" }))).status).toBe(400);
+    expect((await publishPost(mutationRequest("http://local/api/portfolio/publish", "POST", "{"))).status).toBe(400);
     const success = await publishPost(jsonRequest("http://local/api/portfolio/publish", "POST", { data }));
     expect(await success.json()).toMatchObject({ ok: true, action: "created" });
     expect(saveDashboardDraft).toHaveBeenCalledBefore(publishPortfolio);
@@ -144,16 +160,16 @@ describe("dashboard and portfolio lifecycle routes", () => {
   });
 
   it("handles renew, rotate, and unpublish success and failures", async () => {
-    expect((await renewPost()).status).toBe(200);
-    expect(await (await rotatePost()).json()).toMatchObject({ shareToken: "new" });
-    expect(await (await unpublishPost()).json()).toEqual({ status: "unpublished" });
+    expect((await renewPost(mutationRequest("http://local/api/portfolio/renew"))).status).toBe(200);
+    expect(await (await rotatePost(mutationRequest("http://local/api/portfolio/share/rotate"))).json()).toMatchObject({ shareToken: "new" });
+    expect(await (await unpublishPost(mutationRequest("http://local/api/portfolio/share/unpublish"))).json()).toEqual({ status: "unpublished" });
 
     renewPortfolioLink.mockRejectedValueOnce(new PortfolioRenewalError("Not published", "PORTFOLIO_NOT_PUBLISHED", 400));
-    expect((await renewPost()).status).toBe(400);
+    expect((await renewPost(mutationRequest("http://local/api/portfolio/renew"))).status).toBe(400);
     rotatePortfolioLink.mockRejectedValueOnce(new PortfolioShareLifecycleError("Cannot rotate", "ROTATE_FAILED", 409));
-    expect((await rotatePost()).status).toBe(409);
+    expect((await rotatePost(mutationRequest("http://local/api/portfolio/share/rotate"))).status).toBe(409);
     unpublishPortfolio.mockRejectedValueOnce(new Error("private database detail"));
-    const response = await unpublishPost();
+    const response = await unpublishPost(mutationRequest("http://local/api/portfolio/share/unpublish"));
     expect(response.status).toBe(500);
     expect(await response.json()).toMatchObject({ code: "PORTFOLIO_UNPUBLISH_FAILED" });
   });
@@ -190,6 +206,7 @@ describe("dashboard and portfolio lifecycle routes", () => {
 describe("portfolio media route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    enforceRateLimit.mockResolvedValue(null);
     getApiUser.mockResolvedValue(actor);
     uploadPortfolioPhoto.mockResolvedValue({ id: "media" });
     updatePortfolioPhoto.mockResolvedValue({ id: "media", visibility: "public" });
@@ -198,21 +215,21 @@ describe("portfolio media route", () => {
 
   it("validates and uploads a photo", async () => {
     const invalid = new FormData();
-    expect((await mediaPost(new Request("http://local/api/portfolio-media", { method: "POST", body: invalid }))).status).toBe(400);
+    expect((await mediaPost(mutationRequest("http://local/api/portfolio-media", "POST", invalid))).status).toBe(400);
     const form = new FormData();
     form.set("photo", new File(["image"], "photo.png", { type: "image/png" }));
     form.set("portfolioId", "portfolio");
     form.set("visibility", "public");
-    expect(await (await mediaPost(new Request("http://local/api/portfolio-media", { method: "POST", body: form }))).json()).toEqual({ media: { id: "media" } });
+    expect(await (await mediaPost(mutationRequest("http://local/api/portfolio-media", "POST", form))).json()).toEqual({ media: { id: "media" } });
   });
 
   it("validates, updates, and deletes media", async () => {
-    expect((await mediaPatch(new Request("http://local/api/portfolio-media", { method: "PATCH", body: "{" }))).status).toBe(400);
+    expect((await mediaPatch(mutationRequest("http://local/api/portfolio-media", "PATCH", "{"))).status).toBe(400);
     expect((await mediaPatch(jsonRequest("http://local/api/portfolio-media", "PATCH", { mediaId: "bad" }))).status).toBe(400);
     const mediaId = "8f378bb8-ec91-4f3f-90ef-b7eea2c01506";
     expect((await mediaPatch(jsonRequest("http://local/api/portfolio-media", "PATCH", { mediaId, visibility: "public" }))).status).toBe(200);
-    expect((await mediaDelete(new Request("http://local/api/portfolio-media", { method: "DELETE" }))).status).toBe(400);
-    expect((await mediaDelete(new Request(`http://local/api/portfolio-media?mediaId=${mediaId}`, { method: "DELETE" }))).status).toBe(200);
+    expect((await mediaDelete(mutationRequest("http://local/api/portfolio-media", "DELETE"))).status).toBe(400);
+    expect((await mediaDelete(mutationRequest(`http://local/api/portfolio-media?mediaId=${mediaId}`, "DELETE"))).status).toBe(200);
   });
 
   it("preserves domain status and hides unknown errors", async () => {
@@ -220,9 +237,12 @@ describe("portfolio media route", () => {
     const mediaId = "8f378bb8-ec91-4f3f-90ef-b7eea2c01506";
     expect((await mediaPatch(jsonRequest("http://local/api/portfolio-media", "PATCH", { mediaId, visibility: "public" }))).status).toBe(404);
     deletePortfolioPhoto.mockRejectedValueOnce(new Error("secret"));
-    const response = await mediaDelete(new Request(`http://local/api/portfolio-media?mediaId=${mediaId}`, { method: "DELETE" }));
+    const response = await mediaDelete(mutationRequest(`http://local/api/portfolio-media?mediaId=${mediaId}`, "DELETE"));
     expect(response.status).toBe(500);
-    expect(await response.json()).toEqual({ error: "Unable to manage photo" });
+    expect(await response.json()).toEqual({
+      code: "PHOTO_OPERATION_FAILED",
+      error: "Unable to manage photo",
+    });
   });
 });
 
@@ -231,6 +251,7 @@ describe("horoscope attachment route", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    enforceRateLimit.mockResolvedValue(null);
     getApiUser.mockResolvedValue(actor);
     uploadHoroscope.mockResolvedValue({ id: "horoscope", portfolio_id: portfolioId });
     deleteHoroscope.mockResolvedValue(undefined);
@@ -238,12 +259,12 @@ describe("horoscope attachment route", () => {
 
   it("requires authentication and validates upload identity", async () => {
     getApiUser.mockResolvedValueOnce({ status: "missing_session" });
-    expect((await horoscopePost(new Request("http://local/api/portfolio-horoscope", { method: "POST", body: new FormData() }))).status).toBe(401);
+    expect((await horoscopePost(mutationRequest("http://local/api/portfolio-horoscope", "POST", new FormData()))).status).toBe(401);
 
     const invalid = new FormData();
     invalid.set("horoscope", new File(["%PDF-1.7"], "chart.pdf", { type: "application/pdf" }));
     invalid.set("portfolioId", "not-a-uuid");
-    expect((await horoscopePost(new Request("http://local/api/portfolio-horoscope", { method: "POST", body: invalid }))).status).toBe(400);
+    expect((await horoscopePost(mutationRequest("http://local/api/portfolio-horoscope", "POST", invalid))).status).toBe(400);
   });
 
   it("uploads and deletes the one attachment", async () => {
@@ -251,11 +272,11 @@ describe("horoscope attachment route", () => {
     form.set("horoscope", new File(["%PDF-1.7"], "chart.pdf", { type: "application/pdf" }));
     form.set("portfolioId", portfolioId);
     form.set("language", "Kannada");
-    expect(await (await horoscopePost(new Request("http://local/api/portfolio-horoscope", { method: "POST", body: form }))).json()).toMatchObject({ horoscope: { id: "horoscope" } });
+    expect(await (await horoscopePost(mutationRequest("http://local/api/portfolio-horoscope", "POST", form))).json()).toMatchObject({ horoscope: { id: "horoscope" } });
     expect(uploadHoroscope).toHaveBeenCalledWith(expect.objectContaining({ portfolioId, language: "Kannada" }));
 
-    expect((await horoscopeDelete(new Request("http://local/api/portfolio-horoscope", { method: "DELETE" }))).status).toBe(400);
-    expect((await horoscopeDelete(new Request(`http://local/api/portfolio-horoscope?horoscopeId=${portfolioId}`, { method: "DELETE" }))).status).toBe(200);
+    expect((await horoscopeDelete(mutationRequest("http://local/api/portfolio-horoscope", "DELETE"))).status).toBe(400);
+    expect((await horoscopeDelete(mutationRequest(`http://local/api/portfolio-horoscope?horoscopeId=${portfolioId}`, "DELETE"))).status).toBe(200);
   });
 
   it("preserves safe domain errors", async () => {
@@ -263,9 +284,12 @@ describe("horoscope attachment route", () => {
     const form = new FormData();
     form.set("horoscope", new File(["%PDF-1.7"], "chart.pdf", { type: "application/pdf" }));
     form.set("portfolioId", portfolioId);
-    const response = await horoscopePost(new Request("http://local/api/portfolio-horoscope", { method: "POST", body: form }));
+    const response = await horoscopePost(mutationRequest("http://local/api/portfolio-horoscope", "POST", form));
     expect(response.status).toBe(413);
-    expect(await response.json()).toEqual({ error: "Use a file up to 20MB" });
+    expect(await response.json()).toEqual({
+      code: "HOROSCOPE_TOO_LARGE",
+      error: "Use a file up to 20MB",
+    });
   });
 
   it("opens the owner's attachment through a short-lived signed URL", async () => {
@@ -302,7 +326,7 @@ describe("horoscope attachment route", () => {
       supabase: { from, storage: { from: vi.fn(() => ({ createSignedUrl })) } },
     });
 
-    const response = await horoscopeView();
+    const response = await horoscopeView(new Request("http://local/api/portfolio-horoscope/view"));
 
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toBe("https://storage.test/chart.pdf?token=short-lived");
@@ -312,7 +336,8 @@ describe("horoscope attachment route", () => {
 
 describe("authentication callback", () => {
   it("redirects failed callbacks to login", async () => {
-    expect((await authCallback(new Request("http://local/api/auth/callback"))).headers.get("location")).toBe("http://local/login?error=auth_failed");
+    const origin = process.env.NEXT_PUBLIC_APP_URL ? new URL(process.env.NEXT_PUBLIC_APP_URL).origin : "http://local";
+    expect((await authCallback(new Request("http://local/api/auth/callback"))).headers.get("location")).toBe(`${origin}/login?error=auth_failed`);
   });
 
   it("creates a portfolio for a new authenticated user", async () => {
@@ -329,7 +354,8 @@ describe("authentication callback", () => {
       from,
     });
     const response = await authCallback(new Request("http://local/api/auth/callback?code=ok&next=/edit"));
-    expect(response.headers.get("location")).toBe("http://local/edit");
+    const origin = process.env.NEXT_PUBLIC_APP_URL ? new URL(process.env.NEXT_PUBLIC_APP_URL).origin : "http://local";
+    expect(response.headers.get("location")).toBe(`${origin}/edit`);
     expect(insert).toHaveBeenCalled();
   });
 });

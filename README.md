@@ -17,7 +17,7 @@ Fill a form once. Get a shareable link. Update anytime — the link always shows
 - **Rashi-rooted design** — theme colors and constellation backgrounds from Vedic moon sign
 - **WhatsApp-optimized** — dynamic OG meta tags for rich link previews
 - **Mobile-first** — designed for phone-first creation and viewing
-- **Auto-save** — debounced saves every second, no progress lost
+- **Explicit saves** — private drafts and published snapshots have separate update actions
 - **90-day link expiry** — renewable from dashboard, one click
 - **Photo pipeline** — server-side sharp processing → WebP main + thumbnail
 - **Editorial template** — CelestialUnion with glassmorphism, constellation backdrop
@@ -38,7 +38,7 @@ Fill a form once. Get a shareable link. Update anytime — the link always shows
 | Auth | Google OAuth + Supabase Magic Link |
 | Landing fonts | Harmond ExtraBoldExpanded, MangoGrotesque (Light/Regular/Medium/SemiBold) |
 | Landing bg | `shaders` (Swirl + ChromaFlow + FlutedGlass + FilmGrain) |
-| Email | Resend (expiry reminders) |
+| Email | Supabase Auth magic links |
 | Hosting | Vercel / Docker |
 
 ## Getting Started
@@ -77,7 +77,7 @@ Fill a form once. Get a shareable link. Update anytime — the link always shows
 5. Enable Google OAuth in Supabase dashboard:
    Authentication → Providers → Google → Add Client ID + Secret.
 
-6. Create `photos` storage bucket in Supabase (Public).
+6. Create private `photos` and `horoscopes` storage buckets in Supabase. Access is granted only through RLS and short-lived signed URLs.
 
 7. Start dev server:
    ```bash

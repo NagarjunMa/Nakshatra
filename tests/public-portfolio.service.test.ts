@@ -73,6 +73,7 @@ describe("public portfolio service", () => {
   it("uses an approved projection only when the database returns one", async () => {
     const approved = {
       ...publicPayload,
+      accessExpiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
       data: { ...publicPayload.data, personal: { ...publicPayload.data.personal, name: "Approved Aditi" } },
     };
     const fixture = client({
@@ -88,21 +89,22 @@ describe("public portfolio service", () => {
     const fixture = client({
       record_public_portfolio_view: { data: true },
       resolve_approved_horoscope: { data: {
-        accessPath: "owner/portfolio/private.docx",
-        mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        fileExtension: "docx",
+        accessPath: "owner/portfolio/private.webp",
+        mimeType: "image/webp",
+        fileExtension: "webp",
         profileName: "Aditi",
+        accessExpiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
       } },
     });
     await recordPublicPortfolioView(fixture.supabase, "valid-token");
     expect(fixture.rpc).toHaveBeenCalledWith("record_public_portfolio_view", { p_share_token: "valid-token" });
 
     const horoscope = await resolveApprovedHoroscope(fixture.supabase, "valid-token");
-    expect(horoscope?.signedUrl).toContain("private.docx");
+    expect(horoscope?.signedUrl).toContain("private.webp");
     expect(fixture.createSignedUrl).toHaveBeenCalledWith(
-      "owner/portfolio/private.docx",
-      300,
-      { download: "horoscope.docx" }
+      "owner/portfolio/private.webp",
+      expect.any(Number),
+      undefined
     );
   });
 });

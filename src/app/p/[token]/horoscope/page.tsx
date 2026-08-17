@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Download, FileText, LockKeyhole, ShieldCheck } from "lucide-react";
+import { ArrowLeft, LockKeyhole, ShieldCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { horoscopeFormatLabel } from "@/features/horoscope/server/horoscope.contract";
 import { resolveApprovedHoroscope } from "@/features/portfolio/server/public-portfolio.service";
@@ -46,26 +46,11 @@ export default async function HoroscopePage({ params }: { params: Promise<{ toke
           <p className="inline-flex items-center gap-2 text-xs text-[#aebbb8]"><LockKeyhole className="h-3.5 w-3.5" /> Access expires when approval is revoked.</p>
         </div>
 
-        {horoscope.mimeType === "application/pdf" ? (
-          <section className="overflow-hidden rounded-2xl border border-white/10 bg-[#f3efe5] shadow-2xl" aria-label="Horoscope PDF viewer">
-            <iframe src={horoscope.signedUrl} title="Original horoscope PDF" className="h-[78vh] min-h-[560px] w-full" referrerPolicy="no-referrer" />
-          </section>
-        ) : horoscope.mimeType === "image/webp" ? (
-          <section className="flex min-h-[60vh] items-start justify-center overflow-auto rounded-2xl border border-white/10 bg-[#e7e1d5] p-3 sm:p-6" aria-label="Horoscope image viewer">
-            {/* The image is served from a five-minute owner/approved-viewer signed URL. */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={horoscope.signedUrl} alt="Scanned original horoscope" className="h-auto max-w-full rounded-sm shadow-xl" referrerPolicy="no-referrer" />
-          </section>
-        ) : (
-          <section className="flex min-h-[420px] flex-col items-center justify-center rounded-2xl border border-white/10 bg-[#111b2c] px-6 text-center">
-            <span className="flex h-16 w-16 items-center justify-center rounded-2xl border border-[#bba269]/25 bg-[#bba269]/10 text-[#d6bd80]"><FileText className="h-8 w-8" /></span>
-            <h2 className="mt-5 text-2xl font-semibold">Open the Word document</h2>
-            <p className="mt-2 max-w-md text-sm leading-6 text-[#aebbb8]">Browsers cannot safely preview a private Word file. Open the neutral, approval-gated download in your document app.</p>
-            <a href={horoscope.signedUrl} className="mt-6 inline-flex h-11 items-center gap-2 rounded-lg bg-[#d6bd80] px-5 text-sm font-semibold text-[#111827] hover:bg-[#ecd59b]">
-              <Download className="h-4 w-4" /> Open document
-            </a>
-          </section>
-        )}
+        <section className="flex min-h-[60vh] items-start justify-center overflow-auto rounded-2xl border border-white/10 bg-[#e7e1d5] p-3 sm:p-6" aria-label="Horoscope image viewer">
+          {/* The image is served from a grant-bounded owner/approved-viewer signed URL. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={horoscope.signedUrl} alt="Scanned original horoscope" className="h-auto max-w-full rounded-sm shadow-xl" referrerPolicy="no-referrer" />
+        </section>
       </div>
     </main>
   );

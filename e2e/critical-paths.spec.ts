@@ -18,6 +18,9 @@ test("sign-in form preserves a safe post-auth destination", async ({ page }) => 
   await expect(page.getByRole("button", { name: /email me a sign-in link/i })).toBeEnabled();
   await page.getByLabel(/email/i).fill("person@example.com");
   await expect(page.getByLabel(/email/i)).toHaveValue("person@example.com");
+  await page.getByRole("button", { name: /email me a sign-in link/i }).click();
+  await expect(page.getByRole("heading", { name: /check your inbox/i })).toBeVisible();
+  await expect(page.getByText("person@example.com", { exact: true })).toBeVisible();
 });
 
 test("unauthenticated owners are redirected away from protected screens", async ({ page }) => {

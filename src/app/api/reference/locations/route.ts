@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { getApiUser } from "@/lib/auth";
 import { apiAuthFailureResponse } from "@/lib/api/auth-response";
+import { enforceRateLimit } from "@/features/security/server/rate-limit.service";
 
 const querySchema = z.discriminatedUnion("level", [
   z.object({ level: z.literal("countries") }),
@@ -24,6 +25,8 @@ function safePrefix(value: string) {
 export async function GET(request: Request) {
   const auth = await getApiUser();
   if (auth.status !== "authenticated") return apiAuthFailureResponse(auth);
+  const rateLimited = await enforceRateLimit(auth.supabase, request, "location_search");
+  if (rateLimited) return rateLimited;
 
   const url = new URL(request.url);
   const parsed = querySchema.safeParse({
