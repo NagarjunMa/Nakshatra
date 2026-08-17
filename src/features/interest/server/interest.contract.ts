@@ -9,7 +9,13 @@ export const interestRequestSchema = z.object({
   location: z.string().trim().min(2).max(180),
   familyContext: z.string().trim().min(10).max(600),
   message: z.string().trim().min(5).max(600),
-  portfolioUrl: z.union([z.literal(""), z.string().trim().url().max(500)]).optional(),
+  portfolioUrl: z.union([
+    z.literal(""),
+    z.string().trim().url().max(500).refine(
+      (value) => new URL(value).protocol === "https:",
+      "Portfolio links must use HTTPS"
+    ),
+  ]).optional(),
 });
 
 export type InterestRequestInput = z.infer<typeof interestRequestSchema>;

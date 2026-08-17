@@ -19,8 +19,9 @@ export const resolvedPortfolioSchema = z.object({
   templateId: z.number().int().positive(),
   themeColor: z.string().nullable().optional(),
   sunSign: z.string().nullable().optional(),
+  accessExpiresAt: z.string().refine((value) => Number.isFinite(Date.parse(value))).optional(),
   horoscope: z.object({
-    fileExtension: z.enum(["pdf", "doc", "docx", "webp"]),
+    fileExtension: z.literal("webp"),
     languageLabel: z.string().nullable().optional(),
     pageCount: z.number().int().positive().nullable().optional(),
   }).nullable().optional(),
@@ -29,16 +30,12 @@ export const resolvedPortfolioSchema = z.object({
 
 export const approvedHoroscopeSchema = z.object({
   accessPath: z.string().min(1).max(1024),
-  mimeType: z.enum([
-    "application/pdf",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "image/webp",
-  ]),
-  fileExtension: z.enum(["pdf", "doc", "docx", "webp"]),
+  mimeType: z.literal("image/webp"),
+  fileExtension: z.literal("webp"),
   languageLabel: z.string().nullable().optional(),
   pageCount: z.number().int().positive().nullable().optional(),
   profileName: z.string().nullable().optional(),
+  accessExpiresAt: z.string().refine((value) => Number.isFinite(Date.parse(value))),
 });
 
 export type PublicMediaDescriptor = z.infer<typeof publicMediaDescriptorSchema>;

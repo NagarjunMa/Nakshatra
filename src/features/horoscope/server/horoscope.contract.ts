@@ -1,6 +1,9 @@
 import { z } from "zod/v4";
 
 export const MAX_HOROSCOPE_BYTES = 20 * 1024 * 1024;
+export const MAX_HOROSCOPE_PIXELS = 60_000_000;
+export const MAX_HOROSCOPE_DIMENSION = 20_000;
+export const HOROSCOPE_PROCESSING_TIMEOUT_SECONDS = 15;
 
 export const horoscopeLanguageSchema = z
   .string()
@@ -18,9 +21,6 @@ export interface DetectedHoroscopeFile {
   kind: "pdf" | "word" | "image";
 }
 
-const PDF_DANGEROUS_MARKERS = ["/JavaScript", "/JS", "/Launch", "/EmbeddedFile"];
-const OFFICE_DANGEROUS_MARKERS = ["vbaProject.bin", "_VBA_PROJECT", "Macros/", "embeddings/oleObject"];
-
 function startsWith(bytes: Buffer, signature: number[]) {
   return signature.every((value, index) => bytes[index] === value);
 }
@@ -29,37 +29,14 @@ function extensionOf(filename: string) {
   return filename.toLowerCase().match(/\.([a-z0-9]+)$/)?.[1] ?? "";
 }
 
-/** Detects a supported document from bytes and filename while rejecting active content. */
+/** Accepts only scanned images; untrusted document containers require a future isolated CDR pipeline. */
 export function detectHoroscopeFile(filename: string, bytes: Buffer): DetectedHoroscopeFile {
   const extension = extensionOf(filename);
-  const sample = bytes.toString("latin1");
 
-  if (startsWith(bytes, [0x25, 0x50, 0x44, 0x46, 0x2d]) && extension === "pdf") {
-    if (PDF_DANGEROUS_MARKERS.some((marker) => sample.includes(marker))) {
-      throw new Error("PDF_ACTIVE_CONTENT");
-    }
-    return { extension: "pdf", mimeType: "application/pdf", kind: "pdf" };
-  }
-
-  if (startsWith(bytes, [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]) && extension === "doc") {
-    if (OFFICE_DANGEROUS_MARKERS.some((marker) => sample.includes(marker))) {
-      throw new Error("WORD_ACTIVE_CONTENT");
-    }
-    return { extension: "doc", mimeType: "application/msword", kind: "word" };
-  }
-
-  if (startsWith(bytes, [0x50, 0x4b, 0x03, 0x04]) && extension === "docx") {
-    if (!sample.includes("[Content_Types].xml") || !sample.includes("word/")) {
-      throw new Error("WORD_INVALID_CONTAINER");
-    }
-    if (OFFICE_DANGEROUS_MARKERS.some((marker) => sample.includes(marker))) {
-      throw new Error("WORD_ACTIVE_CONTENT");
-    }
-    return {
-      extension: "docx",
-      mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      kind: "word",
-    };
+  if (startsWith(bytes, [0x25, 0x50, 0x44, 0x46, 0x2d])
+    || startsWith(bytes, [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1])
+    || startsWith(bytes, [0x50, 0x4b, 0x03, 0x04])) {
+    throw new Error("HOROSCOPE_DOCUMENT_DISABLED");
   }
 
   const isJpeg = startsWith(bytes, [0xff, 0xd8, 0xff]);
@@ -67,7 +44,13 @@ export function detectHoroscopeFile(filename: string, bytes: Buffer): DetectedHo
   const isHeic = bytes.length >= 12
     && bytes.subarray(4, 8).toString("ascii") === "ftyp"
     && ["heic", "heix", "hevc", "hevx", "mif1", "msf1"].includes(bytes.subarray(8, 12).toString("ascii"));
-  if ((isJpeg && ["jpg", "jpeg"].includes(extension)) || (isPng && extension === "png") || (isHeic && extension === "heic")) {
+  const isWebp = bytes.length >= 12
+    && bytes.subarray(0, 4).toString("ascii") === "RIFF"
+    && bytes.subarray(8, 12).toString("ascii") === "WEBP";
+  if ((isJpeg && ["jpg", "jpeg"].includes(extension))
+    || (isPng && extension === "png")
+    || (isHeic && ["heic", "heif"].includes(extension))
+    || (isWebp && extension === "webp")) {
     return { extension: "webp", mimeType: "image/webp", kind: "image" };
   }
 

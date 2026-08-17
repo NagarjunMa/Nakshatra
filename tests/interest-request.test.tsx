@@ -5,14 +5,19 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const getApiUser = vi.hoisted(() => vi.fn());
+const enforceRateLimit = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/auth", () => ({ getApiUser }));
+vi.mock("@/features/security/server/rate-limit.service", () => ({ enforceRateLimit }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 import { InterestRequestModal } from "../src/components/portfolio/InterestRequestModal";
 import { POST } from "../src/app/api/interest/route";
 
 describe("interest request flow", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    enforceRateLimit.mockResolvedValue(null);
+  });
 
   it("submits from a modal and returns to the portfolio confirmation state", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 201 })));
@@ -43,7 +48,7 @@ describe("interest request flow", () => {
 
     const response = await POST(new Request("http://local/api/interest", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", Origin: "http://local" },
       body: JSON.stringify({
         portfolioToken: "portfolio-token",
         name: "Rohan Mehta",
@@ -75,7 +80,7 @@ describe("interest request flow", () => {
     getApiUser.mockResolvedValue({ status: "missing_session" });
     const response = await POST(new Request("http://local/api/interest", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", Origin: "http://local" },
       body: JSON.stringify({}),
     }));
     expect(response.status).toBe(401);

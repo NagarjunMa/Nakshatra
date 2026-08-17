@@ -732,14 +732,14 @@ function HoroscopeManager({
           Horoscope attachment
         </h3>
         <p className="mt-1 text-xs leading-5 text-white/55">
-          One private original document. It appears only to signed-in viewers you approve and opens separately from the portfolio.
+          One private scanned image. It appears only to signed-in viewers you approve and opens separately from the portfolio.
         </p>
       </div>
 
       <input
         ref={inputRef}
         type="file"
-        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.heic,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png,image/heic"
+        accept=".jpg,.jpeg,.png,.webp,.heic,.heif,image/jpeg,image/png,image/webp,image/heic,image/heif"
         className="sr-only"
         onChange={(event) => onUpload(event.target.files?.[0] || null, language)}
       />
@@ -757,7 +757,11 @@ function HoroscopeManager({
                   {[format, horoscope.language_label, formatBytes(horoscope.byte_size)].filter(Boolean).join(" · ")}
                 </p>
                 <p className={`mt-2 text-xs ${horoscope.published_at ? "text-emerald-300" : "text-[#f4d98f]"}`}>
-                  {horoscope.published_at ? "Published for approved viewers" : "Ready — publish or update the portfolio to share it"}
+                  {horoscope.file_extension !== "webp"
+                    ? "Legacy document — replace it with a scanned image before sharing"
+                    : horoscope.published_at
+                      ? "Published for approved viewers"
+                      : "Ready — publish or update the portfolio to share it"}
                 </p>
               </div>
             </div>
@@ -777,7 +781,7 @@ function HoroscopeManager({
         </article>
       ) : (
         <div className="rounded-xl border border-dashed border-white/15 p-4">
-          <label className="block text-xs font-medium text-white/75" htmlFor="horoscope-language">Document language (optional)</label>
+          <label className="block text-xs font-medium text-white/75" htmlFor="horoscope-language">Horoscope language (optional)</label>
           <input
             id="horoscope-language"
             value={language}
@@ -790,7 +794,7 @@ function HoroscopeManager({
             <Upload className={`h-4 w-4 ${uploading ? "animate-pulse" : ""}`} />
             {uploading ? "Checking attachment..." : "Attach horoscope"}
           </button>
-          <p className="mt-2 text-xs leading-5 text-white/50">PDF, DOC, DOCX, JPG, PNG, or HEIC · up to 20MB</p>
+          <p className="mt-2 text-xs leading-5 text-white/50">Scanned JPG, PNG, WebP, or HEIC · up to 20MB</p>
         </div>
       )}
     </section>

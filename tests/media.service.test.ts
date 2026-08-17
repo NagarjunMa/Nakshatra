@@ -14,6 +14,7 @@ const repository = vi.hoisted(() => ({
   deleteMedia: vi.fn(),
 }));
 const sharpMock = vi.hoisted(() => vi.fn());
+const sharpMetadata = vi.hoisted(() => vi.fn());
 
 vi.mock("../src/features/media/server/media.repository", () => ({
   PortfolioMediaRepository: class {
@@ -56,6 +57,8 @@ function mockSharp() {
     if (source.toString() === "not an image") throw new Error("Invalid image");
     const pipeline = {
       rotate: vi.fn(),
+      timeout: vi.fn(),
+      metadata: sharpMetadata,
       resize: vi.fn(),
       blur: vi.fn(),
       webp: vi.fn(),
@@ -71,6 +74,7 @@ function mockSharp() {
       ),
     };
     pipeline.rotate.mockReturnValue(pipeline);
+    pipeline.timeout.mockReturnValue(pipeline);
     pipeline.resize.mockReturnValue(pipeline);
     pipeline.blur.mockReturnValue(pipeline);
     pipeline.webp.mockReturnValue(pipeline);
@@ -108,6 +112,7 @@ function mockUploadSuccess(count = 0) {
 describe("portfolio media service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    sharpMetadata.mockResolvedValue({ format: "png", width: 900, height: 1200, pages: 1, channels: 4 });
     mockSharp();
     mockUploadSuccess();
     repository.updateMedia.mockResolvedValue({ data: media, error: null });
@@ -205,6 +210,26 @@ describe("portfolio media service", () => {
         visibility: "public",
       })
     ).rejects.toEqual(new PortfolioMediaError("Could not process that image", 500));
+  });
+
+  it("rejects decoded image types and dimensions that do not match the upload contract", async () => {
+    sharpMetadata.mockResolvedValueOnce({ format: "jpeg", width: 900, height: 1200, pages: 1, channels: 3 });
+    await expect(uploadPortfolioPhoto({
+      supabase: {} as never,
+      userId,
+      portfolioId,
+      file: photo({ type: "image/png" }),
+      visibility: "public",
+    })).rejects.toMatchObject({ status: 415 });
+
+    sharpMetadata.mockResolvedValueOnce({ format: "png", width: 20_000, height: 20_000, pages: 1, channels: 4 });
+    await expect(uploadPortfolioPhoto({
+      supabase: {} as never,
+      userId,
+      portfolioId,
+      file: photo(),
+      visibility: "public",
+    })).rejects.toMatchObject({ status: 415 });
   });
 
   it("updates hero selection and fails safely when the media is unavailable", async () => {

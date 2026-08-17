@@ -3,7 +3,14 @@ import "server-only";
 import sharp from "sharp";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PortfolioHoroscope } from "@/types/portfolio";
-import { detectHoroscopeFile, horoscopeLanguageSchema, MAX_HOROSCOPE_BYTES } from "./horoscope.contract";
+import {
+  detectHoroscopeFile,
+  HOROSCOPE_PROCESSING_TIMEOUT_SECONDS,
+  horoscopeLanguageSchema,
+  MAX_HOROSCOPE_BYTES,
+  MAX_HOROSCOPE_DIMENSION,
+  MAX_HOROSCOPE_PIXELS,
+} from "./horoscope.contract";
 import { HoroscopeRepository } from "./horoscope.repository";
 
 export class HoroscopeError extends Error {
@@ -14,10 +21,10 @@ export class HoroscopeError extends Error {
 
 function uploadError(error: unknown) {
   const code = error instanceof Error ? error.message : "";
-  if (code === "PDF_ACTIVE_CONTENT") return new HoroscopeError("Use a PDF without scripts, embedded files, or launch actions", 415);
-  if (code === "WORD_ACTIVE_CONTENT") return new HoroscopeError("Use a Word document without macros or embedded objects", 415);
-  if (code === "WORD_INVALID_CONTAINER") return new HoroscopeError("That DOCX file is damaged or is not a Word document", 415);
-  return new HoroscopeError("Use a PDF, DOC, DOCX, JPG, PNG, or HEIC file", 415);
+  if (code === "HOROSCOPE_DOCUMENT_DISABLED") {
+    return new HoroscopeError("For security, upload a scanned JPG, PNG, WebP, or HEIC image", 415);
+  }
+  return new HoroscopeError("Use a scanned JPG, PNG, WebP, or HEIC image", 415);
 }
 
 /** Validates, sanitizes where possible, and replaces the owner's one horoscope attachment. */
@@ -45,15 +52,35 @@ export async function uploadHoroscope({ supabase, userId, portfolioId, file, lan
     throw uploadError(error);
   }
 
-  let output: Buffer<ArrayBufferLike> = source;
-  let pageCount: number | null = null;
-  if (detected.kind === "image") {
-    try {
-      output = await sharp(source).rotate().resize(2400, 2400, { fit: "inside", withoutEnlargement: true }).webp({ quality: 90 }).toBuffer();
-      pageCount = 1;
-    } catch {
-      throw new HoroscopeError("We could not safely process that image. Try a PDF, JPG, or PNG instead", 415);
+  let output: Buffer<ArrayBufferLike>;
+  const pageCount = 1;
+  try {
+    const input = sharp(source, {
+      failOn: "warning",
+      limitInputPixels: MAX_HOROSCOPE_PIXELS,
+      sequentialRead: true,
+    }).timeout({ seconds: HOROSCOPE_PROCESSING_TIMEOUT_SECONDS });
+    const metadata = await input.metadata();
+    if (!metadata.width || !metadata.height
+      || metadata.width > MAX_HOROSCOPE_DIMENSION
+      || metadata.height > MAX_HOROSCOPE_DIMENSION
+      || metadata.width * metadata.height > MAX_HOROSCOPE_PIXELS
+      || (metadata.pages ?? 1) !== 1
+      || (metadata.channels ?? 4) > 4) {
+      throw new Error("unsafe image dimensions");
     }
+    output = await sharp(source, {
+      failOn: "warning",
+      limitInputPixels: MAX_HOROSCOPE_PIXELS,
+      sequentialRead: true,
+    })
+      .timeout({ seconds: HOROSCOPE_PROCESSING_TIMEOUT_SECONDS })
+      .rotate()
+      .resize(2400, 2400, { fit: "inside", withoutEnlargement: true })
+      .webp({ quality: 90 })
+      .toBuffer();
+  } catch {
+    throw new HoroscopeError("We could not safely process that scanned image", 415);
   }
   if (output.byteLength > MAX_HOROSCOPE_BYTES) throw new HoroscopeError("The processed horoscope is larger than 20MB", 413);
 
