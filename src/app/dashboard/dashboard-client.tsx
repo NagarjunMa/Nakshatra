@@ -13,6 +13,11 @@ import {
   normalizePortfolioPrivacyMode,
 } from "@/types/portfolio";
 import type { PortfolioApiFailure } from "@/features/portfolio/client/portfolio-dashboard.api";
+import type {
+  AccessAuditEvent,
+  AccessGrant,
+  PortfolioAccessSummary,
+} from "@/features/access/server/access.contract";
 import { MAX_PORTFOLIO_PHOTOS } from "@/features/media/portfolio-photo";
 import { BlueprintForm } from "@/components/portfolio/BlueprintForm";
 import {
@@ -37,6 +42,8 @@ import {
   ExternalLink,
   ShieldCheck,
   Inbox,
+  History,
+  UserRoundCheck,
 } from "lucide-react";
 
 interface Props {
@@ -50,6 +57,7 @@ interface Props {
   horoscope?: PortfolioHoroscope | null;
   initialEditorOpen?: boolean;
   interests?: InterestSummary[];
+  accessSummary?: PortfolioAccessSummary;
 }
 
 interface InterestSummary {
@@ -65,6 +73,8 @@ interface InterestSummary {
   created_at: string;
 }
 
+const EMPTY_ACCESS_SUMMARY: PortfolioAccessSummary = { grants: [], events: [] };
+
 export default function DashboardClient({
   portfolio,
   viewCount,
@@ -76,6 +86,7 @@ export default function DashboardClient({
   horoscope = null,
   initialEditorOpen = false,
   interests = [],
+  accessSummary = EMPTY_ACCESS_SUMMARY,
 }: Props) {
   const [copied, setCopied] = useState(false);
   const [renewing, setRenewing] = useState(false);
@@ -96,6 +107,8 @@ export default function DashboardClient({
   const [uploadingHoroscope, setUploadingHoroscope] = useState(false);
   const [activePortfolioId, setActivePortfolioId] = useState(portfolio?.id ?? null);
   const [interestItems, setInterestItems] = useState(interests);
+  const [accessGrants, setAccessGrants] = useState(accessSummary.grants);
+  const accessEvents = accessSummary.events;
   const photoInputRef = useRef<HTMLInputElement>(null);
   const horoscopeInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -447,13 +460,29 @@ export default function DashboardClient({
 
               <InterestInbox
                 interests={interestItems}
-                onDecision={(id, status) =>
+                onDecision={(id, status) => {
                   setInterestItems((current) =>
                     current.map((interest) =>
                       interest.id === id ? { ...interest, status } : interest
                     )
-                  )
-                }
+                  );
+                  router.refresh();
+                }}
+              />
+
+              <AccessControls
+                grants={accessGrants}
+                events={accessEvents}
+                onGrantChange={(grantId, action, expiresAt) => {
+                  setAccessGrants((current) => current.map((grant) =>
+                    grant.id === grantId
+                      ? action === "revoke"
+                        ? { ...grant, status: "revoked", revokedAt: new Date().toISOString() }
+                        : { ...grant, status: "active", expiresAt: expiresAt || grant.expiresAt }
+                      : grant
+                  ));
+                  router.refresh();
+                }}
               />
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -778,13 +807,14 @@ function InterestInbox({
   onDecision,
 }: {
   interests: InterestSummary[];
-  onDecision: (id: string, status: "approved" | "rejected") => void;
+  onDecision: (id: string, status: "approved" | "rejected" | "pending_review") => void;
 }) {
   const newInterests = interests.filter((interest) => interest.status === "new" || interest.status === "pending_review");
+  const rejectedInterests = interests.filter((interest) => interest.status === "rejected");
   const [workingId, setWorkingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  async function decide(interest: InterestSummary, decision: "approved" | "rejected") {
+  async function decide(interest: InterestSummary, decision: "approved" | "rejected" | "reopened") {
     setWorkingId(interest.id);
     setActionError(null);
     try {
@@ -798,7 +828,7 @@ function InterestInbox({
         setActionError(result.error || "This interest could not be updated.");
         return;
       }
-      onDecision(interest.id, decision);
+      onDecision(interest.id, decision === "reopened" ? "pending_review" : decision);
     } catch {
       setActionError("This interest could not be updated. Please try again.");
     } finally {
@@ -850,8 +880,157 @@ function InterestInbox({
           })}
         </div>
       )}
+      {rejectedInterests.length > 0 && (
+        <div className="dashboard-past-interests">
+          <h3>Declined requests</h3>
+          {rejectedInterests.slice(0, 5).map((interest) => (
+            <div key={interest.id} className="dashboard-access-row">
+              <span>
+                <strong>{interest.viewer_name || "Unnamed viewer"}</strong>
+                <small>Declined {formatInterestDate(interest.created_at)}</small>
+              </span>
+              <button
+                type="button"
+                className="dashboard-secondary-action"
+                disabled={workingId === interest.id}
+                onClick={() => void decide(interest, "reopened")}
+              >
+                {workingId === interest.id ? "Reopening..." : "Reopen request"}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </section>
   );
+}
+
+function AccessControls({
+  grants,
+  events,
+  onGrantChange,
+}: {
+  grants: AccessGrant[];
+  events: AccessAuditEvent[];
+  onGrantChange: (grantId: string, action: "renew" | "revoke", expiresAt?: string) => void;
+}) {
+  const [workingId, setWorkingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function manage(grant: AccessGrant, action: "renew" | "revoke") {
+    const prompt = action === "revoke"
+      ? `Revoke Full View for ${grant.viewerName || "this viewer"}?`
+      : `Extend Full View for ${grant.viewerName || "this viewer"} by 30 days?`;
+    if (!confirm(prompt)) return;
+    setWorkingId(grant.id);
+    setError(null);
+    try {
+      const { manageAccessGrantRequest } = await import(
+        "@/features/access/client/access-dashboard.api"
+      );
+      const result = await manageAccessGrantRequest(grant.id, action);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      onGrantChange(grant.id, action, result.expiresAt);
+    } finally {
+      setWorkingId(null);
+    }
+  }
+
+  return (
+    <section className="dashboard-glass dashboard-access-controls">
+      <div className="dashboard-section-heading">
+        <div>
+          <h2>Full View access</h2>
+          <p>Approvals expire after 30 days. You can renew or revoke them at any time.</p>
+        </div>
+        <UserRoundCheck className="h-5 w-5" aria-hidden="true" />
+      </div>
+      {error && <p className="dashboard-action-error" role="alert">{error}</p>}
+      {grants.length === 0 ? (
+        <p className="dashboard-empty-state">No Full View access has been granted yet.</p>
+      ) : (
+        <div className="dashboard-access-list">
+          {grants.map((grant) => (
+            <div key={grant.id} className="dashboard-access-row">
+              <span>
+                <strong>{grant.viewerName || "Verified viewer"}</strong>
+                <small>
+                  {grant.status === "active"
+                    ? `Active until ${formatAccessDate(grant.expiresAt)}`
+                    : grant.status === "expired"
+                      ? `Expired ${formatAccessDate(grant.expiresAt)}`
+                      : "Access revoked"}
+                </small>
+              </span>
+              {grant.status !== "revoked" && (
+                <div className="dashboard-interest-actions">
+                  <button
+                    type="button"
+                    className="dashboard-secondary-action"
+                    disabled={workingId === grant.id}
+                    onClick={() => void manage(grant, "renew")}
+                  >
+                    Renew 30 days
+                  </button>
+                  <button
+                    type="button"
+                    className="dashboard-danger-action"
+                    disabled={workingId === grant.id}
+                    onClick={() => void manage(grant, "revoke")}
+                  >
+                    Revoke
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+      {events.length > 0 && (
+        <details className="dashboard-access-history">
+          <summary><History className="h-4 w-4" aria-hidden="true" /> Access history</summary>
+          <ol>
+            {events.slice(0, 12).map((event) => (
+              <li key={event.id}>
+                <span>{accessEventLabel(event.eventType, event.viewerName)}</span>
+                <time dateTime={event.createdAt}>{formatAccessDate(event.createdAt)}</time>
+              </li>
+            ))}
+          </ol>
+        </details>
+      )}
+    </section>
+  );
+}
+
+function formatAccessDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "recently";
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+}
+
+function accessEventLabel(type: AccessAuditEvent["eventType"], viewerName?: string | null) {
+  const viewer = viewerName || "A viewer";
+  const labels: Record<AccessAuditEvent["eventType"], string> = {
+    request_submitted: `${viewer} submitted a request`,
+    request_reopened: `${viewer}'s request was reopened`,
+    request_rejected: `${viewer}'s request was declined`,
+    grant_created: `Full View granted to ${viewer}`,
+    grant_renewed: `Full View renewed for ${viewer}`,
+    grant_accessed: `${viewer} used Full View`,
+    grant_revoked: `Full View revoked for ${viewer}`,
+    grant_expired: `Full View expired for ${viewer}`,
+    portfolio_rotated: "Portfolio link rotated",
+    portfolio_unpublished: "Portfolio unpublished",
+  };
+  return labels[type];
 }
 
 function formatInterestDate(value: string) {

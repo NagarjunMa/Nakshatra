@@ -48,7 +48,7 @@ describe("interest decision endpoint", () => {
     expect((await patch("approved")).status).toBe(403);
   });
 
-  it("delegates approval and rejection to the atomic database command", async () => {
+  it("delegates approval, rejection, and explicit reopening to the atomic database command", async () => {
     const approveRpc = authenticatedClient("approved");
     const approved = await patch("approved");
     expect(approved.status).toBe(200);
@@ -62,12 +62,36 @@ describe("interest decision endpoint", () => {
     const rejected = await patch("rejected");
     expect(rejected.status).toBe(200);
     expect(rejectRpc).toHaveBeenCalledWith("decide_interest_request", expect.objectContaining({ p_decision: "rejected" }));
+
+    const reopenRpc = authenticatedClient("reopened");
+    const reopened = await patch("reopened");
+    expect(reopened.status).toBe(200);
+    expect(reopenRpc).toHaveBeenCalledWith("decide_interest_request", expect.objectContaining({ p_decision: "reopened" }));
+  });
+
+  it("reports invalid transitions and treats repeated decisions idempotently", async () => {
+    authenticatedClient("invalid_transition");
+    const invalid = await patch("approved");
+    expect(invalid.status).toBe(409);
+    await expect(invalid.json()).resolves.toMatchObject({ error: expect.stringMatching(/reopen/i) });
+
+    authenticatedClient("already_approved");
+    await expect((await patch("approved")).json()).resolves.toEqual({ ok: true, status: "already_approved" });
+    authenticatedClient("already_rejected");
+    await expect((await patch("rejected")).json()).resolves.toEqual({ ok: true, status: "already_rejected" });
   });
 
   it("does not expose database failures", async () => {
     authenticatedClient("approved", new Error("sensitive database failure"));
     const response = await patch("approved");
     expect(response.status).toBe(500);
-    await expect(response.json()).resolves.toEqual({ error: "This interest could not be updated." });
+    await expect(response.json()).resolves.toEqual({
+      code: "INTEREST_DECISION_FAILED",
+      error: "This interest could not be updated.",
+    });
+
+    authenticatedClient("unexpected_status");
+    const malformed = await patch("approved");
+    expect(malformed.status).toBe(500);
   });
 });

@@ -78,7 +78,7 @@ export default async function PublicBiodataPage({ params }: Props) {
       accessMode={portfolio.accessMode}
       photos={portfolio.photos}
       horoscopeAttachment={horoscopeAttachment}
-      interestAction={portfolio.accessMode === "public" ? <InterestRequestModal portfolioToken={token} profileName={portfolio.data.personal.name || "the profile owner"} /> : undefined}
+      interestAction={portfolio.accessMode === "public" ? <InterestRequestModal portfolioToken={token} profileName={portfolio.data.personal.name || "the profile owner"} authenticated={Boolean(authData.user)} /> : undefined}
     />
   );
 }

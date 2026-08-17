@@ -1,7 +1,13 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { z } from "zod/v4";
 import { DashboardRepository } from "./dashboard.repository";
+
+const renewalResultSchema = z.object({
+  status: z.enum(["renewed", "not_published", "unauthorized"]),
+  expiresAt: z.string().optional(),
+});
 
 export class PortfolioRenewalError extends Error {
   constructor(
@@ -15,30 +21,24 @@ export class PortfolioRenewalError extends Error {
 
 /**
  * Extends the authenticated owner's portfolio link by 90 days.
- * Input: authenticated Supabase client and owner ID. Output: resolves after the expiry update succeeds.
+ * Input: authenticated Supabase client. Output: the synchronized public expiry.
  */
 export async function renewPortfolioLink({
   supabase,
-  userId,
 }: {
   supabase: SupabaseClient;
-  userId: string;
 }) {
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + 90);
 
   const repository = new DashboardRepository(supabase);
-  const { data: portfolio, error: findError } = await repository.findPortfolioForUser(userId);
-  if (findError || !portfolio || !portfolio.is_published) {
+  const { data, error } = await repository.renewPortfolioTransaction(expiresAt.toISOString());
+  const result = renewalResultSchema.safeParse(data);
+  if (error || !result.success) {
+    throw new PortfolioRenewalError("We could not renew your portfolio link. Please try again.", "PORTFOLIO_RENEWAL_TRANSACTION_FAILED");
+  }
+  if (result.data.status !== "renewed") {
     throw new PortfolioRenewalError("Generate your portfolio before renewing its link.", "PORTFOLIO_NOT_PUBLISHED", 400);
   }
-
-  const { error } = await repository.renewPortfolioLink(userId, expiresAt.toISOString());
-  if (error) throw new PortfolioRenewalError("We could not renew your portfolio link. Please try again.", "PORTFOLIO_RENEWAL_PERSISTENCE_FAILED");
-
-  const { error: snapshotError } = await repository.updatePublicSnapshot(portfolio.id, {
-    expires_at: expiresAt.toISOString(),
-    is_active: true,
-  });
-  if (snapshotError) throw new PortfolioRenewalError("We could not renew your public portfolio. Please try again.", "PUBLIC_SNAPSHOT_RENEWAL_FAILED");
+  return { expiresAt: result.data.expiresAt ?? expiresAt.toISOString() };
 }

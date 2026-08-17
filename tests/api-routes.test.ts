@@ -7,6 +7,7 @@ const publishPortfolio = vi.hoisted(() => vi.fn());
 const renewPortfolioLink = vi.hoisted(() => vi.fn());
 const rotatePortfolioLink = vi.hoisted(() => vi.fn());
 const unpublishPortfolio = vi.hoisted(() => vi.fn());
+const managePortfolioGrant = vi.hoisted(() => vi.fn());
 const uploadPortfolioPhoto = vi.hoisted(() => vi.fn());
 const updatePortfolioPhoto = vi.hoisted(() => vi.fn());
 const deletePortfolioPhoto = vi.hoisted(() => vi.fn());
@@ -31,6 +32,10 @@ vi.mock("../src/features/portfolio/server/share-lifecycle.service", async (impor
   const actual = await importOriginal<typeof import("../src/features/portfolio/server/share-lifecycle.service")>();
   return { ...actual, rotatePortfolioLink, unpublishPortfolio };
 });
+vi.mock("../src/features/access/server/access.service", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../src/features/access/server/access.service")>();
+  return { ...actual, managePortfolioGrant };
+});
 vi.mock("../src/features/media/server/media.service", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../src/features/media/server/media.service")>();
   return { ...actual, uploadPortfolioPhoto, updatePortfolioPhoto, deletePortfolioPhoto };
@@ -49,14 +54,17 @@ import { POST as publishPost } from "../src/app/api/portfolio/publish/route";
 import { POST as renewPost } from "../src/app/api/portfolio/renew/route";
 import { POST as rotatePost } from "../src/app/api/portfolio/share/rotate/route";
 import { POST as unpublishPost } from "../src/app/api/portfolio/share/unpublish/route";
+import { PATCH as accessGrantPatch } from "../src/app/api/access-grants/[id]/route";
 import { DashboardSaveError } from "../src/features/portfolio/server/dashboard.service";
 import { PortfolioMediaError } from "../src/features/media/server/media.service";
 import { HoroscopeError } from "../src/features/horoscope/server/horoscope.service";
 import { PortfolioPublishError } from "../src/features/portfolio/server/publish.service";
 import { PortfolioRenewalError } from "../src/features/portfolio/server/renew.service";
 import { PortfolioShareLifecycleError } from "../src/features/portfolio/server/share-lifecycle.service";
+import { AccessLifecycleError } from "../src/features/access/server/access.service";
 
 const actor = { status: "authenticated", user: { id: "owner" }, supabase: {} };
+const accessGrantId = "11111111-1111-4111-8111-111111111111";
 const data = {
   personal: { name: "Aditi Rao", dob: "1996-08-12", gender: "female" },
   astrology: { rashi: "kanya" },
@@ -73,9 +81,10 @@ describe("API route authentication", () => {
     getApiUser.mockResolvedValue(actor);
     saveDashboardDraft.mockResolvedValue({ portfolioId: "portfolio" });
     publishPortfolio.mockResolvedValue({ shareUrl: "https://example.test/p/token", expiresAt: "2099-01-01", action: "created" });
-    renewPortfolioLink.mockResolvedValue(undefined);
+    renewPortfolioLink.mockResolvedValue({ expiresAt: "2099-01-01" });
     rotatePortfolioLink.mockResolvedValue({ shareUrl: "https://example.test/p/new", shareToken: "new" });
-    unpublishPortfolio.mockResolvedValue(undefined);
+    unpublishPortfolio.mockResolvedValue({ status: "unpublished" });
+    managePortfolioGrant.mockResolvedValue({ status: "renewed", expiresAt: "2099-02-01" });
   });
 
   it.each([
@@ -84,6 +93,10 @@ describe("API route authentication", () => {
     ["renew", () => renewPost()],
     ["rotate", () => rotatePost()],
     ["unpublish", () => unpublishPost()],
+    ["access grant", () => accessGrantPatch(
+      jsonRequest(`http://local/api/access-grants/${accessGrantId}`, "PATCH", { action: "renew" }),
+      { params: Promise.resolve({ id: accessGrantId }) }
+    )],
     ["owner horoscope view", () => horoscopeView()],
   ])("rejects missing sessions on %s", async (_name, call) => {
     getApiUser.mockResolvedValueOnce({ status: "missing_session" });
@@ -97,9 +110,10 @@ describe("dashboard and portfolio lifecycle routes", () => {
     getApiUser.mockResolvedValue(actor);
     saveDashboardDraft.mockResolvedValue({ portfolioId: "portfolio" });
     publishPortfolio.mockResolvedValue({ shareUrl: "https://example.test/p/token", expiresAt: "2099-01-01", action: "created" });
-    renewPortfolioLink.mockResolvedValue(undefined);
+    renewPortfolioLink.mockResolvedValue({ expiresAt: "2099-01-01" });
     rotatePortfolioLink.mockResolvedValue({ shareUrl: "https://example.test/p/new", shareToken: "new" });
-    unpublishPortfolio.mockResolvedValue(undefined);
+    unpublishPortfolio.mockResolvedValue({ status: "unpublished" });
+    managePortfolioGrant.mockResolvedValue({ status: "renewed", expiresAt: "2099-02-01" });
   });
 
   it("validates and saves dashboard drafts", async () => {
@@ -132,7 +146,7 @@ describe("dashboard and portfolio lifecycle routes", () => {
   it("handles renew, rotate, and unpublish success and failures", async () => {
     expect((await renewPost()).status).toBe(200);
     expect(await (await rotatePost()).json()).toMatchObject({ shareToken: "new" });
-    expect(await (await unpublishPost()).json()).toEqual({ ok: true });
+    expect(await (await unpublishPost()).json()).toEqual({ status: "unpublished" });
 
     renewPortfolioLink.mockRejectedValueOnce(new PortfolioRenewalError("Not published", "PORTFOLIO_NOT_PUBLISHED", 400));
     expect((await renewPost()).status).toBe(400);
@@ -142,6 +156,34 @@ describe("dashboard and portfolio lifecycle routes", () => {
     const response = await unpublishPost();
     expect(response.status).toBe(500);
     expect(await response.json()).toMatchObject({ code: "PORTFOLIO_UNPUBLISH_FAILED" });
+  });
+
+  it("validates and safely maps owner grant actions", async () => {
+    const success = await accessGrantPatch(
+      jsonRequest(`http://local/api/access-grants/${accessGrantId}`, "PATCH", { action: "renew" }),
+      { params: Promise.resolve({ id: accessGrantId }) }
+    );
+    expect(await success.json()).toMatchObject({ status: "renewed", expiresAt: "2099-02-01" });
+    expect(managePortfolioGrant).toHaveBeenCalledWith(actor.supabase, accessGrantId, "renew");
+
+    const invalid = await accessGrantPatch(
+      jsonRequest("http://local/api/access-grants/not-a-uuid", "PATCH", { action: "delete" }),
+      { params: Promise.resolve({ id: "not-a-uuid" }) }
+    );
+    expect(invalid.status).toBe(400);
+
+    managePortfolioGrant.mockRejectedValueOnce(
+      new AccessLifecycleError("Only approved access can be renewed.", "ACCESS_INVALID_TRANSITION", 409)
+    );
+    const conflict = await accessGrantPatch(
+      jsonRequest(`http://local/api/access-grants/${accessGrantId}`, "PATCH", { action: "renew" }),
+      { params: Promise.resolve({ id: accessGrantId }) }
+    );
+    expect(conflict.status).toBe(409);
+    expect(await conflict.json()).toEqual({
+      code: "ACCESS_INVALID_TRANSITION",
+      error: "Only approved access can be renewed.",
+    });
   });
 });
 

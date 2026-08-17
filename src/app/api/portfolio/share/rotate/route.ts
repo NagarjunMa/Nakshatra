@@ -12,7 +12,7 @@ export async function POST() {
   if (auth.status !== "authenticated") return apiAuthFailureResponse(auth);
 
   try {
-    return NextResponse.json(await rotatePortfolioLink({ supabase: auth.supabase, userId: auth.user.id }));
+    return NextResponse.json(await rotatePortfolioLink({ supabase: auth.supabase }));
   } catch (error) {
     const lifecycleError = error instanceof PortfolioShareLifecycleError ? error : null;
     return NextResponse.json(

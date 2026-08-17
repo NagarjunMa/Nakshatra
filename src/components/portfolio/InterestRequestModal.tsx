@@ -1,15 +1,26 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { CheckCircle2, MessageCircle, X } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { CheckCircle2, LogIn, MessageCircle, X } from "lucide-react";
 
-export function InterestRequestModal({ portfolioToken, profileName }: { portfolioToken: string; profileName: string }) {
+export function InterestRequestModal({
+  portfolioToken,
+  profileName,
+  authenticated,
+}: {
+  portfolioToken: string;
+  profileName: string;
+  authenticated: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
     if (!open) return;
@@ -24,6 +35,18 @@ export function InterestRequestModal({ portfolioToken, profileName }: { portfoli
       previous?.focus();
     };
   }, [open]);
+
+  if (!authenticated) {
+    const portfolioPath = `/p/${encodeURIComponent(portfolioToken)}`;
+    return (
+      <Link
+        href={`/login?redirect=${encodeURIComponent(portfolioPath)}`}
+        className="portfolio-button portfolio-button-primary"
+      >
+        <LogIn aria-hidden="true" /> Sign in to show interest
+      </Link>
+    );
+  }
 
   async function submitInterest(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -47,6 +70,10 @@ export function InterestRequestModal({ portfolioToken, profileName }: { portfoli
         }),
       });
       const payload = (await response.json()) as { error?: string };
+      if (response.status === 401) {
+        router.push(`/login?redirect=${encodeURIComponent(`/p/${portfolioToken}`)}`);
+        return;
+      }
       if (!response.ok) throw new Error(payload.error || "Unable to send interest");
       setSubmitted(true);
       setOpen(false);
