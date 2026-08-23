@@ -18,6 +18,9 @@
     "test:all": "npm run lint && npm run typecheck && npm run test:unit:coverage && npm run test:db:local && npm run build && npm run test:e2e",
     "test:watch": "vitest",
     "security:audit": "npm audit --audit-level=high",
+    "privacy:process-deletions": "node scripts/process-account-deletions.mjs",
+    "privacy:retention": "node scripts/run-data-retention.mjs",
+    "db:types": "supabase gen types typescript --local --schema public > src/types/database.generated.ts",
     "check": "npm run lint && npm run typecheck && npm test && npm run build",
     "prepare": "husky"
   },

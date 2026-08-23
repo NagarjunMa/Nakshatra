@@ -66,6 +66,7 @@ vi.mock("@/components/templates", () => ({
 }));
 vi.mock("@/components/auth/AuthForm", () => ({ AuthForm: ({ mode }: { mode: string }) => <div>auth:{mode}</div> }));
 vi.mock("@/app/dashboard/dashboard-client", () => ({ default: (props: { userEmail: string; shareUrl: string | null; viewCount: number }) => <div data-testid="dashboard-props">{JSON.stringify(props)}</div> }));
+vi.mock("@/app/account/account-client", () => ({ default: (props: { userEmail: string; initialDeletion: unknown }) => <div data-testid="account-props">{JSON.stringify(props)}</div> }));
 
 import DashboardPage from "../src/app/dashboard/page";
 import EditPage from "../src/app/edit/page";
@@ -81,6 +82,7 @@ import DashboardLoading from "../src/app/dashboard/loading";
 import EditLoading from "../src/app/edit/loading";
 import PreviewLoading from "../src/app/preview/loading";
 import AppError from "../src/app/error";
+import AccountPage from "../src/app/account/page";
 
 const data: PortfolioData = {
   personal: { name: "Aditi Rao", dob: "1996-08-12", gender: "female" },
@@ -99,6 +101,13 @@ beforeEach(() => {
 });
 
 describe("authenticated server pages", () => {
+  it("loads the authenticated account privacy state", async () => {
+    mocks.outcomes.account_deletion_requests = { data: null };
+    render(await AccountPage());
+    expect(screen.getByTestId("account-props")).toHaveTextContent('"userEmail":"user@example.com"');
+    expect(screen.getByTestId("account-props")).toHaveTextContent('"initialDeletion":null');
+  });
+
   it("loads an empty dashboard", async () => {
     mocks.outcomes.portfolios = { data: null };
     render(await DashboardPage());

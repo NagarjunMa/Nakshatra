@@ -2,12 +2,41 @@ import { headers } from "next/headers";
 import { getAuthenticatedUser } from "@/lib/auth";
 import type { Metadata } from "next";
 import DashboardClient from "./dashboard-client";
-import type { PortfolioHoroscope, PortfolioMedia } from "@/types/portfolio";
+import {
+  normalizePortfolioPrivacyMode,
+  portfolioDataSchema,
+  portfolioDraftSchema,
+  type Portfolio,
+  type PortfolioHoroscope,
+  type PortfolioMedia,
+} from "@/types/portfolio";
+import type { Database, Json } from "@/types/database.generated";
 import { getPortfolioAccessSummary } from "@/features/access/server/access.service";
 
 export const metadata: Metadata = {
   title: "Dashboard",
 };
+
+type PortfolioRow = Database["public"]["Tables"]["portfolios"]["Row"];
+
+/** Validates JSON columns before moving a database row into the dashboard domain model. */
+function mapPortfolioRow(row: PortfolioRow | null): Portfolio | null {
+  if (!row) return null;
+  const draft = portfolioDraftSchema.safeParse(row.draft_data);
+  const published = portfolioDataSchema.safeParse(row.published_data);
+  return {
+    ...row,
+    draft_data: draft.success ? draft.data : { personal: {} },
+    published_data: published.success ? published.data : null,
+    privacy_mode: normalizePortfolioPrivacyMode(row.privacy_mode),
+    visibility_settings: jsonObject(row.visibility_settings) ?? {},
+  };
+}
+
+/** Narrows JSON values to objects before client code reads named metadata fields. */
+function jsonObject(value: Json): Record<string, Json | undefined> | null {
+  return value !== null && typeof value === "object" && !Array.isArray(value) ? value : null;
+}
 
 export default async function DashboardPage({
   searchParams = Promise.resolve({}),
@@ -50,9 +79,13 @@ export default async function DashboardPage({
     ])
     : null;
   const viewCount = dashboardData?.[0].count ?? 0;
+  const dashboardPortfolio = mapPortfolioRow(portfolio);
   const media = (dashboardData?.[1].data ?? []) as PortfolioMedia[];
   const horoscope = (dashboardData?.[2].data as PortfolioHoroscope | null) ?? null;
-  const interestRows = dashboardData?.[3].data ?? [];
+  const interestRows = (dashboardData?.[3].data ?? []).map((interest) => ({
+    ...interest,
+    metadata: jsonObject(interest.metadata),
+  }));
   const accessSummary = dashboardData?.[4] ?? { grants: [], events: [] };
 
   let shareUrl: string | null = null;
@@ -82,7 +115,7 @@ export default async function DashboardPage({
   return (
     <DashboardClient
       key={dashboardRevision}
-      portfolio={portfolio}
+      portfolio={dashboardPortfolio}
       viewCount={viewCount}
       userEmail={user.email ?? ""}
       shareUrl={shareUrl}

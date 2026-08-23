@@ -45,12 +45,14 @@ describe("Supabase client factories", () => {
 describe("Supabase request session proxy", () => {
   let adapter: { getAll: () => unknown; setAll: (values: Array<{ name: string; value: string; options: object }>) => void };
   const getClaims = vi.fn();
+  const rpc = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
+    rpc.mockResolvedValue({ data: true, error: null });
     createServerClient.mockImplementation((_url, _key, options) => {
       adapter = options.cookies;
-      return { auth: { getClaims } };
+      return { auth: { getClaims }, rpc };
     });
   });
 
@@ -65,6 +67,19 @@ describe("Supabase request session proxy", () => {
     getClaims.mockResolvedValue({ data: { claims: { sub: "owner" } } });
     expect((await updateSession(new NextRequest("https://app.test/login"))).headers.get("location")).toBe("https://app.test/dashboard");
     expect((await updateSession(new NextRequest("https://app.test/about"))).status).toBe(200);
+    expect(rpc).toHaveBeenCalledTimes(1);
+  });
+
+  it("treats revoked and unverifiable sessions as signed out without matching sibling routes", async () => {
+    getClaims.mockResolvedValue({ data: { claims: { sub: "owner" } } });
+    rpc.mockResolvedValueOnce({ data: false, error: null });
+    expect((await updateSession(new NextRequest("https://app.test/login"))).status).toBe(200);
+
+    rpc.mockResolvedValueOnce({ data: null, error: new Error("unavailable") });
+    const protectedResponse = await updateSession(new NextRequest("https://app.test/account"));
+    expect(protectedResponse.headers.get("location")).toBe("https://app.test/login?redirect=%2Faccount");
+
+    expect((await updateSession(new NextRequest("https://app.test/dashboard-old"))).status).toBe(200);
   });
 
   it("reads incoming cookies and propagates refreshed cookies", async () => {

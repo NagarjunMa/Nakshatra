@@ -94,6 +94,7 @@ Fill a form once. Get a shareable link. Update anytime — the link always shows
 | `/login` | No | Google OAuth + Magic link |
 | `/signup` | No | New account |
 | `/dashboard` | Yes | Status, link, views, expiry |
+| `/account` | Yes | Data export, session revocation, and deletion recovery controls |
 | `/edit` | Yes | Compatibility redirect to the canonical dashboard editor |
 | `/preview` | Yes | Draft preview |
 | `/p/[token]` | No | Public biodata view (CelestialUnion template) |
@@ -204,6 +205,8 @@ unset SUPABASE_SERVICE_ROLE_KEY
 ```
 
 The importer downloads `countryInfo.txt`, `admin1CodesASCII.txt`, and `cities500.zip` directly from [GeoNames](https://www.geonames.org/), then safely upserts the records. The form retains manual state/region and city entry when reference data is unavailable or incomplete. If the import fails, run `unset SUPABASE_SERVICE_ROLE_KEY` before troubleshooting so the credential does not remain in the shell environment.
+
+Account deletion and retention maintenance use the same temporary local service-role handling. See [Security Phase 4](docs/security-phase-4.md) for the deletion worker, retention schedule, organization role matrix, and production Supabase Auth checklist.
 
 ## Landing Page
 
