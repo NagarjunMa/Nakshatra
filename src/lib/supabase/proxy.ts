@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/lib/env";
 import type { Database } from "@/types/database.generated";
 
-/** Matches one application route without accidentally matching sibling names such as `/dashboard-old`. */
+/** Matches one application route without matching sibling names such as `/dashboard-old`. */
 function isPathWithin(pathname: string, root: string) {
   return pathname === root || pathname.startsWith(`${root}/`);
 }
@@ -32,29 +32,19 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  const protectedPaths = ["/dashboard", "/account", "/edit", "/preview"];
-  const authPaths = ["/login", "/signup"];
+  // Proxy performs only the optimistic token-presence check. Authoritative
+  // live-session validation occurs in server pages, APIs, RLS, and Storage.
+  const protectedPaths = ["/dashboard", "/preview", "/approved-preview", "/account", "/edit"];
   const isProtected = protectedPaths.some((path) => isPathWithin(request.nextUrl.pathname, path));
-  const isAuthPage = authPaths.some((path) => isPathWithin(request.nextUrl.pathname, path));
-
   const { data: authData } = await supabase.auth.getClaims();
-  let isAuthenticated = Boolean(authData?.claims?.sub);
-  if (isAuthenticated && (isProtected || isAuthPage)) {
-    const { data, error } = await supabase.rpc("is_current_session_active");
-    isAuthenticated = !error && data === true;
-  }
+  const isAuthenticated = Boolean(authData?.claims?.sub);
 
-  // Protected routes redirect unless both the JWT and its backing session are valid.
+  // Protected routes redirect when no usable token is present. The destination
+  // performs the authoritative backing-session check before reading private data.
   if (isProtected && !isAuthenticated) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("redirect", request.nextUrl.pathname);
-    return NextResponse.redirect(url);
-  }
-
-  if (isAuthPage && isAuthenticated) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
     return NextResponse.redirect(url);
   }
 

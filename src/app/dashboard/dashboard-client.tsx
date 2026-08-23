@@ -162,8 +162,13 @@ export default function DashboardClient({
    * Input: a normalized client API failure. Output: true when navigation has replaced the current dashboard flow.
    */
   function handlePortfolioApiFailure(failure: PortfolioApiFailure): boolean {
-    if (failure.error.code === "AUTH_SESSION_MISSING" || failure.error.code === "AUTH_SESSION_INVALID") {
-      router.push("/login?error=session_expired");
+    if (
+      failure.error.code === "AUTH_SESSION_MISSING"
+      || failure.error.code === "AUTH_SESSION_INVALID"
+      || failure.error.code === "AUTH_SESSION_REVOKED"
+    ) {
+      const reason = failure.error.code === "AUTH_SESSION_REVOKED" ? "session_revoked" : "session_expired";
+      router.push(`/login?error=${reason}`);
       return true;
     }
 

@@ -247,4 +247,15 @@ describe("dashboard client", () => {
     expect(await screen.findByText(/complete required fields/i)).toBeInTheDocument();
   });
 
+  it("uses a distinct redirect reason for an explicitly revoked session", async () => {
+    mocks.save.mockResolvedValueOnce({
+      ok: false,
+      error: { code: "AUTH_SESSION_REVOKED", message: "This session was signed out", status: 401 },
+    });
+    renderDashboard();
+    fireEvent.click(screen.getByRole("button", { name: /edit portfolio/i }));
+    fireEvent.click(screen.getByRole("button", { name: /save draft/i }));
+    await waitFor(() => expect(mocks.push).toHaveBeenCalledWith("/login?error=session_revoked"));
+  });
+
 });
