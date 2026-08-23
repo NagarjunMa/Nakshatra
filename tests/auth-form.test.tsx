@@ -5,7 +5,9 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const searchParams = vi.hoisted(() => ({ get: vi.fn(() => null) }));
+const searchParams = vi.hoisted(() => ({
+  get: vi.fn<(key: string) => string | null>(() => null),
+}));
 const startAuthentication = vi.hoisted(() => vi.fn());
 const continueToAuthProvider = vi.hoisted(() => vi.fn());
 
@@ -57,5 +59,11 @@ describe("AuthForm", () => {
       await userEvent.click(screen.getByRole("button", { name: /google/i }));
     }
     await waitFor(() => expect(screen.getByText(/temporarily unavailable/i)).toBeInTheDocument());
+  });
+
+  it("explains when the current session was explicitly revoked", () => {
+    searchParams.get.mockImplementation((key: string) => key === "error" ? "session_revoked" : null);
+    render(<AuthForm mode="login" />);
+    expect(screen.getByRole("alert")).toHaveTextContent(/session has been signed out/i);
   });
 });

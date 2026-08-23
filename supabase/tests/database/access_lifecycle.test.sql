@@ -11,6 +11,12 @@ values
   ('a1000000-0000-4000-8000-000000000002', 'authenticated', 'authenticated', 'viewer@access.test', now(), now()),
   ('a1000000-0000-4000-8000-000000000003', 'authenticated', 'authenticated', 'stranger@access.test', now(), now());
 
+insert into auth.sessions (id, user_id, created_at, updated_at)
+values
+  ('a1100000-0000-4000-8000-000000000001', 'a1000000-0000-4000-8000-000000000001', now(), now()),
+  ('a1100000-0000-4000-8000-000000000002', 'a1000000-0000-4000-8000-000000000002', now(), now()),
+  ('a1100000-0000-4000-8000-000000000003', 'a1000000-0000-4000-8000-000000000003', now(), now());
+
 insert into public.candidates (id, primary_owner_user_id, display_name, created_by)
 values (
   'a2000000-0000-4000-8000-000000000001',
@@ -50,7 +56,7 @@ insert into public.portfolio_media (
 );
 
 set local role authenticated;
-set local request.jwt.claim.sub = 'a1000000-0000-4000-8000-000000000001';
+set local request.jwt.claims = '{"sub":"a1000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"a1100000-0000-4000-8000-000000000001"}';
 
 select is(
   public.publish_portfolio_transaction(
@@ -107,7 +113,7 @@ reset role;
 select ok(not has_function_privilege('anon', 'public.submit_public_interest(text,text,text,text,text,text,text,text,text)', 'EXECUTE'), 'anonymous visitors cannot execute the access request command');
 
 set local role authenticated;
-set local request.jwt.claim.sub = 'a1000000-0000-4000-8000-000000000002';
+set local request.jwt.claims = '{"sub":"a1000000-0000-4000-8000-000000000002","role":"authenticated","session_id":"a1100000-0000-4000-8000-000000000002"}';
 select ok(
   public.submit_public_interest(
     'phase2_secure_token_1', 'Rohan Mehta', 'self', '+1 555 010 2200',
@@ -130,7 +136,7 @@ select ok(
 );
 select is((select count(*)::integer from public.interest_requests), 1, 'repeat submissions do not create duplicate active requests');
 
-set local request.jwt.claim.sub = 'a1000000-0000-4000-8000-000000000001';
+set local request.jwt.claims = '{"sub":"a1000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"a1100000-0000-4000-8000-000000000001"}';
 select is(public.decide_interest_request((select id from public.interest_requests limit 1), 'approved'), 'approved', 'the owner can approve a new request');
 select is((select count(*)::integer from public.reveal_grants where revoked_at is null), 1, 'approval creates exactly one active grant');
 select ok((select expires_at between now() + interval '29 days' and now() + interval '31 days' from public.reveal_grants limit 1), 'new Full View access expires after thirty days');
@@ -140,10 +146,10 @@ select ok(pg_catalog.jsonb_array_length(public.list_portfolio_access() -> 'event
 select is(public.decide_interest_request((select id from public.interest_requests limit 1), 'approved'), 'already_approved', 'repeated approval is idempotent');
 select is((select count(*)::integer from public.reveal_grants), 1, 'repeated approval never duplicates the grant');
 
-set local request.jwt.claim.sub = 'a1000000-0000-4000-8000-000000000003';
+set local request.jwt.claims = '{"sub":"a1000000-0000-4000-8000-000000000003","role":"authenticated","session_id":"a1100000-0000-4000-8000-000000000003"}';
 select is(public.resolve_approved_portfolio('phase2_secure_token_1'), null, 'another authenticated user cannot use someone else''s grant');
 
-set local request.jwt.claim.sub = 'a1000000-0000-4000-8000-000000000002';
+set local request.jwt.claims = '{"sub":"a1000000-0000-4000-8000-000000000002","role":"authenticated","session_id":"a1100000-0000-4000-8000-000000000002"}';
 select is(public.resolve_approved_portfolio('phase2_secure_token_1') #>> '{data,personal,name}', 'Aditi Full', 'the approved viewer receives the Full View projection');
 select ok(
   (public.resolve_approved_portfolio('phase2_secure_token_1') ->> 'accessExpiresAt')::timestamptz > now(),
@@ -152,17 +158,17 @@ select ok(
 reset role;
 select is((select count(*)::integer from public.access_audit_events where event_type = 'grant_accessed'), 1, 'approved access is recorded without sensitive payload data');
 set local role authenticated;
-set local request.jwt.claim.sub = 'a1000000-0000-4000-8000-000000000002';
+set local request.jwt.claims = '{"sub":"a1000000-0000-4000-8000-000000000002","role":"authenticated","session_id":"a1100000-0000-4000-8000-000000000002"}';
 select is(public.resolve_approved_portfolio('phase2_secure_token_1') #>> '{data,personal,name}', 'Aditi Full', 'repeat Full View access remains available');
 reset role;
 select is((select count(*)::integer from public.access_audit_events where event_type = 'grant_accessed'), 1, 'repeat access within one hour does not create duplicate audit noise');
 
 set local role authenticated;
-set local request.jwt.claim.sub = 'a1000000-0000-4000-8000-000000000001';
+set local request.jwt.claims = '{"sub":"a1000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"a1100000-0000-4000-8000-000000000001"}';
 select is(public.decide_interest_request((select id from public.interest_requests limit 1), 'rejected'), 'rejected', 'the owner can reject an approved request');
 select ok((select revoked_at is not null and revocation_reason = 'request_rejected' from public.reveal_grants limit 1), 'rejection revokes the active grant atomically');
 
-set local request.jwt.claim.sub = 'a1000000-0000-4000-8000-000000000002';
+set local request.jwt.claims = '{"sub":"a1000000-0000-4000-8000-000000000002","role":"authenticated","session_id":"a1100000-0000-4000-8000-000000000002"}';
 select is(public.resolve_approved_portfolio('phase2_secure_token_1'), null, 'a rejected viewer loses Full View immediately');
 select ok(
   public.submit_public_interest(
@@ -175,7 +181,7 @@ select ok(
 );
 select is((select count(*)::integer from public.interest_requests), 1, 'rejection cannot be bypassed by submitting a second request');
 
-set local request.jwt.claim.sub = 'a1000000-0000-4000-8000-000000000001';
+set local request.jwt.claims = '{"sub":"a1000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"a1100000-0000-4000-8000-000000000001"}';
 select is(public.decide_interest_request((select id from public.interest_requests limit 1), 'approved'), 'invalid_transition', 'a rejected request cannot jump directly back to approved');
 select is(public.decide_interest_request((select id from public.interest_requests limit 1), 'reopened'), 'reopened', 'the owner can explicitly reopen a rejected request');
 select is(public.decide_interest_request((select id from public.interest_requests limit 1), 'approved'), 'approved', 'a reopened request can be approved again');
@@ -194,7 +200,7 @@ select throws_ok(
 );
 
 set local role authenticated;
-set local request.jwt.claim.sub = 'a1000000-0000-4000-8000-000000000001';
+set local request.jwt.claims = '{"sub":"a1000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"a1100000-0000-4000-8000-000000000001"}';
 select is(public.decide_interest_request((select id from public.interest_requests limit 1), 'reopened'), 'reopened', 'revoked access can be deliberately reopened');
 select is(public.decide_interest_request((select id from public.interest_requests limit 1), 'approved'), 'approved', 'reopened access can receive a new grant');
 select is(public.rotate_portfolio_transaction('rotated_secure_tok_01') ->> 'status', 'rotated', 'link rotation completes as one owner transaction');
@@ -270,7 +276,7 @@ insert into public.reveal_grants (
 );
 
 set local role authenticated;
-set local request.jwt.claim.sub = 'a1000000-0000-4000-8000-000000000002';
+set local request.jwt.claims = '{"sub":"a1000000-0000-4000-8000-000000000002","role":"authenticated","session_id":"a1100000-0000-4000-8000-000000000002"}';
 select is(public.resolve_approved_portfolio('rotated_secure_tok_01'), null, 'an expired grant cannot resolve Full View data');
 select is((select count(*)::integer from public.reveal_grants), 0, 'RLS hides expired grants from the viewer');
 reset role;

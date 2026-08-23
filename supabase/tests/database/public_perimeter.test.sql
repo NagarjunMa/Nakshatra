@@ -10,6 +10,11 @@ values
   ('11111111-1111-4111-8111-111111111111', 'authenticated', 'authenticated', 'owner@perimeter.test', now(), now()),
   ('22222222-2222-4222-8222-222222222222', 'authenticated', 'authenticated', 'viewer@perimeter.test', now(), now());
 
+insert into auth.sessions (id, user_id, created_at, updated_at)
+values
+  ('11111111-1111-4111-8111-111111111112', '11111111-1111-4111-8111-111111111111', now(), now()),
+  ('22222222-2222-4222-8222-222222222223', '22222222-2222-4222-8222-222222222222', now(), now());
+
 insert into public.portfolios (id, user_id, share_token, draft_data, published_data)
 values (
   '33333333-3333-4333-8333-333333333333',
@@ -57,7 +62,7 @@ insert into public.approved_portfolio_snapshots (
 );
 
 set local role anon;
-set local request.jwt.claim.sub = '';
+set local request.jwt.claims = '{"role":"anon"}';
 
 select throws_ok(
   $$select * from public.public_portfolio_snapshots$$,
@@ -125,7 +130,7 @@ select ok(
 );
 
 set local role authenticated;
-set local request.jwt.claim.sub = '22222222-2222-4222-8222-222222222222';
+set local request.jwt.claims = '{"sub":"22222222-2222-4222-8222-222222222222","role":"authenticated","session_id":"22222222-2222-4222-8222-222222222223"}';
 select ok(
   public.submit_public_interest(
     'phase1_secure_token_1', 'Rohan Mehta', 'self', '+1 555 010 2200',
@@ -148,28 +153,28 @@ select throws_ok(
 );
 
 set local role authenticated;
-set local request.jwt.claim.sub = '11111111-1111-4111-8111-111111111111';
+set local request.jwt.claims = '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated","session_id":"11111111-1111-4111-8111-111111111112"}';
 select is(
   public.decide_interest_request((select id from public.interest_requests limit 1), 'approved'),
   'approved',
   'owner approval atomically creates full access'
 );
 
-set local request.jwt.claim.sub = '22222222-2222-4222-8222-222222222222';
+set local request.jwt.claims = '{"sub":"22222222-2222-4222-8222-222222222222","role":"authenticated","session_id":"22222222-2222-4222-8222-222222222223"}';
 select is(
   public.resolve_approved_portfolio('phase1_secure_token_1') #>> '{data,personal,name}',
   'Aditi Approved',
   'an approved authenticated viewer receives the approved projection'
 );
 
-set local request.jwt.claim.sub = '11111111-1111-4111-8111-111111111111';
+set local request.jwt.claims = '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated","session_id":"11111111-1111-4111-8111-111111111112"}';
 select is(
   public.decide_interest_request((select id from public.interest_requests limit 1), 'rejected'),
   'rejected',
   'rejection revokes the active grant atomically'
 );
 
-set local request.jwt.claim.sub = '22222222-2222-4222-8222-222222222222';
+set local request.jwt.claims = '{"sub":"22222222-2222-4222-8222-222222222222","role":"authenticated","session_id":"22222222-2222-4222-8222-222222222223"}';
 select is(
   public.resolve_approved_portfolio('phase1_secure_token_1'),
   null,

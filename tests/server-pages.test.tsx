@@ -20,6 +20,7 @@ const mocks = vi.hoisted(() => ({
   signedUrl: vi.fn(async () => ({ data: { signedUrl: "https://signed.test/hero" } })),
   imageResponse: vi.fn(),
   authUser: null as { id: string } | null,
+  apiAuthStatus: "missing_session" as "missing_session" | "authenticated",
 }));
 
 function databaseClient() {
@@ -58,7 +59,10 @@ vi.mock("next/og", () => ({
     }
   },
 }));
-vi.mock("@/lib/auth", () => ({ getAuthenticatedUser: async () => ({ supabase: databaseClient(), user: { id: "user-1", email: "user@example.com" } }) }));
+vi.mock("@/lib/auth", () => ({
+  getAuthenticatedUser: async () => ({ supabase: databaseClient(), user: { id: "user-1", email: "user@example.com" } }),
+  getApiUser: async () => ({ status: mocks.apiAuthStatus }),
+}));
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => databaseClient() }));
 vi.mock("@/features/media/server/photo-url.service", () => ({ createPortfolioPhotoUrls: mocks.photoUrls }));
 vi.mock("@/components/templates", () => ({
@@ -98,6 +102,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.outcomes = {};
   mocks.authUser = null;
+  mocks.apiAuthStatus = "missing_session";
 });
 
 describe("authenticated server pages", () => {
@@ -234,12 +239,12 @@ describe("public portfolio pages", () => {
 });
 
 describe("static app surfaces", () => {
-  it("renders auth pages, layout, and loading states", () => {
+  it("renders auth pages, layout, and loading states", async () => {
     const layout = RootLayout({ children: <main>child</main> });
     expect(layout.props.lang).toBe("en");
-    const { rerender } = render(<LoginPage />);
+    const { rerender } = render(await LoginPage());
     expect(screen.getByText("auth:login")).toBeInTheDocument();
-    rerender(<SignupPage />);
+    rerender(await SignupPage());
     expect(screen.getByText("auth:signup")).toBeInTheDocument();
     rerender(<DashboardLoading />);
     expect(document.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0);
@@ -247,6 +252,12 @@ describe("static app surfaces", () => {
     expect(document.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0);
     rerender(<PreviewLoading />);
     expect(document.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0);
+  });
+
+  it("redirects a live authenticated session away from login and signup", async () => {
+    mocks.apiAuthStatus = "authenticated";
+    await expect(LoginPage()).rejects.toThrow("REDIRECT:/dashboard");
+    await expect(SignupPage()).rejects.toThrow("REDIRECT:/dashboard");
   });
 
   it("never renders raw server error details", () => {

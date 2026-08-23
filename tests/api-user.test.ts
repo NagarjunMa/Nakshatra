@@ -37,11 +37,18 @@ describe("getApiUser", () => {
     await expect(getApiUser()).resolves.toEqual({ status: "invalid_session" });
   });
 
-  it("rejects a verified JWT after its backing session has been revoked", async () => {
+  it("rejects a verified JWT whose backing Auth session was revoked", async () => {
     getClaims.mockResolvedValue({ data: { claims: { sub: "user-id" } }, error: null });
     rpc.mockResolvedValue({ data: false, error: null });
 
-    await expect(getApiUser()).resolves.toEqual({ status: "invalid_session" });
+    await expect(getApiUser()).resolves.toEqual({ status: "revoked_session" });
+  });
+
+  it("fails closed when live-session verification is unavailable", async () => {
+    getClaims.mockResolvedValue({ data: { claims: { sub: "user-id" } }, error: null });
+    rpc.mockResolvedValue({ data: null, error: new Error("database unavailable") });
+
+    await expect(getApiUser()).resolves.toEqual({ status: "service_unavailable" });
   });
 
   it("reports Supabase client initialization failures without leaking internals", async () => {
@@ -70,18 +77,27 @@ describe("getAuthenticatedUser", () => {
       auth: { getUser: vi.fn().mockResolvedValue(result) },
       rpc: vi.fn().mockResolvedValue({ data: true, error: null }),
     });
-
     await expect(getAuthenticatedUser()).rejects.toThrow("NEXT_REDIRECT");
     expect(redirect).toHaveBeenCalledWith("/login");
   });
 
-  it("redirects a user whose Auth session record was revoked", async () => {
+  it("redirects a revoked server-page session with a stable reason", async () => {
     createClient.mockResolvedValue({
       auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: "owner" } }, error: null }) },
       rpc: vi.fn().mockResolvedValue({ data: false, error: null }),
     });
 
     await expect(getAuthenticatedUser()).rejects.toThrow("NEXT_REDIRECT");
-    expect(redirect).toHaveBeenCalledWith("/login");
+    expect(redirect).toHaveBeenCalledWith("/login?error=session_revoked");
+  });
+
+  it("surfaces live-session service failures instead of starting a redirect loop", async () => {
+    createClient.mockResolvedValue({
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: "owner" } }, error: null }) },
+      rpc: vi.fn().mockResolvedValue({ data: null, error: new Error("database unavailable") }),
+    });
+
+    await expect(getAuthenticatedUser()).rejects.toThrow("Authentication service unavailable");
+    expect(redirect).not.toHaveBeenCalled();
   });
 });

@@ -57,7 +57,14 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const [error, setError] = useState("");
   const searchParams = useSearchParams();
   const redirectPath = searchParams.get("redirect") || "/dashboard";
-  const authFailed = searchParams.get("error") === "auth_failed";
+  const authError = searchParams.get("error");
+  const authErrorMessage = authError === "session_revoked"
+    ? "This session has been signed out. Sign in again to continue."
+    : authError === "session_expired"
+      ? "Your session has ended. Sign in again to continue."
+      : authError === "auth_failed"
+        ? "We could not complete the sign-in. Please try again."
+        : "";
   const copy = COPY[mode];
 
   async function handleGoogle() {
@@ -184,12 +191,12 @@ export function AuthForm({ mode }: { mode: Mode }) {
                 </button>
               </form>
 
-              {(error || authFailed) && (
+              {(error || authErrorMessage) && (
                 <p
                   className="account-error"
                   role="alert"
                 >
-                  {error || "We could not complete the sign-in. Please try again."}
+                  {error || authErrorMessage}
                 </p>
               )}
 

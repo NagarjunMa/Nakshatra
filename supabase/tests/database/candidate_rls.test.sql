@@ -23,8 +23,8 @@ select is(
     where schemaname = 'public'
       and tablename = 'candidates'
   ),
-  4,
-  'candidates has exactly four operation-specific policies'
+  5,
+  'candidates has four operation policies plus the restrictive live-session policy'
 );
 
 select is(
@@ -69,8 +69,13 @@ values
   ('00000000-0000-0000-0000-000000000101', 'authenticated', 'authenticated', 'candidate-owner@example.test', now(), now()),
   ('00000000-0000-0000-0000-000000000102', 'authenticated', 'authenticated', 'candidate-outsider@example.test', now(), now());
 
+insert into auth.sessions (id, user_id, created_at, updated_at)
+values
+  ('00000000-0000-4000-8000-000000000201', '00000000-0000-0000-0000-000000000101', now(), now()),
+  ('00000000-0000-4000-8000-000000000202', '00000000-0000-0000-0000-000000000102', now(), now());
+
 set local role authenticated;
-set local request.jwt.claim.sub = '00000000-0000-0000-0000-000000000101';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-000000000101","role":"authenticated","session_id":"00000000-0000-4000-8000-000000000201"}';
 
 select lives_ok(
   $$
@@ -118,7 +123,7 @@ select is(
   'the owner update is persisted'
 );
 
-set local request.jwt.claim.sub = '00000000-0000-0000-0000-000000000102';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-000000000102","role":"authenticated","session_id":"00000000-0000-4000-8000-000000000202"}';
 
 select is(
   (
@@ -166,7 +171,7 @@ select throws_ok(
   'another user cannot create a candidate row owned by someone else'
 );
 
-set local request.jwt.claim.sub = '00000000-0000-0000-0000-000000000101';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-000000000101","role":"authenticated","session_id":"00000000-0000-4000-8000-000000000201"}';
 
 select is(
   (
@@ -197,7 +202,7 @@ select is(
 );
 
 set local role anon;
-set local request.jwt.claim.sub = '00000000-0000-0000-0000-000000000000';
+set local request.jwt.claims = '{"role":"anon"}';
 
 select throws_ok(
   $$

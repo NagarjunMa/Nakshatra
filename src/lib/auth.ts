@@ -5,12 +5,18 @@ export type ApiUserResult =
   | { status: "authenticated"; supabase: Awaited<ReturnType<typeof createClient>>; user: { id: string } }
   | { status: "missing_session" }
   | { status: "invalid_session" }
+  | { status: "revoked_session" }
   | { status: "service_unavailable" };
 
-/** Checks that the signed JWT still maps to a live Supabase Auth session. */
-async function hasActiveSession(supabase: Awaited<ReturnType<typeof createClient>>) {
+type LiveSessionStatus = "active" | "revoked" | "unavailable";
+
+/** Resolves whether the verified JWT still has a matching row in Supabase Auth sessions. */
+async function getLiveSessionStatus(
+  supabase: Awaited<ReturnType<typeof createClient>>
+): Promise<LiveSessionStatus> {
   const { data, error } = await supabase.rpc("is_current_session_active");
-  return !error && data === true;
+  if (error) return "unavailable";
+  return data === true ? "active" : "revoked";
 }
 
 /**
@@ -24,8 +30,16 @@ export async function getAuthenticatedUser() {
     error,
   } = await supabase.auth.getUser();
 
-  if (error || !user || !(await hasActiveSession(supabase))) {
+  if (error || !user) {
     redirect("/login");
+  }
+
+  const sessionStatus = await getLiveSessionStatus(supabase);
+  if (sessionStatus === "revoked") {
+    redirect("/login?error=session_revoked");
+  }
+  if (sessionStatus === "unavailable") {
+    throw new Error("Authentication service unavailable");
   }
 
   return { supabase, user };
@@ -42,7 +56,9 @@ export async function getApiUser(): Promise<ApiUserResult> {
 
     if (error) return { status: "invalid_session" };
     if (!authData?.claims.sub) return { status: "missing_session" };
-    if (!(await hasActiveSession(supabase))) return { status: "invalid_session" };
+    const sessionStatus = await getLiveSessionStatus(supabase);
+    if (sessionStatus === "unavailable") return { status: "service_unavailable" };
+    if (sessionStatus === "revoked") return { status: "revoked_session" };
 
     return { status: "authenticated", supabase, user: { id: authData.claims.sub } };
   } catch {

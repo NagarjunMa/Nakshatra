@@ -98,8 +98,16 @@ values (
   now()
 );
 
+insert into auth.sessions (id, user_id, created_at, updated_at)
+values (
+  'b2000000-0000-4000-8000-000000000001',
+  'b1000000-0000-4000-8000-000000000001',
+  now(),
+  now()
+);
+
 set local role authenticated;
-set local request.jwt.claim.sub = 'b1000000-0000-4000-8000-000000000001';
+set local request.jwt.claims = '{"sub":"b1000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"b2000000-0000-4000-8000-000000000001"}';
 select is(
   public.consume_api_rate_limit('dashboard_save', repeat('d', 64)) ->> 'allowed',
   'true',
