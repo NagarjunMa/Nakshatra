@@ -12,10 +12,12 @@ import { getApiUser, getAuthenticatedUser } from "../src/lib/auth";
 
 describe("getApiUser", () => {
   const getClaims = vi.fn();
+  const rpc = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
-    createClient.mockResolvedValue({ auth: { getClaims } });
+    rpc.mockResolvedValue({ data: true, error: null });
+    createClient.mockResolvedValue({ auth: { getClaims }, rpc });
   });
 
   it("returns an authenticated actor when Supabase verifies a subject claim", async () => {
@@ -35,6 +37,13 @@ describe("getApiUser", () => {
     await expect(getApiUser()).resolves.toEqual({ status: "invalid_session" });
   });
 
+  it("rejects a verified JWT after its backing session has been revoked", async () => {
+    getClaims.mockResolvedValue({ data: { claims: { sub: "user-id" } }, error: null });
+    rpc.mockResolvedValue({ data: false, error: null });
+
+    await expect(getApiUser()).resolves.toEqual({ status: "invalid_session" });
+  });
+
   it("reports Supabase client initialization failures without leaking internals", async () => {
     createClient.mockRejectedValueOnce(new Error("missing environment variable"));
 
@@ -46,6 +55,7 @@ describe("getAuthenticatedUser", () => {
   it("returns the authenticated Supabase actor", async () => {
     const supabase = {
       auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: "owner" } }, error: null }) },
+      rpc: vi.fn().mockResolvedValue({ data: true, error: null }),
     };
     createClient.mockResolvedValue(supabase);
 
@@ -56,7 +66,20 @@ describe("getAuthenticatedUser", () => {
     [{ data: { user: null }, error: null }],
     [{ data: { user: { id: "owner" } }, error: new Error("expired") }],
   ])("redirects when the session is not usable", async (result) => {
-    createClient.mockResolvedValue({ auth: { getUser: vi.fn().mockResolvedValue(result) } });
+    createClient.mockResolvedValue({
+      auth: { getUser: vi.fn().mockResolvedValue(result) },
+      rpc: vi.fn().mockResolvedValue({ data: true, error: null }),
+    });
+
+    await expect(getAuthenticatedUser()).rejects.toThrow("NEXT_REDIRECT");
+    expect(redirect).toHaveBeenCalledWith("/login");
+  });
+
+  it("redirects a user whose Auth session record was revoked", async () => {
+    createClient.mockResolvedValue({
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: "owner" } }, error: null }) },
+      rpc: vi.fn().mockResolvedValue({ data: false, error: null }),
+    });
 
     await expect(getAuthenticatedUser()).rejects.toThrow("NEXT_REDIRECT");
     expect(redirect).toHaveBeenCalledWith("/login");

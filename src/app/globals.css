@@ -93,6 +93,41 @@
   .dashboard-editor .fixed.bottom-5 { left: 0.75rem; right: 0.75rem; width: calc(100% - 1.5rem); }
 }
 
+/* --- Account privacy workspace --- */
+.account-privacy-shell { min-height: 100vh; background: #f8f6f0; color: #18272e; font-family: var(--font-portfolio-body), system-ui, sans-serif; }
+.account-privacy-main { width: min(860px, calc(100% - 2rem)); margin: 0 auto; padding: 4rem 0 6rem; }
+.account-privacy-heading { margin-bottom: 2.5rem; }
+.account-privacy-heading h1 { color: #18272e; font-family: var(--font-portfolio-display), Georgia, serif; font-size: clamp(2.2rem, 6vw, 3.6rem); font-weight: 500; line-height: 1.05; }
+.account-privacy-heading > p:last-child { margin-top: 0.7rem; color: #667478; }
+.account-back-link { display: inline-flex; min-height: 44px; align-items: center; gap: 0.45rem; color: #30464e; font-size: 0.88rem; font-weight: 650; }
+.account-back-link svg,
+.account-control-row button svg,
+.account-confirm-dialog button svg { width: 1rem; height: 1rem; }
+.account-control-row { display: flex; align-items: center; justify-content: space-between; gap: 2rem; border-top: 1px solid #d8d8d2; padding: 1.6rem 0.2rem; }
+.account-control-row h2 { color: #243940; font-size: 1rem; font-weight: 750; }
+.account-control-row p { max-width: 58ch; margin-top: 0.4rem; color: #667478; font-size: 0.88rem; line-height: 1.55; }
+.account-control-row button { flex: none; }
+.account-danger-zone { margin-top: 2rem; border-bottom: 1px solid #e3c5c2; border-top-color: #e3c5c2; }
+.account-danger-zone h2 { color: #873a3a; }
+.account-notice { margin-bottom: 1rem; border-radius: 8px; padding: 0.75rem 0.85rem; font-size: 0.88rem; }
+.account-notice.is-success { border: 1px solid #a8c8be; background: #e0eee9; color: #315f57; }
+.account-notice.is-error { border: 1px solid #d6aaaa; background: #fbeceb; color: #873a3a; }
+.account-confirm-backdrop { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 1rem; background: rgb(16 28 34 / 0.62); }
+.account-confirm-dialog { position: relative; width: min(470px, 100%); border: 1px solid #d0d3ce; border-radius: 10px; padding: 1.5rem; background: #fffdf8; box-shadow: 0 24px 70px rgb(0 0 0 / 0.24); }
+.account-confirm-dialog h2 { color: #18272e; font-family: var(--font-portfolio-display), Georgia, serif; font-size: 1.8rem; font-weight: 500; }
+.account-confirm-dialog > p:not(.site-eyebrow) { margin: 0.8rem 0 1rem; color: #5e6d72; font-size: 0.9rem; line-height: 1.6; }
+.account-confirm-dialog label { display: block; margin-bottom: 0.45rem; color: #30464e; font-size: 0.85rem; }
+.account-confirm-dialog input { width: 100%; height: 46px; margin-bottom: 1rem; border: 1px solid #adb8ba; border-radius: 8px; padding: 0 0.75rem; background: #fff; color: #1d3038; font: inherit; }
+.account-confirm-dialog input:focus-visible { outline: 3px solid rgb(71 123 119 / 0.25); outline-offset: 1px; }
+.account-confirm-dialog > .dashboard-danger-action { width: 100%; }
+.account-confirm-close { position: absolute; top: 0.85rem; right: 0.85rem; display: grid; width: 44px; height: 44px; place-items: center; border: 1px solid #c3c9c8; border-radius: 50%; background: transparent; color: #30464e; }
+
+@media (max-width: 640px) {
+  .account-privacy-main { padding-top: 2.5rem; }
+  .account-control-row { align-items: stretch; flex-direction: column; gap: 1rem; }
+  .account-control-row button { width: 100%; }
+}
+
 .site-header,
 .site-footer {
   display: flex;

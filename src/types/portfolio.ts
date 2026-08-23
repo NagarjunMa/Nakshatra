@@ -268,6 +268,7 @@ export const portfolioDraftSchema = portfolioDataSchema.extend({
 });
 
 export type PortfolioData = z.infer<typeof portfolioDataSchema>;
+export type PortfolioDraftData = z.infer<typeof portfolioDraftSchema>;
 export type PersonalData = z.infer<typeof personalSchema>;
 export type VitalsData = z.infer<typeof vitalsSchema>;
 export type AstrologyData = z.infer<typeof astrologySchema>;
@@ -343,7 +344,7 @@ export interface Portfolio {
   id: string;
   user_id: string;
   share_token: string | null;
-  draft_data: PortfolioData;
+  draft_data: PortfolioDraftData;
   published_data: PortfolioData | null;
   template_id: number;
   theme_color: string | null;

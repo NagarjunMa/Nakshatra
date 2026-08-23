@@ -21,6 +21,9 @@ export const rateLimitActionSchema = z.enum([
   "portfolio_unpublish",
   "horoscope_view",
   "location_search",
+  "account_export",
+  "account_delete",
+  "session_manage",
 ]);
 
 export type RateLimitAction = z.infer<typeof rateLimitActionSchema>;

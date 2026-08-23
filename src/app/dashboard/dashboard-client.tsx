@@ -44,6 +44,7 @@ import {
   Inbox,
   History,
   UserRoundCheck,
+  Settings,
 } from "lucide-react";
 
 interface Props {
@@ -408,6 +409,14 @@ export default function DashboardClient({
             <span className="hidden text-sm text-slate-500 sm:inline">
               {userEmail}
             </span>
+            <Link
+              href="/account"
+              aria-label="Account and privacy"
+              title="Account and privacy"
+              className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-slate-600 transition-colors hover:bg-slate-100"
+            >
+              <Settings className="h-4 w-4" />
+            </Link>
             <button
               onClick={handleSignOut}
               className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-slate-600 transition-colors hover:bg-slate-100"

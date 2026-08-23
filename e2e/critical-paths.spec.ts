@@ -27,6 +27,10 @@ test("unauthenticated owners are redirected away from protected screens", async 
   await page.goto("/dashboard");
   await expect(page).toHaveURL(/\/login\?redirect=%2Fdashboard/);
   await expect(page.getByRole("heading", { name: /sign in to nakshatra/i })).toBeVisible();
+
+  await page.goto("/account");
+  await expect(page).toHaveURL(/\/login\?redirect=%2Faccount/);
+  await expect(page.getByRole("heading", { name: /sign in to nakshatra/i })).toBeVisible();
 });
 
 test("landing page remains usable with reduced motion", async ({ page }) => {
@@ -54,11 +58,17 @@ test("public portfolio renders sanitized data and adaptive media", async ({ page
   const hero = page.locator('.portfolio-hero-media[data-orientation="portrait"]');
   await expect(hero).toBeVisible();
   await expect(hero.getByAltText("Public portrait")).toBeVisible();
-  const heroFrame = await page.locator(".portfolio-primary-photo").evaluate((element) => {
-    const bounds = element.getBoundingClientRect();
-    return Number((bounds.width / bounds.height).toFixed(2));
-  });
-  expect(heroFrame).toBe(0.75);
+  await expect
+    .poll(async () => {
+      const bounds = await page.locator(".portfolio-primary-photo").evaluate((element) => {
+        const rect = element.getBoundingClientRect();
+        return { width: rect.width, height: rect.height };
+      });
+
+      if (bounds.height === 0) return null;
+      return Number((bounds.width / bounds.height).toFixed(2));
+    })
+    .toBe(0.75);
   const gallery = page.locator(".portfolio-gallery");
   await expect(gallery.locator('.portfolio-gallery-feature img[data-orientation="landscape"]')).toBeVisible();
   await expect(gallery.getByAltText("Public landscape", { exact: true })).toBeVisible();
@@ -107,10 +117,10 @@ test("public portfolio exposes production-ready metadata and distinct accent rol
 
   const privacyControl = page.locator(".portfolio-brand");
   await privacyControl.focus();
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Shift+Tab");
   await expect(privacyControl).toBeFocused();
-  expect(
-    await privacyControl.evaluate((element) => getComputedStyle(element).outlineWidth)
-  ).toBe("2px");
+  await expect(privacyControl).toHaveCSS("outline-width", "2px");
 
   if ((page.viewportSize()?.width || 0) >= 900) {
     const chapterStyles = await page.locator(".portfolio-chapter").first().evaluate((element) => {
