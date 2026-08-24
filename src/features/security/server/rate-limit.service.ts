@@ -23,6 +23,7 @@ export const rateLimitActionSchema = z.enum([
   "location_search",
   "account_export",
   "account_delete",
+  "account_delete_reauth",
   "session_manage",
 ]);
 

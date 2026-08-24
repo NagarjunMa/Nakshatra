@@ -9,23 +9,26 @@ import {
   downloadAccountExportRequest,
   requestAccountDeletionRequest,
   revokeOtherSessionsRequest,
+  startAccountDeletionReauthRequest,
 } from "@/features/account/client/account.api";
 
 interface Props {
   userEmail: string;
   initialDeletion: AccountDeletionStatus;
+  reauthComplete?: boolean;
 }
 
-type Action = "export" | "sessions" | "delete" | "cancel" | null;
+type Action = "export" | "sessions" | "delete" | "cancel" | "reauth" | null;
 
 /** Presents browser-safe account controls while all privileged work remains in authenticated APIs. */
-export default function AccountClient({ userEmail, initialDeletion }: Props) {
+export default function AccountClient({ userEmail, initialDeletion, reauthComplete = false }: Props) {
   const [deletion, setDeletion] = useState(initialDeletion);
-  const [confirmationOpen, setConfirmationOpen] = useState(false);
+  const [confirmationOpen, setConfirmationOpen] = useState(reauthComplete);
   const [confirmation, setConfirmation] = useState("");
   const [action, setAction] = useState<Action>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [reauthMethod, setReauthMethod] = useState<"google" | "email" | null>(null);
 
   function beginAction(next: Exclude<Action, null>) {
     setAction(next);
@@ -85,6 +88,24 @@ export default function AccountClient({ userEmail, initialDeletion }: Props) {
     setConfirmationOpen(false);
     setConfirmation("");
     setMessage("Account deletion is scheduled. You can continue using your account until processing begins, or cancel during the recovery window.");
+    setAction(null);
+  }
+
+  /** Starts a fresh provider flow; the proof remains in an HttpOnly server cookie. */
+  async function startDeletionReauth() {
+    if (!reauthMethod) return;
+    beginAction("reauth");
+    const result = await startAccountDeletionReauthRequest(reauthMethod);
+    if (!result.ok) {
+      setError(result.message);
+      setAction(null);
+      return;
+    }
+    if (result.data.url) {
+      window.location.assign(result.data.url);
+      return;
+    }
+    setMessage(`A secure sign-in link was sent to ${userEmail}. Complete it in this browser to continue.`);
     setAction(null);
   }
 
@@ -186,6 +207,40 @@ export default function AccountClient({ userEmail, initialDeletion }: Props) {
             <p className="site-eyebrow">Permanent action</p>
             <h2 id="confirm-delete-heading">Schedule account deletion?</h2>
             <p>Your links and approved access stop working now. After 24 hours, your account and stored files are permanently removed.</p>
+            <p>First complete a fresh sign-in. Your confirmation is submitted only after that sign-in succeeds.</p>
+            <fieldset>
+              <legend>Reauthenticate with</legend>
+              <label>
+                <input
+                  type="radio"
+                  name="reauth-method"
+                  checked={reauthMethod === "google"}
+                  onChange={() => setReauthMethod("google")}
+                />
+                Google
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="reauth-method"
+                  checked={reauthMethod === "email"}
+                  onChange={() => setReauthMethod("email")}
+                />
+                Email link to {userEmail}
+              </label>
+            </fieldset>
+            {!reauthComplete ? (
+              <button
+                className="dashboard-secondary-action"
+                onClick={startDeletionReauth}
+                disabled={!reauthMethod || action !== null}
+              >
+                {action === "reauth" ? <LoaderCircle className="animate-spin" /> : <KeyRound />}
+                Continue to fresh sign-in
+              </button>
+            ) : (
+              <p className="account-notice is-success">Fresh sign-in complete. Type DELETE to schedule deletion.</p>
+            )}
             <label htmlFor="delete-confirmation">Type <strong>DELETE</strong> to continue</label>
             <input
               id="delete-confirmation"
@@ -193,7 +248,11 @@ export default function AccountClient({ userEmail, initialDeletion }: Props) {
               onChange={(event) => setConfirmation(event.target.value)}
               autoComplete="off"
             />
-            <button className="dashboard-danger-action" onClick={requestDeletion} disabled={confirmation !== "DELETE" || action !== null}>
+            <button
+              className="dashboard-danger-action"
+              onClick={requestDeletion}
+              disabled={!reauthComplete || confirmation !== "DELETE" || action !== null}
+            >
               {action === "delete" ? <LoaderCircle className="animate-spin" /> : <Trash2 />}
               Schedule deletion
             </button>

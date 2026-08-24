@@ -108,14 +108,14 @@ beforeEach(() => {
 describe("authenticated server pages", () => {
   it("loads the authenticated account privacy state", async () => {
     mocks.outcomes.account_deletion_requests = { data: null };
-    render(await AccountPage());
+    render(await AccountPage({ searchParams: Promise.resolve({}) }));
     expect(screen.getByTestId("account-props")).toHaveTextContent('"userEmail":"user@example.com"');
     expect(screen.getByTestId("account-props")).toHaveTextContent('"initialDeletion":null');
   });
 
   it("loads an empty dashboard", async () => {
     mocks.outcomes.portfolios = { data: null };
-    render(await DashboardPage());
+    render(await DashboardPage({ searchParams: Promise.resolve({}) }));
     expect(screen.getByTestId("dashboard-props")).toHaveTextContent('"shareUrl":null');
   });
 
@@ -123,7 +123,7 @@ describe("authenticated server pages", () => {
     mocks.outcomes.portfolios = { data: portfolio };
     mocks.outcomes.portfolio_views = { count: 7 };
     mocks.outcomes.portfolio_media = { data: [{ id: "media-1" }] };
-    render(await DashboardPage());
+    render(await DashboardPage({ searchParams: Promise.resolve({}) }));
     const props = screen.getByTestId("dashboard-props").textContent ?? "";
     expect(props).toContain('"viewCount":7');
     expect(props).toContain("https://nakshatra.test/p/token");

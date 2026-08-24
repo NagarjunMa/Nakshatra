@@ -1,14 +1,16 @@
 import { redirect } from "next/navigation";
+import { z } from "zod/v4";
 import { createClient } from "@/lib/supabase/server";
 
 export type ApiUserResult =
-  | { status: "authenticated"; supabase: Awaited<ReturnType<typeof createClient>>; user: { id: string } }
+  | { status: "authenticated"; supabase: Awaited<ReturnType<typeof createClient>>; user: { id: string; sessionId: string } }
   | { status: "missing_session" }
   | { status: "invalid_session" }
   | { status: "revoked_session" }
   | { status: "service_unavailable" };
 
 type LiveSessionStatus = "active" | "revoked" | "unavailable";
+const apiSessionClaimsSchema = z.object({ sub: z.uuid(), session_id: z.uuid() });
 
 /** Resolves whether the verified JWT still has a matching row in Supabase Auth sessions. */
 async function getLiveSessionStatus(
@@ -56,11 +58,13 @@ export async function getApiUser(): Promise<ApiUserResult> {
 
     if (error) return { status: "invalid_session" };
     if (!authData?.claims.sub) return { status: "missing_session" };
+    const claims = apiSessionClaimsSchema.safeParse(authData.claims);
+    if (!claims.success) return { status: "invalid_session" };
     const sessionStatus = await getLiveSessionStatus(supabase);
     if (sessionStatus === "unavailable") return { status: "service_unavailable" };
     if (sessionStatus === "revoked") return { status: "revoked_session" };
 
-    return { status: "authenticated", supabase, user: { id: authData.claims.sub } };
+    return { status: "authenticated", supabase, user: { id: claims.data.sub, sessionId: claims.data.session_id } };
   } catch {
     return { status: "service_unavailable" };
   }

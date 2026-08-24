@@ -4,6 +4,7 @@ const getApiUser = vi.hoisted(() => vi.fn());
 const enforceRateLimit = vi.hoisted(() => vi.fn());
 const exportAccountData = vi.hoisted(() => vi.fn());
 const requestAccountDeletion = vi.hoisted(() => vi.fn());
+const consumeAccountDeletionReauth = vi.hoisted(() => vi.fn());
 const cancelAccountDeletion = vi.hoisted(() => vi.fn());
 const getAccountDeletionStatus = vi.hoisted(() => vi.fn());
 
@@ -15,6 +16,7 @@ vi.mock("../src/features/account/server/account.service", async (importOriginal)
     ...actual,
     exportAccountData,
     requestAccountDeletion,
+    consumeAccountDeletionReauth,
     cancelAccountDeletion,
     getAccountDeletionStatus,
   };
@@ -24,12 +26,26 @@ import { GET as exportGet } from "../src/app/api/account/export/route";
 import { DELETE as deletionDelete, GET as deletionGet, POST as deletionPost } from "../src/app/api/account/deletion/route";
 import { DELETE as sessionsDelete } from "../src/app/api/account/sessions/route";
 import { AccountPrivacyError } from "../src/features/account/server/account.service";
+import { createDeletionProofCookie } from "../src/features/account/server/reauth-cookie";
 
 const signOut = vi.fn();
 const actor = { status: "authenticated", user: { id: "owner" }, supabase: { auth: { signOut } } };
 
-function request(path: string, method = "POST") {
-  return new Request(`http://local${path}`, { method, headers: { Origin: "http://local" } });
+function request(path: string, method = "POST", body?: unknown, cookie?: string) {
+  return new Request(`http://local${path}`, {
+    method,
+    headers: {
+      Origin: "http://local",
+      ...(body ? { "Content-Type": "application/json" } : {}),
+      ...(cookie ? { Cookie: cookie } : {}),
+    },
+    ...(body ? { body: JSON.stringify(body) } : {}),
+  });
+}
+
+function deletionProofCookie() {
+  const cookie = createDeletionProofCookie("11111111-1111-4111-8111-111111111111", "a".repeat(43));
+  return `${cookie.name}=${cookie.value}`;
 }
 
 describe("account privacy routes", () => {
@@ -41,6 +57,7 @@ describe("account privacy routes", () => {
     exportAccountData.mockResolvedValue({ portfolios: [] });
     getAccountDeletionStatus.mockResolvedValue(null);
     cancelAccountDeletion.mockResolvedValue(undefined);
+    consumeAccountDeletionReauth.mockResolvedValue({ status: "pending", scheduledFor: "2026-08-18T00:00:00Z" });
   });
 
   it("requires authentication for every account operation", async () => {
@@ -60,24 +77,30 @@ describe("account privacy routes", () => {
   });
 
   it("schedules deletion without ending the pending account session", async () => {
-    requestAccountDeletion.mockResolvedValue({ status: "pending", scheduledFor: "2026-08-18T00:00:00Z" });
-    const response = await deletionPost(request("/api/account/deletion"));
+    const response = await deletionPost(request(
+      "/api/account/deletion", "POST", { confirmation: "DELETE" }, deletionProofCookie()
+    ));
     expect(response.status).toBe(202);
+    expect(consumeAccountDeletionReauth).toHaveBeenCalled();
     expect(signOut).not.toHaveBeenCalled();
   });
 
   it("does not sign out when organization ownership must be transferred", async () => {
-    requestAccountDeletion.mockResolvedValue({ status: "ownership_transfer_required", organizationCount: 1 });
-    const response = await deletionPost(request("/api/account/deletion"));
+    consumeAccountDeletionReauth.mockResolvedValue({ status: "ownership_transfer_required", organizationCount: 1 });
+    const response = await deletionPost(request(
+      "/api/account/deletion", "POST", { confirmation: "DELETE" }, deletionProofCookie()
+    ));
     expect(response.status).toBe(409);
     expect(signOut).not.toHaveBeenCalled();
   });
 
   it("returns a stable lock error after the worker claims deletion", async () => {
-    requestAccountDeletion.mockRejectedValueOnce(new AccountPrivacyError(
+    consumeAccountDeletionReauth.mockRejectedValueOnce(new AccountPrivacyError(
       "Processing", "ACCOUNT_DELETION_PROCESSING", 409
     ));
-    const response = await deletionPost(request("/api/account/deletion"));
+    const response = await deletionPost(request(
+      "/api/account/deletion", "POST", { confirmation: "DELETE" }, deletionProofCookie()
+    ));
     expect(response.status).toBe(409);
     await expect(response.json()).resolves.toMatchObject({ code: "ACCOUNT_DELETION_PROCESSING" });
   });
@@ -103,7 +126,20 @@ describe("account privacy routes", () => {
       method: "POST",
       headers: { Origin: "https://attacker.test" },
     });
-    expect((await deletionPost(crossSite)).status).toBe(403);
+    const response = await deletionPost(crossSite);
+    expect(response.status).toBe(403);
+    expect(response.headers.get("Cache-Control")).toBe("private, no-store");
     expect(getApiUser).not.toHaveBeenCalled();
+  });
+
+  it("does not schedule deletion without exact confirmation and a valid one-time proof", async () => {
+    const invalidConfirmation = await deletionPost(request("/api/account/deletion", "POST", { confirmation: "delete" }));
+    expect(invalidConfirmation.status).toBe(400);
+    expect(invalidConfirmation.headers.get("Cache-Control")).toBe("private, no-store");
+
+    const missingProof = await deletionPost(request("/api/account/deletion", "POST", { confirmation: "DELETE" }));
+    expect(missingProof.status).toBe(403);
+    await expect(missingProof.json()).resolves.toMatchObject({ code: "DELETION_REAUTH_REQUIRED" });
+    expect(consumeAccountDeletionReauth).not.toHaveBeenCalled();
   });
 });

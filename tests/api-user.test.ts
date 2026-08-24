@@ -13,6 +13,8 @@ import { getApiUser, getAuthenticatedUser } from "../src/lib/auth";
 describe("getApiUser", () => {
   const getClaims = vi.fn();
   const rpc = vi.fn();
+  const userId = "11111111-1111-4111-8111-111111111111";
+  const sessionId = "22222222-2222-4222-8222-222222222222";
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -21,11 +23,11 @@ describe("getApiUser", () => {
   });
 
   it("returns an authenticated actor when Supabase verifies a subject claim", async () => {
-    getClaims.mockResolvedValue({ data: { claims: { sub: "user-id" } }, error: null });
+    getClaims.mockResolvedValue({ data: { claims: { sub: userId, session_id: sessionId } }, error: null });
 
     await expect(getApiUser()).resolves.toMatchObject({
       status: "authenticated",
-      user: { id: "user-id" },
+      user: { id: userId, sessionId },
     });
   });
 
@@ -38,14 +40,14 @@ describe("getApiUser", () => {
   });
 
   it("rejects a verified JWT whose backing Auth session was revoked", async () => {
-    getClaims.mockResolvedValue({ data: { claims: { sub: "user-id" } }, error: null });
+    getClaims.mockResolvedValue({ data: { claims: { sub: userId, session_id: sessionId } }, error: null });
     rpc.mockResolvedValue({ data: false, error: null });
 
     await expect(getApiUser()).resolves.toEqual({ status: "revoked_session" });
   });
 
   it("fails closed when live-session verification is unavailable", async () => {
-    getClaims.mockResolvedValue({ data: { claims: { sub: "user-id" } }, error: null });
+    getClaims.mockResolvedValue({ data: { claims: { sub: userId, session_id: sessionId } }, error: null });
     rpc.mockResolvedValue({ data: null, error: new Error("database unavailable") });
 
     await expect(getApiUser()).resolves.toEqual({ status: "service_unavailable" });

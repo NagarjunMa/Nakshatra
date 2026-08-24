@@ -14,6 +14,21 @@ export class AccountRepository {
     return this.supabase.rpc("request_account_deletion");
   }
 
+  startDeletionReauth(sessionId: string) {
+    return this.supabase.rpc("start_account_deletion_reauth", { p_initiating_session_id: sessionId });
+  }
+
+  completeDeletionReauth(challengeId: string, proofHash: string) {
+    return this.supabase.rpc("complete_account_deletion_reauth", {
+      p_challenge_id: challengeId,
+      p_proof_hash: proofHash,
+    });
+  }
+
+  consumeDeletionReauth(proofHash: string) {
+    return this.supabase.rpc("consume_account_deletion_reauth", { p_proof_hash: proofHash });
+  }
+
   cancelDeletion() {
     return this.supabase.rpc("cancel_account_deletion");
   }

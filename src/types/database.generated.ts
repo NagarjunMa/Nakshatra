@@ -2476,6 +2476,10 @@ export type Database = {
         Returns: boolean
       }
       cancel_account_deletion: { Args: never; Returns: string }
+      complete_account_deletion_reauth: {
+        Args: { p_challenge_id: string; p_proof_hash: string }
+        Returns: string
+      }
       claim_account_deletion_batch: {
         Args: { p_limit?: number }
         Returns: {
@@ -2493,6 +2497,7 @@ export type Database = {
         Args: { p_action: string; p_subject_hash?: string }
         Returns: Json
       }
+      consume_account_deletion_reauth: { Args: { p_proof_hash: string }; Returns: Json }
       create_organization_with_owner: {
         Args: {
           p_name: string
@@ -2580,6 +2585,10 @@ export type Database = {
         Returns: string
       }
       request_account_deletion: { Args: never; Returns: Json }
+      start_account_deletion_reauth: {
+        Args: { p_initiating_session_id: string }
+        Returns: Json
+      }
       resolve_approved_horoscope: {
         Args: { p_share_token: string }
         Returns: Json

@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   sessions: vi.fn(),
   deletion: vi.fn(),
   cancel: vi.fn(),
+  reauth: vi.fn(),
 }));
 
 vi.mock("@/features/account/client/account.api", () => ({
@@ -16,6 +17,7 @@ vi.mock("@/features/account/client/account.api", () => ({
   revokeOtherSessionsRequest: mocks.sessions,
   requestAccountDeletionRequest: mocks.deletion,
   cancelAccountDeletionRequest: mocks.cancel,
+  startAccountDeletionReauthRequest: mocks.reauth,
 }));
 
 import AccountClient from "../src/app/account/account-client";
@@ -29,6 +31,7 @@ beforeEach(() => {
     data: { status: "pending", scheduledFor: "2026-08-18T00:00:00Z" },
   });
   mocks.cancel.mockResolvedValue({ ok: true, data: { ok: true } });
+  mocks.reauth.mockResolvedValue({ ok: true, data: { sent: true } });
   URL.createObjectURL = vi.fn(() => "blob:account-export");
   URL.revokeObjectURL = vi.fn();
   vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
@@ -38,7 +41,7 @@ afterEach(() => vi.restoreAllMocks());
 
 describe("account privacy screen", () => {
   it("downloads the account export and revokes other sessions", async () => {
-    render(<AccountClient userEmail="owner@example.test" initialDeletion={null} />);
+    render(<AccountClient userEmail="owner@example.test" initialDeletion={null} reauthComplete />);
     expect(screen.getByRole("heading", { name: "Privacy and sessions" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Download" }));
@@ -52,7 +55,7 @@ describe("account privacy screen", () => {
   });
 
   it("requires typed confirmation before scheduling deletion", async () => {
-    render(<AccountClient userEmail="owner@example.test" initialDeletion={null} />);
+    render(<AccountClient userEmail="owner@example.test" initialDeletion={null} reauthComplete />);
     fireEvent.click(screen.getByRole("button", { name: "Delete account" }));
 
     const schedule = screen.getByRole("button", { name: "Schedule deletion" });
@@ -65,12 +68,27 @@ describe("account privacy screen", () => {
     expect(screen.getByRole("button", { name: "Cancel deletion" })).toBeInTheDocument();
   });
 
+  it("starts a fresh email sign-in before enabling deletion", async () => {
+    render(<AccountClient userEmail="owner@example.test" initialDeletion={null} />);
+    fireEvent.click(screen.getByRole("button", { name: "Delete account" }));
+    const schedule = screen.getByRole("button", { name: "Schedule deletion" });
+    expect(schedule).toBeDisabled();
+
+    fireEvent.click(screen.getByRole("radio", { name: /email link/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue to fresh sign-in" }));
+
+    await waitFor(() => expect(mocks.reauth).toHaveBeenCalledWith("email"));
+    expect(screen.getByText(/secure sign-in link was sent/i)).toBeInTheDocument();
+    expect(schedule).toBeDisabled();
+    expect(mocks.deletion).not.toHaveBeenCalled();
+  });
+
   it("closes confirmation without deleting and explains ownership transfer blocks", async () => {
     mocks.deletion.mockResolvedValueOnce({
       ok: true,
       data: { status: "ownership_transfer_required", organizationCount: 2 },
     });
-    render(<AccountClient userEmail="owner@example.test" initialDeletion={null} />);
+    render(<AccountClient userEmail="owner@example.test" initialDeletion={null} reauthComplete />);
     fireEvent.click(screen.getByRole("button", { name: "Delete account" }));
     fireEvent.click(screen.getByRole("button", { name: "Close deletion confirmation" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();

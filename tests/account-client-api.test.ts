@@ -58,7 +58,11 @@ describe("account browser API", () => {
     await cancelAccountDeletionRequest();
     expect(fetch.mock.calls).toEqual([
       ["/api/account/sessions", { method: "DELETE" }],
-      ["/api/account/deletion", { method: "POST" }],
+      ["/api/account/deletion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmation: "DELETE" }),
+      }],
       ["/api/account/deletion", { method: "DELETE" }],
     ]);
   });
