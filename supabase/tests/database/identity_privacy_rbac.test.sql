@@ -17,18 +17,20 @@ values
 select has_function('public', 'is_current_session_active', array[]::text[], 'live Auth session predicate exists');
 
 insert into auth.sessions (id, user_id, created_at, updated_at)
-values (
-  '42000000-0000-4000-8000-000000000001',
-  '41000000-0000-4000-8000-000000000001',
-  now(), now()
-);
+values
+  ('42000000-0000-4000-8000-000000000001', '41000000-0000-4000-8000-000000000001', now(), now()),
+  ('42000000-0000-4000-8000-000000000002', '41000000-0000-4000-8000-000000000002', now(), now()),
+  ('42000000-0000-4000-8000-000000000003', '41000000-0000-4000-8000-000000000003', now(), now()),
+  ('42000000-0000-4000-8000-000000000004', '41000000-0000-4000-8000-000000000004', now(), now()),
+  ('42000000-0000-4000-8000-000000000005', '41000000-0000-4000-8000-000000000005', now(), now()),
+  ('42000000-0000-4000-8000-000000000006', '41000000-0000-4000-8000-000000000006', now(), now());
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"41000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"42000000-0000-4000-8000-000000000001"}';
 select ok(public.is_current_session_active(), 'a JWT bound to a live Auth session is active');
 set local request.jwt.claims = '{"sub":"41000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"42000000-0000-4000-8000-000000000099"}';
 select ok(not public.is_current_session_active(), 'a JWT without its backing Auth session is rejected');
 
-set local request.jwt.claim.sub = '41000000-0000-4000-8000-000000000001';
+set local request.jwt.claims = '{"sub":"41000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"42000000-0000-4000-8000-000000000001"}';
 select is(
   public.create_organization_with_owner('matchmaker_agency', 'Phase Four Agency', 'phase-four-agency') ->> 'role',
   'owner',
@@ -56,7 +58,7 @@ select '43000000-0000-4000-8000-000000000001', id, 'Organization Candidate', '41
 from public.organizations where slug = 'phase-four-agency';
 
 set local role authenticated;
-set local request.jwt.claim.sub = '41000000-0000-4000-8000-000000000004';
+set local request.jwt.claims = '{"sub":"41000000-0000-4000-8000-000000000004","role":"authenticated","session_id":"42000000-0000-4000-8000-000000000004"}';
 select ok(
   public.has_organization_role(
     (select id from public.organizations where slug = 'phase-four-agency'),
@@ -81,7 +83,7 @@ select is(
 );
 
 set local role authenticated;
-set local request.jwt.claim.sub = '41000000-0000-4000-8000-000000000004';
+set local request.jwt.claims = '{"sub":"41000000-0000-4000-8000-000000000004","role":"authenticated","session_id":"42000000-0000-4000-8000-000000000004"}';
 select throws_ok(
   $$insert into public.candidates (current_organization_id, display_name)
     select id, 'Viewer Candidate' from public.organizations where slug = 'phase-four-agency'$$,
@@ -89,7 +91,7 @@ select throws_ok(
   'a viewer cannot create candidate data'
 );
 
-set local request.jwt.claim.sub = '41000000-0000-4000-8000-000000000005';
+set local request.jwt.claims = '{"sub":"41000000-0000-4000-8000-000000000005","role":"authenticated","session_id":"42000000-0000-4000-8000-000000000005"}';
 select lives_ok(
   $$update public.candidates set display_name = 'Broker Mutation' where id = '43000000-0000-4000-8000-000000000001'$$,
   'a broker-agent can perform candidate operations'
@@ -102,7 +104,7 @@ select is(
 );
 
 set local role authenticated;
-set local request.jwt.claim.sub = '41000000-0000-4000-8000-000000000002';
+set local request.jwt.claims = '{"sub":"41000000-0000-4000-8000-000000000002","role":"authenticated","session_id":"42000000-0000-4000-8000-000000000002"}';
 select lives_ok(
   $$insert into public.organization_members (organization_id, user_id, role, status)
     select id, '41000000-0000-4000-8000-000000000003', 'editor', 'active'
@@ -116,7 +118,7 @@ select throws_ok(
   'an admin cannot grant the owner role'
 );
 
-set local request.jwt.claim.sub = '41000000-0000-4000-8000-000000000001';
+set local request.jwt.claims = '{"sub":"41000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"42000000-0000-4000-8000-000000000001"}';
 set constraints enforce_organization_owner_invariant immediate;
 select throws_ok(
   $$delete from public.organization_members where user_id = '41000000-0000-4000-8000-000000000001'$$,
@@ -124,7 +126,7 @@ select throws_ok(
   'the final active owner cannot be removed'
 );
 
-set local request.jwt.claim.sub = '41000000-0000-4000-8000-000000000004';
+set local request.jwt.claims = '{"sub":"41000000-0000-4000-8000-000000000004","role":"authenticated","session_id":"42000000-0000-4000-8000-000000000004"}';
 select throws_ok(
   $$insert into public.broker_clients (organization_id, candidate_id)
     select id, '43000000-0000-4000-8000-000000000001'
@@ -142,14 +144,14 @@ select '46000000-0000-4000-8000-000000000001', id, '45000000-0000-4000-8000-0000
 from public.organizations where slug = 'phase-four-agency';
 
 set local role authenticated;
-set local request.jwt.claim.sub = '41000000-0000-4000-8000-000000000002';
+set local request.jwt.claims = '{"sub":"41000000-0000-4000-8000-000000000002","role":"authenticated","session_id":"42000000-0000-4000-8000-000000000002"}';
 select is((select count(*)::integer from public.subscriptions), 1, 'an organization admin can read billing records');
-set local request.jwt.claim.sub = '41000000-0000-4000-8000-000000000004';
+set local request.jwt.claims = '{"sub":"41000000-0000-4000-8000-000000000004","role":"authenticated","session_id":"42000000-0000-4000-8000-000000000004"}';
 select is((select count(*)::integer from public.subscriptions), 0, 'an organization viewer cannot read billing records');
 
 reset role;
 set local role authenticated;
-set local request.jwt.claim.sub = '41000000-0000-4000-8000-000000000006';
+set local request.jwt.claims = '{"sub":"41000000-0000-4000-8000-000000000006","role":"authenticated","session_id":"42000000-0000-4000-8000-000000000006"}';
 select throws_ok(
   $$insert into public.portfolios (user_id, draft_data, is_published)
     values ('41000000-0000-4000-8000-000000000006', '{"personal":{}}', true)$$,
@@ -177,12 +179,6 @@ values (
 );
 update public.portfolios set is_published = true
 where id = '44000000-0000-4000-8000-000000000001';
-insert into auth.sessions (id, user_id, created_at, updated_at)
-values (
-  '42000000-0000-4000-8000-000000000006',
-  '41000000-0000-4000-8000-000000000006',
-  now(), now()
-);
 insert into public.interest_requests (
   id, portfolio_id, viewer_name, viewer_email, message, requester_user_id, status, updated_at
 ) values (
@@ -193,22 +189,28 @@ insert into public.interest_requests (
 );
 
 set local role authenticated;
-set local request.jwt.claim.sub = '41000000-0000-4000-8000-000000000006';
+set local request.jwt.claims = '{"sub":"41000000-0000-4000-8000-000000000006","role":"authenticated","session_id":"42000000-0000-4000-8000-000000000006"}';
 select is(public.request_account_deletion() ->> 'status', 'pending', 'account deletion enters the recovery window');
+reset role;
 select ok(not (select is_published from public.portfolios where id = '44000000-0000-4000-8000-000000000001'), 'deletion immediately unpublishes the portfolio');
 select is((select status from public.account_deletion_requests where user_id = '41000000-0000-4000-8000-000000000006'), 'pending', 'the deletion request is persisted');
-reset role;
 select is((select count(*)::integer from auth.sessions where user_id = '41000000-0000-4000-8000-000000000006'), 0, 'deletion atomically revokes every Auth session');
+insert into auth.sessions (id, user_id, created_at, updated_at)
+values (
+  '42000000-0000-4000-8000-000000000016',
+  '41000000-0000-4000-8000-000000000006',
+  now(), now()
+);
 set local role authenticated;
-set local request.jwt.claim.sub = '41000000-0000-4000-8000-000000000006';
+set local request.jwt.claims = '{"sub":"41000000-0000-4000-8000-000000000006","role":"authenticated","session_id":"42000000-0000-4000-8000-000000000016"}';
 select is(public.cancel_account_deletion(), 'canceled', 'the subject can cancel before processing begins');
 
-set local request.jwt.claim.sub = '41000000-0000-4000-8000-000000000001';
+set local request.jwt.claims = '{"sub":"41000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"42000000-0000-4000-8000-000000000001"}';
 select is(public.request_account_deletion() ->> 'status', 'ownership_transfer_required', 'sole owners must transfer organizations with other active members');
 select is((select count(*)::integer from public.account_deletion_requests where user_id = '41000000-0000-4000-8000-000000000001'), 0, 'a blocked deletion request is not scheduled');
 select ok(position('viewer-secret@phase4.test' in public.export_my_account_data()::text) = 0, 'an owner export excludes another requester''s submitted PII');
 
-set local request.jwt.claim.sub = '41000000-0000-4000-8000-000000000004';
+set local request.jwt.claims = '{"sub":"41000000-0000-4000-8000-000000000004","role":"authenticated","session_id":"42000000-0000-4000-8000-000000000004"}';
 select ok(position('viewer-secret@phase4.test' in public.export_my_account_data()::text) > 0, 'a requester export includes that requester''s own submitted record');
 
 reset role;

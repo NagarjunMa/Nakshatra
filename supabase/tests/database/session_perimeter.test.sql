@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(38);
+select plan(39);
 
 select has_function('public', 'is_current_session_active', array[]::text[], 'live Auth session predicate exists');
 select has_function('app_private', 'require_current_session', array[]::text[], 'internal live-session guard exists');
@@ -57,6 +57,7 @@ select ok(
       'resolve_approved_portfolio(text)',
       'resolve_approved_horoscope(text)',
       'set_portfolio_hero(uuid)',
+      'can_manage_organization_member(uuid,organization_member_role)',
       'create_organization_with_owner(organization_type,text,text)',
       'request_account_deletion()',
       'cancel_account_deletion()',
@@ -185,6 +186,12 @@ select throws_ok(
   '42501',
   'authentication session is no longer active',
   'a mismatched session cannot execute Phase 4 account RPCs'
+);
+select throws_ok(
+  $$select public.can_manage_organization_member('55000000-0000-4000-8000-000000000001', 'viewer')$$,
+  '42501',
+  'authentication session is no longer active',
+  'a mismatched session cannot execute organization authorization helpers'
 );
 
 reset role;
