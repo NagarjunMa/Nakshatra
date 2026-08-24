@@ -55,6 +55,10 @@ select is(
   'claimed',
   'claim records the initial durable worker stage'
 );
+
+-- service_role may invoke the worker RPC but must not receive direct access to
+-- auth.sessions. Return to the test owner to inspect the Auth-side effect.
+reset role;
 select is(
   (select count(*)::integer from auth.sessions where user_id = '61000000-0000-4000-8000-000000000001'),
   0,
