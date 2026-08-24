@@ -190,23 +190,45 @@ insert into public.interest_requests (
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"41000000-0000-4000-8000-000000000006","role":"authenticated","session_id":"42000000-0000-4000-8000-000000000006"}';
-select is(public.request_account_deletion() ->> 'status', 'pending', 'account deletion enters the recovery window');
+create temporary table delete_subject_reauth_challenge as
+select (public.start_account_deletion_reauth('42000000-0000-4000-8000-000000000006') ->> 'challengeId')::uuid as id;
+
 reset role;
-select ok(not (select is_published from public.portfolios where id = '44000000-0000-4000-8000-000000000001'), 'deletion immediately unpublishes the portfolio');
-select is((select status from public.account_deletion_requests where user_id = '41000000-0000-4000-8000-000000000006'), 'pending', 'the deletion request is persisted');
-select is((select count(*)::integer from auth.sessions where user_id = '41000000-0000-4000-8000-000000000006'), 1, 'pending deletion preserves every Auth session through the recovery window');
 insert into auth.sessions (id, user_id, created_at, updated_at)
 values (
   '42000000-0000-4000-8000-000000000016',
   '41000000-0000-4000-8000-000000000006',
-  now(), now()
+  now() + interval '1 second', now()
 );
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"41000000-0000-4000-8000-000000000006","role":"authenticated","session_id":"42000000-0000-4000-8000-000000000016"}';
+create temporary table delete_subject_reauth_verified as
+select public.complete_account_deletion_reauth((select id from delete_subject_reauth_challenge), repeat('c', 64)) as status;
+select is(public.consume_account_deletion_reauth(repeat('c', 64)) ->> 'status', 'pending', 'account deletion enters the recovery window after fresh reauthentication');
+reset role;
+select ok(not (select is_published from public.portfolios where id = '44000000-0000-4000-8000-000000000001'), 'deletion immediately unpublishes the portfolio');
+select is((select status from public.account_deletion_requests where user_id = '41000000-0000-4000-8000-000000000006'), 'pending', 'the deletion request is persisted');
+select is((select count(*)::integer from auth.sessions where user_id = '41000000-0000-4000-8000-000000000006'), 2, 'pending deletion preserves every Auth session through the recovery window');
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"41000000-0000-4000-8000-000000000006","role":"authenticated","session_id":"42000000-0000-4000-8000-000000000016"}';
 select is(public.cancel_account_deletion(), 'canceled', 'the subject can cancel before processing begins');
 
 set local request.jwt.claims = '{"sub":"41000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"42000000-0000-4000-8000-000000000001"}';
-select is(public.request_account_deletion() ->> 'status', 'ownership_transfer_required', 'sole owners must transfer organizations with other active members');
+create temporary table owner_reauth_challenge as
+select (public.start_account_deletion_reauth('42000000-0000-4000-8000-000000000001') ->> 'challengeId')::uuid as id;
+
+reset role;
+insert into auth.sessions (id, user_id, created_at, updated_at)
+values (
+  '42000000-0000-4000-8000-000000000017',
+  '41000000-0000-4000-8000-000000000001',
+  now() + interval '2 seconds', now()
+);
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"41000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"42000000-0000-4000-8000-000000000017"}';
+create temporary table owner_reauth_verified as
+select public.complete_account_deletion_reauth((select id from owner_reauth_challenge), repeat('d', 64)) as status;
+select is(public.consume_account_deletion_reauth(repeat('d', 64)) ->> 'status', 'ownership_transfer_required', 'sole owners must transfer organizations with other active members after fresh reauthentication');
 select is((select count(*)::integer from public.account_deletion_requests where user_id = '41000000-0000-4000-8000-000000000001'), 0, 'a blocked deletion request is not scheduled');
 select ok(position('viewer-secret@phase4.test' in public.export_my_account_data()::text) = 0, 'an owner export excludes another requester''s submitted PII');
 

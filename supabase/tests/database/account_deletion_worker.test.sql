@@ -25,21 +25,44 @@ select ok(
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"61000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"62000000-0000-4000-8000-000000000001"}';
 
-select is(public.request_account_deletion() ->> 'status', 'pending', 'a new deletion request enters pending');
+create temporary table owner_reauth_challenge as
+select (public.start_account_deletion_reauth('62000000-0000-4000-8000-000000000001') ->> 'challengeId')::uuid as id;
+
+reset role;
+insert into auth.sessions (id, user_id, created_at, updated_at)
+values ('62000000-0000-4000-8000-000000000003', '61000000-0000-4000-8000-000000000001', now() + interval '1 second', now());
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"61000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"62000000-0000-4000-8000-000000000003"}';
+create temporary table owner_reauth_verified as
+select public.complete_account_deletion_reauth((select id from owner_reauth_challenge), repeat('a', 64)) as status;
+select is(public.consume_account_deletion_reauth(repeat('a', 64)) ->> 'status', 'pending', 'a fresh reauthentication schedules a new pending deletion request');
 create temporary table owner_deadline as
 select scheduled_for from public.account_deletion_requests where user_id = '61000000-0000-4000-8000-000000000001';
+
+create temporary table owner_repeat_reauth_challenge as
+select (public.start_account_deletion_reauth('62000000-0000-4000-8000-000000000003') ->> 'challengeId')::uuid as id;
+
+reset role;
+insert into auth.sessions (id, user_id, created_at, updated_at)
+values ('62000000-0000-4000-8000-000000000004', '61000000-0000-4000-8000-000000000001', now() + interval '2 seconds', now());
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"61000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"62000000-0000-4000-8000-000000000004"}';
+create temporary table owner_repeat_reauth_verified as
+select public.complete_account_deletion_reauth((select id from owner_repeat_reauth_challenge), repeat('b', 64)) as status;
 select is(
-  (public.request_account_deletion() ->> 'scheduledFor')::timestamptz,
+  (public.consume_account_deletion_reauth(repeat('b', 64)) ->> 'scheduledFor')::timestamptz,
   (select scheduled_for from owner_deadline),
-  'repeating a pending request preserves its original recovery deadline'
+  'repeating a pending request after a fresh proof preserves its original recovery deadline'
 );
 select ok(public.is_current_session_active(), 'pending deletion preserves private session access');
 
 reset role;
 select is(
   (select count(*)::integer from auth.sessions where user_id = '61000000-0000-4000-8000-000000000001'),
-  1,
-  'pending deletion does not revoke Auth sessions'
+  3,
+  'pending deletion preserves every active session through the recovery window'
 );
 update public.account_deletion_requests
 set scheduled_for = now() - interval '1 second'
@@ -66,7 +89,7 @@ select is(
 );
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"61000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"62000000-0000-4000-8000-000000000001"}';
+set local request.jwt.claims = '{"sub":"61000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"62000000-0000-4000-8000-000000000003"}';
 select ok(not public.is_current_session_active(), 'processing deletion denies the previously live JWT');
 
 reset role;
