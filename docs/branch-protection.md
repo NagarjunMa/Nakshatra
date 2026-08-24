@@ -8,7 +8,7 @@ Protect `main` in GitHub before merging production work.
 - Require approvals.
 - Require status checks to pass before merging.
 - Require branches to be up to date before merging.
-- Required status check: `Lint, Typecheck & Build`.
+- Required status checks: `Lint, Test, Coverage & Build` and `TruffleHog Secret Scan`.
 - Block force pushes.
 - Block branch deletion.
 - Include administrators.
@@ -33,7 +33,7 @@ gh api \
 {
   "required_status_checks": {
     "strict": true,
-    "contexts": ["Lint, Typecheck & Build"]
+    "contexts": ["Lint, Test, Coverage & Build", "TruffleHog Secret Scan"]
   },
   "enforce_admins": true,
   "required_pull_request_reviews": {
@@ -51,4 +51,4 @@ gh api \
 JSON
 ```
 
-The local `.husky/pre-push` hook also blocks pushes from local `main` and `master`, but GitHub branch protection is the source of truth.
+The local `.husky/pre-push` hook blocks pushes from local `main` and `master`, then runs typecheck and unit tests. TruffleHog runs on GitHub when a pull request targets `main`; the `TruffleHog Secret Scan` check must be required in branch protection before merge. This keeps secret scanning independent of a contributor's local Docker installation.
