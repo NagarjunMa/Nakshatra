@@ -69,14 +69,20 @@ export type Database = {
       }
       account_deletion_requests: {
         Row: {
+          auth_deleted_at: string | null
           attempts: number
           claimed_at: string | null
           completed_at: string | null
           created_at: string
           id: string
           last_error_code: string | null
+          lease_expires_at: string | null
+          lease_token: string | null
+          processing_stage: string
+          processing_started_at: string | null
           requested_at: string
           retention_until: string | null
+          retry_after: string | null
           scheduled_for: string
           status: string
           subject_hash: string
@@ -84,14 +90,20 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          auth_deleted_at?: string | null
           attempts?: number
           claimed_at?: string | null
           completed_at?: string | null
           created_at?: string
           id?: string
           last_error_code?: string | null
+          lease_expires_at?: string | null
+          lease_token?: string | null
+          processing_stage?: string
+          processing_started_at?: string | null
           requested_at?: string
           retention_until?: string | null
+          retry_after?: string | null
           scheduled_for?: string
           status?: string
           subject_hash: string
@@ -99,14 +111,20 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          auth_deleted_at?: string | null
           attempts?: number
           claimed_at?: string | null
           completed_at?: string | null
           created_at?: string
           id?: string
           last_error_code?: string | null
+          lease_expires_at?: string | null
+          lease_token?: string | null
+          processing_stage?: string
+          processing_started_at?: string | null
           requested_at?: string
           retention_until?: string | null
+          retry_after?: string | null
           scheduled_for?: string
           status?: string
           subject_hash?: string
@@ -2305,9 +2323,19 @@ export type Database = {
       claim_account_deletion_batch: {
         Args: { p_limit?: number }
         Returns: {
+          claim_token: string
+          processing_stage: string
           request_id: string
-          user_id: string
+          user_id: string | null
         }[]
+      }
+      advance_account_deletion_stage: {
+        Args: { p_claim_token: string; p_request_id: string; p_stage: string }
+        Returns: boolean
+      }
+      complete_account_deletion: {
+        Args: { p_claim_token: string; p_request_id: string }
+        Returns: boolean
       }
       consume_api_rate_limit: {
         Args: { p_action: string; p_subject_hash?: string }
@@ -2349,7 +2377,7 @@ export type Database = {
       }
       owns_candidate: { Args: { p_candidate_id: string }; Returns: boolean }
       prepare_account_deletion: {
-        Args: { p_request_id: string; p_user_id: string }
+        Args: { p_claim_token: string; p_request_id: string; p_user_id: string }
         Returns: Json
       }
       publish_portfolio_transaction: {
@@ -2370,6 +2398,10 @@ export type Database = {
         Args: { p_share_token: string }
         Returns: boolean
       }
+      record_account_deletion_auth_deleted: {
+        Args: { p_claim_token: string; p_request_id: string }
+        Returns: boolean
+      }
       renew_portfolio_transaction: {
         Args: { p_expires_at: string }
         Returns: Json
@@ -2384,6 +2416,10 @@ export type Database = {
         Returns: string
       }
       request_account_deletion: { Args: never; Returns: Json }
+      fail_account_deletion: {
+        Args: { p_claim_token: string; p_error_code: string; p_request_id: string }
+        Returns: boolean
+      }
       resolve_approved_horoscope: {
         Args: { p_share_token: string }
         Returns: Json
@@ -2692,4 +2728,3 @@ export const Constants = {
     },
   },
 } as const
-

@@ -43,6 +43,15 @@ describe("account privacy service", () => {
     await expect(requestAccountDeletion(client as never)).rejects.toBeInstanceOf(AccountPrivacyError);
   });
 
+  it.each([
+    ["processing", "ACCOUNT_DELETION_PROCESSING"],
+    ["completed", "ACCOUNT_DELETION_COMPLETED"],
+    ["unavailable", "ACCOUNT_DELETION_NOT_AVAILABLE"],
+  ])("maps the %s state to a stable conflict", async (status, code) => {
+    const client = rpcClient({ request_account_deletion: { data: { status }, error: null } });
+    await expect(requestAccountDeletion(client as never)).rejects.toMatchObject({ code, status: 409 });
+  });
+
   it("cancels only requests that remain recoverable", async () => {
     const success = rpcClient({ cancel_account_deletion: { data: "canceled", error: null } });
     await expect(cancelAccountDeletion(success as never)).resolves.toBeUndefined();

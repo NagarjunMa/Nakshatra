@@ -29,7 +29,7 @@ export async function GET() {
   }
 }
 
-/** Revokes publication and schedules account deletion after a 24-hour recovery window. */
+/** Revokes public access and schedules deletion while preserving private recovery-window access. */
 export async function POST(request: Request) {
   try {
     requireSameOrigin(request);
@@ -43,7 +43,6 @@ export async function POST(request: Request) {
 
   try {
     const result = await requestAccountDeletion(auth.supabase);
-    if (result.status === "pending") await auth.supabase.auth.signOut({ scope: "global" });
     return NextResponse.json(result, { status: result.status === "pending" ? 202 : 409 });
   } catch (error) {
     return accountError(error);

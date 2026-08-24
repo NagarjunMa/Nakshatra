@@ -7,7 +7,7 @@ This phase establishes the application controls for session invalidation, accoun
 - Every protected server page and API request validates the Supabase token and calls `is_current_session_active()`.
 - The RPC binds the JWT `session_id` to a live row in `auth.sessions`. A revoked session therefore stops working immediately in Nakshatra even if its signed access token has not expired.
 - `/account` lets a user revoke every other session through Supabase Auth's `others` sign-out scope.
-- Account deletion uses global sign-out after public access has been revoked and the deletion request has been persisted.
+- Pending account deletion keeps the user's private session usable during the recovery window. The worker atomically revokes every Auth session only when it claims deletion for processing; the live-session predicate then denies any newly issued private session until completion.
 
 Production Auth settings to verify in Supabase:
 
@@ -26,12 +26,12 @@ Production Auth settings to verify in Supabase:
 
 Deletion is asynchronous:
 
-1. The user types `DELETE` in `/account`.
-2. `request_account_deletion()` unpublishes portfolios, disables public snapshots, revokes Full View grants, closes active requests, and schedules deletion after 24 hours.
-3. The user is signed out globally. They can sign in again during the recovery window and cancel; canceled portfolios remain unpublished.
+1. The user requests deletion in `/account`. NAK-41 adds a separate fresh-auth proof before this action is released.
+2. `request_account_deletion()` unpublishes portfolios, disables public snapshots, revokes Full View grants, closes active requests, and schedules deletion after 24 hours. Repeating a pending request returns the original deadline without moving it.
+3. The private account remains usable while the request is `pending`. Cancellation is available only while the request remains `pending` or retryable `failed`; canceled portfolios remain unpublished.
 4. An organization owner must transfer ownership when other active members would otherwise be left without an owner.
-5. `npm run privacy:process-deletions` claims due work, removes `photos` and `horoscopes` objects through the Storage API, anonymizes submitted-request PII, deletes direct candidate records and empty organizations, then deletes the Supabase Auth user.
-6. The worker retains a non-identifying completion receipt for 30 days. Failed work is retried after one hour without logging user IDs, paths, or provider errors.
+5. `npm run privacy:process-deletions` atomically claims due work, sets a 30-minute lease token, freezes account access, and revokes Auth sessions. An expired lease is reclaimed with a new token; no worker can mutate a claim it no longer owns.
+6. The worker performs this exact order: initial `photos`/`horoscopes` Storage cleanup, database cleanup/anonymization, final Storage sweep, Supabase Auth deletion, then a non-identifying completion receipt retained for 30 days. Pre-Auth failures receive a one-hour retry; post-Auth receipt failures exit non-zero and resume only receipt completion after lease expiry.
 
 Run the worker only in an isolated trusted environment:
 
@@ -43,6 +43,16 @@ unset SUPABASE_SERVICE_ROLE_KEY
 ```
 
 The service-role key must not appear in `.env.example`, browser code, Vercel client variables, logs, or GitHub Actions.
+
+### Production schedule and monitoring
+
+Run the worker at least hourly before enabling account deletion in production. A 15-minute schedule gives prompt stale-lease recovery while remaining well below the 30-minute lease:
+
+```cron
+*/15 * * * * node --env-file=/secure/nakshatra.env /app/scripts/process-account-deletions.mjs
+```
+
+The scheduler must use an isolated trusted runtime with the service-role key injected by its secret manager. Alert on every non-zero worker exit, any processing lease older than 30 minutes, repeated failed attempts, and receipt-persistence failures. Alert payloads may contain the categorical stage/error and deployment/request correlation ID, never a user ID, session ID, Storage path, JWT, provider response, or service-role credential.
 
 ## Retention Schedule
 
@@ -89,6 +99,6 @@ The interested-request form must continue to state its purpose before submission
 ## Verification
 
 - Generate schema types with `npm run db:types` after every migration and commit the result.
-- Run `npm run test:db:local` for session binding, the role matrix, deletion transitions, export isolation, and retention behavior.
+- Run `npm run test:db:local` for session binding, the role matrix, deletion state transitions, leases, processing lock, worker receipts, export isolation, and retention behavior.
 - Run unit, build, and browser suites before release.
 - Verify provider settings and backup evidence manually for each environment; application tests cannot prove control-plane configuration.

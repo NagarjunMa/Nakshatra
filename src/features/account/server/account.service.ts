@@ -26,6 +26,15 @@ export async function requestAccountDeletion(supabase: SupabaseClient) {
   if (error || !parsed.success) {
     throw new AccountPrivacyError("We could not schedule account deletion.", "ACCOUNT_DELETION_FAILED", 503);
   }
+  if (parsed.data.status === "processing") {
+    throw new AccountPrivacyError("Account deletion is already being processed and can no longer be changed.", "ACCOUNT_DELETION_PROCESSING", 409);
+  }
+  if (parsed.data.status === "completed") {
+    throw new AccountPrivacyError("This account deletion has already completed.", "ACCOUNT_DELETION_COMPLETED", 409);
+  }
+  if (parsed.data.status === "unavailable") {
+    throw new AccountPrivacyError("This account deletion request cannot be changed.", "ACCOUNT_DELETION_NOT_AVAILABLE", 409);
+  }
   return parsed.data;
 }
 

@@ -2,12 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { ArrowLeft, Download, KeyRound, LoaderCircle, ShieldCheck, Trash2, X } from "lucide-react";
 import type { AccountDeletionStatus } from "@/features/account/server/account.contract";
 import {
   cancelAccountDeletionRequest,
-  clearLocalAccountSession,
   downloadAccountExportRequest,
   requestAccountDeletionRequest,
   revokeOtherSessionsRequest,
@@ -22,7 +20,6 @@ type Action = "export" | "sessions" | "delete" | "cancel" | null;
 
 /** Presents browser-safe account controls while all privileged work remains in authenticated APIs. */
 export default function AccountClient({ userEmail, initialDeletion }: Props) {
-  const router = useRouter();
   const [deletion, setDeletion] = useState(initialDeletion);
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [confirmation, setConfirmation] = useState("");
@@ -64,7 +61,7 @@ export default function AccountClient({ userEmail, initialDeletion }: Props) {
     setAction(null);
   }
 
-  /** Revokes shared access now and schedules permanent deletion after the recovery window. */
+  /** Revokes shared access now while preserving private recovery-window access. */
   async function requestDeletion() {
     if (confirmation !== "DELETE") return;
     beginAction("delete");
@@ -80,9 +77,15 @@ export default function AccountClient({ userEmail, initialDeletion }: Props) {
       setAction(null);
       return;
     }
-    await clearLocalAccountSession();
-    router.push("/login?message=account_deletion_scheduled");
-    router.refresh();
+    setDeletion({
+      status: "pending",
+      scheduledFor: result.data.scheduledFor ?? new Date().toISOString(),
+      requestedAt: new Date().toISOString(),
+    });
+    setConfirmationOpen(false);
+    setConfirmation("");
+    setMessage("Account deletion is scheduled. You can continue using your account until processing begins, or cancel during the recovery window.");
+    setAction(null);
   }
 
   /** Cancels a pending request; previously unpublished portfolios remain private. */
@@ -98,6 +101,7 @@ export default function AccountClient({ userEmail, initialDeletion }: Props) {
   }
 
   const deletionPending = deletion?.status === "pending" || deletion?.status === "failed";
+  const deletionProcessing = deletion?.status === "processing";
 
   return (
     <div className="account-privacy-shell">
@@ -162,6 +166,8 @@ export default function AccountClient({ userEmail, initialDeletion }: Props) {
               {action === "cancel" ? <LoaderCircle className="animate-spin" /> : <ShieldCheck />}
               Cancel deletion
             </button>
+          ) : deletionProcessing ? (
+            <p className="account-notice is-error">Deletion is being processed and can no longer be canceled.</p>
           ) : (
             <button className="dashboard-danger-action" onClick={() => setConfirmationOpen(true)} disabled={action !== null}>
               <Trash2 />
