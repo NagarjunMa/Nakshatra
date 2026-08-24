@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(15);
+select plan(16);
 
 insert into auth.users (id, aud, role, email, created_at, updated_at)
 values
@@ -85,7 +85,8 @@ select (public.start_account_deletion_reauth('72000000-0000-4000-8000-0000000000
 
 reset role;
 update app_private.account_deletion_reauth_challenges
-set expires_at = now() - interval '1 second'
+set created_at = now() - interval '11 minutes',
+    expires_at = now() - interval '1 second'
 where id = (select id from expired_challenge);
 
 set local role authenticated;

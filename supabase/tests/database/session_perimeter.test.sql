@@ -59,7 +59,9 @@ select ok(
       'set_portfolio_hero(uuid)',
       'can_manage_organization_member(uuid,organization_member_role)',
       'create_organization_with_owner(organization_type,text,text)',
-      'request_account_deletion()',
+      'start_account_deletion_reauth(uuid)',
+      'complete_account_deletion_reauth(uuid,text)',
+      'consume_account_deletion_reauth(text)',
       'cancel_account_deletion()',
       'export_my_account_data()'
     ]) signature
