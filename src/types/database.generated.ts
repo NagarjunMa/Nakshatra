@@ -7,6 +7,11 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.15"
+  }
   public: {
     Tables: {
       access_audit_events: {
@@ -69,8 +74,8 @@ export type Database = {
       }
       account_deletion_requests: {
         Row: {
-          auth_deleted_at: string | null
           attempts: number
+          auth_deleted_at: string | null
           claimed_at: string | null
           completed_at: string | null
           created_at: string
@@ -90,8 +95,8 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
-          auth_deleted_at?: string | null
           attempts?: number
+          auth_deleted_at?: string | null
           claimed_at?: string | null
           completed_at?: string | null
           created_at?: string
@@ -111,8 +116,8 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
-          auth_deleted_at?: string | null
           attempts?: number
+          auth_deleted_at?: string | null
           claimed_at?: string | null
           completed_at?: string | null
           created_at?: string
@@ -306,6 +311,81 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      broker_portfolio_edges: {
+        Row: {
+          broker_id: string
+          created_at: string
+          id: string
+          portfolio_id: string
+          ref_token: string
+          status: string
+        }
+        Insert: {
+          broker_id: string
+          created_at?: string
+          id?: string
+          portfolio_id: string
+          ref_token: string
+          status?: string
+        }
+        Update: {
+          broker_id?: string
+          created_at?: string
+          id?: string
+          portfolio_id?: string
+          ref_token?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broker_portfolio_edges_broker_id_fkey"
+            columns: ["broker_id"]
+            isOneToOne: false
+            referencedRelation: "brokers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "broker_portfolio_edges_portfolio_id_fkey"
+            columns: ["portfolio_id"]
+            isOneToOne: false
+            referencedRelation: "portfolios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      brokers: {
+        Row: {
+          business_name: string
+          contact_name: string
+          created_at: string
+          id: string
+          is_verified: boolean
+          phone: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          business_name: string
+          contact_name: string
+          created_at?: string
+          id?: string
+          is_verified?: boolean
+          phone: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          business_name?: string
+          contact_name?: string
+          created_at?: string
+          id?: string
+          is_verified?: boolean
+          phone?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       candidate_astrology_details: {
         Row: {
@@ -778,52 +858,57 @@ export type Database = {
       }
       compatibility_reports: {
         Row: {
-          candidate_id: string
+          candidate_id: string | null
           created_at: string
           id: string
           interest_request_id: string | null
           partner_birth_details: Json
           purchase_id: string | null
+          purchased_at: string
+          purchaser_portfolio_id: string
+          report_data: Json
           report_payload: Json
+          target_portfolio_id: string
         }
         Insert: {
-          candidate_id: string
+          candidate_id?: string | null
           created_at?: string
           id?: string
           interest_request_id?: string | null
           partner_birth_details?: Json
           purchase_id?: string | null
+          purchased_at?: string
+          purchaser_portfolio_id: string
+          report_data: Json
           report_payload?: Json
+          target_portfolio_id: string
         }
         Update: {
-          candidate_id?: string
+          candidate_id?: string | null
           created_at?: string
           id?: string
           interest_request_id?: string | null
           partner_birth_details?: Json
           purchase_id?: string | null
+          purchased_at?: string
+          purchaser_portfolio_id?: string
+          report_data?: Json
           report_payload?: Json
+          target_portfolio_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "compatibility_reports_candidate_id_fkey"
-            columns: ["candidate_id"]
+            foreignKeyName: "compatibility_reports_purchaser_portfolio_id_fkey"
+            columns: ["purchaser_portfolio_id"]
             isOneToOne: false
-            referencedRelation: "candidates"
+            referencedRelation: "portfolios"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "compatibility_reports_interest_request_id_fkey"
-            columns: ["interest_request_id"]
+            foreignKeyName: "compatibility_reports_target_portfolio_id_fkey"
+            columns: ["target_portfolio_id"]
             isOneToOne: false
-            referencedRelation: "interest_requests"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "compatibility_reports_purchase_id_fkey"
-            columns: ["purchase_id"]
-            isOneToOne: false
-            referencedRelation: "purchases"
+            referencedRelation: "portfolios"
             referencedColumns: ["id"]
           },
         ]
@@ -865,6 +950,51 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      handshakes: {
+        Row: {
+          created_at: string
+          id: string
+          portfolio_id: string
+          prospect_name: string
+          prospect_phone: string
+          referring_broker_id: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          portfolio_id: string
+          prospect_name: string
+          prospect_phone: string
+          referring_broker_id?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          portfolio_id?: string
+          prospect_name?: string
+          prospect_phone?: string
+          referring_broker_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "handshakes_portfolio_id_fkey"
+            columns: ["portfolio_id"]
+            isOneToOne: false
+            referencedRelation: "portfolios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "handshakes_referring_broker_id_fkey"
+            columns: ["referring_broker_id"]
+            isOneToOne: false
+            referencedRelation: "brokers"
             referencedColumns: ["id"]
           },
         ]
@@ -1627,17 +1757,23 @@ export type Database = {
         Row: {
           id: string
           portfolio_id: string
+          referring_broker_id: string | null
           viewed_at: string
+          viewer_phone: string | null
         }
         Insert: {
           id?: string
           portfolio_id: string
+          referring_broker_id?: string | null
           viewed_at?: string
+          viewer_phone?: string | null
         }
         Update: {
           id?: string
           portfolio_id?: string
+          referring_broker_id?: string | null
           viewed_at?: string
+          viewer_phone?: string | null
         }
         Relationships: [
           {
@@ -1645,6 +1781,13 @@ export type Database = {
             columns: ["portfolio_id"]
             isOneToOne: false
             referencedRelation: "portfolios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portfolio_views_referring_broker_id_fkey"
+            columns: ["referring_broker_id"]
+            isOneToOne: false
+            referencedRelation: "brokers"
             referencedColumns: ["id"]
           },
         ]
@@ -1664,11 +1807,14 @@ export type Database = {
           published_at: string | null
           published_data: Json | null
           share_token: string | null
+          subscription_tier: string
           sun_sign: string | null
           template_id: number
           theme_color: string | null
           updated_at: string
           user_id: string
+          verification_status: string
+          verified_attributes: Json
           visibility_settings: Json
         }
         Insert: {
@@ -1685,11 +1831,14 @@ export type Database = {
           published_at?: string | null
           published_data?: Json | null
           share_token?: string | null
+          subscription_tier?: string
           sun_sign?: string | null
           template_id?: number
           theme_color?: string | null
           updated_at?: string
           user_id: string
+          verification_status?: string
+          verified_attributes?: Json
           visibility_settings?: Json
         }
         Update: {
@@ -1706,11 +1855,14 @@ export type Database = {
           published_at?: string | null
           published_data?: Json | null
           share_token?: string | null
+          subscription_tier?: string
           sun_sign?: string | null
           template_id?: number
           theme_color?: string | null
           updated_at?: string
           user_id?: string
+          verification_status?: string
+          verified_attributes?: Json
           visibility_settings?: Json
         }
         Relationships: [
@@ -2308,6 +2460,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      advance_account_deletion_stage: {
+        Args: { p_claim_token: string; p_request_id: string; p_stage: string }
+        Returns: boolean
+      }
       can_manage_organization_member: {
         Args: {
           p_organization_id: string
@@ -2326,12 +2482,8 @@ export type Database = {
           claim_token: string
           processing_stage: string
           request_id: string
-          user_id: string | null
+          user_id: string
         }[]
-      }
-      advance_account_deletion_stage: {
-        Args: { p_claim_token: string; p_request_id: string; p_stage: string }
-        Returns: boolean
       }
       complete_account_deletion: {
         Args: { p_claim_token: string; p_request_id: string }
@@ -2354,6 +2506,14 @@ export type Database = {
         Returns: string
       }
       export_my_account_data: { Args: never; Returns: Json }
+      fail_account_deletion: {
+        Args: {
+          p_claim_token: string
+          p_error_code: string
+          p_request_id: string
+        }
+        Returns: boolean
+      }
       has_organization_role: {
         Args: {
           p_organization_id: string
@@ -2364,6 +2524,10 @@ export type Database = {
       is_current_session_active: { Args: never; Returns: boolean }
       is_organization_member: {
         Args: { p_organization_id: string }
+        Returns: boolean
+      }
+      is_public_portfolio_media_path: {
+        Args: { p_bucket_id: string; p_object_name: string }
         Returns: boolean
       }
       is_published_portfolio: {
@@ -2394,12 +2558,12 @@ export type Database = {
         }
         Returns: Json
       }
-      record_public_portfolio_view: {
-        Args: { p_share_token: string }
-        Returns: boolean
-      }
       record_account_deletion_auth_deleted: {
         Args: { p_claim_token: string; p_request_id: string }
+        Returns: boolean
+      }
+      record_public_portfolio_view: {
+        Args: { p_share_token: string }
         Returns: boolean
       }
       renew_portfolio_transaction: {
@@ -2416,10 +2580,6 @@ export type Database = {
         Returns: string
       }
       request_account_deletion: { Args: never; Returns: Json }
-      fail_account_deletion: {
-        Args: { p_claim_token: string; p_error_code: string; p_request_id: string }
-        Returns: boolean
-      }
       resolve_approved_horoscope: {
         Args: { p_share_token: string }
         Returns: Json
