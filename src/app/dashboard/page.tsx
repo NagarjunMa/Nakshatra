@@ -39,10 +39,10 @@ function jsonObject(value: Json): Record<string, Json | undefined> | null {
 }
 
 export default async function DashboardPage({
-  searchParams = Promise.resolve({}),
+  searchParams,
 }: {
-  searchParams?: Promise<{ edit?: string | string[] }>;
-} = {}) {
+  searchParams: Promise<{ edit?: string | string[] }>;
+}) {
   const query = await searchParams;
   const { supabase, user } = await getAuthenticatedUser();
 

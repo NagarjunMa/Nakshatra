@@ -47,7 +47,23 @@ export function revokeOtherSessionsRequest() {
 export function requestAccountDeletionRequest() {
   return accountRequest<{ status: string; scheduledFor?: string; organizationCount?: number }>(
     "/api/account/deletion",
-    { method: "POST" }
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ confirmation: "DELETE" }),
+    }
+  );
+}
+
+/** Starts deletion-only fresh authentication without allowing a caller-selected email address. */
+export function startAccountDeletionReauthRequest(method: "google" | "email") {
+  return accountRequest<{ url?: string; sent?: boolean }>(
+    "/api/account/reauth/start",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ method }),
+    }
   );
 }
 

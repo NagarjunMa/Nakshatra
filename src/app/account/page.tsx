@@ -8,14 +8,20 @@ export const metadata: Metadata = {
 };
 
 /** Loads only the signed-in user's deletion status before rendering account controls. */
-export default async function AccountPage() {
+export default async function AccountPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ reauth?: string }>;
+}) {
   const { supabase, user } = await getAuthenticatedUser();
   const deletion = await getAccountDeletionStatus(supabase);
+  const query = await searchParams;
 
   return (
     <AccountClient
       userEmail={user.email ?? ""}
       initialDeletion={deletion}
+      reauthComplete={query.reauth === "complete"}
     />
   );
 }
