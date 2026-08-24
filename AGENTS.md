@@ -165,6 +165,37 @@ Do not move issues to another workspace or project unless explicitly instructed.
 
 If an issue appears to belong to Aletheia, PrismPro, or another unrelated project, stop and report the mismatch instead of modifying it.
 
+## Git Branch Naming
+
+All branches created or pushed for this repository must use a conventional,
+purpose-based prefix. Do not use agent, tool, person, or vendor prefixes such
+as `codex/`.
+
+Use this format:
+
+`<type>/nak-<issue-number>-<short-kebab-case-description>`
+
+Allowed types are:
+
+- `feat` for product features
+- `fix` for defects
+- `security` for security changes
+- `chore` for maintenance, tooling, or configuration
+- `docs` for documentation-only work
+- `refactor` for behavior-preserving restructuring
+- `test` for test-only work
+
+Examples:
+
+- `security/nak-45-trufflehog-pr-scan`
+- `feat/nak-41-fresh-reauthentication`
+- `fix/nak-52-session-expiry`
+
+Before opening a pull request, verify the local and remote branch name follows
+this convention. If a branch was created with a noncompliant prefix, rename it
+and push the compliant branch before creating the pull request. Do not create
+new noncompliant remote branches.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know
