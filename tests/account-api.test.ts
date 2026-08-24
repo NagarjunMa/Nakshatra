@@ -59,11 +59,11 @@ describe("account privacy routes", () => {
     await expect(response.json()).resolves.toEqual({ portfolios: [] });
   });
 
-  it("schedules deletion and globally revokes sessions", async () => {
+  it("schedules deletion without ending the pending account session", async () => {
     requestAccountDeletion.mockResolvedValue({ status: "pending", scheduledFor: "2026-08-18T00:00:00Z" });
     const response = await deletionPost(request("/api/account/deletion"));
     expect(response.status).toBe(202);
-    expect(signOut).toHaveBeenCalledWith({ scope: "global" });
+    expect(signOut).not.toHaveBeenCalled();
   });
 
   it("does not sign out when organization ownership must be transferred", async () => {
@@ -71,6 +71,15 @@ describe("account privacy routes", () => {
     const response = await deletionPost(request("/api/account/deletion"));
     expect(response.status).toBe(409);
     expect(signOut).not.toHaveBeenCalled();
+  });
+
+  it("returns a stable lock error after the worker claims deletion", async () => {
+    requestAccountDeletion.mockRejectedValueOnce(new AccountPrivacyError(
+      "Processing", "ACCOUNT_DELETION_PROCESSING", 409
+    ));
+    const response = await deletionPost(request("/api/account/deletion"));
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toMatchObject({ code: "ACCOUNT_DELETION_PROCESSING" });
   });
 
   it("returns stable errors and supports cancellation", async () => {

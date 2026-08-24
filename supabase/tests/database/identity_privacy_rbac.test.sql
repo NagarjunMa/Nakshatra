@@ -194,7 +194,7 @@ select is(public.request_account_deletion() ->> 'status', 'pending', 'account de
 reset role;
 select ok(not (select is_published from public.portfolios where id = '44000000-0000-4000-8000-000000000001'), 'deletion immediately unpublishes the portfolio');
 select is((select status from public.account_deletion_requests where user_id = '41000000-0000-4000-8000-000000000006'), 'pending', 'the deletion request is persisted');
-select is((select count(*)::integer from auth.sessions where user_id = '41000000-0000-4000-8000-000000000006'), 0, 'deletion atomically revokes every Auth session');
+select is((select count(*)::integer from auth.sessions where user_id = '41000000-0000-4000-8000-000000000006'), 1, 'pending deletion preserves every Auth session through the recovery window');
 insert into auth.sessions (id, user_id, created_at, updated_at)
 values (
   '42000000-0000-4000-8000-000000000016',
@@ -215,8 +215,8 @@ select ok(position('viewer-secret@phase4.test' in public.export_my_account_data(
 
 reset role;
 select ok(not has_function_privilege('anon', 'public.export_my_account_data()', 'EXECUTE'), 'anonymous callers cannot export account data');
-select ok(not has_function_privilege('authenticated', 'public.prepare_account_deletion(uuid,uuid)', 'EXECUTE'), 'application users cannot execute destructive maintenance');
-select ok(has_function_privilege('service_role', 'public.prepare_account_deletion(uuid,uuid)', 'EXECUTE'), 'only the maintenance role can prepare destructive deletion');
+select ok(not has_function_privilege('authenticated', 'public.prepare_account_deletion(uuid,uuid,uuid)', 'EXECUTE'), 'application users cannot execute destructive maintenance');
+select ok(has_function_privilege('service_role', 'public.prepare_account_deletion(uuid,uuid,uuid)', 'EXECUTE'), 'only the maintenance role can prepare destructive deletion');
 
 insert into public.portfolio_views (portfolio_id, viewed_at)
 values ('44000000-0000-4000-8000-000000000001', now() - interval '396 days');

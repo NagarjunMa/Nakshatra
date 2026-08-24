@@ -5,24 +5,17 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  push: vi.fn(),
-  refresh: vi.fn(),
   export: vi.fn(),
   sessions: vi.fn(),
   deletion: vi.fn(),
   cancel: vi.fn(),
-  clearSession: vi.fn(),
 }));
 
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: mocks.push, refresh: mocks.refresh }),
-}));
 vi.mock("@/features/account/client/account.api", () => ({
   downloadAccountExportRequest: mocks.export,
   revokeOtherSessionsRequest: mocks.sessions,
   requestAccountDeletionRequest: mocks.deletion,
   cancelAccountDeletionRequest: mocks.cancel,
-  clearLocalAccountSession: mocks.clearSession,
 }));
 
 import AccountClient from "../src/app/account/account-client";
@@ -36,7 +29,6 @@ beforeEach(() => {
     data: { status: "pending", scheduledFor: "2026-08-18T00:00:00Z" },
   });
   mocks.cancel.mockResolvedValue({ ok: true, data: { ok: true } });
-  mocks.clearSession.mockResolvedValue(undefined);
   URL.createObjectURL = vi.fn(() => "blob:account-export");
   URL.revokeObjectURL = vi.fn();
   vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
@@ -69,9 +61,8 @@ describe("account privacy screen", () => {
     fireEvent.click(schedule);
 
     await waitFor(() => expect(mocks.deletion).toHaveBeenCalled());
-    expect(mocks.clearSession).toHaveBeenCalled();
-    expect(mocks.push).toHaveBeenCalledWith("/login?message=account_deletion_scheduled");
-    expect(mocks.refresh).toHaveBeenCalled();
+    expect(screen.getByText(/Account deletion is scheduled/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cancel deletion" })).toBeInTheDocument();
   });
 
   it("closes confirmation without deleting and explains ownership transfer blocks", async () => {
@@ -88,7 +79,6 @@ describe("account privacy screen", () => {
     fireEvent.change(screen.getByLabelText(/type delete/i), { target: { value: "DELETE" } });
     fireEvent.click(screen.getByRole("button", { name: "Schedule deletion" }));
     expect(await screen.findByText(/Transfer ownership of 2 organizations/)).toBeInTheDocument();
-    expect(mocks.push).not.toHaveBeenCalled();
   });
 
   it("shows a pending request and lets the user cancel it", async () => {
@@ -105,6 +95,20 @@ describe("account privacy screen", () => {
     await waitFor(() => expect(mocks.cancel).toHaveBeenCalled());
     expect(screen.getByText(/Account deletion has been canceled/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Delete account" })).toBeInTheDocument();
+  });
+
+  it("renders processing as a non-actionable account lock", () => {
+    render(<AccountClient
+      userEmail="owner@example.test"
+      initialDeletion={{
+        status: "processing",
+        scheduledFor: "2026-08-18T00:00:00Z",
+        requestedAt: "2026-08-17T00:00:00Z",
+      }}
+    />);
+    expect(screen.getByText(/Deletion is being processed/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Cancel deletion" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Delete account" })).not.toBeInTheDocument();
   });
 
   it("surfaces safe API errors for every action", async () => {
