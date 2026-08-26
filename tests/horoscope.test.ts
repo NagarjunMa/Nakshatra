@@ -11,6 +11,8 @@ const repository = vi.hoisted(() => ({
   remove: vi.fn(),
 }));
 const sharpPipeline = vi.hoisted(() => ({
+  timeout: vi.fn(),
+  metadata: vi.fn(),
   rotate: vi.fn(),
   resize: vi.fn(),
   webp: vi.fn(),
@@ -42,9 +44,9 @@ const portfolioId = "8f378bb8-ec91-4f3f-90ef-b7eea2c01506";
 const previous = {
   id: "old-id",
   portfolio_id: portfolioId,
-  storage_path: `owner/${portfolioId}/old.pdf`,
-  mime_type: "application/pdf",
-  file_extension: "pdf",
+  storage_path: `owner/${portfolioId}/old.webp`,
+  mime_type: "image/webp",
+  file_extension: "webp",
   byte_size: 20,
   language_label: "Kannada",
   page_count: null,
@@ -61,18 +63,16 @@ function file(bytes: Uint8Array | string, name: string, type = "application/octe
 }
 
 describe("horoscope file contract", () => {
-  it("detects supported bytes instead of trusting the browser MIME type", () => {
-    expect(detectHoroscopeFile("chart.pdf", Buffer.from("%PDF-1.7\nbody"))).toMatchObject({ extension: "pdf", kind: "pdf" });
-    expect(detectHoroscopeFile("chart.doc", Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]))).toMatchObject({ extension: "doc", kind: "word" });
-    expect(detectHoroscopeFile("chart.docx", Buffer.from("PK\u0003\u0004[Content_Types].xml word/document.xml"))).toMatchObject({ extension: "docx", kind: "word" });
+  it("accepts only scanned image bytes that match their extension", () => {
     expect(detectHoroscopeFile("scan.jpg", Buffer.from([0xff, 0xd8, 0xff, 0x00]))).toMatchObject({ extension: "webp", kind: "image" });
     expect(detectHoroscopeFile("scan.png", Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))).toMatchObject({ extension: "webp", kind: "image" });
   });
 
-  it("rejects extension mismatches and active document content", () => {
-    expect(() => detectHoroscopeFile("renamed.jpg", Buffer.from("%PDF-1.7"))).toThrow("HOROSCOPE_FILE_UNSUPPORTED");
-    expect(() => detectHoroscopeFile("active.pdf", Buffer.from("%PDF-1.7 /JavaScript"))).toThrow("PDF_ACTIVE_CONTENT");
-    expect(() => detectHoroscopeFile("macro.docx", Buffer.from("PK\u0003\u0004[Content_Types].xml word/vbaProject.bin"))).toThrow("WORD_ACTIVE_CONTENT");
+  it("rejects document containers and extension mismatches", () => {
+    expect(() => detectHoroscopeFile("renamed.jpg", Buffer.from("%PDF-1.7"))).toThrow("HOROSCOPE_DOCUMENT_DISABLED");
+    expect(() => detectHoroscopeFile("active.pdf", Buffer.from("%PDF-1.7 /JavaScript"))).toThrow("HOROSCOPE_DOCUMENT_DISABLED");
+    expect(() => detectHoroscopeFile("macro.docx", Buffer.from("PK\u0003\u0004[Content_Types].xml word/vbaProject.bin"))).toThrow("HOROSCOPE_DOCUMENT_DISABLED");
+    expect(() => detectHoroscopeFile("scan.jpg", Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))).toThrow("HOROSCOPE_FILE_UNSUPPORTED");
   });
 
   it("normalizes optional language labels and limits their length", () => {
@@ -93,6 +93,8 @@ describe("horoscope lifecycle service", () => {
     repository.delete.mockResolvedValue({ data: previous, error: null });
     repository.publish.mockResolvedValue({ error: null });
     sharpPipeline.rotate.mockReturnValue(sharpPipeline);
+    sharpPipeline.timeout.mockReturnValue(sharpPipeline);
+    sharpPipeline.metadata.mockResolvedValue({ format: "jpeg", width: 1200, height: 1600, pages: 1, channels: 3 });
     sharpPipeline.resize.mockReturnValue(sharpPipeline);
     sharpPipeline.webp.mockReturnValue(sharpPipeline);
     sharpPipeline.toBuffer.mockResolvedValue(Buffer.from("sanitized-webp"));
@@ -122,11 +124,11 @@ describe("horoscope lifecycle service", () => {
       supabase: {} as never,
       userId: "owner",
       portfolioId,
-      file: file("%PDF-1.7\nbody", "new.pdf", "application/pdf"),
+      file: file(new Uint8Array([0xff, 0xd8, 0xff, 0x00]), "new.jpg", "image/jpeg"),
       language: "",
     });
     expect(repository.remove).toHaveBeenCalledWith([previous.storage_path]);
-    expect(repository.save).toHaveBeenCalledWith(expect.objectContaining({ file_extension: "pdf", published_at: null }));
+    expect(repository.save).toHaveBeenCalledWith(expect.objectContaining({ file_extension: "webp", published_at: null }));
   });
 
   it("rejects empty and oversized uploads before touching storage", async () => {

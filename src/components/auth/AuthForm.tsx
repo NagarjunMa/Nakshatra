@@ -2,9 +2,12 @@
 
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, Mail } from "lucide-react";
+import {
+  continueToAuthProvider,
+  startAuthentication,
+} from "@/features/auth/client/auth.api";
 
 type Mode = "login" | "signup";
 
@@ -52,25 +55,28 @@ export function AuthForm({ mode }: { mode: Mode }) {
   );
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
-  const supabase = createClient();
   const searchParams = useSearchParams();
   const redirectPath = searchParams.get("redirect") || "/dashboard";
-  const authFailed = searchParams.get("error") === "auth_failed";
+  const authError = searchParams.get("error");
+  const authErrorMessage = authError === "session_revoked"
+    ? "This session has been signed out. Sign in again to continue."
+    : authError === "session_expired"
+      ? "Your session has ended. Sign in again to continue."
+      : authError === "auth_failed"
+        ? "We could not complete the sign-in. Please try again."
+        : "";
   const copy = COPY[mode];
 
   async function handleGoogle() {
     setPendingAction("google");
     setError("");
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/api/auth/callback?next=${encodeURIComponent(redirectPath)}`,
-      },
-    });
-    if (error) {
-      setError(error.message);
+    const { ok, body } = await startAuthentication({ method: "google", redirect: redirectPath });
+    if (!ok || !body?.url) {
+      setError(body?.error || "We could not start Google sign in.");
       setPendingAction(null);
+      return;
     }
+    continueToAuthProvider(body.url);
   }
 
   async function handleMagicLink(e: React.FormEvent) {
@@ -81,14 +87,9 @@ export function AuthForm({ mode }: { mode: Mode }) {
   async function sendMagicLink() {
     setPendingAction("email");
     setError("");
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/api/auth/callback?next=${encodeURIComponent(redirectPath)}`,
-      },
-    });
-    if (error) {
-      setError(error.message);
+    const { ok, body } = await startAuthentication({ method: "email", email, redirect: redirectPath });
+    if (!ok || !body?.sent) {
+      setError(body?.error || "We could not send the sign-in link.");
     } else {
       setSent(true);
     }
@@ -190,12 +191,12 @@ export function AuthForm({ mode }: { mode: Mode }) {
                 </button>
               </form>
 
-              {(error || authFailed) && (
+              {(error || authErrorMessage) && (
                 <p
                   className="account-error"
                   role="alert"
                 >
-                  {error || "We could not complete the sign-in. Please try again."}
+                  {error || authErrorMessage}
                 </p>
               )}
 

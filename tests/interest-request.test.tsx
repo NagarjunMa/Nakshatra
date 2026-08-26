@@ -4,21 +4,28 @@ import React from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const createClient = vi.hoisted(() => vi.fn());
-vi.mock("@/lib/supabase/server", () => ({ createClient }));
+const getApiUser = vi.hoisted(() => vi.fn());
+const enforceRateLimit = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/auth", () => ({ getApiUser }));
+vi.mock("@/features/security/server/rate-limit.service", () => ({ enforceRateLimit }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 import { InterestRequestModal } from "../src/components/portfolio/InterestRequestModal";
 import { POST } from "../src/app/api/interest/route";
 
 describe("interest request flow", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    enforceRateLimit.mockResolvedValue(null);
+  });
 
   it("submits from a modal and returns to the portfolio confirmation state", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 201 })));
-    render(<InterestRequestModal portfolioToken="portfolio-token" profileName="Ananya Rao" />);
+    render(<InterestRequestModal portfolioToken="portfolio-token" profileName="Ananya Rao" authenticated />);
 
     fireEvent.click(screen.getByRole("button", { name: "Show interest" }));
     expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(document.body.style.overflow).toBe("hidden");
     fireEvent.change(screen.getByLabelText("Your full name"), { target: { value: "Rohan Mehta" } });
     fireEvent.change(screen.getByLabelText("Contacting for"), { target: { value: "self" } });
     fireEvent.change(screen.getByLabelText("Phone number"), { target: { value: "+1 555 010 2200" } });
@@ -26,6 +33,7 @@ describe("interest request flow", () => {
     fireEvent.click(screen.getByRole("button", { name: "Send interest" }));
 
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(document.body.style.overflow).toBe("");
     expect(screen.getByText("Interest sent.")).toBeInTheDocument();
     const request = vi.mocked(fetch).mock.calls[0];
     const submitted = JSON.parse(String((request[1] as RequestInit).body));
@@ -43,7 +51,7 @@ describe("interest request flow", () => {
   });
 
   it("keeps location and introductions optional in the form", () => {
-    render(<InterestRequestModal portfolioToken="portfolio-token" profileName="Ananya Rao" />);
+    render(<InterestRequestModal portfolioToken="portfolio-token" profileName="Ananya Rao" authenticated />);
     fireEvent.click(screen.getByRole("button", { name: "Show interest" }));
 
     expect(screen.getByLabelText("Your full name")).toBeRequired();
@@ -59,19 +67,16 @@ describe("interest request flow", () => {
   });
 
   it("validates and stores an interest for an active portfolio", async () => {
-    const insert = vi.fn().mockResolvedValue({ error: null });
-    const single = vi.fn().mockResolvedValue({ data: { portfolio_id: "portfolio-1" } });
-    const eqActive = vi.fn(() => ({ single }));
-    const eqToken = vi.fn(() => ({ eq: eqActive }));
-    const select = vi.fn(() => ({ eq: eqToken }));
-    createClient.mockResolvedValue({
-      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null } }) },
-      from: vi.fn((table: string) => table === "public_portfolio_snapshots" ? { select } : { insert }),
+    const rpc = vi.fn().mockResolvedValue({ data: true, error: null });
+    getApiUser.mockResolvedValue({
+      status: "authenticated",
+      user: { id: "viewer-1" },
+      supabase: { rpc },
     });
 
     const response = await POST(new Request("http://local/api/interest", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", Origin: "http://local" },
       body: JSON.stringify({
         portfolioToken: "portfolio-token",
         name: "Rohan Mehta",
@@ -82,24 +87,24 @@ describe("interest request flow", () => {
     }));
 
     expect(response.status).toBe(201);
-    expect(insert).toHaveBeenCalledWith(expect.objectContaining({
-      portfolio_id: "portfolio-1",
-      viewer_name: "Rohan Mehta",
-      viewer_email: "rohan@example.com",
-      viewer_family_context: null,
-      message: null,
-      requested_sections: ["full"],
-      metadata: expect.objectContaining({
-        country: null,
-        state: null,
-        city: null,
-        location: null,
-      }),
-    }));
+    expect(rpc).toHaveBeenCalledWith("submit_public_interest", {
+      p_share_token: "portfolio-token",
+      p_name: "Rohan Mehta",
+      p_profile_for: "self",
+      p_phone: "+1 555 010 2200",
+      p_email: "rohan@example.com",
+      p_location: null,
+      p_family_context: null,
+      p_message: null,
+      p_portfolio_url: null,
+      p_country: null,
+      p_state: null,
+      p_city: null,
+    });
 
     const detailedResponse = await POST(new Request("http://local/api/interest", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", Origin: "http://local" },
       body: JSON.stringify({
         portfolioToken: "portfolio-token",
         name: "Rohan Mehta",
@@ -116,16 +121,35 @@ describe("interest request flow", () => {
     }));
 
     expect(detailedResponse.status).toBe(201);
-    expect(insert).toHaveBeenLastCalledWith(expect.objectContaining({
-      viewer_family_context: "Our family lives in Toronto.",
-      message: "We would be glad to connect.",
-      metadata: expect.objectContaining({
-        country: "Canada",
-        state: "Ontario",
-        city: "Toronto",
-        location: "Toronto, Ontario, Canada",
-        portfolio_url: "https://example.com/rohan",
-      }),
+    expect(rpc).toHaveBeenLastCalledWith("submit_public_interest", {
+      p_share_token: "portfolio-token",
+      p_name: "Rohan Mehta",
+      p_profile_for: "self",
+      p_phone: "+1 555 010 2200",
+      p_email: "rohan@example.com",
+      p_location: "Toronto, Ontario, Canada",
+      p_family_context: "Our family lives in Toronto.",
+      p_message: "We would be glad to connect.",
+      p_portfolio_url: "https://example.com/rohan",
+      p_country: "Canada",
+      p_state: "Ontario",
+      p_city: "Toronto",
+    });
+  });
+
+  it("requires sign-in before showing or accepting an interest request", async () => {
+    render(<InterestRequestModal portfolioToken="portfolio-token" profileName="Ananya Rao" authenticated={false} />);
+    expect(screen.getByRole("link", { name: "Sign in to show interest" })).toHaveAttribute(
+      "href",
+      "/login?redirect=%2Fp%2Fportfolio-token"
+    );
+
+    getApiUser.mockResolvedValue({ status: "missing_session" });
+    const response = await POST(new Request("http://local/api/interest", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Origin: "http://local" },
+      body: JSON.stringify({}),
     }));
+    expect(response.status).toBe(401);
   });
 });

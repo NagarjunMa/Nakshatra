@@ -18,11 +18,18 @@ test("sign-in form preserves a safe post-auth destination", async ({ page }) => 
   await expect(page.getByRole("button", { name: /email me a sign-in link/i })).toBeEnabled();
   await page.getByLabel(/email/i).fill("person@example.com");
   await expect(page.getByLabel(/email/i)).toHaveValue("person@example.com");
+  await page.getByRole("button", { name: /email me a sign-in link/i }).click();
+  await expect(page.getByRole("heading", { name: /check your inbox/i })).toBeVisible();
+  await expect(page.getByText("person@example.com", { exact: true })).toBeVisible();
 });
 
 test("unauthenticated owners are redirected away from protected screens", async ({ page }) => {
   await page.goto("/dashboard");
   await expect(page).toHaveURL(/\/login\?redirect=%2Fdashboard/);
+  await expect(page.getByRole("heading", { name: /sign in to nakshatra/i })).toBeVisible();
+
+  await page.goto("/account");
+  await expect(page).toHaveURL(/\/login\?redirect=%2Faccount/);
   await expect(page.getByRole("heading", { name: /sign in to nakshatra/i })).toBeVisible();
 });
 
@@ -43,15 +50,25 @@ test("public portfolio renders sanitized data and adaptive media", async ({ page
   await expect(page.getByText("Direct contact", { exact: true })).toBeVisible();
   await expect(page.getByText("Ramesh Rao", { exact: true })).toHaveCount(0);
   await expect(page.getByText("family@example.com", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Sign in to show interest" })).toHaveAttribute(
+    "href",
+    "/login?redirect=%2Fp%2Fe2e-portfolio-token"
+  );
 
   const hero = page.locator('.portfolio-hero-media[data-orientation="portrait"]');
   await expect(hero).toBeVisible();
   await expect(hero.getByAltText("Public portrait")).toBeVisible();
-  const heroFrame = await page.locator(".portfolio-primary-photo").evaluate((element) => {
-    const bounds = element.getBoundingClientRect();
-    return Number((bounds.width / bounds.height).toFixed(2));
-  });
-  expect(heroFrame).toBe(0.75);
+  await expect
+    .poll(async () => {
+      const bounds = await page.locator(".portfolio-primary-photo").evaluate((element) => {
+        const rect = element.getBoundingClientRect();
+        return { width: rect.width, height: rect.height };
+      });
+
+      if (bounds.height === 0) return null;
+      return Number((bounds.width / bounds.height).toFixed(2));
+    })
+    .toBe(0.75);
   const gallery = page.locator(".portfolio-gallery");
   await expect(gallery.locator('.portfolio-gallery-feature img[data-orientation="landscape"]')).toBeVisible();
   await expect(gallery.getByAltText("Public landscape", { exact: true })).toBeVisible();
@@ -100,10 +117,10 @@ test("public portfolio exposes production-ready metadata and distinct accent rol
 
   const privacyControl = page.locator(".portfolio-brand");
   await privacyControl.focus();
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Shift+Tab");
   await expect(privacyControl).toBeFocused();
-  expect(
-    await privacyControl.evaluate((element) => getComputedStyle(element).outlineWidth)
-  ).toBe("2px");
+  await expect(privacyControl).toHaveCSS("outline-width", "2px");
 
   if ((page.viewportSize()?.width || 0) >= 900) {
     const chapterStyles = await page.locator(".portfolio-chapter").first().evaluate((element) => {

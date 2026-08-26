@@ -23,7 +23,8 @@ describe("PortfolioMediaRepository", () => {
     const remove = vi.fn().mockResolvedValue({ error: null });
     const download = vi.fn().mockResolvedValue({ data: new Blob(), error: null });
     const from = vi.fn(() => q);
-    const supabase = { from, storage: { from: vi.fn(() => ({ upload, remove, download })) } } as never;
+    const rpc = vi.fn().mockResolvedValue({ data: true, error: null });
+    const supabase = { from, rpc, storage: { from: vi.fn(() => ({ upload, remove, download })) } } as never;
     const repository = new PortfolioMediaRepository(supabase);
 
     await repository.findOwnedPortfolio("portfolio", "owner");
@@ -36,7 +37,7 @@ describe("PortfolioMediaRepository", () => {
     await repository.updateMedia("media", { visibility: "public" });
     await repository.findMedia("media");
     await repository.findPortfolioPhotos("portfolio");
-    await repository.demoteOtherHeroPhotos("portfolio", "media");
+    await repository.setPrimaryHero("media");
     await repository.deleteMedia("media");
 
     expect(from).toHaveBeenCalledWith("portfolios");
@@ -44,6 +45,7 @@ describe("PortfolioMediaRepository", () => {
     expect(upload).toHaveBeenCalledWith("path.webp", expect.any(Buffer), { contentType: "image/webp" });
     expect(remove).toHaveBeenCalledWith(["path.webp"]);
     expect(download).toHaveBeenCalledWith("path.webp");
+    expect(rpc).toHaveBeenCalledWith("set_portfolio_hero", { p_media_id: "media" });
     expect(q.in).toHaveBeenCalledWith("media_type", ["hero", "gallery"]);
   });
 });
@@ -51,18 +53,28 @@ describe("PortfolioMediaRepository", () => {
 describe("DashboardRepository", () => {
   it("builds portfolio and snapshot persistence operations", async () => {
     const q = query({ data: { id: "portfolio" }, error: null });
-    const supabase = { from: vi.fn(() => q) } as never;
+    const rpc = vi.fn().mockResolvedValue({ data: { status: "ok" }, error: null });
+    const supabase = { from: vi.fn(() => q), rpc } as never;
     const repository = new DashboardRepository(supabase);
 
     await repository.findPortfolioForUser("owner");
     await repository.savePortfolio("owner", undefined, { draft_data: {} });
     await repository.savePortfolio("owner", "portfolio", { draft_data: {} });
-    await repository.publishPortfolio("owner", { is_published: true });
-    await repository.savePublicSnapshot({ portfolio_id: "portfolio" });
+    await repository.publishPortfolioTransaction({
+      portfolioId: "portfolio",
+      draftData: {},
+      publicData: {},
+      approvedData: {},
+      shareToken: "123456789012345678901",
+      expiresAt: "2099-01-01",
+      templateId: 1,
+      themeColor: "#fff",
+      sunSign: "kanya",
+    });
     await repository.findPublicHeroPhoto("portfolio");
-    await repository.updatePublicSnapshot("portfolio", { is_active: false });
-    await repository.unpublishPortfolio("owner");
-    await repository.renewPortfolioLink("owner", "2099-01-01");
+    await repository.renewPortfolioTransaction("2099-01-01");
+    await repository.rotatePortfolioTransaction("123456789012345678901");
+    await repository.unpublishPortfolioTransaction();
     await repository.linkCandidate("portfolio", "candidate");
     await repository.saveCandidateDetails("candidate", {
       personal: {}, astrology: {}, lifestyle: {}, preferences: {},
@@ -72,6 +84,8 @@ describe("DashboardRepository", () => {
     expect(q.insert).toHaveBeenCalled();
     expect(q.update).toHaveBeenCalled();
     expect(q.upsert).toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalledWith("publish_portfolio_transaction", expect.objectContaining({ p_portfolio_id: "portfolio" }));
+    expect(rpc).toHaveBeenCalledWith("renew_portfolio_transaction", { p_expires_at: "2099-01-01" });
   });
 
   it("creates and updates candidate records", async () => {
@@ -79,22 +93,23 @@ describe("DashboardRepository", () => {
     const repository = new DashboardRepository({ from: vi.fn(() => q) } as never);
 
     await expect(repository.saveCandidate(null, { display_name: "Aditi" })).resolves.toEqual({ candidateId: "new-candidate", error: null });
-    await expect(repository.saveCandidate("existing", { display_name: "Aditi" })).resolves.toEqual({ candidateId: "existing", error: null });
+    await expect(repository.saveCandidate("existing", { display_name: "Aditi" })).resolves.toEqual({ candidateId: "new-candidate", error: null });
   });
 
-  it("replaces family, education, and career rows including empty and failed deletes", async () => {
-    const ok = query({ data: null, error: null });
-    const repository = new DashboardRepository({ from: vi.fn(() => ok) } as never);
-    await expect(repository.replaceFamilyMembers("candidate", [])).resolves.toEqual({ error: null });
-    await repository.replaceFamilyMembers("candidate", [{ relationship: "father", name: "Rao" }]);
-    await expect(repository.replaceEducationAndCareer("candidate", null, null)).resolves.toEqual({ error: null });
-    await repository.replaceEducationAndCareer("candidate", { degree: "MS" }, { title: "Engineer" });
-    expect(ok.delete).toHaveBeenCalled();
-    expect(ok.insert).toHaveBeenCalled();
-
-    const failed = query({ data: null, error: new Error("delete failed") });
-    const failingRepository = new DashboardRepository({ from: vi.fn(() => failed) } as never);
-    await expect(failingRepository.replaceFamilyMembers("candidate", [{ relationship: "father" }])).resolves.toMatchObject({ error: expect.any(Error) });
-    await expect(failingRepository.replaceEducationAndCareer("candidate", null, null)).resolves.toMatchObject({ error: expect.any(Error) });
+  it("delegates family and timeline replacement to one transactional command", async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: "updated", error: null });
+    const repository = new DashboardRepository({ from: vi.fn(), rpc } as never);
+    await expect(repository.replaceCandidateRelationshipsAndTimeline(
+      "candidate",
+      [{ relationship: "father", name: "Rao" }],
+      { degree: "MS" },
+      { title: "Engineer" }
+    )).resolves.toEqual({ data: "updated", error: null });
+    expect(rpc).toHaveBeenCalledWith("replace_candidate_relationships_and_timeline", {
+      p_candidate_id: "candidate",
+      p_family_members: [{ relationship: "father", name: "Rao" }],
+      p_education: { degree: "MS" },
+      p_career: { title: "Engineer" },
+    });
   });
 });

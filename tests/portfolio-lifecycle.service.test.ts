@@ -3,15 +3,11 @@ import type { PortfolioData } from "../src/types/portfolio";
 
 const repository = vi.hoisted(() => ({
   findPortfolioForUser: vi.fn(),
-  publishPortfolio: vi.fn(),
-  savePublicSnapshot: vi.fn(),
-  saveApprovedSnapshot: vi.fn(),
+  publishPortfolioTransaction: vi.fn(),
   findPublicHeroPhoto: vi.fn(),
-  updatePublicSnapshot: vi.fn(),
-  renewPortfolioLink: vi.fn(),
+  renewPortfolioTransaction: vi.fn(),
 }));
 const ensurePortfolioPhotoPreviews = vi.hoisted(() => vi.fn());
-const publishHoroscope = vi.hoisted(() => vi.fn());
 
 vi.mock("../src/features/portfolio/server/dashboard.repository", () => ({
   DashboardRepository: class {
@@ -23,10 +19,6 @@ vi.mock("../src/features/portfolio/server/dashboard.repository", () => ({
 
 vi.mock("../src/features/media/server/media.service", () => ({
   ensurePortfolioPhotoPreviews,
-}));
-
-vi.mock("../src/features/horoscope/server/horoscope.service", () => ({
-  publishHoroscope,
 }));
 
 import {
@@ -76,45 +68,39 @@ describe("portfolio lifecycle services", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     ensurePortfolioPhotoPreviews.mockResolvedValue(undefined);
-    publishHoroscope.mockResolvedValue(undefined);
     repository.findPortfolioForUser.mockResolvedValue({
       data: { id: "portfolio-id", is_published: false, share_token: null, expires_at: null },
       error: null,
     });
-    repository.publishPortfolio.mockResolvedValue({ error: null });
-    repository.savePublicSnapshot.mockResolvedValue({ error: null });
-    repository.saveApprovedSnapshot.mockResolvedValue({ error: null });
+    repository.publishPortfolioTransaction.mockResolvedValue({
+      data: {
+        status: "ok",
+        action: "created",
+        shareToken: "123456789012345678901",
+        expiresAt: "2099-01-01T00:00:00.000Z",
+      },
+      error: null,
+    });
     repository.findPublicHeroPhoto.mockResolvedValue({ data: { id: "hero-photo-id" }, error: null });
-    repository.updatePublicSnapshot.mockResolvedValue({ error: null });
-    repository.renewPortfolioLink.mockResolvedValue({ error: null });
+    repository.renewPortfolioTransaction.mockResolvedValue({
+      data: { status: "renewed", expiresAt: "2099-01-01T00:00:00.000Z" },
+      error: null,
+    });
   });
 
   it("publishes a saved draft with a share token, expiry, and safe snapshot", async () => {
     const result = await publishPortfolio({ supabase: {} as never, userId: "user-id", data: draft });
-    expect(repository.publishPortfolio).toHaveBeenCalledWith(
-      "user-id",
+    expect(repository.publishPortfolioTransaction).toHaveBeenCalledWith(
       expect.objectContaining({
-        is_published: true,
-        share_token: expect.stringMatching(/^.{21}$/),
-        template_id: 1,
-        theme_color: "#f7f5ef",
-        draft_data: expect.objectContaining({
+        portfolioId: "portfolio-id",
+        shareToken: expect.stringMatching(/^.{21}$/),
+        templateId: 1,
+        themeColor: "#f7f5ef",
+        draftData: expect.objectContaining({
           style: expect.objectContaining({ template_name: "Nakshatra Portfolio" }),
         }),
-      })
-    );
-    expect(repository.savePublicSnapshot).toHaveBeenCalledWith(
-      expect.objectContaining({
-        portfolio_id: "portfolio-id",
-        share_token: expect.stringMatching(/^.{21}$/),
-        data: expect.not.objectContaining({ family: expect.anything(), contact: expect.anything() }),
-        is_active: true,
-      })
-    );
-    expect(repository.saveApprovedSnapshot).toHaveBeenCalledWith(
-      expect.objectContaining({
-        portfolio_id: "portfolio-id",
-        data: expect.objectContaining({
+        publicData: expect.not.objectContaining({ family: expect.anything(), contact: expect.anything() }),
+        approvedData: expect.objectContaining({
           family: expect.objectContaining({
             father: expect.objectContaining({ name: "Rao" }),
           }),
@@ -123,7 +109,6 @@ describe("portfolio lifecycle services", () => {
       })
     );
     expect(result).toMatchObject({ action: "created", shareUrl: expect.stringContaining("/p/") });
-    expect(publishHoroscope).toHaveBeenCalledWith(expect.objectContaining({ portfolioId: "portfolio-id" }));
   });
 
   it("normalizes legacy template labels to the Nakshatra portfolio", async () => {
@@ -132,22 +117,25 @@ describe("portfolio lifecycle services", () => {
       userId: "user-id",
       data: { ...draft, style: { ...draft.style, template_name: "Celestial Union" } },
     });
-    expect(repository.publishPortfolio.mock.calls[0][1]).toMatchObject({ template_id: 1 });
+    expect(repository.publishPortfolioTransaction.mock.calls[0][0]).toMatchObject({ templateId: 1 });
 
     vi.clearAllMocks();
     repository.findPortfolioForUser.mockResolvedValue({
       data: { id: "portfolio-id", is_published: false, share_token: null, expires_at: null },
       error: null,
     });
-    repository.publishPortfolio.mockResolvedValue({ error: null });
+    repository.publishPortfolioTransaction.mockResolvedValue({
+      data: { status: "ok", action: "created", shareToken: "123456789012345678901", expiresAt: "2099-01-01T00:00:00.000Z" },
+      error: null,
+    });
     await publishPortfolio({
       supabase: {} as never,
       userId: "user-id",
       data: { ...draft, style: { ...draft.style, template_name: "Editorial Matrimonial" } },
     });
-    expect(repository.publishPortfolio.mock.calls[0][1]).toMatchObject({
-      template_id: 1,
-      draft_data: expect.objectContaining({
+    expect(repository.publishPortfolioTransaction.mock.calls[0][0]).toMatchObject({
+      templateId: 1,
+      draftData: expect.objectContaining({
         style: expect.objectContaining({ template_name: "Nakshatra Portfolio" }),
       }),
     });
@@ -155,11 +143,14 @@ describe("portfolio lifecycle services", () => {
 
   it("does not rotate the share token for a published portfolio", async () => {
     repository.findPortfolioForUser.mockResolvedValue({
-      data: { id: "portfolio-id", is_published: true, share_token: "stable-token", expires_at: "2099-01-01T00:00:00.000Z" },
+      data: { id: "portfolio-id", is_published: true, share_token: "123456789012345678901", expires_at: "2099-01-01T00:00:00.000Z" },
       error: null,
     });
     await publishPortfolio({ supabase: {} as never, userId: "user-id", data: draft });
-    expect(repository.publishPortfolio.mock.calls[0][1]).not.toHaveProperty("share_token");
+    expect(repository.publishPortfolioTransaction.mock.calls[0][0]).toMatchObject({
+      shareToken: "123456789012345678901",
+      expiresAt: "2099-01-01T00:00:00.000Z",
+    });
   });
 
   it("returns safe errors for missing drafts and persistence failures", async () => {
@@ -172,49 +163,33 @@ describe("portfolio lifecycle services", () => {
       data: { id: "portfolio-id", is_published: false, share_token: null, expires_at: null },
       error: null,
     });
-    repository.publishPortfolio.mockResolvedValue({ error: new Error("db") });
+    repository.publishPortfolioTransaction.mockResolvedValue({ data: null, error: new Error("db") });
     await expect(
       publishPortfolio({ supabase: {} as never, userId: "user-id", data: draft })
     ).rejects.toBeInstanceOf(PortfolioPublishError);
   });
 
   it("renews for 90 days and returns a safe error on failure", async () => {
-    repository.findPortfolioForUser.mockResolvedValue({
-      data: { id: "portfolio-id", is_published: true, share_token: "stable-token", expires_at: "2000-01-01T00:00:00.000Z" },
-      error: null,
-    });
     const before = Date.now();
-    await renewPortfolioLink({ supabase: {} as never, userId: "user-id" });
-    const expiresAt = new Date(repository.renewPortfolioLink.mock.calls[0][1]).getTime();
+    await renewPortfolioLink({ supabase: {} as never });
+    const expiresAt = new Date(repository.renewPortfolioTransaction.mock.calls[0][0]).getTime();
     expect(expiresAt).toBeGreaterThan(before + 89 * 86_400_000);
-    expect(repository.updatePublicSnapshot).toHaveBeenCalledWith(
-      "portfolio-id",
-      expect.objectContaining({ is_active: true })
-    );
 
-    repository.renewPortfolioLink.mockResolvedValue({ error: new Error("db") });
+    repository.renewPortfolioTransaction.mockResolvedValue({ data: null, error: new Error("db") });
     await expect(
-      renewPortfolioLink({ supabase: {} as never, userId: "user-id" })
+      renewPortfolioLink({ supabase: {} as never })
     ).rejects.toBeInstanceOf(PortfolioRenewalError);
   });
 
   it("rejects renewals for unpublished portfolios and snapshot synchronization failures", async () => {
-    repository.findPortfolioForUser.mockResolvedValue({
-      data: { id: "portfolio-id", is_published: false, share_token: null, expires_at: null },
-      error: null,
-    });
+    repository.renewPortfolioTransaction.mockResolvedValue({ data: { status: "not_published" }, error: null });
     await expect(
-      renewPortfolioLink({ supabase: {} as never, userId: "user-id" })
+      renewPortfolioLink({ supabase: {} as never })
     ).rejects.toBeInstanceOf(PortfolioRenewalError);
 
-    repository.findPortfolioForUser.mockResolvedValue({
-      data: { id: "portfolio-id", is_published: true, share_token: "stable-token", expires_at: null },
-      error: null,
-    });
-    repository.renewPortfolioLink.mockResolvedValue({ error: null });
-    repository.updatePublicSnapshot.mockResolvedValue({ error: new Error("db") });
+    repository.renewPortfolioTransaction.mockResolvedValue({ data: {}, error: null });
     await expect(
-      renewPortfolioLink({ supabase: {} as never, userId: "user-id" })
+      renewPortfolioLink({ supabase: {} as never })
     ).rejects.toBeInstanceOf(PortfolioRenewalError);
   });
 });

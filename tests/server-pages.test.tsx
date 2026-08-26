@@ -16,13 +16,17 @@ const mocks = vi.hoisted(() => ({
     mediaType: "hero" as const,
     orientation: "portrait" as const,
   }]),
-  rpc: vi.fn(() => Promise.resolve({ data: null, error: null })),
+  rpc: vi.fn(),
   signedUrl: vi.fn(async () => ({ data: { signedUrl: "https://signed.test/hero" } })),
   imageResponse: vi.fn(),
   authUser: null as { id: string } | null,
+  apiAuthStatus: "missing_session" as "missing_session" | "authenticated",
 }));
 
 function databaseClient() {
+  mocks.rpc.mockImplementation((name: string) =>
+    Promise.resolve(mocks.outcomes[name] ?? { data: null, error: null })
+  );
   return {
     from: vi.fn((table: string) => {
       const response = () => mocks.outcomes[table] ?? { data: null };
@@ -55,7 +59,10 @@ vi.mock("next/og", () => ({
     }
   },
 }));
-vi.mock("@/lib/auth", () => ({ getAuthenticatedUser: async () => ({ supabase: databaseClient(), user: { id: "user-1", email: "user@example.com" } }) }));
+vi.mock("@/lib/auth", () => ({
+  getAuthenticatedUser: async () => ({ supabase: databaseClient(), user: { id: "user-1", email: "user@example.com" } }),
+  getApiUser: async () => ({ status: mocks.apiAuthStatus }),
+}));
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => databaseClient() }));
 vi.mock("@/features/media/server/photo-url.service", () => ({ createPortfolioPhotoUrls: mocks.photoUrls }));
 vi.mock("@/components/templates", () => ({
@@ -63,6 +70,7 @@ vi.mock("@/components/templates", () => ({
 }));
 vi.mock("@/components/auth/AuthForm", () => ({ AuthForm: ({ mode }: { mode: string }) => <div>auth:{mode}</div> }));
 vi.mock("@/app/dashboard/dashboard-client", () => ({ default: (props: { userEmail: string; shareUrl: string | null; viewCount: number }) => <div data-testid="dashboard-props">{JSON.stringify(props)}</div> }));
+vi.mock("@/app/account/account-client", () => ({ default: (props: { userEmail: string; initialDeletion: unknown }) => <div data-testid="account-props">{JSON.stringify(props)}</div> }));
 
 import DashboardPage from "../src/app/dashboard/page";
 import EditPage from "../src/app/edit/page";
@@ -77,6 +85,8 @@ import RootLayout from "../src/app/layout";
 import DashboardLoading from "../src/app/dashboard/loading";
 import EditLoading from "../src/app/edit/loading";
 import PreviewLoading from "../src/app/preview/loading";
+import AppError from "../src/app/error";
+import AccountPage from "../src/app/account/page";
 
 const data: PortfolioData = {
   personal: { name: "Aditi Rao", dob: "1996-08-12", gender: "female" },
@@ -92,12 +102,20 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.outcomes = {};
   mocks.authUser = null;
+  mocks.apiAuthStatus = "missing_session";
 });
 
 describe("authenticated server pages", () => {
+  it("loads the authenticated account privacy state", async () => {
+    mocks.outcomes.account_deletion_requests = { data: null };
+    render(await AccountPage({ searchParams: Promise.resolve({}) }));
+    expect(screen.getByTestId("account-props")).toHaveTextContent('"userEmail":"user@example.com"');
+    expect(screen.getByTestId("account-props")).toHaveTextContent('"initialDeletion":null');
+  });
+
   it("loads an empty dashboard", async () => {
     mocks.outcomes.portfolios = { data: null };
-    render(await DashboardPage());
+    render(await DashboardPage({ searchParams: Promise.resolve({}) }));
     expect(screen.getByTestId("dashboard-props")).toHaveTextContent('"shareUrl":null');
   });
 
@@ -105,7 +123,7 @@ describe("authenticated server pages", () => {
     mocks.outcomes.portfolios = { data: portfolio };
     mocks.outcomes.portfolio_views = { count: 7 };
     mocks.outcomes.portfolio_media = { data: [{ id: "media-1" }] };
-    render(await DashboardPage());
+    render(await DashboardPage({ searchParams: Promise.resolve({}) }));
     const props = screen.getByTestId("dashboard-props").textContent ?? "";
     expect(props).toContain('"viewCount":7');
     expect(props).toContain("https://nakshatra.test/p/token");
@@ -143,93 +161,90 @@ describe("authenticated server pages", () => {
 });
 
 describe("public portfolio pages", () => {
+  const publicPayload = {
+    data,
+    templateId: 3,
+    themeColor: "#17151c",
+    sunSign: "kanya",
+    media: [],
+  };
+
   it("builds missing and complete metadata", async () => {
-    mocks.outcomes.public_portfolio_snapshots = { data: null };
+    mocks.outcomes.resolve_public_portfolio = { data: null };
     await expect(generateMetadata({ params: Promise.resolve({ token: "missing" }) })).resolves.toEqual({ title: "Biodata Not Found" });
-    mocks.outcomes.public_portfolio_snapshots = { data: { data, theme_color: "#17151c", sun_sign: "kanya", share_token: "token" } };
+    mocks.outcomes.resolve_public_portfolio = { data: publicPayload };
     const metadata = await generateMetadata({ params: Promise.resolve({ token: "token" }) });
     expect(metadata.title).toBe("Aditi Rao — Wedding Biodata");
     expect(metadata.description).toContain("Kanya");
   });
 
   it("rejects inactive tokens and renders sanitized public snapshots", async () => {
-    mocks.outcomes.public_portfolio_snapshots = { data: null };
+    mocks.outcomes.resolve_public_portfolio = { data: null };
     await expect(PublicBiodataPage({ params: Promise.resolve({ token: "missing" }) })).rejects.toThrow("NOT_FOUND");
-    mocks.outcomes.public_portfolio_snapshots = { data: { portfolio_id: "portfolio-1", data, template_id: 3, theme_color: null, sun_sign: "kanya" } };
-    mocks.outcomes.portfolio_media = { data: [] };
+    mocks.outcomes.resolve_public_portfolio = { data: publicPayload };
+    mocks.outcomes.record_public_portfolio_view = { data: true };
     render(await PublicBiodataPage({ params: Promise.resolve({ token: "token" }) }));
     expect(screen.getByTestId("template")).toHaveTextContent("Aditi Rao:public");
-    await waitFor(() => expect(mocks.rpc).toHaveBeenCalledWith("record_view", { p_portfolio_id: "portfolio-1" }));
+    await waitFor(() => expect(mocks.rpc).toHaveBeenCalledWith("record_public_portfolio_view", { p_share_token: "token" }));
   });
 
   it("uses the approved projection only when row-level access returns an approved snapshot", async () => {
     mocks.authUser = { id: "viewer-1" };
-    mocks.outcomes.public_portfolio_snapshots = { data: { portfolio_id: "portfolio-1", data, template_id: 3, theme_color: null, sun_sign: "kanya" } };
-    mocks.outcomes.reveal_grants = { data: { id: "grant-1", expires_at: null } };
-    mocks.outcomes.approved_portfolio_snapshots = { data: { data: { ...data, personal: { ...data.personal, name: "Approved Aditi" } }, template_id: 3, theme_color: null, sun_sign: "kanya" } };
-    mocks.outcomes.portfolio_media = { data: [] };
-    mocks.outcomes.portfolio_horoscopes = { data: null };
+    mocks.outcomes.resolve_public_portfolio = { data: publicPayload };
+    mocks.outcomes.resolve_approved_portfolio = { data: { ...publicPayload, accessExpiresAt: new Date(Date.now() + 600_000).toISOString(), data: { ...data, personal: { ...data.personal, name: "Approved Aditi" } } } };
     render(await PublicBiodataPage({ params: Promise.resolve({ token: "token" }) }));
     expect(screen.getByTestId("template")).toHaveTextContent("Approved Aditi:approved");
-    expect(mocks.photoUrls).toHaveBeenCalledWith(expect.objectContaining({ viewer: "approved" }));
+    expect(mocks.rpc).toHaveBeenCalledWith("resolve_approved_portfolio", { p_share_token: "token" });
   });
 
   it("keeps the published link public for a signed-in owner without a viewer grant", async () => {
     mocks.authUser = { id: "user-1" };
-    mocks.outcomes.public_portfolio_snapshots = { data: { portfolio_id: "portfolio-1", data, template_id: 3, theme_color: null, sun_sign: "kanya" } };
-    mocks.outcomes.portfolios = { data: { id: "portfolio-1" } };
-    mocks.outcomes.approved_portfolio_snapshots = { data: { data: { ...data, personal: { ...data.personal, name: "Owner-only approved data" } } } };
-    mocks.outcomes.portfolio_media = { data: [] };
+    mocks.outcomes.resolve_public_portfolio = { data: publicPayload };
+    mocks.outcomes.resolve_approved_portfolio = { data: null };
 
     render(await PublicBiodataPage({ params: Promise.resolve({ token: "token" }) }));
 
     expect(screen.getByTestId("template")).toHaveTextContent("Aditi Rao:public");
     expect(screen.queryByText(/Owner-only approved data/)).not.toBeInTheDocument();
-    expect(mocks.photoUrls).toHaveBeenCalledWith(expect.objectContaining({ viewer: "public" }));
+    expect(mocks.rpc).toHaveBeenCalledWith("resolve_approved_portfolio", { p_share_token: "token" });
   });
 
-  it("keeps the separate horoscope viewer gated and uses a neutral Word download", async () => {
-    mocks.outcomes.public_portfolio_snapshots = { data: { portfolio_id: "portfolio-1", data } };
-    mocks.outcomes.portfolio_horoscopes = { data: null };
+  it("keeps the separate horoscope image viewer gated with a grant-bounded URL", async () => {
+    mocks.outcomes.resolve_approved_horoscope = { data: null };
     await expect(HoroscopePage({ params: Promise.resolve({ token: "token" }) })).rejects.toThrow("NOT_FOUND");
 
-    mocks.outcomes.portfolio_horoscopes = { data: {
-      id: "horoscope-1",
-      portfolio_id: "portfolio-1",
-      storage_path: "owner/portfolio-1/private.docx",
-      mime_type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      file_extension: "docx",
-      byte_size: 100,
-      language_label: "Kannada",
-      page_count: null,
-      published_at: "2026-08-04T00:00:00.000Z",
-      created_at: "2026-08-04T00:00:00.000Z",
-      updated_at: "2026-08-04T00:00:00.000Z",
+    mocks.outcomes.resolve_approved_horoscope = { data: {
+      accessPath: "owner/portfolio-1/private.webp",
+      mimeType: "image/webp",
+      fileExtension: "webp",
+      languageLabel: "Kannada",
+      pageCount: null,
+      profileName: "Aditi Rao",
+      accessExpiresAt: new Date(Date.now() + 600_000).toISOString(),
     } };
     render(await HoroscopePage({ params: Promise.resolve({ token: "token" }) }));
     expect(screen.getByRole("heading", { name: /original horoscope/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /open document/i })).toHaveAttribute("href", "https://signed.test/hero");
-    expect(mocks.signedUrl).toHaveBeenCalledWith("owner/portfolio-1/private.docx", 300, { download: "horoscope.docx" });
+    expect(screen.getByRole("img", { name: /scanned original horoscope/i })).toHaveAttribute("src", "https://signed.test/hero");
+    expect(mocks.signedUrl).toHaveBeenCalledWith("owner/portfolio-1/private.webp", expect.any(Number), undefined);
   });
 
   it("generates fallback and hero-backed Open Graph images", async () => {
-    mocks.outcomes.public_portfolio_snapshots = { data: null };
+    mocks.outcomes.resolve_public_portfolio = { data: null };
     await OpenGraphImage({ params: Promise.resolve({ token: "missing" }) });
     expect(mocks.imageResponse).toHaveBeenLastCalledWith(expect.anything(), { width: 1200, height: 630 });
-    mocks.outcomes.public_portfolio_snapshots = { data: { portfolio_id: "portfolio-1", data, theme_color: "#ffffff", sun_sign: "kanya" } };
-    mocks.outcomes.portfolio_media = { data: { storage_path: "hero.webp" } };
+    mocks.outcomes.resolve_public_portfolio = { data: { ...publicPayload, themeColor: "#ffffff", media: [{ key: "hero", accessPath: "hero.webp", mediaType: "hero", sortOrder: 0, presentation: "clear" }] } };
     await OpenGraphImage({ params: Promise.resolve({ token: "token" }) });
     expect(mocks.signedUrl).toHaveBeenCalledWith("hero.webp", 600);
   });
 });
 
 describe("static app surfaces", () => {
-  it("renders auth pages, layout, and loading states", () => {
+  it("renders auth pages, layout, and loading states", async () => {
     const layout = RootLayout({ children: <main>child</main> });
     expect(layout.props.lang).toBe("en");
-    const { rerender } = render(<LoginPage />);
+    const { rerender } = render(await LoginPage());
     expect(screen.getByText("auth:login")).toBeInTheDocument();
-    rerender(<SignupPage />);
+    rerender(await SignupPage());
     expect(screen.getByText("auth:signup")).toBeInTheDocument();
     rerender(<DashboardLoading />);
     expect(document.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0);
@@ -237,5 +252,18 @@ describe("static app surfaces", () => {
     expect(document.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0);
     rerender(<PreviewLoading />);
     expect(document.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0);
+  });
+
+  it("redirects a live authenticated session away from login and signup", async () => {
+    mocks.apiAuthStatus = "authenticated";
+    await expect(LoginPage()).rejects.toThrow("REDIRECT:/dashboard");
+    await expect(SignupPage()).rejects.toThrow("REDIRECT:/dashboard");
+  });
+
+  it("never renders raw server error details", () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    render(<AppError error={Object.assign(new Error("database password leaked"), { digest: "safe-digest" })} reset={vi.fn()} />);
+    expect(screen.getByText(/could not complete this request/i)).toBeInTheDocument();
+    expect(screen.queryByText(/database password/i)).not.toBeInTheDocument();
   });
 });

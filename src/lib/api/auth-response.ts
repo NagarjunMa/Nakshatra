@@ -19,6 +19,11 @@ export function apiAuthFailureResponse(auth: ApiAuthFailure) {
         { code: "AUTH_SESSION_INVALID", error: "We could not verify your session. Sign in again to continue." },
         { status: 401 }
       );
+    case "revoked_session":
+      return NextResponse.json(
+        { code: "AUTH_SESSION_REVOKED", error: "This session has been signed out. Sign in again to continue." },
+        { status: 401 }
+      );
     case "service_unavailable":
       return NextResponse.json(
         { code: "AUTH_SERVICE_UNAVAILABLE", error: "Authentication is temporarily unavailable. Please try again shortly." },

@@ -4,7 +4,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import sharp from "sharp";
 import {
   MAX_PHOTO_BYTES,
+  MAX_PHOTO_DIMENSION,
+  MAX_PHOTO_PIXELS,
   MAX_PORTFOLIO_PHOTOS,
+  PHOTO_PROCESSING_TIMEOUT_SECONDS,
   PHOTO_MIME_TYPES,
   type updatePortfolioMediaSchema,
 } from "./media.contract";
@@ -24,17 +27,33 @@ export class PortfolioMediaError extends Error {
 type MediaUpdate = Omit<ReturnType<typeof updatePortfolioMediaSchema.parse>, "mediaId">;
 
 const PROTECTED_VISIBILITIES = new Set(["blurred", "interest_required", "approved_only"]);
+const SHARP_INPUT_OPTIONS = {
+  failOn: "warning" as const,
+  limitInputPixels: MAX_PHOTO_PIXELS,
+  sequentialRead: true,
+};
+
+const FORMAT_MIME_TYPES: Record<string, Set<string>> = {
+  jpeg: new Set(["image/jpeg"]),
+  png: new Set(["image/png"]),
+  webp: new Set(["image/webp"]),
+  heif: new Set(["image/heic", "image/heif"]),
+};
+
+function sharpInput(source: Buffer) {
+  return sharp(source, SHARP_INPUT_OPTIONS).timeout({ seconds: PHOTO_PROCESSING_TIMEOUT_SECONDS });
+}
 
 /** Removes identifying facial detail while retaining enough color and shape to signal a protected photo. */
 async function createBlurredPreview(source: Buffer) {
-  const lowDetail = await sharp(source)
+  const lowDetail = await sharpInput(source)
     .rotate()
     .resize(96, 96, { fit: "inside", withoutEnlargement: true })
     .blur(10)
     .webp({ quality: 52 })
     .toBuffer();
 
-  return sharp(lowDetail)
+  return sharpInput(lowDetail)
     .resize(640, 640, { fit: "inside", kernel: "nearest" })
     .webp({ quality: 58 })
     .toBuffer();
@@ -52,6 +71,23 @@ function requireSupportedPhoto(file: File) {
   }
   if (!PHOTO_MIME_TYPES.has(file.type)) {
     throw new PortfolioMediaError("Use a JPEG, PNG, HEIC, or WebP image", 415);
+  }
+}
+
+/** Verifies decoded format and resource bounds instead of trusting browser MIME or filename metadata. */
+async function requireSafeDecodedPhoto(source: Buffer, claimedMimeType: string) {
+  const metadata = await sharpInput(source).metadata();
+  const acceptedMimeTypes = metadata.format ? FORMAT_MIME_TYPES[metadata.format] : undefined;
+  if (!acceptedMimeTypes?.has(claimedMimeType)) {
+    throw new PortfolioMediaError("The selected file content does not match its image type", 415);
+  }
+  if (!metadata.width || !metadata.height
+    || metadata.width > MAX_PHOTO_DIMENSION
+    || metadata.height > MAX_PHOTO_DIMENSION
+    || metadata.width * metadata.height > MAX_PHOTO_PIXELS
+    || (metadata.pages ?? 1) !== 1
+    || (metadata.channels ?? 4) > 4) {
+    throw new PortfolioMediaError("Use a single-frame image with standard dimensions and color channels", 415);
   }
 }
 
@@ -90,13 +126,14 @@ export async function uploadPortfolioPhoto({
 
   try {
     const source = Buffer.from(await file.arrayBuffer());
+    await requireSafeDecodedPhoto(source, file.type);
     const [imageOutput, thumbnail, blurredPreview] = await Promise.all([
-      sharp(source)
+      sharpInput(source)
         .rotate()
         .resize(1600, 1600, { fit: "inside", withoutEnlargement: true })
         .webp({ quality: 86 })
         .toBuffer({ resolveWithObject: true }),
-      sharp(source)
+      sharpInput(source)
         .rotate()
         .resize(360, 360, { fit: "cover" })
         .webp({ quality: 80 })
@@ -174,13 +211,29 @@ export async function updatePortfolioPhoto({
     }
   }
 
-  const { data: media, error } = await repository.updateMedia(mediaId, safeChanges);
+  const promoteToHero = changes.media_type === "hero";
+  if (promoteToHero) {
+    safeChanges = Object.fromEntries(
+      Object.entries(safeChanges).filter(([key]) => key !== "media_type")
+    );
+  }
+  const mutation = Object.keys(safeChanges).length
+    ? await repository.updateMedia(mediaId, safeChanges)
+    : await repository.findMedia(mediaId);
+  const { data: media, error } = mutation;
   if (error || !media) {
     throw new PortfolioMediaError("Photo not found", 404);
   }
-  if (changes.media_type === "hero") {
-    const { error: demoteError } = await repository.demoteOtherHeroPhotos(media.portfolio_id, media.id);
-    if (demoteError) throw new PortfolioMediaError("Could not update the primary photo", 500);
+  if (promoteToHero) {
+    const { data: promoted, error: promotionError } = await repository.setPrimaryHero(media.id);
+    if (promotionError || !promoted) {
+      throw new PortfolioMediaError("Could not update the primary photo", 500);
+    }
+    const refreshed = await repository.findMedia(media.id);
+    if (refreshed.error || !refreshed.data) {
+      throw new PortfolioMediaError("Could not load the primary photo", 500);
+    }
+    return refreshed.data;
   }
   return media;
 }

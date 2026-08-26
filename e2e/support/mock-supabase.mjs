@@ -5,17 +5,12 @@ const port = 54329;
 const portfolioId = "11111111-1111-4111-8111-111111111111";
 
 const publicSnapshot = {
-  portfolio_id: portfolioId,
-  share_token: "e2e-portfolio-token",
-  template_id: 1,
-  theme_color: "#f2c6a7",
-  sun_sign: "kanya",
   data: {
-    privacy_mode: "progressive",
+    privacy_mode: "balanced",
     personal: {
       name: "Aditi Rao",
       preferred_name: "Aditi",
-      dob: "1996-08-12",
+      age: 29,
       gender: "female",
       current_location: "Boston",
       short_bio: "Warm, grounded, and curious about the world.",
@@ -153,6 +148,36 @@ const publicMediaWithPreviews = publicMedia.map((item) =>
     : item
 );
 
+function resolvedPortfolio(isPrivate) {
+  let clearGallerySeen = false;
+  const media = publicMediaWithPreviews.map((item) => {
+    const protectedPhoto = item.visibility !== "public";
+    const privateGallery = isPrivate && item.media_type === "gallery";
+    const clearPrivateGallery = privateGallery && !protectedPhoto && !clearGallerySeen;
+    if (clearPrivateGallery) clearGallerySeen = true;
+    const blurred = protectedPhoto || (privateGallery && !clearPrivateGallery);
+    return {
+      key: `safe-${item.sort_order}`,
+      accessPath: blurred ? item.metadata.blurPath : item.storage_path,
+      altText: item.alt_text,
+      mediaType: item.media_type,
+      sortOrder: item.sort_order,
+      width: item.metadata.width,
+      height: item.metadata.height,
+      aspectRatio: item.metadata.aspectRatio,
+      orientation: item.metadata.orientation,
+      presentation: blurred ? "blurred" : "clear",
+    };
+  });
+  return {
+    data: { ...publicSnapshot.data, privacy_mode: isPrivate ? "private" : "balanced" },
+    templateId: 3,
+    themeColor: "#f2c6a7",
+    sunSign: "kanya",
+    media,
+  };
+}
+
 function sendJson(response, status, value) {
   response.writeHead(status, {
     "Access-Control-Allow-Origin": "*",
@@ -191,21 +216,29 @@ const server = createServer((request, response) => {
 
   if (url.pathname === "/health") return sendJson(response, 200, { ok: true });
   if (url.pathname === "/auth/v1/user") return sendJson(response, 401, { message: "Unauthorized" });
-  if (url.pathname === "/rest/v1/public_portfolio_snapshots") {
-    const isPrivate = url.searchParams.get("share_token") === "eq.e2e-private-token";
-    return sendJson(response, 200, isPrivate
-      ? {
-          ...publicSnapshot,
-          share_token: "e2e-private-token",
-          data: { ...publicSnapshot.data, privacy_mode: "private" },
-        }
-      : publicSnapshot);
+  if (request.method === "POST" && url.pathname === "/auth/v1/otp") {
+    return sendJson(response, 200, {});
   }
-  if (url.pathname === "/rest/v1/portfolio_media") {
-    return sendJson(response, 200, publicMediaWithPreviews);
+  if (url.pathname === "/rest/v1/public_portfolio_snapshots" || url.pathname === "/rest/v1/portfolio_media") {
+    return sendJson(response, 403, { message: "Direct public table access is disabled" });
   }
-  if (url.pathname === "/rest/v1/rpc/record_view") {
+  if (request.method === "POST" && url.pathname === "/rest/v1/rpc/resolve_public_portfolio") {
+    let body = "";
+    request.on("data", (chunk) => { body += chunk; });
+    return request.on("end", () => {
+      const token = JSON.parse(body || "{}").p_share_token;
+      if (token !== "e2e-portfolio-token" && token !== "e2e-private-token") return sendJson(response, 200, null);
+      return sendJson(response, 200, resolvedPortfolio(token === "e2e-private-token"));
+    });
+  }
+  if (request.method === "POST" && url.pathname === "/rest/v1/rpc/resolve_approved_portfolio") {
     return sendJson(response, 200, null);
+  }
+  if (request.method === "POST" && url.pathname === "/rest/v1/rpc/record_public_portfolio_view") {
+    return sendJson(response, 200, true);
+  }
+  if (request.method === "POST" && url.pathname === "/rest/v1/rpc/consume_api_rate_limit") {
+    return sendJson(response, 200, { allowed: true, retryAfter: 0 });
   }
   if (request.method === "POST" && url.pathname.startsWith("/storage/v1/object/sign/photos/")) {
     return sendJson(response, 200, {

@@ -17,7 +17,7 @@ Fill a form once. Get a shareable link. Update anytime — the link always shows
 - **Rashi-rooted design** — theme colors and constellation backgrounds from Vedic moon sign
 - **WhatsApp-optimized** — dynamic OG meta tags for rich link previews
 - **Mobile-first** — designed for phone-first creation and viewing
-- **Auto-save** — debounced saves every second, no progress lost
+- **Explicit saves** — private drafts and published snapshots have separate update actions
 - **90-day link expiry** — renewable from dashboard, one click
 - **Photo pipeline** — server-side sharp processing → WebP main + thumbnail
 - **Editorial template** — CelestialUnion with glassmorphism, constellation backdrop
@@ -38,7 +38,7 @@ Fill a form once. Get a shareable link. Update anytime — the link always shows
 | Auth | Google OAuth + Supabase Magic Link |
 | Landing fonts | Harmond ExtraBoldExpanded, MangoGrotesque (Light/Regular/Medium/SemiBold) |
 | Landing bg | `shaders` (Swirl + ChromaFlow + FlutedGlass + FilmGrain) |
-| Email | Resend (expiry reminders) |
+| Email | Supabase Auth magic links |
 | Hosting | Vercel / Docker |
 
 ## Getting Started
@@ -77,7 +77,7 @@ Fill a form once. Get a shareable link. Update anytime — the link always shows
 5. Enable Google OAuth in Supabase dashboard:
    Authentication → Providers → Google → Add Client ID + Secret.
 
-6. Create `photos` storage bucket in Supabase (Public).
+6. Create private `photos` and `horoscopes` storage buckets in Supabase. Access is granted only through RLS and short-lived signed URLs.
 
 7. Start dev server:
    ```bash
@@ -94,11 +94,12 @@ Fill a form once. Get a shareable link. Update anytime — the link always shows
 | `/login` | No | Google OAuth + Magic link |
 | `/signup` | No | New account |
 | `/dashboard` | Yes | Status, link, views, expiry |
+| `/account` | Yes | Data export, session revocation, and deletion recovery controls |
 | `/edit` | Yes | Compatibility redirect to the canonical dashboard editor |
 | `/preview` | Yes | Draft preview |
 | `/p/[token]` | No | Public biodata view (CelestialUnion template) |
 | `/api/auth/callback` | No | OAuth/magic link callback |
-| `/api/upload` | Yes | Photo upload (sharp → Supabase Storage) |
+| `/api/portfolio-media` | Yes | Owner-scoped photo upload and gallery management |
 
 ## Project Structure
 
@@ -107,7 +108,7 @@ src/
 ├── app/
 │   ├── api/
 │   │   ├── auth/callback/route.ts    # OAuth + magic link callback
-│   │   └── upload/route.ts           # Photo upload (sharp processing)
+│   │   └── portfolio-media/route.ts  # Owner-scoped photo operations
 │   ├── dashboard/                     # Status, link, views, expiry
 │   ├── edit/                          # Redirect to the canonical dashboard editor
 │   ├── login/                         # Auth entry
@@ -194,13 +195,18 @@ vercel --prod            # Production deploy
 
 ### Importing location reference data
 
-The profile form uses GeoNames reference tables for dependent Country → State/Region → City suggestions. After applying Supabase migrations, add the server-only `SUPABASE_SERVICE_ROLE_KEY` to `.env.local`, then run:
+The profile form uses GeoNames reference tables for dependent Country → State/Region → City suggestions. After applying Supabase migrations, load the service-role key only for the one-off import process. Do not add it to `.env.example`, GitHub Actions, or any `NEXT_PUBLIC_` variable:
 
 ```bash
+read -rsp "Supabase service-role key: " SUPABASE_SERVICE_ROLE_KEY && echo
+export SUPABASE_SERVICE_ROLE_KEY
 node --env-file=.env.local scripts/import-geonames.mjs
+unset SUPABASE_SERVICE_ROLE_KEY
 ```
 
-The importer downloads `countryInfo.txt`, `admin1CodesASCII.txt`, and `cities500.zip` directly from [GeoNames](https://www.geonames.org/), then safely upserts the records. The form retains manual state/region and city entry when reference data is unavailable or incomplete. Never prefix the service-role key with `NEXT_PUBLIC_` or commit it.
+The importer downloads `countryInfo.txt`, `admin1CodesASCII.txt`, and `cities500.zip` directly from [GeoNames](https://www.geonames.org/), then safely upserts the records. The form retains manual state/region and city entry when reference data is unavailable or incomplete. If the import fails, run `unset SUPABASE_SERVICE_ROLE_KEY` before troubleshooting so the credential does not remain in the shell environment.
+
+Account deletion and retention maintenance use the same temporary local service-role handling. See [Security Phase 4](docs/security-phase-4.md) for the deletion worker, retention schedule, organization role matrix, and production Supabase Auth checklist.
 
 ## Landing Page
 

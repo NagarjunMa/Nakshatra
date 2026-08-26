@@ -45,12 +45,14 @@ describe("Supabase client factories", () => {
 describe("Supabase request session proxy", () => {
   let adapter: { getAll: () => unknown; setAll: (values: Array<{ name: string; value: string; options: object }>) => void };
   const getClaims = vi.fn();
+  const rpc = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
+    rpc.mockResolvedValue({ data: true, error: null });
     createServerClient.mockImplementation((_url, _key, options) => {
       adapter = options.cookies;
-      return { auth: { getClaims } };
+      return { auth: { getClaims }, rpc };
     });
   });
 
@@ -61,11 +63,30 @@ describe("Supabase request session proxy", () => {
     expect(response.headers.get("location")).toBe("https://app.test/login?redirect=%2Fdashboard%2Fsettings");
   });
 
-  it("redirects authenticated users away from login and passes public pages through", async () => {
+  it("leaves auth-page live-session redirects to server pages and passes public pages through", async () => {
     getClaims.mockResolvedValue({ data: { claims: { sub: "owner" } } });
-    expect((await updateSession(new NextRequest("https://app.test/login"))).headers.get("location")).toBe("https://app.test/dashboard");
+    expect((await updateSession(new NextRequest("https://app.test/login"))).status).toBe(200);
     expect((await updateSession(new NextRequest("https://app.test/about"))).status).toBe(200);
+    expect(rpc).not.toHaveBeenCalled();
   });
+
+  it("leaves authoritative live-session checks to destinations without matching sibling routes", async () => {
+    getClaims.mockResolvedValue({ data: { claims: { sub: "owner" } } });
+    rpc.mockRejectedValue(new Error("Proxy must not call database RPCs"));
+    expect((await updateSession(new NextRequest("https://app.test/login"))).status).toBe(200);
+    expect((await updateSession(new NextRequest("https://app.test/account"))).status).toBe(200);
+    expect((await updateSession(new NextRequest("https://app.test/dashboard-old"))).status).toBe(200);
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it.each(["/approved-preview", "/account", "/edit", "/preview"])(
+    "protects the exact %s route boundary",
+    async (pathname) => {
+      getClaims.mockResolvedValue({ data: { claims: null } });
+      expect((await updateSession(new NextRequest(`https://app.test${pathname}`))).status).toBe(307);
+      expect((await updateSession(new NextRequest(`https://app.test${pathname}-public`))).status).toBe(200);
+    }
+  );
 
   it("reads incoming cookies and propagates refreshed cookies", async () => {
     getClaims.mockResolvedValue({ data: { claims: { sub: "owner" } } });
