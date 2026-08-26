@@ -23,13 +23,39 @@ describe("interest request flow", () => {
     fireEvent.change(screen.getByLabelText("Contacting for"), { target: { value: "self" } });
     fireEvent.change(screen.getByLabelText("Phone number"), { target: { value: "+1 555 010 2200" } });
     fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "rohan@example.com" } });
-    fireEvent.change(screen.getByLabelText("City and country"), { target: { value: "Toronto, Canada" } });
-    fireEvent.change(screen.getByLabelText("Brief family introduction"), { target: { value: "Our family is based in Toronto and Bengaluru." } });
-    fireEvent.change(screen.getByLabelText("Message"), { target: { value: "We would be glad to introduce our families." } });
     fireEvent.click(screen.getByRole("button", { name: "Send interest" }));
 
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
     expect(screen.getByText("Interest sent.")).toBeInTheDocument();
+    const request = vi.mocked(fetch).mock.calls[0];
+    const submitted = JSON.parse(String((request[1] as RequestInit).body));
+    expect(submitted).toMatchObject({
+      name: "Rohan Mehta",
+      profileFor: "self",
+      phone: "+1 555 010 2200",
+      email: "rohan@example.com",
+      country: "",
+      state: "",
+      city: "",
+      familyContext: "",
+      message: "",
+    });
+  });
+
+  it("keeps location and introductions optional in the form", () => {
+    render(<InterestRequestModal portfolioToken="portfolio-token" profileName="Ananya Rao" />);
+    fireEvent.click(screen.getByRole("button", { name: "Show interest" }));
+
+    expect(screen.getByLabelText("Your full name")).toBeRequired();
+    expect(screen.getByLabelText("Contacting for")).toBeRequired();
+    expect(screen.getByLabelText("Phone number")).toBeRequired();
+    expect(screen.getByLabelText("Email address")).toBeRequired();
+    fireEvent.click(screen.getByText("Add more details"));
+    expect(screen.getByLabelText("Country")).not.toBeRequired();
+    expect(screen.getByLabelText("State or province")).not.toBeRequired();
+    expect(screen.getByLabelText("City")).not.toBeRequired();
+    expect(screen.getByLabelText("Brief family introduction")).not.toBeRequired();
+    expect(screen.getByLabelText("Message")).not.toBeRequired();
   });
 
   it("validates and stores an interest for an active portfolio", async () => {
@@ -52,10 +78,6 @@ describe("interest request flow", () => {
         profileFor: "self",
         phone: "+1 555 010 2200",
         email: "rohan@example.com",
-        location: "Toronto, Canada",
-        familyContext: "Our family is based in Toronto and Bengaluru.",
-        message: "We would be glad to introduce our families.",
-        portfolioUrl: "",
       }),
     }));
 
@@ -64,7 +86,46 @@ describe("interest request flow", () => {
       portfolio_id: "portfolio-1",
       viewer_name: "Rohan Mehta",
       viewer_email: "rohan@example.com",
+      viewer_family_context: null,
+      message: null,
       requested_sections: ["full"],
+      metadata: expect.objectContaining({
+        country: null,
+        state: null,
+        city: null,
+        location: null,
+      }),
+    }));
+
+    const detailedResponse = await POST(new Request("http://local/api/interest", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        portfolioToken: "portfolio-token",
+        name: "Rohan Mehta",
+        profileFor: "self",
+        phone: "+1 555 010 2200",
+        email: "rohan@example.com",
+        country: "Canada",
+        state: "Ontario",
+        city: "Toronto",
+        familyContext: "Our family lives in Toronto.",
+        message: "We would be glad to connect.",
+        portfolioUrl: "https://example.com/rohan",
+      }),
+    }));
+
+    expect(detailedResponse.status).toBe(201);
+    expect(insert).toHaveBeenLastCalledWith(expect.objectContaining({
+      viewer_family_context: "Our family lives in Toronto.",
+      message: "We would be glad to connect.",
+      metadata: expect.objectContaining({
+        country: "Canada",
+        state: "Ontario",
+        city: "Toronto",
+        location: "Toronto, Ontario, Canada",
+        portfolio_url: "https://example.com/rohan",
+      }),
     }));
   });
 });

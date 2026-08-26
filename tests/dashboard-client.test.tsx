@@ -156,12 +156,13 @@ describe("dashboard client", () => {
         message: "We would be glad to introduce our families.",
         status: "new",
         requester_user_id: "viewer-1",
-        metadata: { profile_for: "self", location: "Toronto, Canada" },
+        metadata: { profile_for: "self", country: "Canada", state: "Ontario", city: "Toronto" },
         created_at: "2026-08-09T12:00:00.000Z",
       }],
     });
 
     fireEvent.click(screen.getByText("Rohan Mehta"));
+    expect(screen.getByText(/Toronto, Ontario, Canada/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Approve Full View" }));
 
     await waitFor(() => expect(decisionFetch).toHaveBeenCalledWith(

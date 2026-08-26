@@ -149,6 +149,38 @@ test("public portfolio exposes production-ready metadata and distinct accent rol
   }
 });
 
+test("interest popup stays in view and keeps extra details optional", async ({ page }) => {
+  await page.goto("/p/e2e-portfolio-token");
+  await page.getByRole("button", { name: "Show interest" }).click();
+
+  const dialog = page.getByRole("dialog", { name: /introduce yourself/i });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByLabel("Your full name")).toHaveAttribute("required", "");
+  await expect(dialog.getByLabel("Contacting for")).toHaveAttribute("required", "");
+  await expect(dialog.getByLabel("Phone number")).toHaveAttribute("required", "");
+  await expect(dialog.getByLabel("Email address")).toHaveAttribute("required", "");
+
+  const bounds = await dialog.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return { top: rect.top, bottom: rect.bottom, viewport: window.innerHeight };
+  });
+  expect(bounds.top).toBeGreaterThanOrEqual(0);
+  expect(bounds.bottom).toBeLessThanOrEqual(bounds.viewport + 1);
+
+  await dialog.getByText("Add more details").click();
+  await expect(dialog.getByLabel("Country")).not.toHaveAttribute("required", "");
+  await expect(dialog.getByLabel("State or province")).not.toHaveAttribute("required", "");
+  await expect(dialog.getByLabel("City")).not.toHaveAttribute("required", "");
+  const optionalLayout = await dialog.locator(".interest-optional").evaluate((element) => ({
+    open: element.hasAttribute("open"),
+    clientHeight: element.clientHeight,
+    scrollHeight: element.scrollHeight,
+  }));
+  expect(optionalLayout.open).toBe(true);
+  expect(optionalLayout.scrollHeight).toBeLessThanOrEqual(optionalLayout.clientHeight + 1);
+  await expect(dialog.getByRole("button", { name: "Send interest" })).toBeVisible();
+});
+
 test("Private portfolio keeps one gallery photo clear and safely blurs the rest", async ({ page }) => {
   await page.goto("/p/e2e-private-token");
 
