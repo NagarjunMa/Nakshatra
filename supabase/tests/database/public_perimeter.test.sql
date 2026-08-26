@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(22);
+select plan(25);
 
 insert into auth.users (id, aud, role, email, created_at, updated_at)
 values
@@ -136,7 +136,8 @@ select ok(
     'phase1_secure_token_1', 'Rohan Mehta', 'self', '+1 555 010 2200',
     'viewer@perimeter.test', 'Toronto, Canada',
     'A family introduction with sufficient detail.',
-    'We would be glad to introduce our families.', null
+    'We would be glad to introduce our families.', null,
+    'Canada', 'Ontario', 'Toronto'
   ),
   'an authenticated viewer can submit an identity-bound request'
 );
@@ -145,6 +146,9 @@ reset role;
 select is((select count(*)::integer from public.interest_requests), 1, 'interest command inserts exactly one row');
 select is((select status::text from public.interest_requests limit 1), 'new', 'interest status is database-owned');
 select is((select requested_sections from public.interest_requests limit 1), array['full']::text[], 'requested scope is database-owned');
+select is((select metadata ->> 'country' from public.interest_requests limit 1), 'Canada', 'interest command stores the structured country');
+select is((select metadata ->> 'state' from public.interest_requests limit 1), 'Ontario', 'interest command stores the structured state');
+select is((select metadata ->> 'city' from public.interest_requests limit 1), 'Toronto', 'interest command stores the structured city');
 select is((select count(*)::integer from public.portfolio_views), 1, 'view command inserts one rate-limited row');
 select throws_ok(
   $$update public.public_portfolio_snapshots set data = jsonb_set(data, '{contact}', '{"email":"private@example.test"}'::jsonb)$$,

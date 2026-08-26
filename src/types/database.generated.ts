@@ -2609,15 +2609,18 @@ export type Database = {
       set_portfolio_hero: { Args: { p_media_id: string }; Returns: boolean }
       submit_public_interest: {
         Args: {
+          p_city?: string | null
+          p_country?: string | null
           p_email: string
-          p_family_context: string
-          p_location: string
-          p_message: string
+          p_family_context?: string | null
+          p_location?: string | null
+          p_message?: string | null
           p_name: string
           p_phone: string
-          p_portfolio_url?: string
+          p_portfolio_url?: string | null
           p_profile_for: string
           p_share_token: string
+          p_state?: string | null
         }
         Returns: boolean
       }

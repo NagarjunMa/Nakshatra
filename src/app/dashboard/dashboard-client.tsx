@@ -870,7 +870,7 @@ function InterestInbox({
           {actionError && <p className="dashboard-action-error" role="alert">{actionError}</p>}
           {newInterests.slice(0, 5).map((interest) => {
             const profileFor = typeof interest.metadata?.profile_for === "string" ? interest.metadata.profile_for : "self";
-            const location = typeof interest.metadata?.location === "string" ? interest.metadata.location : "";
+            const location = formatInterestLocation(interest.metadata);
             const portfolioUrl = typeof interest.metadata?.portfolio_url === "string" ? interest.metadata.portfolio_url : "";
             return (
               <details key={interest.id} className="dashboard-interest-row">
@@ -1055,6 +1055,14 @@ function formatInterestDate(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Recently";
   return new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(date);
+}
+
+function formatInterestLocation(metadata: Record<string, unknown> | null) {
+  if (!metadata) return "";
+  const parts = [metadata.city, metadata.state, metadata.country]
+    .filter((value): value is string => typeof value === "string" && value.trim().length > 0);
+  if (parts.length) return parts.join(", ");
+  return typeof metadata.location === "string" ? metadata.location : "";
 }
 
 const EMPTY_DATA: PortfolioData = {

@@ -29,6 +29,7 @@ export default defineConfig({
     {
       command: "npm run dev -- --hostname 127.0.0.1 --port 3100",
       env: {
+        NEXT_DIST_DIR: ".next-e2e",
         NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54329",
         NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "e2e-publishable-key",
         NEXT_PUBLIC_APP_URL: "http://127.0.0.1:3100",

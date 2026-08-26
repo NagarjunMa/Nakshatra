@@ -22,7 +22,10 @@ export async function POST(request: Request) {
     const parsed = interestRequestSchema.safeParse(await readJsonBody(request));
     if (!parsed.success) {
       return NextResponse.json(
-        { code: "INTEREST_REQUEST_INVALID", error: "Please check the form and complete every required field." },
+        {
+          code: "INTEREST_REQUEST_INVALID",
+          error: "Complete your name, who you are contacting for, phone number, and email.",
+        },
         { status: 400 }
       );
     }

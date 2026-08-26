@@ -45,7 +45,7 @@ select ok(
   not exists (
     select 1
     from unnest(array[
-      'submit_public_interest(text,text,text,text,text,text,text,text,text)',
+      'submit_public_interest(text,text,text,text,text,text,text,text,text,text,text,text)',
       'decide_interest_request(uuid,text)',
       'manage_reveal_grant(uuid,text)',
       'publish_portfolio_transaction(uuid,jsonb,jsonb,jsonb,text,timestamp with time zone,integer,text,text)',

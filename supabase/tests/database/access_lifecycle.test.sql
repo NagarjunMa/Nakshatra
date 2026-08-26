@@ -110,7 +110,7 @@ select is((select draft_data #>> '{personal,name}' from public.portfolios where 
 select is((select data #>> '{personal,name}' from public.approved_portfolio_snapshots where portfolio_id = 'a3000000-0000-4000-8000-000000000001'), 'Aditi Full', 'an invalid approved projection preserves the prior Full View snapshot');
 
 reset role;
-select ok(not has_function_privilege('anon', 'public.submit_public_interest(text,text,text,text,text,text,text,text,text)', 'EXECUTE'), 'anonymous visitors cannot execute the access request command');
+select ok(not has_function_privilege('anon', 'public.submit_public_interest(text,text,text,text,text,text,text,text,text,text,text,text)', 'EXECUTE'), 'anonymous visitors cannot execute the access request command');
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"a1000000-0000-4000-8000-000000000002","role":"authenticated","session_id":"a1100000-0000-4000-8000-000000000002"}';

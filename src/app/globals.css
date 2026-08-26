@@ -390,53 +390,105 @@
 .interest-modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 100;
-  display: grid;
-  place-items: center;
-  overflow-y: auto;
-  padding: 1rem;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: clamp(12px, 2vw, 24px);
   background: rgb(16 28 34 / 0.62);
   backdrop-filter: blur(5px);
 }
 
 .interest-modal {
-  width: min(100%, 570px);
-  max-height: calc(100vh - 2rem);
-  overflow-y: auto;
+  display: flex;
+  width: min(100%, 660px);
+  max-height: min(720px, calc(100vh - 24px));
+  max-height: min(720px, calc(100dvh - 24px));
+  flex-direction: column;
+  overflow: hidden;
   border: 1px solid #c8ccc7;
-  border-radius: 16px;
-  padding: 1.35rem;
+  border-radius: 20px;
   background: #fffdf8;
   color: #18272e;
   box-shadow: 0 30px 90px rgb(0 0 0 / 0.34);
   font-family: var(--font-portfolio-body), system-ui, sans-serif;
 }
 
-.interest-modal-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
-.interest-modal-header h2 { margin: 0.35rem 0; color: #18272e; font-family: var(--font-portfolio-display), Georgia, serif; font-size: clamp(1.7rem, 5vw, 2.25rem); font-weight: 500; line-height: 1.08; }
-.interest-modal-header p:last-child { color: #59686d; line-height: 1.55; }
-.interest-modal-close { display: grid; width: 44px; height: 44px; flex: none; place-items: center; border: 1px solid #c3c9c8; border-radius: 50%; background: transparent; color: #30464e; }
+.interest-modal-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 1.35rem 1.4rem 1rem; border-bottom: 1px solid #e0ded7; }
+.interest-modal-header .portfolio-eyebrow { margin: 0; }
+.interest-modal-header h2 { max-width: 520px; margin: 0.3rem 0 0.25rem; color: #18272e; font-family: var(--font-portfolio-display), Georgia, serif; font-size: clamp(1.65rem, 4vw, 2.15rem); font-weight: 500; line-height: 1.08; }
+.interest-modal-header p:last-child { margin: 0; color: #59686d; font-size: 0.9rem; line-height: 1.5; }
+.interest-modal-close { display: grid; width: 42px; height: 42px; flex: none; place-items: center; border: 1px solid #c3c9c8; border-radius: 50%; background: #fff; color: #30464e; cursor: pointer; }
+.interest-modal-close:hover { border-color: #477b77; background: #edf3f0; }
 .interest-modal-close svg { width: 1.1rem; height: 1.1rem; }
-.interest-form { display: grid; gap: 0.8rem; margin-top: 1.2rem; }
-.interest-field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.8rem; }
-.interest-field { display: grid; gap: 0.35rem; color: #3a4e56; font-size: 0.82rem; font-weight: 650; }
+.interest-form { display: flex; min-height: 0; flex: 1; flex-direction: column; }
+.interest-form-scroll { display: grid; min-height: 0; grid-auto-rows: max-content; align-content: start; gap: 1rem; overflow-y: auto; overscroll-behavior: contain; padding: 1.1rem 1.4rem 1.25rem; }
+.interest-form-intro { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; color: #263d45; }
+.interest-form-intro strong { font-family: var(--font-portfolio-display), Georgia, serif; font-size: 1.08rem; font-weight: 600; }
+.interest-form-intro span { color: #69777b; font-size: 0.75rem; font-weight: 500; }
+.interest-field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.9rem; }
+.interest-location-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; }
+.interest-optional-copy-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+.interest-field { display: grid; min-width: 0; gap: 0.38rem; color: #3a4e56; font-size: 0.82rem; font-weight: 650; }
+.interest-field > span { min-height: 1.2em; }
+.interest-field b { color: #9a4c39; font-weight: 800; }
 .interest-field input,
 .interest-field select,
-.interest-field textarea { width: 100%; min-height: 46px; border: 1px solid #adb8ba; border-radius: 8px; padding: 0.65rem 0.75rem; background: #fff; color: #1d3038; font: inherit; font-weight: 400; }
-.interest-field textarea { min-height: 82px; resize: vertical; }
+.interest-field textarea { width: 100%; min-height: 48px; border: 1px solid #adb8ba; border-radius: 10px; padding: 0.7rem 0.78rem; background: #fff; color: #1d3038; font: inherit; font-weight: 400; }
+.interest-field textarea { min-height: 72px; resize: vertical; }
+.interest-field input::placeholder,
+.interest-field textarea::placeholder { color: #879295; }
 .interest-field input:focus,
 .interest-field select:focus,
 .interest-field textarea:focus { border-color: #477b77; outline: 3px solid rgb(71 123 119 / 0.16); }
-.interest-form-note { border-left: 3px solid #477b77; padding: 0.7rem 0.8rem; background: #e7efeb; color: #49635f; font-size: 0.8rem; line-height: 1.5; }
-.interest-form-error { color: #9b3434; font-size: 0.85rem; }
+.interest-optional { overflow: hidden; border: 1px solid #d9dcd7; border-radius: 12px; background: #f7f7f2; }
+.interest-optional summary { display: flex; min-height: 64px; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.8rem 0.95rem; color: #29444b; cursor: pointer; list-style: none; }
+.interest-optional summary::-webkit-details-marker { display: none; }
+.interest-optional summary span { display: grid; gap: 0.15rem; }
+.interest-optional summary strong { font-size: 0.88rem; }
+.interest-optional summary small { color: #67767a; font-size: 0.75rem; font-weight: 450; line-height: 1.4; }
+.interest-optional summary svg { width: 18px; height: 18px; flex: none; transition: transform 160ms ease; }
+.interest-optional[open] summary svg { transform: rotate(180deg); }
+.interest-optional-content { display: grid; gap: 0.9rem; border-top: 1px solid #d9dcd7; padding: 1rem; background: #fffdf8; }
+.interest-form-footer { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 1rem; border-top: 1px solid #e0ded7; padding: 0.9rem 1.4rem 1rem; background: #fffdf8; box-shadow: 0 -10px 24px rgb(34 50 54 / 0.04); }
+.interest-form-footer .portfolio-button {
+  display: inline-flex;
+  min-width: 170px;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #21465b;
+  border-radius: 9px;
+  padding: 0.7rem 1.15rem;
+  background: #21465b;
+  color: #fffdf8;
+  font-size: 0.93rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+.interest-form-footer .portfolio-button:hover,
+.interest-form-footer .portfolio-button:focus-visible { background: #18394b; box-shadow: 0 8px 22px rgb(18 53 69 / 0.18); }
+.interest-form-footer .portfolio-button:disabled { cursor: wait; opacity: 0.68; }
+.interest-form-note { margin: 0; color: #58706d; font-size: 0.78rem; line-height: 1.45; }
+.interest-form-error { margin: 0; border-left: 3px solid #b65f53; padding: 0.7rem 0.8rem; background: #f8e8e4; color: #8e342e; font-size: 0.84rem; }
 .interest-sent { display: inline-flex; align-items: flex-start; gap: 0.55rem; border: 1px solid #a8c8be; border-radius: 10px; padding: 0.75rem 0.85rem; background: #e0eee9; color: #315f57; font-family: var(--font-portfolio-body), system-ui, sans-serif; font-size: 0.88rem; line-height: 1.45; }
 .interest-sent svg { width: 1.05rem; height: 1.05rem; margin-top: 0.1rem; flex: none; }
 
 @media (max-width: 600px) {
   .interest-modal-backdrop { align-items: end; padding: 0; }
-  .interest-modal { max-height: 92vh; border-radius: 18px 18px 0 0; padding: 1.1rem; }
-  .interest-field-grid { grid-template-columns: 1fr; gap: 0.8rem; }
-  .interest-form > .portfolio-button { width: 100%; }
+  .interest-modal { width: 100%; max-height: 94vh; max-height: 94dvh; border-radius: 20px 20px 0 0; }
+  .interest-modal-header { padding: 1rem 1rem 0.85rem; }
+  .interest-modal-header h2 { font-size: 1.65rem; }
+  .interest-modal-header p:last-child { font-size: 0.82rem; }
+  .interest-modal-close { width: 40px; height: 40px; }
+  .interest-form-scroll { padding: 0.95rem 1rem 1rem; }
+  .interest-field-grid,
+  .interest-location-grid,
+  .interest-optional-copy-grid { grid-template-columns: 1fr; gap: 0.75rem; }
+  .interest-form-footer { grid-template-columns: 1fr; gap: 0.65rem; padding: 0.75rem 1rem calc(0.8rem + env(safe-area-inset-bottom)); }
+  .interest-form-footer .portfolio-button { width: 100%; }
+  .interest-form-note { text-align: center; }
 }
 
 .dashboard-shell {
