@@ -1,5 +1,25 @@
 import { expect, test } from "@playwright/test";
 
+const authenticatedAccessToken = "e2e-authenticated-user-token";
+
+function authenticatedSessionCookie() {
+  const session = {
+    access_token: authenticatedAccessToken,
+    refresh_token: "e2e-refresh-token",
+    expires_at: Math.floor(Date.now() / 1000) + 60 * 60,
+    expires_in: 60 * 60,
+    token_type: "bearer",
+    user: {
+      id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      aud: "authenticated",
+      role: "authenticated",
+      email: "authenticated@example.test",
+    },
+  };
+
+  return `base64-${Buffer.from(JSON.stringify(session)).toString("base64url")}`;
+}
+
 test("landing page presents the product and reaches account creation", async ({ page }) => {
   await page.goto("/");
   await expect(page).toHaveTitle("Nakshatra - One Digital Wedding Portfolio");
@@ -167,6 +187,14 @@ test("public portfolio exposes production-ready metadata and distinct accent rol
 });
 
 test("interest popup stays in view and keeps extra details optional", async ({ page }) => {
+  // This mirrors the Supabase SSR cookie format used by the configured
+  // http://127.0.0.1:54329 E2E project, whose default storage key is
+  // sb-127-auth-token. The mock accepts only this synthetic access token.
+  await page.context().addCookies([{
+    name: "sb-127-auth-token",
+    value: authenticatedSessionCookie(),
+    url: "http://127.0.0.1:3100",
+  }]);
   await page.goto("/p/e2e-portfolio-token");
   await page.getByRole("button", { name: "Show interest" }).click();
 
