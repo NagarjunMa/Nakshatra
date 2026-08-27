@@ -3,6 +3,13 @@ import { createServer } from "node:http";
 const host = "127.0.0.1";
 const port = 54329;
 const portfolioId = "11111111-1111-4111-8111-111111111111";
+const authenticatedAccessToken = "e2e-authenticated-user-token";
+const authenticatedUser = {
+  id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  aud: "authenticated",
+  role: "authenticated",
+  email: "authenticated@example.test",
+};
 
 const publicSnapshot = {
   data: {
@@ -215,7 +222,12 @@ const server = createServer((request, response) => {
   }
 
   if (url.pathname === "/health") return sendJson(response, 200, { ok: true });
-  if (url.pathname === "/auth/v1/user") return sendJson(response, 401, { message: "Unauthorized" });
+  if (url.pathname === "/auth/v1/user") {
+    if (request.headers.authorization === `Bearer ${authenticatedAccessToken}`) {
+      return sendJson(response, 200, authenticatedUser);
+    }
+    return sendJson(response, 401, { message: "Unauthorized" });
+  }
   if (request.method === "POST" && url.pathname === "/auth/v1/otp") {
     return sendJson(response, 200, {});
   }
