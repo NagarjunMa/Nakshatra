@@ -1,4 +1,11 @@
 detectors:
+  - name: DiditCredentialAssignment
+    keywords:
+      - DIDIT_API_KEY
+      - DIDIT_WEBHOOK_SECRET
+    regex:
+      didit_credential: '(?:DIDIT_(?:API_KEY|WEBHOOK_SECRET)\s*[:=]\s*["'']?)([A-Za-z0-9_-]{24,})'
+    entropy: 3.5
   - name: GoogleStitchAPIKey
     keywords:
       - AQ.
