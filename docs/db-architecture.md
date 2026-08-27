@@ -152,6 +152,21 @@ pricing.
 - immigration
 - employment
 
+### Identity Verification Perimeter
+
+Didit identity verification is not stored in `public.verifications`. The Phase
+1 normalized model is held in `app_private`: one random provider subject per
+candidate, short-lived token hashes, attempts with no evidence payloads,
+webhook event digests, and leased worker state. These tables have no `anon` or
+ordinary `authenticated` grants.
+
+`public_portfolio_snapshots` can contain only a derived
+`identity_verified` badge, its verification expiry, and a 30-day
+reverification-grace deadline. It never contains a provider reference,
+document country/type, consent version, attempt ID, token, or webhook data.
+The database prevents first publication unless the linked candidate has a
+current normalized identity verification.
+
 `compatibility_reports` supports paid astrology compatibility reports tied to
 an interest request.
 
