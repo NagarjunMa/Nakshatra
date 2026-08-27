@@ -15,10 +15,18 @@ values
   ('11111111-1111-4111-8111-111111111112', '11111111-1111-4111-8111-111111111111', now(), now()),
   ('22222222-2222-4222-8222-222222222223', '22222222-2222-4222-8222-222222222222', now(), now());
 
-insert into public.portfolios (id, user_id, share_token, draft_data, published_data)
+insert into public.candidates (id, primary_owner_user_id, display_name, created_by)
+values ('33333333-3333-4333-8333-333333333334', '11111111-1111-4111-8111-111111111111', 'Aditi', '11111111-1111-4111-8111-111111111111');
+
+update app_private.identity_verification_subjects
+set status = 'verified', verified_at = now() - interval '1 day', expires_at = now() + interval '365 days'
+where candidate_id = '33333333-3333-4333-8333-333333333334';
+
+insert into public.portfolios (id, user_id, candidate_id, share_token, draft_data, published_data)
 values (
   '33333333-3333-4333-8333-333333333333',
   '11111111-1111-4111-8111-111111111111',
+  '33333333-3333-4333-8333-333333333334',
   'phase1_secure_token_1',
   '{}'::jsonb,
   '{}'::jsonb

@@ -25,6 +25,10 @@ values (
   'a1000000-0000-4000-8000-000000000001'
 );
 
+update app_private.identity_verification_subjects
+set status = 'verified', verified_at = now() - interval '1 day', expires_at = now() + interval '365 days'
+where candidate_id = 'a2000000-0000-4000-8000-000000000001';
+
 insert into public.portfolios (
   id, user_id, candidate_id, share_token, draft_data, published_data,
   is_published, expires_at, template_id, theme_color, sun_sign

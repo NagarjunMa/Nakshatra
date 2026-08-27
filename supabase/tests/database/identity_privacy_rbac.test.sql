@@ -159,10 +159,18 @@ select throws_ok(
   'a direct portfolio insert cannot bypass the public hero requirement'
 );
 reset role;
-insert into public.portfolios (id, user_id, share_token, draft_data, published_data, is_published, expires_at)
+insert into public.candidates (id, primary_owner_user_id, display_name, created_by)
+values ('44000000-0000-4000-8000-000000000002', '41000000-0000-4000-8000-000000000006', 'Delete Subject', '41000000-0000-4000-8000-000000000006');
+
+update app_private.identity_verification_subjects
+set status = 'verified', verified_at = now() - interval '1 day', expires_at = now() + interval '365 days'
+where candidate_id = '44000000-0000-4000-8000-000000000002';
+
+insert into public.portfolios (id, user_id, candidate_id, share_token, draft_data, published_data, is_published, expires_at)
 values (
   '44000000-0000-4000-8000-000000000001',
   '41000000-0000-4000-8000-000000000006',
+  '44000000-0000-4000-8000-000000000002',
   'phase4_delete_token01',
   '{"personal":{"name":"Delete Subject"}}',
   '{"personal":{"name":"Delete Subject"}}',

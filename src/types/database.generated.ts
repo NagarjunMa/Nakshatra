@@ -1886,6 +1886,9 @@ export type Database = {
         Row: {
           data: Json
           expires_at: string | null
+          identity_reverification_grace_until: string | null
+          identity_verification_badge: string | null
+          identity_verified_until: string | null
           is_active: boolean
           portfolio_id: string
           published_at: string
@@ -1898,6 +1901,9 @@ export type Database = {
         Insert: {
           data?: Json
           expires_at?: string | null
+          identity_reverification_grace_until?: string | null
+          identity_verification_badge?: string | null
+          identity_verified_until?: string | null
           is_active?: boolean
           portfolio_id: string
           published_at?: string
@@ -1910,6 +1916,9 @@ export type Database = {
         Update: {
           data?: Json
           expires_at?: string | null
+          identity_reverification_grace_until?: string | null
+          identity_verification_badge?: string | null
+          identity_verified_until?: string | null
           is_active?: boolean
           portfolio_id?: string
           published_at?: string
