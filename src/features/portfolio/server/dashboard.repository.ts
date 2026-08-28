@@ -23,6 +23,18 @@ export interface PublicPortfolioSnapshotPayload {
   is_active: boolean;
 }
 
+export interface PublishPortfolioTransactionPayload {
+  portfolioId: string;
+  draftData: Record<string, unknown>;
+  publicData: Record<string, unknown>;
+  approvedData: Record<string, unknown>;
+  shareToken: string;
+  expiresAt: string;
+  templateId: number;
+  themeColor: string | null;
+  sunSign: string | null;
+}
+
 /**
  * Performs dashboard persistence for server-side portfolio services.
  * Input: an authenticated Supabase client at construction and typed method arguments.
@@ -51,28 +63,19 @@ export class DashboardRepository {
     return query.select("id, candidate_id").single();
   }
 
-  async publishPortfolio(userId: string, payload: Record<string, unknown>) {
-    return this.supabase
-      .from("portfolios")
-      .update(payload)
-      .eq("user_id", userId);
-  }
-
-  /**
-   * Stores the whitelisted public representation of a portfolio separately from owner data.
-   * Input: one snapshot row keyed by portfolio ID. Output: the Supabase upsert result.
-   */
-  async savePublicSnapshot(payload: Record<string, unknown>) {
-    return this.supabase
-      .from("public_portfolio_snapshots")
-      .upsert(payload, { onConflict: "portfolio_id" });
-  }
-
-  /** Stores the sanitized full-blueprint representation used by identity-bound grants. */
-  async saveApprovedSnapshot(payload: Record<string, unknown>) {
-    return this.supabase
-      .from("approved_portfolio_snapshots")
-      .upsert(payload, { onConflict: "portfolio_id" });
+  /** Atomically persists owner, public, approved, and horoscope publication state. */
+  async publishPortfolioTransaction(payload: PublishPortfolioTransactionPayload) {
+    return this.supabase.rpc("publish_portfolio_transaction", {
+      p_portfolio_id: payload.portfolioId,
+      p_draft_data: payload.draftData,
+      p_public_data: payload.publicData,
+      p_approved_data: payload.approvedData,
+      p_share_token: payload.shareToken,
+      p_expires_at: payload.expiresAt,
+      p_template_id: payload.templateId,
+      p_theme_color: payload.themeColor,
+      p_sun_sign: payload.sunSign,
+    });
   }
 
   /**
@@ -89,41 +92,19 @@ export class DashboardRepository {
       .maybeSingle();
   }
 
-  /**
-   * Updates lifecycle fields on the sanitized snapshot without exposing owner data.
-   * Input: owner portfolio ID and safe snapshot lifecycle changes. Output: Supabase update result.
-   */
-  async updatePublicSnapshot(
-    portfolioId: string,
-    updates: Partial<Pick<PublicPortfolioSnapshotPayload, "share_token" | "expires_at" | "is_active">>
-  ) {
-    return this.supabase
-      .from("public_portfolio_snapshots")
-      .update(updates)
-      .eq("portfolio_id", portfolioId);
+  /** Atomically extends owner and public snapshot expiry. */
+  async renewPortfolioTransaction(expiresAt: string) {
+    return this.supabase.rpc("renew_portfolio_transaction", { p_expires_at: expiresAt });
   }
 
-  /**
-   * Disables the owner's public portfolio while retaining their private draft and generated snapshot.
-   * Input: owner user ID. Output: Supabase update result for the owner portfolio row.
-   */
-  async unpublishPortfolio(userId: string) {
-    return this.supabase
-      .from("portfolios")
-      .update({ is_published: false })
-      .eq("user_id", userId)
-      .select("id")
-      .maybeSingle();
+  /** Atomically rotates the canonical link and revokes grants bound to the old publication. */
+  async rotatePortfolioTransaction(shareToken: string) {
+    return this.supabase.rpc("rotate_portfolio_transaction", { p_share_token: shareToken });
   }
 
-  async renewPortfolioLink(userId: string, expiresAt: string) {
-    return this.supabase
-      .from("portfolios")
-      .update({
-        expires_at: expiresAt,
-        last_renewed_at: new Date().toISOString(),
-      })
-      .eq("user_id", userId);
+  /** Atomically disables public access and revokes every active reveal grant. */
+  async unpublishPortfolioTransaction() {
+    return this.supabase.rpc("unpublish_portfolio_transaction");
   }
 
   async saveCandidate(
@@ -131,11 +112,13 @@ export class DashboardRepository {
     payload: Record<string, unknown>
   ) {
     if (candidateId) {
-      const { error } = await this.supabase
+      const { data, error } = await this.supabase
         .from("candidates")
         .update(payload)
-        .eq("id", candidateId);
-      return { candidateId, error };
+        .eq("id", candidateId)
+        .select("id")
+        .single();
+      return { candidateId: data?.id ?? null, error };
     }
 
     const { data, error } = await this.supabase
@@ -150,7 +133,9 @@ export class DashboardRepository {
     return this.supabase
       .from("portfolios")
       .update({ candidate_id: candidateId })
-      .eq("id", portfolioId);
+      .eq("id", portfolioId)
+      .select("id")
+      .single();
   }
 
   async saveCandidateDetails(candidateId: string, details: Record<string, Record<string, unknown>>) {
@@ -176,7 +161,7 @@ export class DashboardRepository {
       .upsert(rules, { onConflict: "portfolio_id,section_key" });
   }
 
-  async replaceFamilyMembers(
+  async replaceCandidateRelationshipsAndTimeline(
     candidateId: string,
     members: Array<{
       relationship: string;
@@ -184,45 +169,15 @@ export class DashboardRepository {
       occupation?: string;
       location?: string;
       marital_status?: string;
-    }>
-  ) {
-    const { error: deleteError } = await this.supabase
-      .from("candidate_family_members")
-      .delete()
-      .eq("candidate_id", candidateId);
-    if (deleteError || !members.length) return { error: deleteError };
-
-    return this.supabase.from("candidate_family_members").insert(
-      members.map((member, sort_order) => ({ candidate_id: candidateId, ...member, sort_order }))
-    );
-  }
-
-  async replaceEducationAndCareer(
-    candidateId: string,
+    }>,
     education: Record<string, unknown> | null,
     career: Record<string, unknown> | null
   ) {
-    const [educationDelete, careerDelete] = await Promise.all([
-      this.supabase.from("candidate_education_entries").delete().eq("candidate_id", candidateId),
-      this.supabase.from("candidate_career_entries").delete().eq("candidate_id", candidateId),
-    ]);
-    if (educationDelete.error || careerDelete.error) {
-      return { error: educationDelete.error || careerDelete.error };
-    }
-
-    const writes = await Promise.all([
-      education
-        ? this.supabase
-            .from("candidate_education_entries")
-            .insert({ candidate_id: candidateId, ...education })
-        : Promise.resolve({ error: null }),
-      career
-        ? this.supabase
-            .from("candidate_career_entries")
-            .insert({ candidate_id: candidateId, ...career })
-        : Promise.resolve({ error: null }),
-    ]);
-
-    return { error: writes.find(({ error }) => error)?.error ?? null };
+    return this.supabase.rpc("replace_candidate_relationships_and_timeline", {
+      p_candidate_id: candidateId,
+      p_family_members: members,
+      p_education: education,
+      p_career: career,
+    });
   }
 }

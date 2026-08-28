@@ -2,9 +2,9 @@ import { expect, test } from "@playwright/test";
 
 test("landing page presents the product and reaches account creation", async ({ page }) => {
   await page.goto("/");
-  await expect(page).toHaveTitle("Nakshatra - One Digital Wedding Portfolio");
-  await expect(page.getByRole("heading", { name: /your wedding story, clearly together/i })).toBeVisible();
-  const primaryCta = page.locator(".site-hero-v2").getByRole("link", { name: /create your portfolio/i });
+  await expect(page).toHaveTitle("Nakshatra - Digital Marriage Portfolio");
+  await expect(page.getByRole("heading", { name: /create and share your marriage portfolio in one clear link/i })).toBeVisible();
+  const primaryCta = page.getByRole("main").getByRole("link", { name: /create my portfolio/i }).first();
   await expect(primaryCta).toHaveAttribute("href", "/signup");
   await page.goto("/signup");
   await expect(page).toHaveURL(/\/signup$/);
@@ -29,9 +29,9 @@ test("unauthenticated owners are redirected away from protected screens", async 
 test("landing page remains usable with reduced motion", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
-  const hero = page.locator(".site-hero-v2");
-  await expect(hero.getByRole("link", { name: /create your portfolio/i })).toBeVisible();
-  await expect(hero.getByRole("link", { name: /see what families receive/i })).toBeVisible();
+  const main = page.getByRole("main");
+  await expect(main.getByRole("link", { name: /create my portfolio/i }).first()).toBeVisible();
+  await expect(main.getByRole("link", { name: /view a sample portfolio/i })).toBeVisible();
 });
 
 test("public portfolio renders sanitized data and adaptive media", async ({ page }) => {

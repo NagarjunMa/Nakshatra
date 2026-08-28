@@ -1,60 +1,106 @@
-import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
-import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
-
-const interestSchema = z.object({
-  portfolioToken: z.string().min(8).max(160),
-  name: z.string().trim().min(2).max(180),
-  profileFor: z.enum(["self", "son", "daughter", "sibling", "relative"]),
-  phone: z.string().trim().min(7).max(40),
-  email: z.string().trim().email().max(180),
-  location: z.string().trim().min(2).max(180),
-  familyContext: z.string().trim().min(10).max(600),
-  message: z.string().trim().min(5).max(600),
-  portfolioUrl: z.union([z.literal(""), z.string().trim().url().max(500)]).optional(),
-});
+import { getApiUser } from "@/lib/auth";
+import { apiAuthFailureResponse } from "@/lib/api/auth-response";
+import {
+  interestRequestSchema,
+  interestRequestValidationMessage,
+} from "@/features/interest/server/interest.contract";
+import {
+  InterestSubmissionError,
+  submitInterestRequest,
+} from "@/features/interest/server/interest.service";
+import {
+  readJsonBody,
+  RequestSecurityError,
+  requestSecurityErrorResponse,
+  requireSameOrigin,
+} from "@/lib/api/request-security";
+import { enforceRateLimit } from "@/features/security/server/rate-limit.service";
 
 /** Accepts a short viewer introduction for an active public portfolio. */
 export async function POST(request: Request) {
   try {
-    const parsed = interestSchema.safeParse(await request.json());
+    requireSameOrigin(request);
+    const auth = await getApiUser();
+    if (auth.status !== "authenticated") return apiAuthFailureResponse(auth);
+    const rateLimited = await enforceRateLimit(auth.supabase, request, "interest_submit");
+    if (rateLimited) return rateLimited;
+    const parsed = interestRequestSchema.safeParse(await readJsonBody(request));
     if (!parsed.success) {
-      return NextResponse.json({ error: "Please check the form and complete every required field." }, { status: 400 });
+      return NextResponse.json(
+        {
+          code: "INTEREST_REQUEST_INVALID",
+          error: interestRequestValidationMessage(parsed.error),
+        },
+        { status: 400 }
+      );
     }
-    const supabase = await createClient();
-    const { data: snapshot } = await supabase
-      .from("public_portfolio_snapshots")
-      .select("portfolio_id")
-      .eq("share_token", parsed.data.portfolioToken)
-      .eq("is_active", true)
-      .single();
-    if (!snapshot?.portfolio_id) return NextResponse.json({ error: "This portfolio is not available." }, { status: 404 });
-
-    const { data: authData } = await supabase.auth.getUser();
-    const prospectKey = createHash("sha256")
-      .update(`${parsed.data.email.toLowerCase()}|${parsed.data.phone.replace(/\D/g, "")}`)
-      .digest("hex");
-    const { error } = await supabase.from("interest_requests").insert({
-      portfolio_id: snapshot.portfolio_id,
-      requester_user_id: authData.user?.id ?? null,
-      viewer_name: parsed.data.name,
-      viewer_phone: parsed.data.phone,
-      viewer_email: parsed.data.email.toLowerCase(),
-      viewer_family_context: parsed.data.familyContext,
-      message: parsed.data.message,
-      request_reason: parsed.data.message,
-      requested_sections: ["full"],
-      prospect_key_hash: prospectKey,
-      metadata: {
-        profile_for: parsed.data.profileFor,
-        location: parsed.data.location,
-        portfolio_url: parsed.data.portfolioUrl || null,
-      },
-    });
-    if (error) throw error;
+    const result = await submitInterestRequest(auth.supabase, parsed.data);
+    if (result === "unavailable") {
+      return NextResponse.json(
+        { code: "PORTFOLIO_UNAVAILABLE", error: "This portfolio is not available." },
+        { status: 404 }
+      );
+    }
     return NextResponse.json({ ok: true }, { status: 201 });
-  } catch {
-    return NextResponse.json({ error: "We could not send your interest. Please try again." }, { status: 500 });
+  } catch (error) {
+    if (error instanceof RequestSecurityError) {
+      return requestSecurityErrorResponse(error);
+    }
+    if (error instanceof InterestSubmissionError && error.reason === "own_portfolio") {
+      return NextResponse.json(
+        {
+          code: "OWN_PORTFOLIO_INTEREST",
+          error: "You cannot send an interest request to your own portfolio. To test the viewer journey, use a different verified email in a private browser window.",
+        },
+        { status: 409 }
+      );
+    }
+    if (error instanceof InterestSubmissionError && error.reason === "existing_request") {
+      return NextResponse.json(
+        {
+          code: "INTEREST_REQUEST_EXISTS",
+          error: "An interest request with these contact details already exists. The portfolio owner can review the existing request.",
+        },
+        { status: 409 }
+      );
+    }
+    if (error instanceof InterestSubmissionError && error.reason === "verification_required") {
+      return NextResponse.json(
+        {
+          code: "VERIFIED_EMAIL_REQUIRED",
+          error: "Your verified email session could not be confirmed. Sign in again and retry.",
+        },
+        { status: 403 }
+      );
+    }
+    if (error instanceof InterestSubmissionError && error.reason === "invalid_request") {
+      return NextResponse.json(
+        {
+          code: "INTEREST_REQUEST_REJECTED",
+          error: "The request contains a value the database cannot accept. Check the phone number and optional portfolio link.",
+        },
+        { status: 400 }
+      );
+    }
+    if (error instanceof InterestSubmissionError && error.reason === "database_update_required") {
+      return NextResponse.json(
+        {
+          code: "INTEREST_DATABASE_UPDATE_REQUIRED",
+          error: "The interest-request database update has not been applied yet. Apply the latest Supabase migrations and try again.",
+        },
+        { status: 503 }
+      );
+    }
+    if (error instanceof InterestSubmissionError) {
+      console.error("Interest submission failed", {
+        reason: error.reason,
+        databaseCode: error.databaseCode || "unknown",
+      });
+    }
+    return NextResponse.json(
+      { code: "INTEREST_REQUEST_FAILED", error: "We could not send your interest. Please try again." },
+      { status: 500 }
+    );
   }
 }

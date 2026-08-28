@@ -69,7 +69,7 @@ export default async function DashboardPage({
   const { data: interestRows } = portfolio
     ? await supabase
         .from("interest_requests")
-        .select("id, viewer_name, viewer_phone, viewer_email, viewer_family_context, message, status, requester_user_id, metadata, created_at")
+        .select("id, viewer_name, viewer_phone, viewer_email, email_verified_at, verification_channel, viewer_family_context, message, status, requester_user_id, metadata, created_at")
         .eq("portfolio_id", portfolio.id)
         .order("created_at", { ascending: false })
         .limit(12)

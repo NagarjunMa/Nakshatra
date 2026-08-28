@@ -2,8 +2,18 @@ import "server-only";
 
 import { nanoid } from "nanoid";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { z } from "zod/v4";
 import { DashboardRepository } from "./dashboard.repository";
 import { createShareUrl } from "./share-url.service";
+
+const rotateResultSchema = z.object({
+  status: z.enum(["rotated", "not_published", "unauthorized"]),
+  shareToken: z.string().optional(),
+});
+
+const unpublishResultSchema = z.object({
+  status: z.enum(["unpublished", "already_unpublished", "not_found", "unauthorized"]),
+});
 
 export class PortfolioShareLifecycleError extends Error {
   constructor(
@@ -17,53 +27,46 @@ export class PortfolioShareLifecycleError extends Error {
 
 /**
  * Rotates a published portfolio's canonical token and invalidates its former public URL.
- * Input: authenticated Supabase client and owner user ID. Output: the replacement absolute share URL.
+ * Input: authenticated Supabase client. Output: the replacement absolute share URL.
  */
 export async function rotatePortfolioLink({
   supabase,
-  userId,
 }: {
   supabase: SupabaseClient;
-  userId: string;
 }) {
   const repository = new DashboardRepository(supabase);
-  const { data: portfolio, error: findError } = await repository.findPortfolioForUser(userId);
-  if (findError || !portfolio?.is_published) {
+  const shareToken = nanoid(21);
+  const { data, error } = await repository.rotatePortfolioTransaction(shareToken);
+  const result = rotateResultSchema.safeParse(data);
+  if (error || !result.success) {
+    throw new PortfolioShareLifecycleError("We could not rotate your portfolio link. Please try again.", "PORTFOLIO_LINK_ROTATION_FAILED");
+  }
+  if (result.data.status !== "rotated" || !result.data.shareToken) {
     throw new PortfolioShareLifecycleError("Generate your portfolio before rotating its link.", "PORTFOLIO_NOT_PUBLISHED", 400);
   }
-
-  const shareToken = nanoid(21);
-  const { error: portfolioError } = await repository.publishPortfolio(userId, { share_token: shareToken });
-  if (portfolioError) throw new PortfolioShareLifecycleError("We could not rotate your portfolio link. Please try again.", "PORTFOLIO_LINK_ROTATION_PERSISTENCE_FAILED");
-
-  const { error: snapshotError } = await repository.updatePublicSnapshot(portfolio.id, {
-    share_token: shareToken,
-    is_active: true,
-  });
-  if (snapshotError) throw new PortfolioShareLifecycleError("We could not update your public portfolio link. Please try again.", "PUBLIC_SNAPSHOT_ROTATION_FAILED");
-
-  return { shareToken, shareUrl: createShareUrl(shareToken) };
+  return { shareToken: result.data.shareToken, shareUrl: createShareUrl(result.data.shareToken) };
 }
 
 /**
  * Disables public access to an owner's portfolio while keeping all private draft data intact.
- * Input: authenticated Supabase client and owner user ID. Output: resolves after public access is disabled.
+ * Input: authenticated Supabase client. Output: the resulting unpublish status.
  */
 export async function unpublishPortfolio({
   supabase,
-  userId,
 }: {
   supabase: SupabaseClient;
-  userId: string;
 }) {
   const repository = new DashboardRepository(supabase);
-  const { data: portfolio, error: portfolioError } = await repository.unpublishPortfolio(userId);
-  if (portfolioError || !portfolio) {
+  const { data, error } = await repository.unpublishPortfolioTransaction();
+  const result = unpublishResultSchema.safeParse(data);
+  if (error || !result.success) {
     throw new PortfolioShareLifecycleError("We could not unpublish your portfolio. Please try again.", "PORTFOLIO_UNPUBLISH_PERSISTENCE_FAILED");
   }
-
-  const { error: snapshotError } = await repository.updatePublicSnapshot(portfolio.id, {
-    is_active: false,
-  });
-  if (snapshotError) throw new PortfolioShareLifecycleError("We could not disable your public portfolio safely. Please try again.", "PUBLIC_SNAPSHOT_UNPUBLISH_FAILED");
+  if (result.data.status === "not_found") {
+    throw new PortfolioShareLifecycleError("Portfolio not found.", "PORTFOLIO_NOT_FOUND", 404);
+  }
+  if (result.data.status === "unauthorized") {
+    throw new PortfolioShareLifecycleError("Your session cannot manage this portfolio.", "PORTFOLIO_FORBIDDEN", 403);
+  }
+  return { status: result.data.status };
 }

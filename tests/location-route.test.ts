@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const getApiUser = vi.hoisted(() => vi.fn());
+const enforceRateLimit = vi.hoisted(() => vi.fn());
 vi.mock("../src/lib/auth", () => ({ getApiUser }));
+vi.mock("../src/features/security/server/rate-limit.service", () => ({ enforceRateLimit }));
 
 import { GET } from "../src/app/api/reference/locations/route";
 
@@ -20,6 +22,7 @@ function queryBuilder(result: { data: unknown; error: unknown }) {
 describe("location reference route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    enforceRateLimit.mockResolvedValue(null);
   });
 
   it("requires authentication and validates query combinations", async () => {

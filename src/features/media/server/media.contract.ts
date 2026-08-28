@@ -3,6 +3,9 @@ import { MAX_PORTFOLIO_PHOTOS } from "../portfolio-photo";
 
 export { MAX_PORTFOLIO_PHOTOS };
 export const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
+export const MAX_PHOTO_PIXELS = 40_000_000;
+export const MAX_PHOTO_DIMENSION = 16_000;
+export const PHOTO_PROCESSING_TIMEOUT_SECONDS = 10;
 
 export const PHOTO_MIME_TYPES = new Set([
   "image/jpeg",

@@ -12,3 +12,12 @@ export const env = envSchema.parse({
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
 });
+
+const deletionReauthSecretSchema = z
+  .string()
+  .min(32, "DELETION_REAUTH_COOKIE_SECRET must contain at least 32 characters");
+
+/** Reads the server-only HMAC key only in deletion-reauthentication code paths. */
+export function getDeletionReauthCookieSecret() {
+  return deletionReauthSecretSchema.parse(process.env.DELETION_REAUTH_COOKIE_SECRET);
+}

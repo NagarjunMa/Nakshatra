@@ -9,13 +9,13 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  console.error("App error:", error.message);
+  console.error("App rendering failed", { digest: error.digest || "unavailable" });
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-4 py-16 text-center">
       <h1 className="text-2xl font-bold">Something went wrong</h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        {error.message || "An unexpected error occurred"}
+        We could not complete this request. Try again, or return home if the problem continues.
       </p>
       <div className="mt-6 flex gap-3">
         <button

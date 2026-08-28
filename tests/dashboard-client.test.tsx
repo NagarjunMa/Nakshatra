@@ -156,6 +156,8 @@ describe("dashboard client", () => {
         message: "We would be glad to introduce our families.",
         status: "new",
         requester_user_id: "viewer-1",
+        email_verified_at: "2026-08-09T12:00:00.000Z",
+        verification_channel: "email",
         metadata: { profile_for: "self", location: "Toronto, Canada" },
         created_at: "2026-08-09T12:00:00.000Z",
       }],

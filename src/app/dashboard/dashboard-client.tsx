@@ -57,6 +57,8 @@ interface InterestSummary {
   viewer_name: string | null;
   viewer_phone: string | null;
   viewer_email: string | null;
+  email_verified_at: string | null;
+  verification_channel: string | null;
   viewer_family_context: string | null;
   message: string | null;
   status: string;
@@ -822,7 +824,9 @@ function InterestInbox({
           {actionError && <p className="dashboard-action-error" role="alert">{actionError}</p>}
           {newInterests.slice(0, 5).map((interest) => {
             const profileFor = typeof interest.metadata?.profile_for === "string" ? interest.metadata.profile_for : "self";
-            const location = typeof interest.metadata?.location === "string" ? interest.metadata.location : "";
+            const location = [interest.metadata?.city, interest.metadata?.state, interest.metadata?.country]
+              .filter((value): value is string => typeof value === "string" && value.length > 0)
+              .join(", ") || (typeof interest.metadata?.location === "string" ? interest.metadata.location : "");
             const portfolioUrl = typeof interest.metadata?.portfolio_url === "string" ? interest.metadata.portfolio_url : "";
             return (
               <details key={interest.id} className="dashboard-interest-row">
@@ -831,6 +835,7 @@ function InterestInbox({
                   <span className="dashboard-interest-status">New</span>
                 </summary>
                 <div className="dashboard-interest-details">
+                  {interest.email_verified_at && <p><strong>Identity check</strong>Email verified</p>}
                   {interest.viewer_family_context && <p><strong>Family introduction</strong>{interest.viewer_family_context}</p>}
                   {interest.message && <p><strong>Message</strong>{interest.message}</p>}
                   <div className="dashboard-interest-actions">
@@ -838,10 +843,10 @@ function InterestInbox({
                     {interest.viewer_email && <a href={`mailto:${interest.viewer_email}`} className="dashboard-secondary-action">Email</a>}
                     {portfolioUrl && <a href={portfolioUrl} target="_blank" rel="noreferrer" className="dashboard-secondary-action">Open their portfolio</a>}
                     <button type="button" className="dashboard-secondary-action" disabled={workingId === interest.id} onClick={() => void decide(interest, "rejected")}>Decline</button>
-                    {interest.requester_user_id ? (
+                    {interest.requester_user_id && interest.email_verified_at ? (
                       <button type="button" className="dashboard-primary-action" disabled={workingId === interest.id} onClick={() => void decide(interest, "approved")}>{workingId === interest.id ? "Saving..." : "Approve Full View"}</button>
                     ) : (
-                      <span className="dashboard-action-note">Ask the viewer to sign in before approving Full View.</span>
+                      <span className="dashboard-action-note">Email verification is required before Full View can be approved.</span>
                     )}
                   </div>
                 </div>

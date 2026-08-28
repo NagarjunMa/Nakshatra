@@ -67,15 +67,14 @@ export async function saveDashboardDraft({
     throw new DashboardSaveError("Could not save portfolio details");
   }
 
-  const [familyWrite, timelineWrite] = await Promise.all([
-    repository.replaceFamilyMembers(candidateId, mapFamilyMembers(data)),
-    repository.replaceEducationAndCareer(
+  const { data: replacementStatus, error: replacementError } =
+    await repository.replaceCandidateRelationshipsAndTimeline(
       candidateId,
+      mapFamilyMembers(data),
       mapEducationEntry(data),
       mapCareerEntry(data)
-    ),
-  ]);
-  if (familyWrite.error || timelineWrite.error) {
+    );
+  if (replacementError || replacementStatus !== "updated") {
     throw new DashboardSaveError("Could not save portfolio history");
   }
 
