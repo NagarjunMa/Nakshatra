@@ -5,11 +5,11 @@ set search_path = public, extensions;
 
 select plan(65);
 
-insert into auth.users (id, aud, role, email, created_at, updated_at)
+insert into auth.users (id, aud, role, email, email_confirmed_at, created_at, updated_at)
 values
-  ('a1000000-0000-4000-8000-000000000001', 'authenticated', 'authenticated', 'owner@access.test', now(), now()),
-  ('a1000000-0000-4000-8000-000000000002', 'authenticated', 'authenticated', 'viewer@access.test', now(), now()),
-  ('a1000000-0000-4000-8000-000000000003', 'authenticated', 'authenticated', 'stranger@access.test', now(), now());
+  ('a1000000-0000-4000-8000-000000000001', 'authenticated', 'authenticated', 'owner@access.test', now(), now(), now()),
+  ('a1000000-0000-4000-8000-000000000002', 'authenticated', 'authenticated', 'viewer@access.test', now(), now(), now()),
+  ('a1000000-0000-4000-8000-000000000003', 'authenticated', 'authenticated', 'stranger@access.test', now(), now(), now());
 
 insert into auth.sessions (id, user_id, created_at, updated_at)
 values
@@ -128,7 +128,7 @@ select is((select status::text from public.interest_requests limit 1), 'new', 'n
 select ok(
   public.submit_public_interest(
     'phase2_secure_token_1', 'Different Display Name', 'relative', '+1 555 010 9999',
-    'different@access.test', 'Vancouver, Canada',
+    'viewer@access.test', 'Vancouver, Canada',
     'A second family introduction with enough detail.',
     'This repeat must not bypass the existing request.', null
   ),
