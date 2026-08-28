@@ -157,7 +157,7 @@ create trigger reject_identity_evidence_payload
   for each row execute function app_private.reject_identity_evidence_payload();
 
 create function app_private.current_identity_verification(p_candidate_id uuid)
-returns app_private.identity_verification_subjects
+returns setof app_private.identity_verification_subjects
 language sql
 stable
 security definer
