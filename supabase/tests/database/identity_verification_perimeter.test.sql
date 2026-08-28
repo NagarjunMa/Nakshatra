@@ -6,12 +6,14 @@ set search_path = public, extensions;
 select plan(17);
 
 insert into auth.users (id, aud, role, email, created_at, updated_at)
-values ('91000000-0000-4000-8000-000000000001', 'authenticated', 'authenticated', 'identity-owner@test.local', now(), now());
+values
+  ('91000000-0000-4000-8000-000000000001', 'authenticated', 'authenticated', 'identity-owner@test.local', now(), now()),
+  ('91000000-0000-4000-8000-000000000002', 'authenticated', 'authenticated', 'verified-owner@test.local', now(), now());
 
 insert into public.candidates (id, primary_owner_user_id, display_name, created_by)
 values
   ('92000000-0000-4000-8000-000000000001', '91000000-0000-4000-8000-000000000001', 'Unverified Candidate', '91000000-0000-4000-8000-000000000001'),
-  ('92000000-0000-4000-8000-000000000002', '91000000-0000-4000-8000-000000000001', 'Verified Candidate', '91000000-0000-4000-8000-000000000001');
+  ('92000000-0000-4000-8000-000000000002', '91000000-0000-4000-8000-000000000002', 'Verified Candidate', '91000000-0000-4000-8000-000000000002');
 
 select ok(
   exists (select 1 from app_private.identity_verification_subjects where candidate_id = '92000000-0000-4000-8000-000000000001'),
@@ -54,12 +56,12 @@ select is((select status::text from app_private.identity_verification_subjects w
 insert into public.portfolios (id, user_id, candidate_id, share_token, draft_data, published_data, expires_at)
 values
   ('94000000-0000-4000-8000-000000000001', '91000000-0000-4000-8000-000000000001', '92000000-0000-4000-8000-000000000001', 'identity_unverified_tok', '{}'::jsonb, '{}'::jsonb, now() + interval '90 days'),
-  ('94000000-0000-4000-8000-000000000002', '91000000-0000-4000-8000-000000000001', '92000000-0000-4000-8000-000000000002', 'identity_verified_token', '{}'::jsonb, '{}'::jsonb, now() + interval '90 days');
+  ('94000000-0000-4000-8000-000000000002', '91000000-0000-4000-8000-000000000002', '92000000-0000-4000-8000-000000000002', 'identity_verified_token', '{}'::jsonb, '{}'::jsonb, now() + interval '90 days');
 
 insert into public.portfolio_media (portfolio_id, candidate_id, media_type, storage_path, visibility, sort_order)
 values
   ('94000000-0000-4000-8000-000000000001', '92000000-0000-4000-8000-000000000001', 'hero', '91000000-0000-4000-8000-000000000001/94000000-0000-4000-8000-000000000001/hero.webp', 'public', 0),
-  ('94000000-0000-4000-8000-000000000002', '92000000-0000-4000-8000-000000000002', 'hero', '91000000-0000-4000-8000-000000000001/94000000-0000-4000-8000-000000000002/hero.webp', 'public', 0);
+  ('94000000-0000-4000-8000-000000000002', '92000000-0000-4000-8000-000000000002', 'hero', '91000000-0000-4000-8000-000000000002/94000000-0000-4000-8000-000000000002/hero.webp', 'public', 0);
 
 select throws_ok($$update public.portfolios set is_published = true where id = '94000000-0000-4000-8000-000000000001'$$, '23514', null, 'direct database publication fails without current verification');
 select lives_ok($$update public.portfolios set is_published = true where id = '94000000-0000-4000-8000-000000000002'$$, 'verified candidate publication succeeds');
