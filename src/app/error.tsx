@@ -9,28 +9,32 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  console.error("App rendering failed", { digest: error.digest || "unavailable" });
+  console.error("App error:", error.message);
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center px-4 py-16 text-center">
+    <main
+      id="main-content"
+      className="flex flex-1 flex-col items-center justify-center bg-[color:var(--workspace-canvas)] px-4 py-16 text-center text-[color:var(--workspace-ink)]"
+    >
       <h1 className="text-2xl font-bold">Something went wrong</h1>
-      <p className="mt-2 text-sm text-muted-foreground">
-        We could not complete this request. Try again, or return home if the problem continues.
+      <p className="mt-2 max-w-md text-base text-[color:var(--workspace-ink-muted)]">
+        We could not finish that action. Your saved information is unchanged.
+        Please try again.
       </p>
-      <div className="mt-6 flex gap-3">
+      <div className="mt-6 flex w-full max-w-sm flex-col gap-3 sm:flex-row sm:justify-center">
         <button
           onClick={reset}
-          className="inline-flex h-10 items-center justify-center rounded-lg bg-foreground px-4 text-sm font-medium text-background transition-colors hover:bg-foreground/90"
+          className="workspace-focus inline-flex min-h-12 items-center justify-center rounded-xl bg-[color:var(--workspace-navy)] px-5 text-base font-semibold text-white transition-colors hover:bg-[color:var(--workspace-navy-strong)]"
         >
           Try again
         </button>
         <Link
           href="/"
-          className="inline-flex h-10 items-center justify-center rounded-lg border border-border px-4 text-sm font-medium transition-colors hover:bg-muted"
+          className="workspace-focus inline-flex min-h-12 items-center justify-center rounded-xl border border-[color:var(--workspace-border)] bg-white px-5 text-base font-semibold transition-colors hover:bg-[color:var(--workspace-surface-soft)]"
         >
           Go home
         </Link>
       </div>
-    </div>
+    </main>
   );
 }

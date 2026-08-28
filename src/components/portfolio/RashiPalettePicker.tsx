@@ -24,7 +24,7 @@ export function RashiPalettePicker({
   if (!palettes.length) {
     return (
       <p className="text-sm opacity-65">
-        Select a rashi to reveal its portfolio colors.
+        Select a rashi to reveal its biodata colors.
       </p>
     );
   }

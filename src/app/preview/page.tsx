@@ -46,19 +46,19 @@ export default async function PreviewPage() {
   return (
     <div className="flex flex-1 flex-col">
       {/* Preview banner */}
-      <div data-preview-bar="" className="border-b border-border bg-muted px-4 py-2">
-        <div className="mx-auto flex max-w-3xl items-center justify-between">
-          <span className="text-sm font-medium">Preview Mode (Draft)</span>
-          <div className="flex gap-2">
+      <div data-preview-bar="" className="border-b border-[color:var(--workspace-border)] bg-[color:var(--workspace-surface-soft)] px-4 py-3 text-[color:var(--workspace-ink)]">
+        <div className="mx-auto flex max-w-3xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <span className="text-sm font-semibold">Public preview · Draft</span>
+          <div className="grid grid-cols-2 gap-2 sm:flex">
             <Link
               href="/dashboard?edit=1"
-              className="rounded-lg border border-border px-3 py-1 text-sm transition-colors hover:bg-background"
+              className="workspace-focus inline-flex min-h-11 items-center justify-center rounded-lg border border-[color:var(--workspace-border)] bg-white px-4 text-sm font-semibold transition-colors hover:bg-[color:var(--workspace-canvas)]"
             >
               Back to editing
             </Link>
             <Link
               href="/dashboard"
-              className="rounded-lg border border-border px-3 py-1 text-sm transition-colors hover:bg-background"
+              className="workspace-focus inline-flex min-h-11 items-center justify-center rounded-lg border border-[color:var(--workspace-border)] bg-white px-4 text-sm font-semibold transition-colors hover:bg-[color:var(--workspace-canvas)]"
             >
               Dashboard
             </Link>
