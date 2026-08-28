@@ -32,8 +32,10 @@ describe("interest request flow", () => {
     fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "rohan@example.com" } });
     fireEvent.click(screen.getByRole("button", { name: "Send interest" }));
 
-    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
-    expect(document.body.style.overflow).toBe("");
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(document.body.style.overflow).toBe("");
+    });
     expect(screen.getByText("Interest sent.")).toBeInTheDocument();
     const request = vi.mocked(fetch).mock.calls[0];
     const submitted = JSON.parse(String((request[1] as RequestInit).body));
