@@ -8,7 +8,7 @@ export default function NotFound() {
     >
       <h1 className="text-4xl font-bold">404</h1>
       <p className="mt-2 text-base text-[color:var(--workspace-ink-muted)]">
-        We could not find that page.
+        Page not found. Check the address or return to your dashboard.
       </p>
       <Link
         href="/dashboard"

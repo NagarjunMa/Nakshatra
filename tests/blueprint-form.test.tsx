@@ -87,7 +87,7 @@ describe("blueprint form", () => {
     expect(onUpdate).toHaveBeenCalledWith("style", expect.objectContaining({
       appearance: "dark",
       theme_color: "#121a21",
-      template_name: "Nakshatra Portfolio",
+      template_name: "Celestial Union",
     }));
     expect(onUpdate).toHaveBeenCalledWith("privacy_mode", "balanced");
   });
@@ -132,7 +132,7 @@ describe("blueprint form", () => {
     const sectionNavigation = screen.getByRole("navigation", { name: "Portfolio form sections" });
     const sectionLabels = within(sectionNavigation).getAllByRole("button").map((button) => button.textContent);
     expect(sectionLabels.slice(3, 6)).toEqual(["04Family", "05Astrology", "06Lifestyle"]);
-    expect(screen.queryByText("Optional")).not.toBeInTheDocument();
+    expect(screen.getAllByText("Optional").length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole("button", { name: /Education & work/ }));
     fireEvent.change(screen.getByLabelText("Annual income range"), { target: { value: "125k-150k" } });
@@ -156,7 +156,7 @@ describe("blueprint form", () => {
       values_statement: "Kindness",
     }));
 
-    fireEvent.click(screen.getByRole("button", { name: /Preferences/ }));
+    fireEvent.click(screen.getByRole("button", { name: /preferences/i }));
     fireEvent.change(screen.getByLabelText("Minimum age"), { target: { value: "25" } });
     fireEvent.change(screen.getByLabelText("Maximum height"), { target: { value: `5'10"` } });
     expect(onUpdate).toHaveBeenCalledWith("preferences", expect.objectContaining({ age_range: "25–28" }));
@@ -173,7 +173,7 @@ describe("blueprint form", () => {
     const onUpdate = vi.fn();
     render(<BlueprintForm data={{ ...completeBlueprint, preferences: {} }} onUpdate={onUpdate} />);
 
-    fireEvent.click(screen.getByRole("button", { name: /Preferences/ }));
+    fireEvent.click(screen.getByRole("button", { name: /preferences/i }));
     fireEvent.change(screen.getByLabelText("Maximum height"), { target: { value: `5'10"` } });
 
     expect(onUpdate).toHaveBeenCalledWith("preferences", expect.objectContaining({

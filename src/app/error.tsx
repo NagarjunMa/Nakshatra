@@ -18,7 +18,7 @@ export default function Error({
     >
       <h1 className="text-2xl font-bold">Something went wrong</h1>
       <p className="mt-2 max-w-md text-base text-[color:var(--workspace-ink-muted)]">
-        We could not finish that action. Your saved information is unchanged.
+        We could not complete this request. Your saved information is unchanged.
         Please try again.
       </p>
       <div className="mt-6 flex w-full max-w-sm flex-col gap-3 sm:flex-row sm:justify-center">

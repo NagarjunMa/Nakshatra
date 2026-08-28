@@ -141,7 +141,7 @@ describe("authenticated server pages", () => {
     mocks.outcomes.portfolios = { data: portfolio };
     mocks.outcomes.portfolio_media = { data: [] };
     render(await PreviewPage());
-    expect(screen.getByText("Preview Mode (Draft)")).toBeInTheDocument();
+    expect(screen.getByText("Public preview · Draft")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Back to editing" })).toHaveAttribute("href", "/dashboard?edit=1");
     expect(screen.getByTestId("template")).toHaveTextContent("Aditi Rao:public");
     expect(mocks.photoUrls).toHaveBeenCalledWith(expect.objectContaining({ viewer: "public" }));
