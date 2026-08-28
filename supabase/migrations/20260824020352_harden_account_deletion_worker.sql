@@ -691,4 +691,3 @@ grant execute on function public.prepare_account_deletion(uuid, uuid, uuid) to s
 grant execute on function public.record_account_deletion_auth_deleted(uuid, uuid) to service_role;
 grant execute on function public.complete_account_deletion(uuid, uuid) to service_role;
 grant execute on function public.fail_account_deletion(uuid, uuid, text) to service_role;
-

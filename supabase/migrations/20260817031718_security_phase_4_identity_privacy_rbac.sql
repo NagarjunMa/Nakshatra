@@ -1057,4 +1057,3 @@ $$;
 
 revoke all on function public.consume_api_rate_limit(text, text) from public, anon, authenticated;
 grant execute on function public.consume_api_rate_limit(text, text) to anon, authenticated;
-

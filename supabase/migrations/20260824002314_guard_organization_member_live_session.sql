@@ -31,4 +31,3 @@ revoke all on function public.can_manage_organization_member(uuid, public.organi
   from public, anon, authenticated;
 grant execute on function public.can_manage_organization_member(uuid, public.organization_member_role)
   to authenticated;
-

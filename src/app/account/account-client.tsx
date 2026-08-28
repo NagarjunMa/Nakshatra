@@ -262,4 +262,3 @@ export default function AccountClient({ userEmail, initialDeletion, reauthComple
     </div>
   );
 }
-

@@ -104,4 +104,3 @@ export async function getAccountDeletionStatus(supabase: SupabaseClient) {
   }
   return parsed.data;
 }
-

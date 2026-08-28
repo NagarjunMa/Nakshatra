@@ -1,5 +1,25 @@
 import { expect, test } from "@playwright/test";
 
+const authenticatedAccessToken = "e2e-authenticated-user-token";
+
+function authenticatedSessionCookie() {
+  const session = {
+    access_token: authenticatedAccessToken,
+    refresh_token: "e2e-refresh-token",
+    expires_at: Math.floor(Date.now() / 1000) + 60 * 60,
+    expires_in: 60 * 60,
+    token_type: "bearer",
+    user: {
+      id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      aud: "authenticated",
+      role: "authenticated",
+      email: "authenticated@example.test",
+    },
+  };
+
+  return `base64-${Buffer.from(JSON.stringify(session)).toString("base64url")}`;
+}
+
 test("landing page presents the product and reaches account creation", async ({ page }) => {
   await page.goto("/");
   await expect(page).toHaveTitle("Nakshatra - Digital Marriage Portfolio");
@@ -18,11 +38,18 @@ test("sign-in form preserves a safe post-auth destination", async ({ page }) => 
   await expect(page.getByRole("button", { name: /email me a sign-in link/i })).toBeEnabled();
   await page.getByLabel(/email/i).fill("person@example.com");
   await expect(page.getByLabel(/email/i)).toHaveValue("person@example.com");
+  await page.getByRole("button", { name: /email me a sign-in link/i }).click();
+  await expect(page.getByRole("heading", { name: /check your inbox/i })).toBeVisible();
+  await expect(page.getByText("person@example.com", { exact: true })).toBeVisible();
 });
 
 test("unauthenticated owners are redirected away from protected screens", async ({ page }) => {
   await page.goto("/dashboard");
   await expect(page).toHaveURL(/\/login\?redirect=%2Fdashboard/);
+  await expect(page.getByRole("heading", { name: /sign in to nakshatra/i })).toBeVisible();
+
+  await page.goto("/account");
+  await expect(page).toHaveURL(/\/login\?redirect=%2Faccount/);
   await expect(page.getByRole("heading", { name: /sign in to nakshatra/i })).toBeVisible();
 });
 
@@ -43,15 +70,25 @@ test("public portfolio renders sanitized data and adaptive media", async ({ page
   await expect(page.getByText("Direct contact", { exact: true })).toBeVisible();
   await expect(page.getByText("Ramesh Rao", { exact: true })).toHaveCount(0);
   await expect(page.getByText("family@example.com", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Sign in to show interest" })).toHaveAttribute(
+    "href",
+    "/login?redirect=%2Fp%2Fe2e-portfolio-token"
+  );
 
   const hero = page.locator('.portfolio-hero-media[data-orientation="portrait"]');
   await expect(hero).toBeVisible();
   await expect(hero.getByAltText("Public portrait")).toBeVisible();
-  const heroFrame = await page.locator(".portfolio-primary-photo").evaluate((element) => {
-    const bounds = element.getBoundingClientRect();
-    return Number((bounds.width / bounds.height).toFixed(2));
-  });
-  expect(heroFrame).toBe(0.75);
+  await expect
+    .poll(async () => {
+      const bounds = await page.locator(".portfolio-primary-photo").evaluate((element) => {
+        const rect = element.getBoundingClientRect();
+        return { width: rect.width, height: rect.height };
+      });
+
+      if (bounds.height === 0) return null;
+      return Number((bounds.width / bounds.height).toFixed(2));
+    })
+    .toBe(0.75);
   const gallery = page.locator(".portfolio-gallery");
   await expect(gallery.locator('.portfolio-gallery-feature img[data-orientation="landscape"]')).toBeVisible();
   await expect(gallery.getByAltText("Public landscape", { exact: true })).toBeVisible();
@@ -100,10 +137,10 @@ test("public portfolio exposes production-ready metadata and distinct accent rol
 
   const privacyControl = page.locator(".portfolio-brand");
   await privacyControl.focus();
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Shift+Tab");
   await expect(privacyControl).toBeFocused();
-  expect(
-    await privacyControl.evaluate((element) => getComputedStyle(element).outlineWidth)
-  ).toBe("2px");
+  await expect(privacyControl).toHaveCSS("outline-width", "2px");
 
   if ((page.viewportSize()?.width || 0) >= 900) {
     const chapterStyles = await page.locator(".portfolio-chapter").first().evaluate((element) => {
@@ -147,6 +184,46 @@ test("public portfolio exposes production-ready metadata and distinct accent rol
       { display: "grid", columns: 1 },
     ]);
   }
+});
+
+test("interest popup stays in view and keeps extra details optional", async ({ page }) => {
+  // This mirrors the Supabase SSR cookie format used by the configured
+  // http://127.0.0.1:54329 E2E project, whose default storage key is
+  // sb-127-auth-token. The mock accepts only this synthetic access token.
+  await page.context().addCookies([{
+    name: "sb-127-auth-token",
+    value: authenticatedSessionCookie(),
+    url: "http://127.0.0.1:3100",
+  }]);
+  await page.goto("/p/e2e-portfolio-token");
+  await page.getByRole("button", { name: "Show interest" }).click();
+
+  const dialog = page.getByRole("dialog", { name: /introduce yourself/i });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByLabel("Your full name")).toHaveAttribute("required", "");
+  await expect(dialog.getByLabel("Contacting for")).toHaveAttribute("required", "");
+  await expect(dialog.getByLabel("Phone number")).toHaveAttribute("required", "");
+  await expect(dialog.getByLabel("Email address")).toHaveAttribute("required", "");
+
+  const bounds = await dialog.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return { top: rect.top, bottom: rect.bottom, viewport: window.innerHeight };
+  });
+  expect(bounds.top).toBeGreaterThanOrEqual(0);
+  expect(bounds.bottom).toBeLessThanOrEqual(bounds.viewport + 1);
+
+  await dialog.getByText("Add more details").click();
+  await expect(dialog.getByLabel("Country")).not.toHaveAttribute("required", "");
+  await expect(dialog.getByLabel("State or province")).not.toHaveAttribute("required", "");
+  await expect(dialog.getByLabel("City")).not.toHaveAttribute("required", "");
+  const optionalLayout = await dialog.locator(".interest-optional").evaluate((element) => ({
+    open: element.hasAttribute("open"),
+    clientHeight: element.clientHeight,
+    scrollHeight: element.scrollHeight,
+  }));
+  expect(optionalLayout.open).toBe(true);
+  expect(optionalLayout.scrollHeight).toBeLessThanOrEqual(optionalLayout.clientHeight + 1);
+  await expect(dialog.getByRole("button", { name: "Send interest" })).toBeVisible();
 });
 
 test("Private portfolio keeps one gallery photo clear and safely blurs the rest", async ({ page }) => {

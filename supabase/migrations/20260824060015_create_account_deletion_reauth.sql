@@ -293,4 +293,3 @@ grant execute on function public.consume_api_rate_limit(text, text) to anon, aut
 
 comment on table app_private.account_deletion_reauth_challenges is
   'Short-lived account-deletion reauthentication state. Raw proofs are never persisted.';
-

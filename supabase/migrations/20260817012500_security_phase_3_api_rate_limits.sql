@@ -295,4 +295,3 @@ revoke all on function public.resolve_approved_portfolio(text) from public, anon
 revoke all on function public.resolve_approved_horoscope(text) from public, anon, authenticated;
 grant execute on function public.resolve_approved_portfolio(text) to authenticated;
 grant execute on function public.resolve_approved_horoscope(text) to authenticated;
-

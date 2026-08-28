@@ -112,4 +112,3 @@ export function readRequestCookie(request: Request, name: string) {
 }
 
 export const deletionReauthCookieNames = { transaction: TRANSACTION_COOKIE, proof: PROOF_COOKIE } as const;
-

@@ -1,5 +1,6 @@
 export type AuthStartPayload =
   | { method: "google"; redirect: string }
+  | { method: "email"; email: string; redirect: string }
   | { method: "password_signup"; name: string; email: string; password: string; redirect: string }
   | { method: "password_signin"; email: string; password: string; redirect: string }
   | { method: "email_otp"; email: string; redirect: string }

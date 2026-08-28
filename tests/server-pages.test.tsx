@@ -19,7 +19,7 @@ const mocks = vi.hoisted(() => ({
   rpc: vi.fn(),
   signedUrl: vi.fn(async () => ({ data: { signedUrl: "https://signed.test/hero" } })),
   imageResponse: vi.fn(),
-  authUser: null as { id: string; email?: string; email_confirmed_at?: string } | null,
+  authUser: null as { id: string } | null,
   apiAuthStatus: "missing_session" as "missing_session" | "authenticated",
 }));
 
@@ -66,7 +66,7 @@ vi.mock("@/lib/auth", () => ({
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => databaseClient() }));
 vi.mock("@/features/media/server/photo-url.service", () => ({ createPortfolioPhotoUrls: mocks.photoUrls }));
 vi.mock("@/components/templates", () => ({
-  BiodataTemplate: (props: { data: PortfolioData; accessMode?: string; interestAction?: React.ReactNode }) => <div data-testid="template">{props.data.personal.name}:{props.accessMode}{props.interestAction}</div>,
+  BiodataTemplate: (props: { data: PortfolioData; accessMode?: string }) => <div data-testid="template">{props.data.personal.name}:{props.accessMode}</div>,
 }));
 vi.mock("@/components/auth/AuthForm", () => ({ AuthForm: ({ mode }: { mode: string }) => <div>auth:{mode}</div> }));
 vi.mock("@/app/dashboard/dashboard-client", () => ({ default: (props: { userEmail: string; shareUrl: string | null; viewCount: number }) => <div data-testid="dashboard-props">{JSON.stringify(props)}</div> }));
@@ -189,11 +189,7 @@ describe("public portfolio pages", () => {
   });
 
   it("uses the approved projection only when row-level access returns an approved snapshot", async () => {
-    mocks.authUser = {
-      id: "viewer-1",
-      email: "viewer@example.com",
-      email_confirmed_at: "2026-08-26T00:00:00.000Z",
-    };
+    mocks.authUser = { id: "viewer-1" };
     mocks.outcomes.resolve_public_portfolio = { data: publicPayload };
     mocks.outcomes.resolve_approved_portfolio = { data: { ...publicPayload, accessExpiresAt: new Date(Date.now() + 600_000).toISOString(), data: { ...data, personal: { ...data.personal, name: "Approved Aditi" } } } };
     render(await PublicBiodataPage({ params: Promise.resolve({ token: "token" }) }));
@@ -202,20 +198,13 @@ describe("public portfolio pages", () => {
   });
 
   it("keeps the published link public for a signed-in owner without a viewer grant", async () => {
-    mocks.authUser = {
-      id: "user-1",
-      email: "owner@example.com",
-      email_confirmed_at: "2026-08-26T00:00:00.000Z",
-    };
+    mocks.authUser = { id: "user-1" };
     mocks.outcomes.resolve_public_portfolio = { data: publicPayload };
     mocks.outcomes.resolve_approved_portfolio = { data: null };
-    mocks.outcomes.portfolios = { data: { id: "portfolio-1" } };
 
     render(await PublicBiodataPage({ params: Promise.resolve({ token: "token" }) }));
 
     expect(screen.getByTestId("template")).toHaveTextContent("Aditi Rao:public");
-    expect(screen.getByRole("button", { name: "Show interest" })).toBeDisabled();
-    expect(screen.getByText("This is your portfolio.")).toBeInTheDocument();
     expect(screen.queryByText(/Owner-only approved data/)).not.toBeInTheDocument();
     expect(mocks.rpc).toHaveBeenCalledWith("resolve_approved_portfolio", { p_share_token: "token" });
   });

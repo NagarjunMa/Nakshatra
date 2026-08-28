@@ -13,7 +13,6 @@ const interestDecisionResultSchema = z.enum([
   "invalid_transition",
   "not_found",
   "signin_required",
-  "verification_required",
   "unauthorized",
 ]);
 

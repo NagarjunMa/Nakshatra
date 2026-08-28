@@ -3,13 +3,13 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(66);
+select plan(65);
 
-insert into auth.users (id, aud, role, email, email_confirmed_at, created_at, updated_at)
+insert into auth.users (id, aud, role, email, created_at, updated_at)
 values
-  ('a1000000-0000-4000-8000-000000000001', 'authenticated', 'authenticated', 'owner@access.test', now(), now(), now()),
-  ('a1000000-0000-4000-8000-000000000002', 'authenticated', 'authenticated', 'viewer@access.test', now(), now(), now()),
-  ('a1000000-0000-4000-8000-000000000003', 'authenticated', 'authenticated', 'stranger@access.test', now(), now(), now());
+  ('a1000000-0000-4000-8000-000000000001', 'authenticated', 'authenticated', 'owner@access.test', now(), now()),
+  ('a1000000-0000-4000-8000-000000000002', 'authenticated', 'authenticated', 'viewer@access.test', now(), now()),
+  ('a1000000-0000-4000-8000-000000000003', 'authenticated', 'authenticated', 'stranger@access.test', now(), now());
 
 insert into auth.sessions (id, user_id, created_at, updated_at)
 values
@@ -125,11 +125,10 @@ select ok(
 );
 select is((select requester_user_id from public.interest_requests limit 1), 'a1000000-0000-4000-8000-000000000002'::uuid, 'the request is bound to the authenticated identity');
 select is((select status::text from public.interest_requests limit 1), 'new', 'new requests start in the expected state');
-select is((select verification_channel from public.interest_requests limit 1), 'email', 'the request records email as its verification channel');
 select ok(
   public.submit_public_interest(
     'phase2_secure_token_1', 'Different Display Name', 'relative', '+1 555 010 9999',
-    'viewer@access.test', 'Vancouver, Canada',
+    'different@access.test', 'Vancouver, Canada',
     'A second family introduction with enough detail.',
     'This repeat must not bypass the existing request.', null
   ),
@@ -140,7 +139,7 @@ select is((select count(*)::integer from public.interest_requests), 1, 'repeat s
 set local request.jwt.claims = '{"sub":"a1000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"a1100000-0000-4000-8000-000000000001"}';
 select is(public.decide_interest_request((select id from public.interest_requests limit 1), 'approved'), 'approved', 'the owner can approve a new request');
 select is((select count(*)::integer from public.reveal_grants where revoked_at is null), 1, 'approval creates exactly one active grant');
-select ok((select expires_at between now() + interval '6 days 23 hours' and now() + interval '7 days 1 hour' from public.reveal_grants limit 1), 'new Full View access expires after seven days');
+select ok((select expires_at between now() + interval '29 days' and now() + interval '31 days' from public.reveal_grants limit 1), 'new Full View access expires after thirty days');
 select is((select count(*)::integer from public.access_audit_events where event_type = 'grant_created'), 1, 'approval creates an immutable grant audit event');
 select is(public.list_portfolio_access() #>> '{grants,0,viewerName}', 'Rohan Mehta', 'the owner access summary returns the bounded grant history');
 select ok(pg_catalog.jsonb_array_length(public.list_portfolio_access() -> 'events') >= 2, 'the owner access summary includes recent lifecycle events');
@@ -189,7 +188,7 @@ select is(public.decide_interest_request((select id from public.interest_request
 select is((select count(*)::integer from public.reveal_grants where revoked_at is null), 1, 'reapproval creates one replacement active grant');
 
 select is(public.manage_reveal_grant((select id from public.reveal_grants where revoked_at is null), 'renew') ->> 'status', 'renewed', 'the owner can renew active Full View access');
-select ok((select renewed_at is not null and expires_at between now() + interval '6 days 23 hours' and now() + interval '7 days 1 hour' from public.reveal_grants where revoked_at is null), 'renewal resets access to seven days');
+select ok((select renewed_at is not null and expires_at > now() + interval '59 days' from public.reveal_grants where revoked_at is null), 'renewal extends access by another thirty days');
 select is(public.manage_reveal_grant((select id from public.reveal_grants where revoked_at is null), 'revoke') ->> 'status', 'revoked', 'the owner can revoke Full View access');
 select is((select status::text from public.interest_requests limit 1), 'rejected', 'manual revocation returns the request to rejected');
 

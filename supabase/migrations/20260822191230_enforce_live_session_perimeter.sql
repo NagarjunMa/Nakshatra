@@ -619,4 +619,3 @@ grant execute on function public.create_organization_with_owner(public.organizat
 grant execute on function public.request_account_deletion() to authenticated;
 grant execute on function public.cancel_account_deletion() to authenticated;
 grant execute on function public.export_my_account_data() to authenticated;
-

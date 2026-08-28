@@ -131,4 +131,3 @@ export async function DELETE(request: Request) {
     return accountError(error);
   }
 }
-

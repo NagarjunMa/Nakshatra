@@ -16,12 +16,17 @@ export interface PortfolioView extends ResolvedPortfolio {
   photos: PortfolioPhoto[];
 }
 
+/** Caps a private signed capability at five minutes without allowing it to outlive its reveal grant. */
 export function privateCapabilityTtl(expiresAt: string, now = Date.now()) {
   const remainingSeconds = Math.floor((Date.parse(expiresAt) - now) / 1000);
   return remainingSeconds > 0 ? Math.min(5 * 60, remainingSeconds) : null;
 }
 
-export async function resolvePublicPortfolio(supabase: SupabaseClient, token: string) {
+/** Resolves one exact public token without exposing direct table reads to the caller. */
+export async function resolvePublicPortfolio(
+  supabase: SupabaseClient,
+  token: string
+): Promise<ResolvedPortfolio | null> {
   const repository = new PublicPortfolioRepository(supabase);
   const { data, error } = await repository.resolvePublic(token);
   if (error || !data) return null;
@@ -29,6 +34,7 @@ export async function resolvePublicPortfolio(supabase: SupabaseClient, token: st
   return parsed.success ? parsed.data : null;
 }
 
+/** Resolves an approved projection only when the authenticated viewer has an active full grant. */
 export async function resolvePortfolioView(
   supabase: SupabaseClient,
   token: string,
@@ -37,6 +43,7 @@ export async function resolvePortfolioView(
   const repository = new PublicPortfolioRepository(supabase);
   const publicPortfolio = await resolvePublicPortfolio(supabase, token);
   if (!publicPortfolio) return null;
+
   let resolved = publicPortfolio;
   let accessMode: PortfolioView["accessMode"] = "public";
   if (authenticated) {
@@ -47,6 +54,7 @@ export async function resolvePortfolioView(
       accessMode = "approved";
     }
   }
+
   return {
     ...resolved,
     accessMode,
@@ -60,21 +68,16 @@ export async function resolvePortfolioView(
   };
 }
 
-export async function recordPublicPortfolioView(supabase: SupabaseClient, token: string) {
-  await new PublicPortfolioRepository(supabase).recordView(token);
-}
-
-export async function isPortfolioOwner(
+/** Records a view using only the share token; unavailable tokens are ignored uniformly. */
+export async function recordPublicPortfolioView(
   supabase: SupabaseClient,
-  token: string,
-  userId: string | null | undefined
+  token: string
 ) {
-  if (!userId) return false;
-  const { data, error } = await new PublicPortfolioRepository(supabase)
-    .findOwnedPortfolio(token, userId);
-  return !error && Boolean(data);
+  const repository = new PublicPortfolioRepository(supabase);
+  await repository.recordView(token);
 }
 
+/** Resolves and signs an approved horoscope for five minutes. */
 export async function resolveApprovedHoroscope(
   supabase: SupabaseClient,
   token: string
@@ -86,15 +89,20 @@ export async function resolveApprovedHoroscope(
   if (!parsed.success) return null;
   const ttl = privateCapabilityTtl(parsed.data.accessExpiresAt);
   if (!ttl) return null;
-  const signed = await repository.createHoroscopeUrl(parsed.data.accessPath, ttl);
+  const signed = await repository.createHoroscopeUrl(
+    parsed.data.accessPath,
+    ttl,
+    undefined
+  );
   return signed.data?.signedUrl ? { ...parsed.data, signedUrl: signed.data.signedUrl } : null;
 }
 
+/** Converts only RPC-authorized media paths into temporary browser URLs. */
 async function createSafePhotoUrls(
   repository: PublicPortfolioRepository,
   media: PublicMediaDescriptor[],
   expiresInSeconds: number | null
-) {
+): Promise<PortfolioPhoto[]> {
   if (!expiresInSeconds) return [];
   const photos = await Promise.all(media.map(async (item): Promise<PortfolioPhoto | null> => {
     const signed = await repository.createPhotoUrl(item.accessPath, expiresInSeconds);

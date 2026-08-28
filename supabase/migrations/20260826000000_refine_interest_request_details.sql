@@ -168,4 +168,3 @@ grant execute on function public.submit_public_interest(
 comment on function public.submit_public_interest(
   text, text, text, text, text, text, text, text, text, text, text, text
 ) is 'Authenticated, live-session-guarded interest submission with optional structured introduction details.';
-

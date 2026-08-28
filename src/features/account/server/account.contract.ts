@@ -29,4 +29,3 @@ export const deletionStatusSchema = z.object({
 }).nullable();
 
 export type AccountDeletionStatus = z.infer<typeof deletionStatusSchema>;
-

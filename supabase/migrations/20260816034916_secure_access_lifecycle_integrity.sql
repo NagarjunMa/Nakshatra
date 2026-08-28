@@ -1094,4 +1094,3 @@ comment on table public.access_audit_events is
   'Immutable, non-sensitive history of identity-bound portfolio access decisions and use.';
 comment on column public.reveal_grants.expires_at is
   'Required Full View expiry. New approvals last 30 days and owner renewal extends by 30 days.';
-

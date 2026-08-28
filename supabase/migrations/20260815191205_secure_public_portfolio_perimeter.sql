@@ -836,4 +836,3 @@ comment on function public.resolve_public_portfolio(text) is
   'Returns one active sanitized snapshot plus public-safe media descriptors for an exact share token.';
 comment on function public.submit_public_interest(text, text, text, text, text, text, text, text, text) is
   'Validates an active share token and inserts only server-owned interest request fields.';
-

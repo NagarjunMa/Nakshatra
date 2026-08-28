@@ -55,4 +55,3 @@ export type AccessGrant = z.infer<typeof accessGrantSchema>;
 export type AccessAuditEvent = z.infer<typeof accessAuditEventSchema>;
 export type PortfolioAccessSummary = z.infer<typeof portfolioAccessSummarySchema>;
 export type GrantAction = z.infer<typeof grantActionSchema>["action"];
-

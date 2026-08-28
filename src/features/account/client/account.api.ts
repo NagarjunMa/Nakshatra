@@ -77,4 +77,3 @@ export async function clearLocalAccountSession() {
   const { createClient } = await import("@/lib/supabase/client");
   await createClient().auth.signOut({ scope: "local" });
 }
-

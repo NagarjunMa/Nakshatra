@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 
 import React from "react";
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Portfolio, PortfolioData, PortfolioMedia } from "../src/types/portfolio";
 
 const mocks = vi.hoisted(() => ({
@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   renew: vi.fn(),
   rotate: vi.fn(),
   unpublish: vi.fn(),
+  manageAccess: vi.fn(),
   upload: vi.fn(),
   update: vi.fn(),
   remove: vi.fn(),
@@ -37,6 +38,9 @@ vi.mock("@/features/portfolio/client/portfolio-dashboard.api", () => ({
   updatePortfolioPhotoRequest: mocks.update,
   deletePortfolioPhotoRequest: mocks.remove,
 }));
+vi.mock("@/features/access/client/access-dashboard.api", () => ({
+  manageAccessGrantRequest: mocks.manageAccess,
+}));
 
 import DashboardClient from "../src/app/dashboard/dashboard-client";
 
@@ -58,6 +62,7 @@ const media: PortfolioMedia = {
   thumbnail_path: "one-thumb.webp", media_type: "gallery", visibility: "public",
   sort_order: 0, alt_text: "Portrait",
 };
+const accessGrantId = "11111111-1111-4111-8111-111111111111";
 
 function renderDashboard(overrides: Partial<React.ComponentProps<typeof DashboardClient>> = {}) {
   return render(<DashboardClient portfolio={portfolio} viewCount={12} userEmail="aditi@example.com"
@@ -74,9 +79,15 @@ beforeEach(() => {
   mocks.renew.mockResolvedValue({ ok: true, data: {} });
   mocks.rotate.mockResolvedValue({ ok: true, data: {} });
   mocks.unpublish.mockResolvedValue({ ok: true, data: {} });
+  mocks.manageAccess.mockResolvedValue({ ok: true, status: "renewed", expiresAt: "2099-02-01T12:00:00.000Z" });
   mocks.remove.mockResolvedValue({ ok: true, data: {} });
   mocks.update.mockImplementation(async (_id, changes) => ({ ok: true, data: { media: { ...media, ...changes } } }));
   mocks.upload.mockResolvedValue({ ok: true, data: { media: { ...media, id: "media-2" } } });
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
 });
 
 describe("dashboard client", () => {
@@ -156,14 +167,13 @@ describe("dashboard client", () => {
         message: "We would be glad to introduce our families.",
         status: "new",
         requester_user_id: "viewer-1",
-        email_verified_at: "2026-08-09T12:00:00.000Z",
-        verification_channel: "email",
-        metadata: { profile_for: "self", location: "Toronto, Canada" },
+        metadata: { profile_for: "self", country: "Canada", state: "Ontario", city: "Toronto" },
         created_at: "2026-08-09T12:00:00.000Z",
       }],
     });
 
     fireEvent.click(screen.getByText("Rohan Mehta"));
+    expect(screen.getByText(/Toronto, Ontario, Canada/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Approve Full View" }));
 
     await waitFor(() => expect(decisionFetch).toHaveBeenCalledWith(
@@ -171,6 +181,42 @@ describe("dashboard client", () => {
       expect.objectContaining({ method: "PATCH" })
     ));
     expect(await screen.findByText("0 waiting")).toBeInTheDocument();
+  });
+
+  it("lets the owner renew and revoke Full View access", async () => {
+    renderDashboard({
+      accessSummary: {
+        grants: [{
+          id: accessGrantId,
+          interestRequestId: "22222222-2222-4222-8222-222222222222",
+          viewerName: "Rohan Mehta",
+          status: "active",
+          expiresAt: "2099-01-01T12:00:00.000Z",
+          renewedAt: null,
+          revokedAt: null,
+          lastAccessedAt: null,
+        }],
+        events: [{
+          id: 1,
+          eventType: "grant_created",
+          viewerName: "Rohan Mehta",
+          createdAt: "2026-08-16T00:00:00.000Z",
+          metadata: {},
+        }],
+      },
+    });
+
+    expect(screen.getByText("Active until Jan 1, 2099")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Renew 30 days" }));
+    await waitFor(() => expect(mocks.manageAccess).toHaveBeenCalledWith(accessGrantId, "renew"));
+    expect(await screen.findByText("Active until Feb 1, 2099")).toBeInTheDocument();
+
+    mocks.manageAccess.mockResolvedValueOnce({ ok: true, status: "revoked" });
+    fireEvent.click(screen.getByRole("button", { name: "Revoke" }));
+    await waitFor(() => expect(mocks.manageAccess).toHaveBeenCalledWith(accessGrantId, "revoke"));
+    expect(await screen.findByText("Access revoked")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Access history"));
+    expect(screen.getByText("Full View granted to Rohan Mehta")).toBeInTheDocument();
   });
 
   it("updates, deletes, and uploads owner photos", async () => {
@@ -202,13 +248,15 @@ describe("dashboard client", () => {
     expect(await screen.findByText(/complete required fields/i)).toBeInTheDocument();
   });
 
-  it("clears the copied-link state after its timeout", async () => {
-    vi.useFakeTimers();
-    renderDashboard({ media: [] });
-    fireEvent.click(screen.getByRole("button", { name: "Copy" }));
-    await act(async () => Promise.resolve());
-    expect(screen.getByRole("button", { name: "Copied!" })).toBeInTheDocument();
-    act(() => vi.advanceTimersByTime(2000));
-    expect(screen.getByRole("button", { name: "Copy" })).toBeInTheDocument();
+  it("uses a distinct redirect reason for an explicitly revoked session", async () => {
+    mocks.save.mockResolvedValueOnce({
+      ok: false,
+      error: { code: "AUTH_SESSION_REVOKED", message: "This session was signed out", status: 401 },
+    });
+    renderDashboard();
+    fireEvent.click(screen.getByRole("button", { name: /edit portfolio/i }));
+    fireEvent.click(screen.getByRole("button", { name: /save draft/i }));
+    await waitFor(() => expect(mocks.push).toHaveBeenCalledWith("/login?error=session_revoked"));
   });
+
 });

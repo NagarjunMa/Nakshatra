@@ -56,13 +56,7 @@ export async function PATCH(
   }
   if (result === "signin_required") {
     return NextResponse.json(
-      { code: "INTEREST_SIGNIN_REQUIRED", error: "This request is not connected to a viewer account." },
-      { status: 409 }
-    );
-  }
-  if (result === "verification_required") {
-    return NextResponse.json(
-      { code: "INTEREST_VERIFICATION_REQUIRED", error: "This viewer must verify their email before Full View can be approved." },
+      { code: "INTEREST_SIGNIN_REQUIRED", error: "Ask this viewer to sign in before approving Full View." },
       { status: 409 }
     );
   }
