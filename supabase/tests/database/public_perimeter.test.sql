@@ -5,10 +5,10 @@ set search_path = public, extensions;
 
 select plan(25);
 
-insert into auth.users (id, aud, role, email, created_at, updated_at)
+insert into auth.users (id, aud, role, email, email_confirmed_at, created_at, updated_at)
 values
-  ('11111111-1111-4111-8111-111111111111', 'authenticated', 'authenticated', 'owner@perimeter.test', now(), now()),
-  ('22222222-2222-4222-8222-222222222222', 'authenticated', 'authenticated', 'viewer@perimeter.test', now(), now());
+  ('11111111-1111-4111-8111-111111111111', 'authenticated', 'authenticated', 'owner@perimeter.test', now(), now(), now()),
+  ('22222222-2222-4222-8222-222222222222', 'authenticated', 'authenticated', 'viewer@perimeter.test', now(), now(), now());
 
 insert into auth.sessions (id, user_id, created_at, updated_at)
 values

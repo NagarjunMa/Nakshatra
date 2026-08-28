@@ -7,7 +7,7 @@ export default function DashboardLoading() {
           <div className="h-6 w-16 animate-pulse rounded bg-muted" />
         </div>
       </div>
-      <main className="flex-1 px-4 py-8">
+      <main id="main-content" className="flex-1 px-4 py-8">
         <div className="mx-auto max-w-3xl">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[1, 2, 3].map((i) => (

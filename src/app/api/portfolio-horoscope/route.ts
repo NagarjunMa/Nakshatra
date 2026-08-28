@@ -63,7 +63,6 @@ export async function POST(request: Request) {
     return errorResponse(error);
   }
 }
-
 export async function DELETE(request: Request) {
   try {
     requireSameOrigin(request);

@@ -74,9 +74,12 @@ describe("landing and shared frontend components", () => {
     render(<Home />);
     expect(screen.getAllByText(/Nakshatra/i).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /create/i }).length).toBeGreaterThan(0);
-    expect(screen.getByRole("heading", { name: /your wedding story, clearly together/i })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /balanced mode/i })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /private mode/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /create and share your marriage portfolio in one clear link/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /balanced view/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /private view/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /one portfolio\. one-time payment/i })).toBeInTheDocument();
+    expect(screen.getByText("₹2,450")).toBeInTheDocument();
+    expect(screen.getByText(/plans do not renew automatically/i)).toBeInTheDocument();
     expect(screen.getAllByText(/identity verified/i).length).toBeGreaterThan(0);
   });
 

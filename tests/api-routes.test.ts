@@ -341,15 +341,17 @@ describe("authentication callback", () => {
   });
 
   it("creates a portfolio for a new authenticated user", async () => {
-    const insert = vi.fn().mockResolvedValue({ error: null });
-    const single = vi.fn().mockResolvedValue({ data: null });
-    const eq = vi.fn(() => ({ single }));
+    const createdSingle = vi.fn().mockResolvedValue({ data: { id: "portfolio-id" }, error: null });
+    const insertSelect = vi.fn(() => ({ single: createdSingle }));
+    const insert = vi.fn(() => ({ select: insertSelect }));
+    const maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
+    const eq = vi.fn(() => ({ maybeSingle }));
     const select = vi.fn(() => ({ eq }));
     const from = vi.fn(() => ({ select, insert }));
     createClient.mockResolvedValue({
       auth: {
         exchangeCodeForSession: vi.fn().mockResolvedValue({ error: null }),
-        getUser: vi.fn().mockResolvedValue({ data: { user: { id: "owner" } } }),
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: "owner", user_metadata: {} } } }),
       },
       from,
     });

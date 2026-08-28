@@ -20,7 +20,7 @@ export default async function HoroscopePage({ params }: { params: Promise<{ toke
   if (!horoscope) return notFound();
 
   return (
-    <main className="min-h-screen bg-[#0d1423] text-[#f8f3e7]">
+    <main id="main-content" className="min-h-screen bg-[#0d1423] text-[#f8f3e7]">
       <header className="border-b border-white/10 bg-[#111b2c]/95 px-4 py-3">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
           <Link href={`/p/${encodeURIComponent(token)}`} className="inline-flex items-center gap-2 text-sm text-[#d6dfdb] hover:text-white">
