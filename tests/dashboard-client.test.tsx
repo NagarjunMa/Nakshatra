@@ -91,6 +91,13 @@ afterEach(() => {
 });
 
 describe("dashboard client", () => {
+  it("shows identity-verification actions only after a saved candidate is linked", () => {
+    renderDashboard({ portfolio: { ...portfolio, candidate_id: "candidate-1" } });
+    expect(screen.getByRole("heading", { name: "Identity verification" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Verify myself" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Create candidate invitation" })).toBeInTheDocument();
+  });
+
   it("opens the canonical editor when requested by an editing route", () => {
     renderDashboard({ initialEditorOpen: true });
     expect(screen.getByRole("heading", { name: "Portfolio details" })).toBeInTheDocument();

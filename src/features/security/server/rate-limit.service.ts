@@ -25,6 +25,10 @@ export const rateLimitActionSchema = z.enum([
   "account_delete",
   "account_delete_reauth",
   "session_manage",
+  "identity_verification_invitation",
+  "identity_verification_start",
+  "identity_verification_status",
+  "identity_verification_retry",
 ]);
 
 export type RateLimitAction = z.infer<typeof rateLimitActionSchema>;

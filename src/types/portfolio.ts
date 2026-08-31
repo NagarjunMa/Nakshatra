@@ -343,6 +343,7 @@ export interface PortfolioHoroscopeAttachment {
 export interface Portfolio {
   id: string;
   user_id: string;
+  candidate_id?: string | null;
   share_token: string | null;
   draft_data: PortfolioDraftData;
   published_data: PortfolioData | null;
