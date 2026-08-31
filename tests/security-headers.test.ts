@@ -22,6 +22,8 @@ describe("Next.js security headers", () => {
       "/preview/:path*",
       "/approved-preview/:path*",
       "/p/:path*",
+      "/verify/:path*",
+      "/verification/:path*",
     ]) {
       const headers = rules?.find((rule) => rule.source === source)?.headers ?? [];
       expect(headers).toContainEqual({ key: "Cache-Control", value: "private, no-store, max-age=0" });

@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const config = readFileSync(new URL("../.github/trufflehog.yml", import.meta.url), "utf8");
+const environmentExample = readFileSync(new URL("../.env.example", import.meta.url), "utf8");
 const detectorPattern = config
   .split("\n")
   .find((line) => line.trimStart().startsWith("didit_credential: "))
@@ -27,5 +28,6 @@ describe("Didit TruffleHog detector", () => {
     const detector = new RegExp(detectorPattern!);
     expect(detector.test("DIDIT_API_KEY=<set-in-secret-manager>")).toBe(false);
     expect(detector.test("DIDIT_WEBHOOK_SECRET=short-placeholder")).toBe(false);
+    expect(environmentExample.split("\n").some((line) => detector.test(line))).toBe(false);
   });
 });

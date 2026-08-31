@@ -61,6 +61,8 @@ const nextConfig: NextConfig = {
       { source: "/preview/:path*", headers: privateNoStoreHeaders },
       { source: "/approved-preview/:path*", headers: privateNoStoreHeaders },
       { source: "/p/:path*", headers: privateNoStoreHeaders },
+      { source: "/verify/:path*", headers: privateNoStoreHeaders },
+      { source: "/verification/:path*", headers: privateNoStoreHeaders },
     ];
   },
 };

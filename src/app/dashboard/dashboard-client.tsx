@@ -20,6 +20,7 @@ import type {
 } from "@/features/access/server/access.contract";
 import { MAX_PORTFOLIO_PHOTOS } from "@/features/media/portfolio-photo";
 import { BlueprintForm } from "@/components/portfolio/BlueprintForm";
+import { IdentityVerificationDashboard } from "@/features/identity-verification/client/identity-verification-dashboard";
 import {
   Eye,
   Clock,
@@ -608,6 +609,7 @@ export default function DashboardClient({
               </div>
             </div>
           )}
+          {portfolio?.candidate_id ? <div className="mt-6"><IdentityVerificationDashboard candidateId={portfolio.candidate_id} /></div> : null}
         </div>
       </main>
 
