@@ -2,20 +2,13 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
+\ir ../support/auth-fixtures.sql
 
 select plan(65);
 
-insert into auth.users (id, aud, role, email, email_confirmed_at, created_at, updated_at)
-values
-  ('a1000000-0000-4000-8000-000000000001', 'authenticated', 'authenticated', 'owner@access.test', now(), now(), now()),
-  ('a1000000-0000-4000-8000-000000000002', 'authenticated', 'authenticated', 'viewer@access.test', now(), now(), now()),
-  ('a1000000-0000-4000-8000-000000000003', 'authenticated', 'authenticated', 'stranger@access.test', now(), now(), now());
-
-insert into auth.sessions (id, user_id, created_at, updated_at)
-values
-  ('a1100000-0000-4000-8000-000000000001', 'a1000000-0000-4000-8000-000000000001', now(), now()),
-  ('a1100000-0000-4000-8000-000000000002', 'a1000000-0000-4000-8000-000000000002', now(), now()),
-  ('a1100000-0000-4000-8000-000000000003', 'a1000000-0000-4000-8000-000000000003', now(), now());
+select pg_temp.create_auth_actor('a1000000-0000-4000-8000-000000000001', 'a1100000-0000-4000-8000-000000000001', 'owner@access.test');
+select pg_temp.create_auth_actor('a1000000-0000-4000-8000-000000000002', 'a1100000-0000-4000-8000-000000000002', 'viewer@access.test');
+select pg_temp.create_auth_actor('a1000000-0000-4000-8000-000000000003', 'a1100000-0000-4000-8000-000000000003', 'stranger@access.test');
 
 insert into public.candidates (id, primary_owner_user_id, display_name, created_by)
 values (

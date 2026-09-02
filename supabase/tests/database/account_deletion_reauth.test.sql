@@ -2,18 +2,12 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
+\ir ../support/auth-fixtures.sql
 
 select plan(16);
 
-insert into auth.users (id, aud, role, email, created_at, updated_at)
-values
-  ('71000000-0000-4000-8000-000000000001', 'authenticated', 'authenticated', 'reauth-owner@nakshatra.test', now(), now()),
-  ('71000000-0000-4000-8000-000000000002', 'authenticated', 'authenticated', 'reauth-other@nakshatra.test', now(), now());
-
-insert into auth.sessions (id, user_id, created_at, updated_at)
-values
-  ('72000000-0000-4000-8000-000000000001', '71000000-0000-4000-8000-000000000001', now() - interval '1 minute', now()),
-  ('72000000-0000-4000-8000-000000000002', '71000000-0000-4000-8000-000000000002', now() - interval '1 minute', now());
+select pg_temp.create_auth_actor('71000000-0000-4000-8000-000000000001', '72000000-0000-4000-8000-000000000001', 'reauth-owner@nakshatra.test', now() - interval '1 minute');
+select pg_temp.create_auth_actor('71000000-0000-4000-8000-000000000002', '72000000-0000-4000-8000-000000000002', 'reauth-other@nakshatra.test', now() - interval '1 minute');
 
 select has_function('public', 'start_account_deletion_reauth', array['uuid'], 'start reauthentication RPC exists');
 select has_function('public', 'complete_account_deletion_reauth', array['uuid', 'text'], 'completion RPC exists');
@@ -40,8 +34,7 @@ select is(
 );
 
 reset role;
-insert into auth.sessions (id, user_id, created_at, updated_at)
-values ('72000000-0000-4000-8000-000000000003', '71000000-0000-4000-8000-000000000001', now() + interval '1 second', now());
+select pg_temp.create_auth_session('71000000-0000-4000-8000-000000000001', '72000000-0000-4000-8000-000000000003', now() + interval '1 second');
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"71000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"72000000-0000-4000-8000-000000000003"}';

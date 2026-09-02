@@ -2,31 +2,21 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
+\ir ../support/auth-fixtures.sql
 
 select plan(39);
 
-insert into auth.users (id, aud, role, email, created_at, updated_at)
-values
-  ('41000000-0000-4000-8000-000000000001', 'authenticated', 'authenticated', 'owner@phase4.test', now(), now()),
-  ('41000000-0000-4000-8000-000000000002', 'authenticated', 'authenticated', 'admin@phase4.test', now(), now()),
-  ('41000000-0000-4000-8000-000000000003', 'authenticated', 'authenticated', 'editor@phase4.test', now(), now()),
-  ('41000000-0000-4000-8000-000000000004', 'authenticated', 'authenticated', 'viewer@phase4.test', now(), now()),
-  ('41000000-0000-4000-8000-000000000005', 'authenticated', 'authenticated', 'broker@phase4.test', now(), now()),
-  ('41000000-0000-4000-8000-000000000006', 'authenticated', 'authenticated', 'delete@phase4.test', now(), now());
-
 select has_function('public', 'is_current_session_active', array[]::text[], 'live Auth session predicate exists');
-
-insert into auth.sessions (id, user_id, created_at, updated_at)
-values
-  ('42000000-0000-4000-8000-000000000001', '41000000-0000-4000-8000-000000000001', now(), now()),
-  ('42000000-0000-4000-8000-000000000002', '41000000-0000-4000-8000-000000000002', now(), now()),
-  ('42000000-0000-4000-8000-000000000003', '41000000-0000-4000-8000-000000000003', now(), now()),
-  ('42000000-0000-4000-8000-000000000004', '41000000-0000-4000-8000-000000000004', now(), now()),
-  ('42000000-0000-4000-8000-000000000005', '41000000-0000-4000-8000-000000000005', now(), now()),
-  ('42000000-0000-4000-8000-000000000006', '41000000-0000-4000-8000-000000000006', now(), now());
+select pg_temp.create_auth_actor('41000000-0000-4000-8000-000000000001', '42000000-0000-4000-8000-000000000001', 'owner@phase4.test');
+select pg_temp.create_auth_actor('41000000-0000-4000-8000-000000000002', '42000000-0000-4000-8000-000000000002', 'admin@phase4.test');
+select pg_temp.create_auth_actor('41000000-0000-4000-8000-000000000003', '42000000-0000-4000-8000-000000000003', 'editor@phase4.test');
+select pg_temp.create_auth_actor('41000000-0000-4000-8000-000000000004', '42000000-0000-4000-8000-000000000004', 'viewer@phase4.test');
+select pg_temp.create_auth_actor('41000000-0000-4000-8000-000000000005', '42000000-0000-4000-8000-000000000005', 'broker@phase4.test');
+select pg_temp.create_auth_actor('41000000-0000-4000-8000-000000000006', '42000000-0000-4000-8000-000000000006', 'delete@phase4.test');
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"41000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"42000000-0000-4000-8000-000000000001"}';
 select ok(public.is_current_session_active(), 'a JWT bound to a live Auth session is active');
+-- db:smoke: allow-invalid-auth-claims
 set local request.jwt.claims = '{"sub":"41000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"42000000-0000-4000-8000-000000000099"}';
 select ok(not public.is_current_session_active(), 'a JWT without its backing Auth session is rejected');
 
@@ -202,11 +192,10 @@ create temporary table delete_subject_reauth_challenge as
 select (public.start_account_deletion_reauth('42000000-0000-4000-8000-000000000006') ->> 'challengeId')::uuid as id;
 
 reset role;
-insert into auth.sessions (id, user_id, created_at, updated_at)
-values (
-  '42000000-0000-4000-8000-000000000016',
+select pg_temp.create_auth_session(
   '41000000-0000-4000-8000-000000000006',
-  now() + interval '1 second', now()
+  '42000000-0000-4000-8000-000000000016',
+  now() + interval '1 second'
 );
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"41000000-0000-4000-8000-000000000006","role":"authenticated","session_id":"42000000-0000-4000-8000-000000000016"}';
@@ -226,11 +215,10 @@ create temporary table owner_reauth_challenge as
 select (public.start_account_deletion_reauth('42000000-0000-4000-8000-000000000001') ->> 'challengeId')::uuid as id;
 
 reset role;
-insert into auth.sessions (id, user_id, created_at, updated_at)
-values (
-  '42000000-0000-4000-8000-000000000017',
+select pg_temp.create_auth_session(
   '41000000-0000-4000-8000-000000000001',
-  now() + interval '2 seconds', now()
+  '42000000-0000-4000-8000-000000000017',
+  now() + interval '2 seconds'
 );
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"41000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"42000000-0000-4000-8000-000000000017"}';

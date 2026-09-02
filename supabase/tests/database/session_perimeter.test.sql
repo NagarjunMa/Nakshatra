@@ -2,6 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
+\ir ../support/auth-fixtures.sql
 
 select plan(39);
 
@@ -113,15 +114,8 @@ select ok(
   'the unguarded public-media helper is explicitly documented as a safe allowlist entry'
 );
 
-insert into auth.users (id, aud, role, email, created_at, updated_at)
-values
-  ('51000000-0000-4000-8000-000000000001', 'authenticated', 'authenticated', 'owner@session.test', now(), now()),
-  ('51000000-0000-4000-8000-000000000002', 'authenticated', 'authenticated', 'other@session.test', now(), now());
-
-insert into auth.sessions (id, user_id, created_at, updated_at)
-values
-  ('52000000-0000-4000-8000-000000000001', '51000000-0000-4000-8000-000000000001', now(), now()),
-  ('52000000-0000-4000-8000-000000000002', '51000000-0000-4000-8000-000000000002', now(), now());
+select pg_temp.create_auth_actor('51000000-0000-4000-8000-000000000001', '52000000-0000-4000-8000-000000000001', 'owner@session.test');
+select pg_temp.create_auth_actor('51000000-0000-4000-8000-000000000002', '52000000-0000-4000-8000-000000000002', 'other@session.test');
 
 insert into public.portfolios (id, user_id, draft_data)
 values ('53000000-0000-4000-8000-000000000001', '51000000-0000-4000-8000-000000000001', '{}'::jsonb);
@@ -151,12 +145,15 @@ select lives_ok($$select public.list_portfolio_access()$$, 'a live session can e
 select lives_ok($$select public.export_my_account_data()$$, 'a live session can execute a Phase 4 account RPC');
 select ok(not public.is_public_portfolio_media_path('photos', 'missing.webp'), 'the public-media helper does not reveal private or missing paths');
 
+-- db:smoke: allow-invalid-auth-claims
 set local request.jwt.claims = '{"sub":"51000000-0000-4000-8000-000000000001","role":"authenticated"}';
 select ok(not public.is_current_session_active(), 'a JWT without a session identifier fails closed');
 
+-- db:smoke: allow-invalid-auth-claims
 set local request.jwt.claims = '{"sub":"51000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"not-a-uuid"}';
 select ok(not public.is_current_session_active(), 'a malformed session identifier fails closed without casting errors');
 
+-- db:smoke: allow-invalid-auth-claims
 set local request.jwt.claims = '{"sub":"51000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"52000000-0000-4000-8000-000000000002"}';
 select ok(not public.is_current_session_active(), 'a session belonging to another user is rejected');
 select is((select count(*)::integer from public.portfolios), 0, 'a mismatched session cannot read private tables');

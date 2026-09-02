@@ -2,6 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
+\ir ../support/auth-fixtures.sql
 
 select plan(16);
 
@@ -88,22 +89,10 @@ select is(
 );
 
 reset role;
-insert into auth.users (id, aud, role, email, created_at, updated_at)
-values (
+select pg_temp.create_auth_actor(
   'b1000000-0000-4000-8000-000000000001',
-  'authenticated',
-  'authenticated',
-  'rate-limit@example.test',
-  now(),
-  now()
-);
-
-insert into auth.sessions (id, user_id, created_at, updated_at)
-values (
   'b2000000-0000-4000-8000-000000000001',
-  'b1000000-0000-4000-8000-000000000001',
-  now(),
-  now()
+  'rate-limit@example.test'
 );
 
 set local role authenticated;

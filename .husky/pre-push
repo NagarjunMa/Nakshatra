@@ -7,5 +7,6 @@ case "$branch" in
     ;;
 esac
 
+npm run db:smoke
 npm run typecheck
-npm test
+npm run test:unit

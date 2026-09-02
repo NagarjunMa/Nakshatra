@@ -2,6 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
+\ir ../support/auth-fixtures.sql
 
 select plan(16);
 
@@ -64,15 +65,8 @@ select ok(
   'authenticated dashboard saves have explicit table privileges'
 );
 
-insert into auth.users (id, aud, role, email, created_at, updated_at)
-values
-  ('00000000-0000-0000-0000-000000000101', 'authenticated', 'authenticated', 'candidate-owner@example.test', now(), now()),
-  ('00000000-0000-0000-0000-000000000102', 'authenticated', 'authenticated', 'candidate-outsider@example.test', now(), now());
-
-insert into auth.sessions (id, user_id, created_at, updated_at)
-values
-  ('00000000-0000-4000-8000-000000000201', '00000000-0000-0000-0000-000000000101', now(), now()),
-  ('00000000-0000-4000-8000-000000000202', '00000000-0000-0000-0000-000000000102', now(), now());
+select pg_temp.create_auth_actor('00000000-0000-0000-0000-000000000101', '00000000-0000-4000-8000-000000000201', 'candidate-owner@example.test');
+select pg_temp.create_auth_actor('00000000-0000-0000-0000-000000000102', '00000000-0000-4000-8000-000000000202', 'candidate-outsider@example.test');
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-000000000101","role":"authenticated","session_id":"00000000-0000-4000-8000-000000000201"}';

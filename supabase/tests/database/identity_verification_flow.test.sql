@@ -2,20 +2,12 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
+\ir ../support/auth-fixtures.sql
 
 select plan(19);
 
-insert into auth.users (id, aud, role, email, created_at, updated_at)
-values
-  ('95000000-0000-4000-8000-000000000001', 'authenticated', 'authenticated', 'verification-owner@test.local', now(), now()),
-  ('95000000-0000-4000-8000-000000000002', 'authenticated', 'authenticated', 'verification-other@test.local', now(), now());
-
--- The live-session perimeter validates the JWT session_id against auth.sessions.
--- Keep these fixture IDs aligned with every authenticated request below.
-insert into auth.sessions (id, user_id, created_at, updated_at)
-values
-  ('95100000-0000-4000-8000-000000000001', '95000000-0000-4000-8000-000000000001', now(), now()),
-  ('95100000-0000-4000-8000-000000000002', '95000000-0000-4000-8000-000000000002', now(), now());
+select pg_temp.create_auth_actor('95000000-0000-4000-8000-000000000001', '95100000-0000-4000-8000-000000000001', 'verification-owner@test.local');
+select pg_temp.create_auth_actor('95000000-0000-4000-8000-000000000002', '95100000-0000-4000-8000-000000000002', 'verification-other@test.local');
 
 insert into public.candidates (id, primary_owner_user_id, display_name, legal_name, birth_date, created_by)
 values
@@ -28,13 +20,17 @@ select ok(
 );
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"95000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"95100000-0000-4000-8000-000000000001"}';
+do $$ begin
+  perform pg_temp.set_authenticated_claims('95000000-0000-4000-8000-000000000001', '95100000-0000-4000-8000-000000000001');
+end $$;
 select ok(
   public.create_identity_verification_invitation('96000000-0000-4000-8000-000000000001', repeat('a', 64)) > now(),
   'an authorized owner creates a short-lived candidate-bound invitation'
 );
 
-set local request.jwt.claims = '{"sub":"95000000-0000-4000-8000-000000000002","role":"authenticated","session_id":"95100000-0000-4000-8000-000000000002"}';
+do $$ begin
+  perform pg_temp.set_authenticated_claims('95000000-0000-4000-8000-000000000002', '95100000-0000-4000-8000-000000000002');
+end $$;
 select throws_ok(
   $$select public.create_identity_verification_invitation('96000000-0000-4000-8000-000000000001', repeat('b', 64))$$,
   '42501', null, 'a different authenticated user cannot issue an invitation'
@@ -42,7 +38,9 @@ select throws_ok(
 
 reset role;
 set local role anon;
-set local request.jwt.claims = '{"role":"anon"}';
+do $$ begin
+  perform pg_temp.set_anon_claims();
+end $$;
 select is(
   public.get_identity_verification_link_status(repeat('a', 64)) ->> 'kind',
   'invitation', 'an accountless bearer link resolves only to generic invitation state'
@@ -75,7 +73,9 @@ select ok(
 );
 reset role;
 set local role anon;
-set local request.jwt.claims = '{"role":"anon"}';
+do $$ begin
+  perform pg_temp.set_anon_claims();
+end $$;
 select throws_ok(
   $$select * from public.begin_identity_verification(null, repeat('a', 64), repeat('d', 64))$$,
   '22023', null, 'a consumed invitation cannot start a second attempt'
@@ -116,6 +116,7 @@ select ok(
 
 reset role;
 set local role authenticated;
+-- db:smoke: allow-invalid-auth-claims
 set local request.jwt.claims = '{"sub":"95000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"95100000-0000-4000-8000-000000000099"}';
 select throws_ok(
   $$select public.get_identity_verification_link_status(repeat('c', 64))$$,
@@ -123,18 +124,23 @@ select throws_ok(
   'a revoked authenticated session cannot use a bearer verification link'
 );
 
-set local request.jwt.claims = '{"sub":"95000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"95100000-0000-4000-8000-000000000001"}';
+do $$ begin
+  perform pg_temp.set_authenticated_claims('95000000-0000-4000-8000-000000000001', '95100000-0000-4000-8000-000000000001');
+end $$;
 select is(
   (select legal_name from public.begin_identity_verification('96000000-0000-4000-8000-000000000002', null, repeat('e', 64))),
   'Self Candidate Name', 'only the candidate primary owner can begin direct self-verification'
 );
 
-set local request.jwt.claims = '{"sub":"95000000-0000-4000-8000-000000000002","role":"authenticated","session_id":"95100000-0000-4000-8000-000000000002"}';
+do $$ begin
+  perform pg_temp.set_authenticated_claims('95000000-0000-4000-8000-000000000002', '95100000-0000-4000-8000-000000000002');
+end $$;
 select throws_ok(
   $$select * from public.begin_identity_verification('96000000-0000-4000-8000-000000000002', null, repeat('f', 64))$$,
   '42501', null, 'a non-primary owner cannot begin direct self-verification'
 );
 
+-- db:smoke: allow-invalid-auth-claims
 set local request.jwt.claims = '{"sub":"95000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"95100000-0000-4000-8000-000000000099"}';
 select throws_ok(
   $$select * from public.begin_identity_verification('96000000-0000-4000-8000-000000000002', null, repeat('0', 64))$$,
@@ -144,7 +150,9 @@ select throws_ok(
 
 reset role;
 set local role anon;
-set local request.jwt.claims = '{"role":"anon"}';
+do $$ begin
+  perform pg_temp.set_anon_claims();
+end $$;
 select is(
   public.consume_api_rate_limit('identity_verification_start', repeat('9', 64)) ->> 'allowed',
   'true', 'identity-verification starts use a database-backed anonymous rate limit'

@@ -2,13 +2,12 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
+\ir ../support/auth-fixtures.sql
 
 select plan(17);
 
-insert into auth.users (id, aud, role, email, created_at, updated_at)
-values
-  ('91000000-0000-4000-8000-000000000001', 'authenticated', 'authenticated', 'identity-owner@test.local', now(), now()),
-  ('91000000-0000-4000-8000-000000000002', 'authenticated', 'authenticated', 'verified-owner@test.local', now(), now());
+select pg_temp.create_auth_actor('91000000-0000-4000-8000-000000000001', '91100000-0000-4000-8000-000000000001', 'identity-owner@test.local');
+select pg_temp.create_auth_actor('91000000-0000-4000-8000-000000000002', '91100000-0000-4000-8000-000000000002', 'verified-owner@test.local');
 
 insert into public.candidates (id, primary_owner_user_id, display_name, created_by)
 values
