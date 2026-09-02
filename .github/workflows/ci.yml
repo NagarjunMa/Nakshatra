@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: ["**"]
+    branches: [main]
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -112,10 +112,17 @@ jobs:
         run: npm ci
 
       - name: Start minimal local Supabase stack
-        run: npm run test:db:start
+        run: npm run ci:db:start
+
+      - name: Replay migrations from a clean local database
+        run: npm run test:db:reset
 
       - name: Run database tests
         run: npm run test:db
+
+      - name: Diagnose failed Supabase startup or database verification
+        if: failure()
+        run: npm run ci:db:diagnose
 
       - name: Stop local Supabase stack
         if: always()

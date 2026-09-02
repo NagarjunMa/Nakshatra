@@ -2,18 +2,12 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
+\ir ../support/auth-fixtures.sql
 
 select plan(25);
 
-insert into auth.users (id, aud, role, email, email_confirmed_at, created_at, updated_at)
-values
-  ('11111111-1111-4111-8111-111111111111', 'authenticated', 'authenticated', 'owner@perimeter.test', now(), now(), now()),
-  ('22222222-2222-4222-8222-222222222222', 'authenticated', 'authenticated', 'viewer@perimeter.test', now(), now(), now());
-
-insert into auth.sessions (id, user_id, created_at, updated_at)
-values
-  ('11111111-1111-4111-8111-111111111112', '11111111-1111-4111-8111-111111111111', now(), now()),
-  ('22222222-2222-4222-8222-222222222223', '22222222-2222-4222-8222-222222222222', now(), now());
+select pg_temp.create_auth_actor('11111111-1111-4111-8111-111111111111', '11111111-1111-4111-8111-111111111112', 'owner@perimeter.test');
+select pg_temp.create_auth_actor('22222222-2222-4222-8222-222222222222', '22222222-2222-4222-8222-222222222223', 'viewer@perimeter.test');
 
 insert into public.candidates (id, primary_owner_user_id, display_name, created_by)
 values ('33333333-3333-4333-8333-333333333334', '11111111-1111-4111-8111-111111111111', 'Aditi', '11111111-1111-4111-8111-111111111111');

@@ -2,18 +2,12 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
+\ir ../support/auth-fixtures.sql
 
 select plan(24);
 
-insert into auth.users (id, aud, role, email, created_at, updated_at)
-values
-  ('61000000-0000-4000-8000-000000000001', 'authenticated', 'authenticated', 'delete-owner@worker.test', now(), now()),
-  ('61000000-0000-4000-8000-000000000002', 'authenticated', 'authenticated', 'delete-stale@worker.test', now(), now());
-
-insert into auth.sessions (id, user_id, created_at, updated_at)
-values
-  ('62000000-0000-4000-8000-000000000001', '61000000-0000-4000-8000-000000000001', now(), now()),
-  ('62000000-0000-4000-8000-000000000002', '61000000-0000-4000-8000-000000000002', now(), now());
+select pg_temp.create_auth_actor('61000000-0000-4000-8000-000000000001', '62000000-0000-4000-8000-000000000001', 'delete-owner@worker.test');
+select pg_temp.create_auth_actor('61000000-0000-4000-8000-000000000002', '62000000-0000-4000-8000-000000000002', 'delete-stale@worker.test');
 
 select has_function('public', 'claim_account_deletion_batch', array['integer'], 'worker claim RPC exists');
 select has_function('public', 'complete_account_deletion', array['uuid', 'uuid'], 'worker receipt RPC exists');
@@ -29,8 +23,7 @@ create temporary table owner_reauth_challenge as
 select (public.start_account_deletion_reauth('62000000-0000-4000-8000-000000000001') ->> 'challengeId')::uuid as id;
 
 reset role;
-insert into auth.sessions (id, user_id, created_at, updated_at)
-values ('62000000-0000-4000-8000-000000000003', '61000000-0000-4000-8000-000000000001', now() + interval '1 second', now());
+select pg_temp.create_auth_session('61000000-0000-4000-8000-000000000001', '62000000-0000-4000-8000-000000000003', now() + interval '1 second');
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"61000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"62000000-0000-4000-8000-000000000003"}';
@@ -44,8 +37,7 @@ create temporary table owner_repeat_reauth_challenge as
 select (public.start_account_deletion_reauth('62000000-0000-4000-8000-000000000003') ->> 'challengeId')::uuid as id;
 
 reset role;
-insert into auth.sessions (id, user_id, created_at, updated_at)
-values ('62000000-0000-4000-8000-000000000004', '61000000-0000-4000-8000-000000000001', now() + interval '2 seconds', now());
+select pg_temp.create_auth_session('61000000-0000-4000-8000-000000000001', '62000000-0000-4000-8000-000000000004', now() + interval '2 seconds');
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"61000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"62000000-0000-4000-8000-000000000004"}';

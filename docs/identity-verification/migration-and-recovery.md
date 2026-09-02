@@ -31,6 +31,6 @@ verification flow projects a current verified status.
 
 ## Validation
 
-Run `supabase db reset --local`, `npm run test:db`, generated-type validation,
-and the application test suite before requesting review. The local database
+Run `npm run db:verify`, generated-type validation, and the application test
+suite before requesting review. The local database
 must use a Supabase CLI version compatible with `supabase/config.toml`.
