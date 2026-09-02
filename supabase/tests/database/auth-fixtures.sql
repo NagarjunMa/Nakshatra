@@ -1,6 +1,6 @@
--- Test-only helpers loaded by individual pgTAP files with \ir. This directory is
--- intentionally outside supabase/tests/database so pg_prove never treats these
--- helpers as an executable test suite.
+-- Test-only helpers loaded by individual pgTAP files with \ir. This file lives
+-- beside the test suites so the Supabase pg_prove container can read it, while
+-- its non-.test.sql suffix prevents it from running as an executable test suite.
 --
 -- Fixture rows are created while the pgTAP runner still has its trusted role.
 -- Runtime assertions must then switch to the role being exercised. Never use
