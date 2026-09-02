@@ -51,7 +51,6 @@ export default async function OpenGraphImage({
       >
         {heroUrl ? (
           // Image comes from the portfolio's explicitly public hero media only.
-          // eslint-disable-next-line @next/next/no-img-element -- ImageResponse renders OG markup and cannot use next/image.
           <img
             alt=""
             src={heroUrl}
