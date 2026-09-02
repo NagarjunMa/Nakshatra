@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
-\ir auth-fixtures.sql
+\ir auth-fixtures.psql
 
 select plan(19);
 
