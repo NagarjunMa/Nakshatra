@@ -24,6 +24,7 @@
     "test:watch": "vitest",
     "security:audit": "npm audit --audit-level=high",
     "privacy:process-deletions": "node scripts/process-account-deletions.mjs",
+    "identity-verification:process": "node scripts/process-identity-verifications.mjs",
     "privacy:retention": "node scripts/run-data-retention.mjs",
     "db:types": "supabase gen types typescript --local --schema public > src/types/database.generated.ts",
     "check": "npm run lint && npm run typecheck && npm test && npm run build",
