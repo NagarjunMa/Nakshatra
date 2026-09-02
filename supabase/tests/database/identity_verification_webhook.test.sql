@@ -29,10 +29,13 @@ select
 from app_private.identity_verification_subjects subject
 where subject.candidate_id = '97200000-0000-4000-8000-000000000001';
 
-create temporary table webhook_attempt as
-select provider_subject_ref
+-- Capture the private fixture value before switching to the service role. A
+-- temporary table belongs to the pgTAP runner role and is intentionally not
+-- readable by service_role.
+select provider_subject_ref as webhook_provider_subject_ref
 from app_private.identity_verification_attempts
-where id = '97300000-0000-4000-8000-000000000001';
+where id = '97300000-0000-4000-8000-000000000001'
+\gset
 
 select ok(
   not has_function_privilege('anon', 'public.record_identity_verification_webhook(text,text,uuid,text,uuid)', 'execute'),
@@ -53,7 +56,7 @@ select ok(
     repeat('a', 64), repeat('b', 64),
     '97300000-0000-4000-8000-000000000001',
     '97400000-0000-4000-8000-000000000001',
-    (select provider_subject_ref from webhook_attempt)
+    :'webhook_provider_subject_ref'
   ),
   'a matching signed-webhook receipt is persisted and queued'
 );
@@ -62,7 +65,7 @@ select ok(
     repeat('a', 64), repeat('c', 64),
     '97300000-0000-4000-8000-000000000001',
     '97400000-0000-4000-8000-000000000001',
-    (select provider_subject_ref from webhook_attempt)
+    :'webhook_provider_subject_ref'
   ),
   'a duplicate provider event is acknowledged without replaying work'
 );
@@ -71,7 +74,7 @@ select ok(
     repeat('d', 64), repeat('e', 64),
     '97300000-0000-4000-8000-000000000001',
     '97400000-0000-4000-8000-000000000099',
-    (select provider_subject_ref from webhook_attempt)
+    :'webhook_provider_subject_ref'
   ),
   'an event with a mismatched provider session does not enter the private inbox'
 );
