@@ -78,7 +78,7 @@ describe("account privacy screen", () => {
     fireEvent.click(screen.getByRole("button", { name: "Continue to fresh sign-in" }));
 
     await waitFor(() => expect(mocks.reauth).toHaveBeenCalledWith("email"));
-    expect(screen.getByText(/secure sign-in link was sent/i)).toBeInTheDocument();
+    expect(await screen.findByText(/secure sign-in link was sent/i)).toBeInTheDocument();
     expect(schedule).toBeDisabled();
     expect(mocks.deletion).not.toHaveBeenCalled();
   });
