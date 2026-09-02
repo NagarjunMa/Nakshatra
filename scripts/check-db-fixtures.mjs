@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const migrationsDirectory = path.join(root, "supabase", "migrations");
 const testsDirectory = path.join(root, "supabase", "tests", "database");
-const fixtureInclude = "\\ir auth-fixtures.sql";
+const fixtureInclude = "\\ir auth-fixtures.psql";
 const migrationPattern = /^(\d{14})_[a-z0-9][a-z0-9_]*\.sql$/;
 const runtimeRolePattern = /\bset\s+(?:local\s+)?role\s+(authenticated|anon|service_role)\s*;/i;
 const authFixturePattern = /pg_temp\.create_auth_(?:actor|session)\(\s*'([^']+)'\s*,\s*'([^']+)'/gi;
