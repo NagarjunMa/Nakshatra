@@ -61,11 +61,27 @@ secrets, or raw identity data to Linear.
 - Store the webhook signing secret separately as `DIDIT_WEBHOOK_SECRET`. Rotate
   it through the provider console/API after every suspected exposure and at the
   cadence recorded in the private credential inventory.
-- A future webhook endpoint must verify a current Didit signature over the raw
-  request representation, enforce a five-minute freshness window, and dedupe
-  provider event IDs before changing local state. It must resolve the local
-  verification from a server-stored provider session ID rather than trusting
-  caller-supplied metadata.
+- The deployed webhook endpoint at `/api/webhooks/didit` verifies
+  `X-Signature-V2` over Didit's canonical JSON form, enforces a five-minute
+  freshness window for both the signed envelope and `X-Timestamp`, and dedupes
+  hashed provider event IDs before queueing work. It resolves an attempt only
+  when its server-stored provider subject reference and provider session ID both
+  match; it never stores the webhook body or decision object.
+- Run `npm run identity-verification:process` every five minutes from the
+  trusted scheduler. It fetches a provider decision transiently, projects only
+  the normalized result, and deletes terminal provider sessions. It must run
+  with the service-role key and must never log decision data, provider URLs, or
+  provider credentials.
+- Attaching a provider session also queues a delayed reconciliation fallback.
+  This recovers a missed provider webhook without trusting an unauthenticated
+  caller. Provider calls time out after ten seconds; transient failures retry
+  with database-controlled exponential backoff from five minutes up to one
+  hour. Alert when the scheduler fails or a work item reaches repeated retries.
+- The approved workflow must contain exactly one identity-document result. A
+  changed or ambiguous workflow fails closed rather than allowing the worker to
+  select an arbitrary name or date-of-birth result. Validate the configured
+  workflow and a signed test delivery in Didit sandbox before enabling live
+  webhooks.
 - The repository secret scan detects high-entropy values assigned to
   `DIDIT_API_KEY` or `DIDIT_WEBHOOK_SECRET`. Didit does not publish a stable
   credential prefix in its public documentation, so this detector is purposely
@@ -118,4 +134,3 @@ processing an identity document:
 - [Didit hosted sessions overview](https://docs.didit.me/api-reference/overview)
 - [Didit webhook verification](https://docs.didit.me/integration/webhooks)
 - [Didit data retention and deletion](https://docs.didit.me/console/data-retention)
-

@@ -75,9 +75,13 @@ select ok(
   'public snapshots receive only the safe verification badge and validity windows'
 );
 
-insert into app_private.identity_verification_worker_state(candidate_id, task_type)
-values ('92000000-0000-4000-8000-000000000002', 'reconcile');
-select is((select task_type from app_private.claim_identity_verification_work(1)), 'reconcile', 'worker claims are lease-backed and bounded');
+insert into app_private.identity_verification_worker_state(candidate_id, attempt_id, task_type)
+values ('92000000-0000-4000-8000-000000000002', '93000000-0000-4000-8000-000000000001', 'reconcile');
+set local role service_role;
+do $$ begin
+  perform pg_temp.set_service_role_claims();
+end $$;
+select is((select task_type from public.claim_identity_verification_work(1)), 'reconcile', 'worker claims are lease-backed and service-role-only');
 
 select * from finish();
 rollback;

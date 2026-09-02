@@ -4,7 +4,7 @@ create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 \ir auth-fixtures.psql
 
-select plan(19);
+select plan(20);
 
 select pg_temp.create_auth_actor('95000000-0000-4000-8000-000000000001', '95100000-0000-4000-8000-000000000001', 'verification-owner@test.local');
 select pg_temp.create_auth_actor('95000000-0000-4000-8000-000000000002', '95100000-0000-4000-8000-000000000002', 'verification-other@test.local');
@@ -88,6 +88,25 @@ select lives_ok(
   $$select public.attach_identity_verification_provider_session((select attempt_id from invitation_start), '11111111-1111-4111-8111-111111111111', repeat('c', 64))$$,
   'the matching management credential attaches the hosted provider session'
 );
+
+-- A provider delivery is not required to make progress: session attachment
+-- itself schedules a delayed reconcile fallback for a missed webhook.
+reset role;
+select ok(
+  exists (
+    select 1
+    from app_private.identity_verification_worker_state state
+    where state.attempt_id = (select attempt_id from invitation_start)
+      and state.task_type = 'reconcile'
+      and state.completed_at is null
+      and state.run_after > pg_catalog.now()
+  ),
+  'attaching a provider session queues delayed reconciliation when no webhook arrives'
+);
+set local role anon;
+do $$ begin
+  perform pg_temp.set_anon_claims();
+end $$;
 select is(
   public.get_identity_verification_link_status(repeat('c', 64)) ->> 'status',
   'in_progress', 'the management link exposes only generic in-progress state'
