@@ -127,7 +127,7 @@ begin
     and state.task_type = p_task_type
     and state.claim_token = p_claim_token
     and state.lease_expires_at > pg_catalog.now()
-    and state.completed_at is null
+    and state.completed_at is null;
   return found;
 end;
 $$;
