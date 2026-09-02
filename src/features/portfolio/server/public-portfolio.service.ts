@@ -77,6 +77,18 @@ export async function recordPublicPortfolioView(
   await repository.recordView(token);
 }
 
+/** Detects the owner so the public page can disable self-interest in the UI. */
+export async function isPortfolioOwner(
+  supabase: SupabaseClient,
+  token: string,
+  userId: string | null | undefined
+) {
+  if (!userId) return false;
+  const { data, error } = await new PublicPortfolioRepository(supabase)
+    .findOwnedPortfolio(token, userId);
+  return !error && Boolean(data);
+}
+
 /** Resolves and signs an approved horoscope for five minutes. */
 export async function resolveApprovedHoroscope(
   supabase: SupabaseClient,
