@@ -54,6 +54,7 @@ select ok(
       'rotate_portfolio_transaction(text)',
       'unpublish_portfolio_transaction()',
       'replace_candidate_relationships_and_timeline(uuid,jsonb,jsonb,jsonb)',
+      'save_dashboard_draft_transaction(jsonb)',
       'list_portfolio_access()',
       'resolve_approved_portfolio(text)',
       'resolve_approved_horoscope(text)',

@@ -35,6 +35,22 @@ export interface PublishPortfolioTransactionPayload {
   sunSign: string | null;
 }
 
+export interface SaveDashboardDraftTransactionPayload {
+  portfolio: Record<string, unknown>;
+  candidate: Record<string, unknown> | null;
+  details: Record<string, Record<string, unknown>> | null;
+  visibilityRules: Record<string, unknown>[];
+  familyMembers: Array<{
+    relationship: string;
+    name?: string;
+    occupation?: string;
+    location?: string;
+    marital_status?: string;
+  }>;
+  education: Record<string, unknown> | null;
+  career: Record<string, unknown> | null;
+}
+
 /**
  * Performs dashboard persistence for server-side portfolio services.
  * Input: an authenticated Supabase client at construction and typed method arguments.
@@ -51,16 +67,11 @@ export class DashboardRepository {
       .maybeSingle();
   }
 
-  async savePortfolio(
-    userId: string,
-    existingPortfolioId: string | undefined,
-    payload: Record<string, unknown>
-  ) {
-    const query = existingPortfolioId
-      ? this.supabase.from("portfolios").update(payload).eq("id", existingPortfolioId)
-      : this.supabase.from("portfolios").insert({ user_id: userId, ...payload });
-
-    return query.select("id, candidate_id").single();
+  /** Persists the complete dashboard draft graph in one database transaction. */
+  async saveDashboardDraftTransaction(payload: SaveDashboardDraftTransactionPayload) {
+    return this.supabase.rpc("save_dashboard_draft_transaction", {
+      p_payload: payload,
+    });
   }
 
   /** Atomically persists owner, public, approved, and horoscope publication state. */
@@ -107,77 +118,4 @@ export class DashboardRepository {
     return this.supabase.rpc("unpublish_portfolio_transaction");
   }
 
-  async saveCandidate(
-    candidateId: string | null,
-    payload: Record<string, unknown>
-  ) {
-    if (candidateId) {
-      const { data, error } = await this.supabase
-        .from("candidates")
-        .update(payload)
-        .eq("id", candidateId)
-        .select("id")
-        .single();
-      return { candidateId: data?.id ?? null, error };
-    }
-
-    const { data, error } = await this.supabase
-      .from("candidates")
-      .insert(payload)
-      .select("id")
-      .single();
-    return { candidateId: data?.id ?? null, error };
-  }
-
-  async linkCandidate(portfolioId: string, candidateId: string) {
-    return this.supabase
-      .from("portfolios")
-      .update({ candidate_id: candidateId })
-      .eq("id", portfolioId)
-      .select("id")
-      .single();
-  }
-
-  async saveCandidateDetails(candidateId: string, details: Record<string, Record<string, unknown>>) {
-    return Promise.all([
-      this.supabase
-        .from("candidate_personal_details")
-        .upsert({ candidate_id: candidateId, ...details.personal }),
-      this.supabase
-        .from("candidate_astrology_details")
-        .upsert({ candidate_id: candidateId, ...details.astrology }),
-      this.supabase
-        .from("candidate_lifestyle_details")
-        .upsert({ candidate_id: candidateId, ...details.lifestyle }),
-      this.supabase
-        .from("candidate_partner_preferences")
-        .upsert({ candidate_id: candidateId, ...details.preferences }),
-    ]);
-  }
-
-  async saveVisibilityRules(rules: Record<string, unknown>[]) {
-    return this.supabase
-      .from("visibility_rules")
-      .upsert(rules, { onConflict: "portfolio_id,section_key" });
-  }
-
-  async replaceCandidateRelationshipsAndTimeline(
-    candidateId: string,
-    members: Array<{
-      relationship: string;
-      name?: string;
-      occupation?: string;
-      location?: string;
-      marital_status?: string;
-    }>,
-    education: Record<string, unknown> | null,
-    career: Record<string, unknown> | null
-  ) {
-    return this.supabase.rpc("replace_candidate_relationships_and_timeline", {
-      p_candidate_id: candidateId,
-      p_family_members: members,
-      p_education: education,
-      p_career: career,
-    });
-  }
 }

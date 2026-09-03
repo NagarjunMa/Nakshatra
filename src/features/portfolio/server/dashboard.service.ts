@@ -6,14 +6,28 @@ import {
   mapCandidate,
   mapCandidateDetails,
   mapCareerEntry,
+  mapDashboardVisibilityRules,
   mapEducationEntry,
   mapFamilyMembers,
   mapPortfolioDraft,
-  mapVisibilityRules,
 } from "./dashboard.mapper";
 import { DashboardRepository } from "./dashboard.repository";
 
 export class DashboardSaveError extends Error {}
+
+function savedDraftResult(value: unknown): value is {
+  status: "saved";
+  portfolioId: string;
+  candidateId: string | null;
+} {
+  if (!value || typeof value !== "object") return false;
+  const result = value as Record<string, unknown>;
+  return (
+    result.status === "saved" &&
+    typeof result.portfolioId === "string" &&
+    (typeof result.candidateId === "string" || result.candidateId === null)
+  );
+}
 
 /**
  * Saves a dashboard draft and synchronizes its candidate-owned relational records.
@@ -29,54 +43,20 @@ export async function saveDashboardDraft({
   data: PortfolioData;
 }) {
   const repository = new DashboardRepository(supabase);
-  const { data: existing, error: findError } = await repository.findPortfolioForUser(userId);
-  if (findError) throw new DashboardSaveError("Could not load your portfolio");
+  const hasCandidate = Boolean(data.personal.name?.trim());
+  const { data: result, error } = await repository.saveDashboardDraftTransaction({
+    portfolio: mapPortfolioDraft(data, null),
+    candidate: hasCandidate ? mapCandidate(data, userId) : null,
+    details: hasCandidate ? mapCandidateDetails(data) : null,
+    visibilityRules: hasCandidate ? mapDashboardVisibilityRules(data) : [],
+    familyMembers: hasCandidate ? mapFamilyMembers(data) : [],
+    education: hasCandidate ? mapEducationEntry(data) : null,
+    career: hasCandidate ? mapCareerEntry(data) : null,
+  });
 
-  const { data: portfolio, error: portfolioError } = await repository.savePortfolio(
-    userId,
-    existing?.id,
-    mapPortfolioDraft(data, existing?.theme_color ?? null)
-  );
-  if (portfolioError || !portfolio) {
+  if (error || !savedDraftResult(result)) {
     throw new DashboardSaveError("Could not save portfolio");
   }
 
-  if (!data.personal.name?.trim()) {
-    return { portfolioId: portfolio.id, candidateId: null };
-  }
-
-  const { candidateId, error: candidateError } = await repository.saveCandidate(
-    portfolio.candidate_id,
-    mapCandidate(data, userId)
-  );
-  if (candidateError || !candidateId) {
-    throw new DashboardSaveError("Could not save candidate details");
-  }
-
-  if (!portfolio.candidate_id) {
-    const { error: linkError } = await repository.linkCandidate(portfolio.id, candidateId);
-    if (linkError) throw new DashboardSaveError("Could not link candidate details");
-  }
-
-  const [detailWrites, visibilityWrite] = await Promise.all([
-    repository.saveCandidateDetails(candidateId, mapCandidateDetails(data)),
-    repository.saveVisibilityRules(mapVisibilityRules(portfolio.id, data)),
-  ]);
-  const detailError = detailWrites.find(({ error }) => error)?.error;
-  if (detailError || visibilityWrite.error) {
-    throw new DashboardSaveError("Could not save portfolio details");
-  }
-
-  const { data: replacementStatus, error: replacementError } =
-    await repository.replaceCandidateRelationshipsAndTimeline(
-      candidateId,
-      mapFamilyMembers(data),
-      mapEducationEntry(data),
-      mapCareerEntry(data)
-    );
-  if (replacementError || replacementStatus !== "updated") {
-    throw new DashboardSaveError("Could not save portfolio history");
-  }
-
-  return { portfolioId: portfolio.id, candidateId };
+  return { portfolioId: result.portfolioId, candidateId: result.candidateId };
 }
