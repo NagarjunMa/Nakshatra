@@ -18,6 +18,15 @@ export class PublicPortfolioRepository {
     return this.supabase.rpc("resolve_approved_horoscope", { p_share_token: token });
   }
 
+  findOwnedPortfolio(token: string, userId: string) {
+    return this.supabase
+      .from("portfolios")
+      .select("id")
+      .eq("share_token", token)
+      .eq("user_id", userId)
+      .maybeSingle();
+  }
+
   recordView(token: string) {
     return this.supabase.rpc("record_public_portfolio_view", { p_share_token: token });
   }

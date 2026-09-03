@@ -26,3 +26,21 @@ export const interestRequestSchema = z.object({
 });
 
 export type InterestRequestInput = z.infer<typeof interestRequestSchema>;
+
+/** Returns a clear form-level message for the first invalid interest field. */
+export function interestRequestValidationMessage(error: z.ZodError) {
+  const invalidFields = new Set(error.issues.map((issue) => issue.path[0]));
+
+  if (invalidFields.has("portfolioToken")) {
+    return "This portfolio link is invalid. Open the original shared link and try again.";
+  }
+  if (invalidFields.has("name")) return "Enter your full name.";
+  if (invalidFields.has("profileFor")) return "Choose who you are contacting for.";
+  if (invalidFields.has("phone")) return "Enter a valid phone number.";
+  if (invalidFields.has("email")) return "Enter a valid email address.";
+  if (invalidFields.has("portfolioUrl")) {
+    return "Use a secure portfolio link beginning with https://, or leave this optional field blank. Localhost links cannot be shared.";
+  }
+
+  return "One of the optional details is too long. Shorten it and try again.";
+}

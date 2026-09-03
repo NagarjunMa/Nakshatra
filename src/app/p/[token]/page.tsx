@@ -6,6 +6,7 @@ import type { PortfolioHoroscopeAttachment } from "@/types/portfolio";
 import { horoscopeFormatLabel } from "@/features/horoscope/server/horoscope.contract";
 import { InterestRequestModal } from "@/components/portfolio/InterestRequestModal";
 import {
+  isPortfolioOwner,
   recordPublicPortfolioView,
   resolvePortfolioView,
   resolvePublicPortfolio,
@@ -56,8 +57,12 @@ export default async function PublicBiodataPage({ params }: Props) {
   const supabase = await createClient();
 
   const { data: authData } = await supabase.auth.getUser();
-  const portfolio = await resolvePortfolioView(supabase, token, Boolean(authData.user));
+  const verifiedEmail = authData.user?.email_confirmed_at
+    ? authData.user.email?.trim().toLowerCase() || null
+    : null;
+  const portfolio = await resolvePortfolioView(supabase, token, Boolean(verifiedEmail));
   if (!portfolio) return notFound();
+  const viewingOwnPortfolio = await isPortfolioOwner(supabase, token, authData.user?.id);
 
   void recordPublicPortfolioView(supabase, token);
   const horoscopeAttachment: PortfolioHoroscopeAttachment | undefined = portfolio.horoscope
@@ -78,7 +83,7 @@ export default async function PublicBiodataPage({ params }: Props) {
       accessMode={portfolio.accessMode}
       photos={portfolio.photos}
       horoscopeAttachment={horoscopeAttachment}
-      interestAction={portfolio.accessMode === "public" ? <InterestRequestModal portfolioToken={token} profileName={portfolio.data.personal.name || "the profile owner"} authenticated={Boolean(authData.user)} /> : undefined}
+      interestAction={portfolio.accessMode === "public" ? <InterestRequestModal portfolioToken={token} profileName={portfolio.data.personal.name || "the profile owner"} authenticated={Boolean(verifiedEmail)} verifiedEmail={verifiedEmail} isOwner={viewingOwnPortfolio} /> : undefined}
     />
   );
 }
