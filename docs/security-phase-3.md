@@ -6,7 +6,7 @@ This document records the application controls introduced before public beta and
 
 - Every cookie-authenticated mutation requires an exact `Origin` match. A contradictory `Sec-Fetch-Site` value is rejected.
 - JSON and multipart bodies are streamed into bounded buffers before parsing. Photo and horoscope form limits include only a small multipart allowance above the accepted file size.
-- OAuth and magic-link requests start through `/api/auth/start`. Redirects accept only local application paths and absolute callbacks use `NEXT_PUBLIC_APP_URL` in production.
+- Owner email/password sign-in, signup confirmation, password recovery, viewer email OTP, and Google OAuth start through `/api/auth/start`. Redirects accept only local application paths and absolute callbacks use `NEXT_PUBLIC_APP_URL` in production.
 - User-supplied portfolio links accept only `https:` URLs.
 - Public errors use stable codes and application-authored messages. Server logs contain an event, correlation ID, and error type only.
 

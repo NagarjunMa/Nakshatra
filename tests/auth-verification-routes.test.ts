@@ -165,15 +165,15 @@ describe("authentication verification routes", () => {
 
   it("updates a recovered password only for an authenticated session", async () => {
     const response = await passwordPost(request("/api/auth/password", {
-      password: "new-strong-pass",
+      password: "NewStrongPass1",
     }));
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ updated: true });
-    expect(updateUser).toHaveBeenCalledWith({ password: "new-strong-pass" });
+    expect(updateUser).toHaveBeenCalledWith({ password: "NewStrongPass1" });
 
     getApiUser.mockResolvedValueOnce({ status: "missing_session" });
     expect((await passwordPost(request("/api/auth/password", {
-      password: "new-strong-pass",
+      password: "NewStrongPass1",
     }))).status).toBe(401);
   });
 
@@ -181,13 +181,13 @@ describe("authentication verification routes", () => {
     expect((await passwordPost(request("/api/auth/password", { password: "short" }))).status).toBe(400);
     expect((await passwordPost(request(
       "/api/auth/password",
-      { password: "new-strong-pass" },
+      { password: "NewStrongPass1" },
       "https://attacker.test"
     ))).status).toBe(403);
 
     updateUser.mockResolvedValueOnce({ error: new Error("expired") });
     expect((await passwordPost(request("/api/auth/password", {
-      password: "new-strong-pass",
+      password: "NewStrongPass1",
     }))).status).toBe(500);
   });
 });

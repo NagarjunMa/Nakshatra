@@ -1,7 +1,6 @@
 export type AuthStartPayload =
   | { method: "google"; redirect: string }
-  | { method: "email"; email: string; redirect: string }
-  | { method: "password_signup"; name: string; email: string; password: string; redirect: string }
+  | { method: "password_signup"; email: string; password: string; redirect: string }
   | { method: "password_signin"; email: string; password: string; redirect: string }
   | { method: "email_otp"; email: string; redirect: string }
   | { method: "resend_signup"; email: string; redirect: string }
@@ -21,13 +20,23 @@ type AuthResponse = {
 };
 
 async function postAuth(path: string, payload: unknown) {
-  const response = await fetch(path, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  const body = (await response.json().catch(() => null)) as AuthResponse | null;
-  return { ok: response.ok, body };
+  try {
+    const response = await fetch(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const body = (await response.json().catch(() => null)) as AuthResponse | null;
+    return { ok: response.ok, body };
+  } catch {
+    return {
+      ok: false,
+      body: {
+        code: "AUTH_NETWORK_ERROR",
+        error: "We could not connect. Check your internet connection and try again.",
+      },
+    };
+  }
 }
 
 /** Calls the same-origin auth gateway so every provider receives application rate limiting. */

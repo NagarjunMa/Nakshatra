@@ -38,7 +38,7 @@ Fill a form once. Get a shareable link. Update anytime — the link always shows
 | Auth | Google OAuth + Supabase Magic Link |
 | Landing fonts | Harmond ExtraBoldExpanded, MangoGrotesque (Light/Regular/Medium/SemiBold) |
 | Landing bg | `shaders` (Swirl + ChromaFlow + FlutedGlass + FilmGrain) |
-| Email | Supabase Auth magic links |
+| Email | Supabase Auth email/password, signup confirmation, and password recovery |
 | Hosting | Vercel / Docker |
 
 ## Getting Started
@@ -98,7 +98,7 @@ Fill a form once. Get a shareable link. Update anytime — the link always shows
 | `/edit` | Yes | Compatibility redirect to the canonical dashboard editor |
 | `/preview` | Yes | Draft preview |
 | `/p/[token]` | No | Public biodata view (CelestialUnion template) |
-| `/api/auth/callback` | No | OAuth/magic link callback |
+| `/api/auth/callback` | No | OAuth and email-confirmation callback |
 | `/api/portfolio-media` | Yes | Owner-scoped photo upload and gallery management |
 
 ## Project Structure
@@ -107,7 +107,7 @@ Fill a form once. Get a shareable link. Update anytime — the link always shows
 src/
 ├── app/
 │   ├── api/
-│   │   ├── auth/callback/route.ts    # OAuth + magic link callback
+│   │   ├── auth/callback/route.ts    # OAuth + email-confirmation callback
 │   │   └── portfolio-media/route.ts  # Owner-scoped photo operations
 │   ├── dashboard/                     # Status, link, views, expiry
 │   ├── edit/                          # Redirect to the canonical dashboard editor
