@@ -19,11 +19,10 @@ Provider retention is a fallback, not the deletion strategy:
    maintenance process. Do not include session IDs or subject data in alerts.
 
 Didit's public retention documentation currently describes a console range of
-one month to ten years and an API deletion capability. Its public pages use
-different session-delete path forms. The exact endpoint, request method,
-success status, and idempotency behavior must be verified against the
-versioned Sandbox API documentation before implementation; this Phase 0 work
-does not add executable deletion code.
+one month to ten years. The implemented worker uses the current V3 operation
+`DELETE /v3/session/{session_id}/delete/`, accepts `204` as success, and treats
+`404` as an idempotent already-deleted outcome. Revalidate this contract in
+Sandbox and against the current provider documentation before live enablement.
 
 ## Required evidence before production
 
@@ -70,4 +69,3 @@ does not add executable deletion code.
 - [Didit data retention](https://docs.didit.me/console/data-retention)
 - [Didit sessions API](https://docs.didit.me/sessions-api/overview)
 - [Didit business terms](https://updates.didit.me/terms/business/)
-
