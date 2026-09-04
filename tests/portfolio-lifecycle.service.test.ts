@@ -169,6 +169,24 @@ describe("portfolio lifecycle services", () => {
     ).rejects.toBeInstanceOf(PortfolioPublishError);
   });
 
+  it("maps transactional readiness and authorization failures to safe errors", async () => {
+    repository.publishPortfolioTransaction.mockResolvedValue({
+      data: { status: "not_ready" },
+      error: null,
+    });
+    await expect(
+      publishPortfolio({ supabase: {} as never, userId: "user-id", data: draft })
+    ).rejects.toMatchObject({ code: "PORTFOLIO_NOT_READY", status: 400 });
+
+    repository.publishPortfolioTransaction.mockResolvedValue({
+      data: { status: "unauthorized" },
+      error: null,
+    });
+    await expect(
+      publishPortfolio({ supabase: {} as never, userId: "user-id", data: draft })
+    ).rejects.toMatchObject({ code: "PORTFOLIO_NOT_FOUND", status: 404 });
+  });
+
   it("renews for 90 days and returns a safe error on failure", async () => {
     const before = Date.now();
     await renewPortfolioLink({ supabase: {} as never });

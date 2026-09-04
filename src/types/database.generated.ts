@@ -2615,6 +2615,10 @@ export type Database = {
         Returns: Json
       }
       run_data_retention: { Args: never; Returns: Json }
+      save_dashboard_draft_transaction: {
+        Args: { p_payload: Json }
+        Returns: Json
+      }
       set_portfolio_hero: { Args: { p_media_id: string }; Returns: boolean }
       submit_public_interest: {
         Args: {

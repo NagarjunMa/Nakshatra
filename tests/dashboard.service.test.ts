@@ -2,13 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { PortfolioData } from "../src/types/portfolio";
 
 const repository = vi.hoisted(() => ({
-  findPortfolioForUser: vi.fn(),
-  savePortfolio: vi.fn(),
-  saveCandidate: vi.fn(),
-  linkCandidate: vi.fn(),
-  saveCandidateDetails: vi.fn(),
-  saveVisibilityRules: vi.fn(),
-  replaceCandidateRelationshipsAndTimeline: vi.fn(),
+  saveDashboardDraftTransaction: vi.fn(),
 }));
 
 vi.mock("../src/features/portfolio/server/dashboard.repository", () => ({
@@ -28,89 +22,80 @@ const baseDraft: PortfolioData = {
   personal: { name: "Aditi Rao", dob: "1996-08-12", gender: "female" },
 };
 
-function mockSuccessfulWrites() {
-  repository.findPortfolioForUser.mockResolvedValue({
-    data: { id: "portfolio-id", candidate_id: null, theme_color: null },
-    error: null,
-  });
-  repository.savePortfolio.mockResolvedValue({
-    data: { id: "portfolio-id", candidate_id: null },
-    error: null,
-  });
-  repository.saveCandidate.mockResolvedValue({ candidateId: "candidate-id", error: null });
-  repository.linkCandidate.mockResolvedValue({ error: null });
-  repository.saveCandidateDetails.mockResolvedValue([{ error: null }]);
-  repository.saveVisibilityRules.mockResolvedValue({ error: null });
-  repository.replaceCandidateRelationshipsAndTimeline.mockResolvedValue({
-    data: "updated",
-    error: null,
-  });
-}
-
 describe("saveDashboardDraft", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSuccessfulWrites();
+    repository.saveDashboardDraftTransaction.mockResolvedValue({
+      data: {
+        status: "saved",
+        portfolioId: "portfolio-id",
+        candidateId: "candidate-id",
+      },
+      error: null,
+    });
   });
 
-  it("saves a populated draft and synchronizes the related records", async () => {
+  it("sends the complete populated draft graph through one transaction", async () => {
     await expect(
       saveDashboardDraft({ supabase: {} as never, userId: "user-id", data: baseDraft })
     ).resolves.toEqual({ portfolioId: "portfolio-id", candidateId: "candidate-id" });
 
-    expect(repository.saveCandidate).toHaveBeenCalledOnce();
-    expect(repository.linkCandidate).toHaveBeenCalledWith("portfolio-id", "candidate-id");
-    expect(repository.saveCandidateDetails).toHaveBeenCalledOnce();
-    expect(repository.replaceCandidateRelationshipsAndTimeline).toHaveBeenCalledOnce();
+    expect(repository.saveDashboardDraftTransaction).toHaveBeenCalledOnce();
+    expect(repository.saveDashboardDraftTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        portfolio: expect.objectContaining({ draft_data: expect.any(Object) }),
+        candidate: expect.objectContaining({
+          display_name: "Aditi Rao",
+          primary_owner_user_id: "user-id",
+        }),
+        details: expect.objectContaining({
+          personal: expect.any(Object),
+          astrology: expect.any(Object),
+          lifestyle: expect.any(Object),
+          preferences: expect.any(Object),
+        }),
+        visibilityRules: expect.arrayContaining([
+          expect.objectContaining({ section_key: "family" }),
+        ]),
+      })
+    );
   });
 
-  it("creates an empty portfolio draft without a candidate record", async () => {
+  it("saves an empty first step without creating candidate projections", async () => {
+    repository.saveDashboardDraftTransaction.mockResolvedValue({
+      data: { status: "saved", portfolioId: "portfolio-id", candidateId: null },
+      error: null,
+    });
     const emptyDraft = { ...baseDraft, personal: { ...baseDraft.personal, name: "" } };
+
     await expect(
       saveDashboardDraft({ supabase: {} as never, userId: "user-id", data: emptyDraft })
     ).resolves.toEqual({ portfolioId: "portfolio-id", candidateId: null });
-    expect(repository.saveCandidate).not.toHaveBeenCalled();
-  });
 
-  it("updates an existing candidate without relinking it", async () => {
-    repository.findPortfolioForUser.mockResolvedValue({
-      data: { id: "portfolio-id", candidate_id: "candidate-id", theme_color: null },
-      error: null,
-    });
-    repository.savePortfolio.mockResolvedValue({
-      data: { id: "portfolio-id", candidate_id: "candidate-id" },
-      error: null,
-    });
-    repository.saveCandidate.mockResolvedValue({ candidateId: "candidate-id", error: null });
-
-    await saveDashboardDraft({ supabase: {} as never, userId: "user-id", data: baseDraft });
-    expect(repository.linkCandidate).not.toHaveBeenCalled();
+    expect(repository.saveDashboardDraftTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        candidate: null,
+        details: null,
+        visibilityRules: [],
+        familyMembers: [],
+        education: null,
+        career: null,
+      })
+    );
   });
 
   it.each([
-    ["cannot find the portfolio", "findPortfolioForUser", { data: null, error: new Error("db") }],
-    ["cannot save the portfolio", "savePortfolio", { data: null, error: new Error("db") }],
-    ["cannot save the candidate", "saveCandidate", { candidateId: null, error: new Error("db") }],
-  ])("returns a safe error when it %s", async (_label, method, result) => {
-    repository[method as keyof typeof repository].mockResolvedValue(result as never);
+    [{ data: null, error: new Error("db") }],
+    [{ data: { status: "unexpected" }, error: null }],
+    [{ data: { status: "saved", portfolioId: 42, candidateId: null }, error: null }],
+    [{ data: { status: "saved", portfolioId: "portfolio-id" }, error: null }],
+    [{ data: "saved", error: null }],
+    [{ data: null, error: null }],
+  ])("returns a safe error when the transaction does not confirm a save", async (result) => {
+    repository.saveDashboardDraftTransaction.mockResolvedValue(result);
+
     await expect(
       saveDashboardDraft({ supabase: {} as never, userId: "user-id", data: baseDraft })
     ).rejects.toBeInstanceOf(DashboardSaveError);
-  });
-
-  it("fails when detail or history writes cannot be persisted", async () => {
-    repository.saveCandidateDetails.mockResolvedValue([{ error: new Error("db") }]);
-    await expect(
-      saveDashboardDraft({ supabase: {} as never, userId: "user-id", data: baseDraft })
-    ).rejects.toThrow("Could not save portfolio details");
-
-    mockSuccessfulWrites();
-    repository.replaceCandidateRelationshipsAndTimeline.mockResolvedValue({
-      data: null,
-      error: new Error("db"),
-    });
-    await expect(
-      saveDashboardDraft({ supabase: {} as never, userId: "user-id", data: baseDraft })
-    ).rejects.toThrow("Could not save portfolio history");
   });
 });

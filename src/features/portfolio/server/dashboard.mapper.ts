@@ -199,19 +199,25 @@ export function mapCandidateDetails(data: PortfolioData) {
  * Produces the two-mode public visibility rules for one portfolio.
  * Input: portfolio ID and validated visibility choices. Output: visibility_rules upsert rows.
  */
-export function mapVisibilityRules(portfolioId: string, data: PortfolioData) {
+export function mapDashboardVisibilityRules(data: PortfolioData) {
   const privacyMode = normalizePortfolioPrivacyMode(data.privacy_mode);
   return (["family", "astrology", "gallery", "contact"] as const).map(
     (section_key) => {
       const visibility = presetVisibility(privacyMode, section_key);
       return {
-    portfolio_id: portfolioId,
-    section_key,
+        section_key,
         visibility,
         requires_interest: visibility !== "public",
       };
     }
   );
+}
+
+export function mapVisibilityRules(portfolioId: string, data: PortfolioData) {
+  return mapDashboardVisibilityRules(data).map((rule) => ({
+    portfolio_id: portfolioId,
+    ...rule,
+  }));
 }
 
 /**
