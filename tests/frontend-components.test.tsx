@@ -80,6 +80,7 @@ describe("landing and shared frontend components", () => {
     expect(screen.getAllByText(/full view/i).length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: /build first\. pay only when you are ready to publish/i })).toBeInTheDocument();
     expect(screen.getByText("₹2,450")).toBeInTheDocument();
+    expect(screen.getByText(/outside india\? view pricing in usd/i)).toBeInTheDocument();
     expect(screen.getByText(/plans do not renew automatically/i)).toBeInTheDocument();
     expect(screen.getAllByText(/identity verified/i).length).toBeGreaterThan(0);
   });

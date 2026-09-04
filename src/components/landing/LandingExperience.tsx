@@ -92,6 +92,12 @@ const plans = [
   { duration: "14 months", price: "₹4,200", rate: "₹300/month", recommended: false },
 ] as const;
 
+const internationalPlans = [
+  { duration: "4 months", price: "$24", rate: "$6/month" },
+  { duration: "7 months", price: "$35", rate: "$5/month" },
+  { duration: "14 months", price: "$56", rate: "$4/month" },
+] as const;
+
 const faqs = [
   { question: "Is Nakshatra a matchmaking website?", answer: "No. It helps you create and share your own marriage portfolio. There is no public profile feed." },
   { question: "Can I see the portfolio before paying?", answer: "Yes. Build and preview first. Choose a publishing period only when you are ready to share." },
@@ -172,6 +178,10 @@ export function LandingExperience({ variant }: { variant: LandingVariant }) {
             {plans.map((plan) => <article key={plan.duration} className={plan.recommended ? styles.recommendedPlan : undefined}>{plan.recommended && <span>Most popular</span>}<h3>{plan.duration}</h3><strong>{plan.price}</strong><p>{plan.rate}</p><Link href="/signup">Start creating</Link></article>)}
           </div>
           <details className={styles.pricingDetails}><summary>What every plan includes <ChevronDown aria-hidden="true" /></summary><div><span><BadgeCheck aria-hidden="true" /> Identity-verified portfolio</span><span><RefreshCw aria-hidden="true" /> Unlimited updates</span><span><LockKeyhole aria-hidden="true" /> Full View approval controls</span></div></details>
+          <details className={styles.internationalPricing}>
+            <summary>Outside India? View pricing in USD <ChevronDown aria-hidden="true" /></summary>
+            <div>{internationalPlans.map((plan) => <span key={plan.duration}><strong>{plan.duration}</strong><b>{plan.price}</b><small>{plan.rate}</small></span>)}</div>
+          </details>
         </section>
 
         <section id="questions" className={styles.faqSection}>

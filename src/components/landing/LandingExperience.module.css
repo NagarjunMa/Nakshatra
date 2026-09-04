@@ -301,13 +301,20 @@
 .pricingGrid a { display: inline-flex; margin-top: 1.6rem; border-bottom: 1px solid currentColor; padding-bottom: 0.2rem; color: var(--teal); font-size: 0.82rem; font-weight: 750; }
 .recommendedPlan { border: 2px solid #42888a !important; }
 .pricingDetails { margin-top: 1rem; border-block: 1px solid var(--line); }
-.pricingDetails summary, .faqList summary { display: flex; min-height: 54px; align-items: center; justify-content: space-between; gap: 1rem; cursor: pointer; list-style: none; font-size: 0.84rem; font-weight: 720; }
-.pricingDetails summary::-webkit-details-marker, .faqList summary::-webkit-details-marker { display: none; }
-.pricingDetails summary svg, .faqList summary svg { width: 1rem; height: 1rem; transition: transform 160ms ease; }
-.pricingDetails[open] summary svg, .faqList details[open] summary svg { transform: rotate(180deg); }
+.internationalPricing { border-bottom: 1px solid var(--line); }
+.pricingDetails summary, .internationalPricing summary, .faqList summary { display: flex; min-height: 54px; align-items: center; justify-content: space-between; gap: 1rem; cursor: pointer; list-style: none; font-size: 0.84rem; font-weight: 720; }
+.pricingDetails summary::-webkit-details-marker, .internationalPricing summary::-webkit-details-marker, .faqList summary::-webkit-details-marker { display: none; }
+.pricingDetails summary svg, .internationalPricing summary svg, .faqList summary svg { width: 1rem; height: 1rem; transition: transform 160ms ease; }
+.pricingDetails[open] summary svg, .internationalPricing[open] summary svg, .faqList details[open] summary svg { transform: rotate(180deg); }
 .pricingDetails > div { display: flex; flex-wrap: wrap; gap: 1.5rem; padding: 0 0 1.1rem; color: var(--muted); font-size: 0.78rem; }
 .pricingDetails > div span { display: inline-flex; align-items: center; gap: 0.4rem; }
 .pricingDetails > div svg { width: 0.95rem; height: 0.95rem; color: #277973; }
+.internationalPricing > div { display: grid; grid-template-columns: repeat(3, 1fr); padding-bottom: 1rem; }
+.internationalPricing > div > span { display: grid; gap: 0.2rem; border-right: 1px solid var(--line); padding: 0.25rem 1rem; }
+.internationalPricing > div > span:first-child { padding-left: 0; }
+.internationalPricing > div > span:last-child { border: 0; }
+.internationalPricing b { color: var(--teal); font-size: 1rem; }
+.internationalPricing small { color: var(--muted); }
 
 .faqSection { display: grid; grid-template-columns: minmax(280px, 0.72fr) minmax(0, 1fr); gap: clamp(3rem, 8vw, 7rem); }
 .faqList { border-top: 1px solid var(--line); }
@@ -401,5 +408,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .primaryButton, .secondaryButton, .lightButton, .pricingDetails summary svg, .faqList summary svg { transition: none; }
+  .primaryButton, .secondaryButton, .lightButton, .pricingDetails summary svg, .internationalPricing summary svg, .faqList summary svg { transition: none; }
 }
