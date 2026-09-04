@@ -47,7 +47,7 @@ describe("identity-verification worker", () => {
     const fetchImpl = vi.fn().mockResolvedValue(new Response(JSON.stringify(approvedDecision), { status: 200 }));
     const result = await createIdentityVerificationWorker(client, { apiKey: "test-api-key", fetchImpl }).run(10);
 
-    expect(result).toMatchObject({ claimed: 1, completed: 1, deferred: 0 });
+    expect(result).toMatchObject({ claimed: 1, completed: 1, pending: 0, deferred: 0 });
     expect(rpc).toHaveBeenCalledWith("complete_identity_verification_reconciliation", expect.objectContaining({
       p_attempt_id: claim.attempt_id,
       p_outcome: "verified",
@@ -60,7 +60,7 @@ describe("identity-verification worker", () => {
     const { client, rpc } = workerClient();
     const fetchImpl = vi.fn().mockRejectedValueOnce(new Error("network"));
     const worker = createIdentityVerificationWorker(client, { apiKey: "test-api-key", fetchImpl });
-    await expect(worker.run(1)).resolves.toMatchObject({ completed: 0, deferred: 1 });
+    await expect(worker.run(1)).resolves.toMatchObject({ completed: 0, pending: 0, deferred: 1 });
     expect(rpc).toHaveBeenCalledWith("defer_identity_verification_work", expect.objectContaining({
       p_error_code: "DIDIT_DECISION_FETCH_FAILED",
     }));
@@ -69,7 +69,7 @@ describe("identity-verification worker", () => {
     const redactionClient = workerClient([redaction]);
     const deleteFetch = vi.fn().mockResolvedValue(new Response(null, { status: 404 }));
     await expect(createIdentityVerificationWorker(redactionClient.client, { apiKey: "test-api-key", fetchImpl: deleteFetch }).run(1))
-      .resolves.toMatchObject({ completed: 1, deferred: 0 });
+      .resolves.toMatchObject({ completed: 1, pending: 0, deferred: 0 });
     expect(redactionClient.rpc).toHaveBeenCalledWith("complete_identity_verification_provider_redaction", expect.any(Object));
   });
 
@@ -87,7 +87,7 @@ describe("identity-verification worker", () => {
       }).run(1);
 
       await vi.advanceTimersByTimeAsync(100);
-      await expect(run).resolves.toMatchObject({ completed: 0, deferred: 1 });
+      await expect(run).resolves.toMatchObject({ completed: 0, pending: 0, deferred: 1 });
       expect(fetchMock.mock.calls[0]?.[1]?.signal).toBeInstanceOf(AbortSignal);
       expect(rpc).toHaveBeenCalledWith("defer_identity_verification_work", expect.not.objectContaining({
         p_delay_seconds: expect.anything(),
@@ -95,5 +95,20 @@ describe("identity-verification worker", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("keeps an in-review decision distinct from a failed deferred operation", async () => {
+    const { client, rpc } = workerClient();
+    const fetchImpl = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      ...approvedDecision,
+      status: "In Review",
+    }), { status: 200 }));
+
+    await expect(createIdentityVerificationWorker(client, { apiKey: "test-api-key", fetchImpl }).run(1))
+      .resolves.toMatchObject({ claimed: 1, completed: 0, pending: 1, deferred: 0 });
+    expect(rpc).toHaveBeenCalledWith("complete_identity_verification_reconciliation", expect.objectContaining({
+      p_outcome: "pending",
+    }));
+    expect(rpc).not.toHaveBeenCalledWith("defer_identity_verification_work", expect.anything());
   });
 });

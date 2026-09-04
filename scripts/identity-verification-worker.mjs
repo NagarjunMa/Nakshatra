@@ -144,7 +144,7 @@ export function createIdentityVerificationWorker(supabase, {
           p_attempt_id: claim.attempt_id,
           p_claim_token: claim.claim_token,
         }, "IDENTITY_VERIFICATION_REDACTION_COMPLETION_FAILED");
-        return { completed: true };
+        return { status: "completed" };
       }
       if (claim.task_type !== "reconcile") throw workerError("IDENTITY_VERIFICATION_WORK_TYPE_INVALID");
 
@@ -160,13 +160,13 @@ export function createIdentityVerificationWorker(supabase, {
         p_name_matches: result.nameMatches,
         p_birth_date_matches: result.birthDateMatches,
       }, "IDENTITY_VERIFICATION_RECONCILIATION_COMPLETION_FAILED");
-      return { completed: result.outcome !== "pending" };
+      return { status: result.outcome === "pending" ? "pending" : "completed" };
     } catch (error) {
       const code = error instanceof Error && /^[A-Z_]{3,64}$/.test(error.message)
         ? error.message
         : "IDENTITY_VERIFICATION_PROCESSING_FAILED";
       await defer(claim, code);
-      return { completed: false };
+      return { status: "deferred" };
     }
   }
 
@@ -176,13 +176,15 @@ export function createIdentityVerificationWorker(supabase, {
     if (error) throw workerError("IDENTITY_VERIFICATION_CLAIM_FAILED");
 
     let completed = 0;
+    let pending = 0;
     let deferred = 0;
     for (const claim of claims ?? []) {
       const result = await process(claim);
-      if (result.completed) completed += 1;
+      if (result.status === "completed") completed += 1;
+      else if (result.status === "pending") pending += 1;
       else deferred += 1;
     }
-    return { claimed: claims?.length ?? 0, completed, deferred, completedAt: now().toISOString() };
+    return { claimed: claims?.length ?? 0, completed, pending, deferred, completedAt: now().toISOString() };
   }
 
   return { evaluateDiditDecision, process, run };
