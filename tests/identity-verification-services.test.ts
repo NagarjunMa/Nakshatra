@@ -3,7 +3,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const createDiditVerificationSession = vi.hoisted(() => vi.fn());
 vi.mock("@/features/identity-verification/server/didit.provider", () => ({
   createDiditVerificationSession,
-  DiditProviderError: class DiditProviderError extends Error {},
+  DiditProviderError: class DiditProviderError extends Error {
+    constructor(readonly code: string) {
+      super(code);
+    }
+  },
 }));
 
 import { createIdentityVerificationInvitation, IdentityVerificationInvitationError } from "@/features/identity-verification/server/invitation.service";
@@ -93,5 +97,45 @@ describe("identity-verification services", () => {
     })).rejects.toEqual(expect.objectContaining<Partial<IdentityVerificationSessionError>>({ code: "IDENTITY_VERIFICATION_START_FAILED" }));
     await expect(withdrawIdentityVerificationConsent(supabaseWith([{ data: null, error: { code: "22023" } }]), "a".repeat(64)))
       .rejects.toEqual(expect.objectContaining<Partial<IdentityVerificationSessionError>>({ code: "IDENTITY_VERIFICATION_LINK_INVALID" }));
+  });
+
+  it("maps authorization and generic database failures without exposing persistence details", async () => {
+    await expect(startIdentityVerification({
+      supabase: supabaseWith([{ data: null, error: { code: "42501" } }]), candidateId: "candidate", invitationTokenHash: null,
+      managementToken: "management", managementTokenHash: "b".repeat(64), callbackUrl: "https://nakshatra.test/result",
+    })).rejects.toEqual(expect.objectContaining<Partial<IdentityVerificationSessionError>>({
+      code: "IDENTITY_VERIFICATION_FORBIDDEN", status: 403,
+    }));
+
+    await expect(getIdentityVerificationLinkStatus(
+      supabaseWith([{ data: null, error: { code: "XX000" } }]),
+      "a".repeat(64)
+    )).rejects.toEqual(expect.objectContaining<Partial<IdentityVerificationSessionError>>({
+      code: "IDENTITY_VERIFICATION_STATUS_FAILED", status: 503,
+    }));
+
+    await expect(retryIdentityVerification({
+      supabase: supabaseWith([{ data: null, error: { code: "22023" } }]), tokenHash: "a".repeat(64),
+      managementToken: "management", managementTokenHash: "b".repeat(64), callbackUrl: "https://nakshatra.test/result",
+    })).rejects.toEqual(expect.objectContaining<Partial<IdentityVerificationSessionError>>({
+      code: "IDENTITY_VERIFICATION_LINK_INVALID", status: 400,
+    }));
+  });
+
+  it("fails closed for malformed status results and provider-session persistence failures", async () => {
+    await expect(getIdentityVerificationLinkStatus(
+      supabaseWith([{ data: { kind: "management", status: "unknown" }, error: null }]),
+      "a".repeat(64)
+    )).rejects.toEqual(expect.objectContaining<Partial<IdentityVerificationSessionError>>({
+      code: "IDENTITY_VERIFICATION_STATUS_FAILED", status: 503,
+    }));
+
+    await expect(startIdentityVerification({
+      supabase: supabaseWith([{ data: prepared, error: null }, { data: null, error: { code: "42501" } }]),
+      candidateId: "candidate", invitationTokenHash: null, managementToken: "management",
+      managementTokenHash: "b".repeat(64), callbackUrl: "https://nakshatra.test/result",
+    })).rejects.toEqual(expect.objectContaining<Partial<IdentityVerificationSessionError>>({
+      code: "IDENTITY_VERIFICATION_FORBIDDEN", managementToken: "management", status: 403,
+    }));
   });
 });
