@@ -62,6 +62,7 @@ vi.mock("shaders/react", () => {
 });
 
 import Home from "../src/app/page";
+import { LandingExperience } from "../src/components/landing/LandingExperience";
 import ErrorPage from "../src/app/error";
 import NotFound from "../src/app/not-found";
 import { RashiPalettePicker } from "../src/components/portfolio/RashiPalettePicker";
@@ -70,17 +71,27 @@ import { getRashiPalettes } from "../src/features/portfolio/rashi-theme";
 describe("landing and shared frontend components", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("renders the product promise, viewing modes, and primary actions", () => {
+  it("renders the concise product promise, access model, and primary actions", () => {
     render(<Home />);
     expect(screen.getAllByText(/Nakshatra/i).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /create/i }).length).toBeGreaterThan(0);
-    expect(screen.getByRole("heading", { name: /create and share your marriage portfolio in one clear link/i })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /balanced view/i })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /private view/i })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /one portfolio\. one-time payment/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /one marriage portfolio\. always current\. shared on your terms/i })).toBeInTheDocument();
+    expect(screen.getAllByText(/first view/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/full view/i).length).toBeGreaterThan(0);
+    expect(screen.getByRole("heading", { name: /build first\. pay only when you are ready to publish/i })).toBeInTheDocument();
     expect(screen.getByText("₹2,450")).toBeInTheDocument();
     expect(screen.getByText(/plans do not renew automatically/i)).toBeInTheDocument();
     expect(screen.getAllByText(/identity verified/i).length).toBeGreaterThan(0);
+  });
+
+  it("offers distinct privacy and family landing concepts", () => {
+    const { rerender } = render(<LandingExperience variant="control" />);
+    expect(screen.getByRole("heading", { name: /share your story without sharing everything at once/i })).toBeInTheDocument();
+    expect(screen.getByText(/full view needs your approval/i)).toBeInTheDocument();
+
+    rerender(<LandingExperience variant="family" />);
+    expect(screen.getByRole("heading", { name: /one beautiful introduction\. easy for every family to open/i })).toBeInTheDocument();
+    expect(screen.getByText(/opens in their browser/i)).toBeInTheDocument();
   });
 
   it("handles empty, selected, disabled, and selectable rashi palettes", async () => {
