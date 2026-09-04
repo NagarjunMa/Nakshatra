@@ -29,8 +29,8 @@ describe("password recovery form", () => {
   it("requires matching passwords before submitting", async () => {
     const user = userEvent.setup();
     render(<ResetPasswordForm />);
-    await user.type(screen.getByLabelText("New password"), "new-password");
-    await user.type(screen.getByLabelText("Confirm new password"), "different-password");
+    await user.type(screen.getByLabelText("New password"), "NewPassword1");
+    await user.type(screen.getByLabelText("Confirm new password"), "DifferentPassword2");
     await user.click(screen.getByRole("button", { name: "Save new password" }));
     expect(screen.getByRole("alert")).toHaveTextContent("The passwords do not match.");
     expect(updateRecoveredPassword).not.toHaveBeenCalled();
@@ -39,10 +39,10 @@ describe("password recovery form", () => {
   it("updates the password and returns to the dashboard", async () => {
     const user = userEvent.setup();
     render(<ResetPasswordForm />);
-    await user.type(screen.getByLabelText("New password"), "new-password");
-    await user.type(screen.getByLabelText("Confirm new password"), "new-password");
+    await user.type(screen.getByLabelText("New password"), "NewPassword1");
+    await user.type(screen.getByLabelText("Confirm new password"), "NewPassword1");
     await user.click(screen.getByRole("button", { name: "Save new password" }));
-    expect(updateRecoveredPassword).toHaveBeenCalledWith("new-password");
+    expect(updateRecoveredPassword).toHaveBeenCalledWith("NewPassword1");
     expect(replace).toHaveBeenCalledWith("/dashboard?password=updated");
     expect(refresh).toHaveBeenCalled();
   });
@@ -58,8 +58,8 @@ describe("password recovery form", () => {
     expect(password).toHaveAttribute("type", "password");
     await user.click(screen.getAllByRole("button", { name: "Show password" })[0]);
     expect(password).toHaveAttribute("type", "text");
-    await user.type(password, "new-password");
-    await user.type(screen.getByLabelText("Confirm new password"), "new-password");
+    await user.type(password, "NewPassword1");
+    await user.type(screen.getByLabelText("Confirm new password"), "NewPassword1");
     await user.click(screen.getByRole("button", { name: "Save new password" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("This recovery link has expired.");
   });

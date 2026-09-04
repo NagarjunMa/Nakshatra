@@ -322,13 +322,13 @@ describe("authentication callback", () => {
   });
 
   it("creates a portfolio for a new authenticated user", async () => {
-    const createdSingle = vi.fn().mockResolvedValue({ data: { id: "portfolio-id" }, error: null });
-    const insertSelect = vi.fn(() => ({ single: createdSingle }));
-    const insert = vi.fn(() => ({ select: insertSelect }));
+    const createdMaybeSingle = vi.fn().mockResolvedValue({ data: { id: "portfolio-id" }, error: null });
+    const upsertSelect = vi.fn(() => ({ maybeSingle: createdMaybeSingle }));
+    const upsert = vi.fn(() => ({ select: upsertSelect }));
     const maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
     const eq = vi.fn(() => ({ maybeSingle }));
     const select = vi.fn(() => ({ eq }));
-    const from = vi.fn(() => ({ select, insert }));
+    const from = vi.fn(() => ({ select, upsert }));
     createClient.mockResolvedValue({
       auth: {
         exchangeCodeForSession: vi.fn().mockResolvedValue({ error: null }),
@@ -339,6 +339,9 @@ describe("authentication callback", () => {
     const response = await authCallback(new Request("http://local/api/auth/callback?code=ok&next=/edit"));
     const origin = process.env.NEXT_PUBLIC_APP_URL ? new URL(process.env.NEXT_PUBLIC_APP_URL).origin : "http://local";
     expect(response.headers.get("location")).toBe(`${origin}/edit`);
-    expect(insert).toHaveBeenCalled();
+    expect(upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ user_id: "owner" }),
+      { onConflict: "user_id", ignoreDuplicates: true }
+    );
   });
 });

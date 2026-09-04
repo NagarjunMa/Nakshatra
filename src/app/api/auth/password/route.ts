@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod/v4";
+import {
+  isAcceptablePassword,
+  PASSWORD_HELP,
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+} from "@/features/auth/password-policy";
 import { getApiUser } from "@/lib/auth";
 import { apiAuthFailureResponse } from "@/lib/api/auth-response";
 import {
@@ -11,7 +17,11 @@ import {
 } from "@/lib/api/request-security";
 
 const passwordSchema = z.object({
-  password: z.string().min(8).max(72),
+  password: z
+    .string()
+    .min(PASSWORD_MIN_LENGTH)
+    .max(PASSWORD_MAX_LENGTH)
+    .refine(isAcceptablePassword),
 });
 
 /** Sets a new password for the authenticated recovery session. */
@@ -23,7 +33,7 @@ export async function POST(request: Request) {
     const parsed = passwordSchema.safeParse(await readJsonBody(request, AUTH_BODY_LIMIT));
     if (!parsed.success) {
       return NextResponse.json(
-        { code: "PASSWORD_INVALID", error: "Use at least eight characters." },
+        { code: "PASSWORD_INVALID", error: PASSWORD_HELP },
         { status: 400 }
       );
     }

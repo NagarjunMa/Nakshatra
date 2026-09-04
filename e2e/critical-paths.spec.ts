@@ -8,29 +8,40 @@ test("landing page presents the product and reaches account creation", async ({ 
   await expect(primaryCta).toHaveAttribute("href", "/signup");
   await page.goto("/signup");
   await expect(page).toHaveURL(/\/signup$/);
-  await expect(page.getByRole("heading", { name: /start your wedding portfolio/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /start your marriage portfolio/i })).toBeVisible();
+  await expect(page.getByLabel("Email address")).toBeVisible();
+  await expect(page.getByLabel("Password", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Create account" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: /continue with google/i })).toBeEnabled();
+  await expect(page.getByRole("button", { name: /sign-in link/i })).toHaveCount(0);
 });
 
 test("sign-in form preserves a safe post-auth destination", async ({ page }) => {
   await page.goto("/login?redirect=%2Fedit");
-  await expect(page.getByRole("heading", { name: /sign in to nakshatra/i })).toBeVisible();
-  await expect(page.getByRole("button", { name: /sign in with google/i })).toBeEnabled();
-  await expect(page.getByRole("button", { name: /email me a sign-in link/i })).toBeEnabled();
-  await page.getByLabel(/email/i).fill("person@example.com");
-  await expect(page.getByLabel(/email/i)).toHaveValue("person@example.com");
-  await page.getByRole("button", { name: /email me a sign-in link/i }).click();
-  await expect(page.getByRole("heading", { name: /check your inbox/i })).toBeVisible();
-  await expect(page.getByText("person@example.com", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /sign in to your portfolio/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: /continue with google/i })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Sign in" })).toBeEnabled();
+  await page.getByLabel("Email address").fill("person@example.com");
+  await page.getByLabel("Password", { exact: true }).fill("Wedding2026");
+  await expect(page.getByLabel("Email address")).toHaveValue("person@example.com");
+  await expect(page.getByLabel("Password", { exact: true })).toHaveValue("Wedding2026");
+  await expect(page.getByRole("button", { name: "Forgot password?" })).toBeVisible();
+
+  const viewport = await page.evaluate(() => ({
+    height: window.innerHeight,
+    pageHeight: document.documentElement.scrollHeight,
+  }));
+  expect(viewport.pageHeight).toBeLessThanOrEqual(viewport.height + 1);
 });
 
 test("unauthenticated owners are redirected away from protected screens", async ({ page }) => {
   await page.goto("/dashboard");
   await expect(page).toHaveURL(/\/login\?redirect=%2Fdashboard/);
-  await expect(page.getByRole("heading", { name: /sign in to nakshatra/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /sign in to your portfolio/i })).toBeVisible();
 
   await page.goto("/account");
   await expect(page).toHaveURL(/\/login\?redirect=%2Faccount/);
-  await expect(page.getByRole("heading", { name: /sign in to nakshatra/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /sign in to your portfolio/i })).toBeVisible();
 });
 
 test("landing page remains usable with reduced motion", async ({ page }) => {

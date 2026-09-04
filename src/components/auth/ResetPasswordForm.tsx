@@ -5,6 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Eye, EyeOff, KeyRound } from "lucide-react";
 import { updateRecoveredPassword } from "@/features/auth/client/auth.api";
+import {
+  isAcceptablePassword,
+  PASSWORD_HELP,
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+} from "@/features/auth/password-policy";
 
 export function ResetPasswordForm() {
   const [password, setPassword] = useState("");
@@ -19,6 +25,10 @@ export function ResetPasswordForm() {
     setError("");
     if (password !== confirmation) {
       setError("The passwords do not match.");
+      return;
+    }
+    if (!isAcceptablePassword(password)) {
+      setError(PASSWORD_HELP);
       return;
     }
     setPending(true);
@@ -45,7 +55,7 @@ export function ResetPasswordForm() {
         <section className="account-panel">
           <p className="account-eyebrow">Account security</p>
           <h1 className="account-title">Choose a new password.</h1>
-          <p className="account-copy">Use at least 8 characters. Do not reuse a password from another account.</p>
+          <p className="account-copy">{PASSWORD_HELP} Do not reuse a password from another account.</p>
           <form className="account-form" onSubmit={submit}>
             <PasswordField
               id="new-password"
@@ -90,8 +100,8 @@ function PasswordField({
   onToggle: () => void;
 }) {
   return (
-    <label className="account-field" htmlFor={id}>
-      <span>{label}</span>
+    <div className="account-field">
+      <label htmlFor={id}>{label}</label>
       <div className="auth-input-wrap">
         <KeyRound aria-hidden="true" />
         <input
@@ -99,8 +109,8 @@ function PasswordField({
           className="auth-input"
           type={show ? "text" : "password"}
           autoComplete="new-password"
-          minLength={8}
-          maxLength={72}
+          minLength={PASSWORD_MIN_LENGTH}
+          maxLength={PASSWORD_MAX_LENGTH}
           value={value}
           onChange={(event) => onChange(event.target.value)}
           required
@@ -114,6 +124,6 @@ function PasswordField({
           {show ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
         </button>
       </div>
-    </label>
+    </div>
   );
 }
