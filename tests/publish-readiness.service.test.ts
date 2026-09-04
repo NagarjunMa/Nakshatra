@@ -70,4 +70,23 @@ describe("portfolio publish readiness", () => {
       hasPublicHeroPhoto: true,
     })).not.toThrow();
   });
+
+  it("summarizes long lists of missing required details", () => {
+    const incomplete: PortfolioData = {
+      ...readyPortfolio,
+      personal: {
+        ...readyPortfolio.personal,
+        name: "",
+        dob: "",
+        gender: "" as PortfolioData["personal"]["gender"],
+        current_location: "",
+        profile_summary: undefined,
+        short_bio: undefined,
+      },
+      career: undefined,
+    };
+
+    expect(() => requirePortfolioPublishReadiness({ data: incomplete, hasPublicHeroPhoto: false }))
+      .toThrow(" and 2 more");
+  });
 });

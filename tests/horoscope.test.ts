@@ -32,6 +32,7 @@ vi.mock("sharp", () => ({ default: vi.fn(() => sharpPipeline) }));
 
 import {
   detectHoroscopeFile,
+  horoscopeFormatLabel,
   horoscopeLanguageSchema,
   MAX_HOROSCOPE_BYTES,
 } from "../src/features/horoscope/server/horoscope.contract";
@@ -69,6 +70,8 @@ describe("horoscope file contract", () => {
   it("accepts only scanned image bytes that match their extension", () => {
     expect(detectHoroscopeFile("scan.jpg", Buffer.from([0xff, 0xd8, 0xff, 0x00]))).toMatchObject({ extension: "webp", kind: "image" });
     expect(detectHoroscopeFile("scan.png", Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))).toMatchObject({ extension: "webp", kind: "image" });
+    expect(detectHoroscopeFile("scan.webp", Buffer.from("RIFFxxxxWEBP"))).toMatchObject({ extension: "webp", kind: "image" });
+    expect(detectHoroscopeFile("scan.heif", Buffer.from("xxxxftypmif1"))).toMatchObject({ extension: "webp", kind: "image" });
   });
 
   it("rejects document containers and extension mismatches", () => {
@@ -82,6 +85,13 @@ describe("horoscope file contract", () => {
     expect(horoscopeLanguageSchema.parse(" Kannada ")).toBe("Kannada");
     expect(horoscopeLanguageSchema.parse("  ")).toBeNull();
     expect(horoscopeLanguageSchema.safeParse("x".repeat(81)).success).toBe(false);
+  });
+
+  it("uses human-readable attachment format labels", () => {
+    expect(horoscopeFormatLabel("pdf")).toBe("PDF document");
+    expect(horoscopeFormatLabel("doc")).toBe("Word document");
+    expect(horoscopeFormatLabel("docx")).toBe("Word document");
+    expect(horoscopeFormatLabel("webp")).toBe("Scanned image");
   });
 });
 
@@ -142,6 +152,63 @@ describe("horoscope lifecycle service", () => {
     expect(repository.upload).not.toHaveBeenCalled();
   });
 
+  it("fails safely across validation, processing, and persistence boundaries", async () => {
+    await expect(uploadHoroscope({
+      supabase: {} as never, userId: "owner", portfolioId,
+      file: file(new Uint8Array([0xff, 0xd8, 0xff]), "scan.jpg"), language: "x".repeat(81),
+    })).rejects.toMatchObject({ status: 400 });
+
+    repository.findOwnedPortfolio.mockResolvedValueOnce({ data: null, error: { message: "denied" } });
+    await expect(uploadHoroscope({
+      supabase: {} as never, userId: "owner", portfolioId,
+      file: file(new Uint8Array([0xff, 0xd8, 0xff]), "scan.jpg"), language: "",
+    })).rejects.toMatchObject({ status: 404 });
+
+    await expect(uploadHoroscope({
+      supabase: {} as never, userId: "owner", portfolioId,
+      file: file("%PDF-1.7", "scan.pdf"), language: "",
+    })).rejects.toMatchObject({ status: 415 });
+
+    sharpPipeline.metadata.mockResolvedValueOnce({ width: 0, height: 10 });
+    await expect(uploadHoroscope({
+      supabase: {} as never, userId: "owner", portfolioId,
+      file: file(new Uint8Array([0xff, 0xd8, 0xff]), "scan.jpg"), language: "",
+    })).rejects.toMatchObject({ status: 415 });
+
+    repository.findByPortfolio.mockResolvedValueOnce({ data: null, error: { message: "database" } });
+    await expect(uploadHoroscope({
+      supabase: {} as never, userId: "owner", portfolioId,
+      file: file(new Uint8Array([0xff, 0xd8, 0xff]), "scan.jpg"), language: "",
+    })).rejects.toMatchObject({ status: 500 });
+
+    repository.upload.mockResolvedValueOnce({ error: { message: "storage" } });
+    await expect(uploadHoroscope({
+      supabase: {} as never, userId: "owner", portfolioId,
+      file: file(new Uint8Array([0xff, 0xd8, 0xff]), "scan.jpg"), language: "",
+    })).rejects.toMatchObject({ status: 500 });
+  });
+
+  it("cleans up failed writes and rolls back an unsafe replacement", async () => {
+    repository.save.mockResolvedValueOnce({ data: null, error: { message: "database" } });
+    await expect(uploadHoroscope({
+      supabase: {} as never, userId: "owner", portfolioId,
+      file: file(new Uint8Array([0xff, 0xd8, 0xff]), "scan.jpg"), language: "",
+    })).rejects.toMatchObject({ status: 500 });
+    expect(repository.remove).toHaveBeenCalled();
+
+    vi.clearAllMocks();
+    repository.findOwnedPortfolio.mockResolvedValue({ data: { id: portfolioId }, error: null });
+    repository.findByPortfolio.mockResolvedValue({ data: previous, error: null });
+    repository.upload.mockResolvedValue({ error: null });
+    repository.save.mockImplementation(async (payload) => ({ data: { id: "new-id", ...payload }, error: null }));
+    repository.remove.mockResolvedValueOnce({ error: { message: "storage" } }).mockResolvedValue({ error: null });
+    await expect(uploadHoroscope({
+      supabase: {} as never, userId: "owner", portfolioId,
+      file: file(new Uint8Array([0xff, 0xd8, 0xff]), "scan.jpg"), language: "",
+    })).rejects.toMatchObject({ status: 500 });
+    expect(repository.save).toHaveBeenCalledWith(previous);
+  });
+
   it("revokes on delete and publishes only through the explicit publish lifecycle", async () => {
     await deleteHoroscope({ supabase: {} as never, horoscopeId: "old-id" });
     expect(repository.delete).toHaveBeenCalledWith("old-id");
@@ -168,5 +235,17 @@ describe("horoscope lifecycle service", () => {
     repository.createSignedUrl.mockResolvedValueOnce({ data: null, error: { message: "storage" } });
     await expect(createOwnerHoroscopeViewUrl({ supabase: {} as never, userId: "owner" }))
       .rejects.toMatchObject({ status: 500 });
+  });
+
+  it("surfaces delete, storage cleanup, and publish failures", async () => {
+    repository.delete.mockResolvedValueOnce({ data: null, error: { message: "missing" } });
+    await expect(deleteHoroscope({ supabase: {} as never, horoscopeId: "missing" })).rejects.toMatchObject({ status: 404 });
+
+    repository.delete.mockResolvedValueOnce({ data: previous, error: null });
+    repository.remove.mockResolvedValueOnce({ error: { message: "storage" } });
+    await expect(deleteHoroscope({ supabase: {} as never, horoscopeId: "old-id" })).rejects.toMatchObject({ status: 500 });
+
+    repository.publish.mockResolvedValueOnce({ error: { message: "database" } });
+    await expect(publishHoroscope({ supabase: {} as never, portfolioId, publishedAt: "now" })).rejects.toMatchObject({ status: 500 });
   });
 });
