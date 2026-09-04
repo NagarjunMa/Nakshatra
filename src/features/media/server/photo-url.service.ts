@@ -7,6 +7,35 @@ import {
   type PortfolioPhoto,
 } from "../portfolio-photo";
 import type { PortfolioData, PortfolioMedia } from "../../../types/portfolio";
+import { PortfolioMediaRepository } from "./media.repository";
+
+/** Creates short-lived thumbnail URLs for the authenticated owner's dashboard. */
+export async function createOwnerPortfolioMediaPreviewUrls({
+  supabase,
+  media,
+}: {
+  supabase: SupabaseClient;
+  media: PortfolioMedia[];
+}) {
+  const repository = new PortfolioMediaRepository(supabase);
+  const entries = await Promise.all(
+    media.map(async (item) => {
+      const path = item.thumbnail_path || item.storage_path;
+      try {
+        const { data } = await repository.createSignedPhotoUrl(path, 60 * 60);
+        return [item.id, data?.signedUrl] as const;
+      } catch {
+        // A transient signing failure should not make a successful upload or
+        // the entire owner dashboard appear to have failed.
+        return [item.id, undefined] as const;
+      }
+    })
+  );
+
+  return Object.fromEntries(
+    entries.filter((entry): entry is readonly [string, string] => Boolean(entry[1]))
+  );
+}
 
 /**
  * Creates temporary full-resolution photo URLs for media the calling Supabase role may read.
@@ -23,7 +52,10 @@ export async function createPortfolioPhotoUrls({
   viewer?: "owner" | "approved" | "public";
   privacyMode?: PortfolioData["privacy_mode"];
 }): Promise<PortfolioPhoto[]> {
-  const orderedMedia = orderPortfolioPhotos(media);
+  const visibleMedia = viewer === "owner"
+    ? media
+    : media.filter((item) => item.visibility !== "hidden" && item.visibility !== "owner_only");
+  const orderedMedia = orderPortfolioPhotos(visibleMedia);
   let hasClearPrivateGalleryPhoto = false;
   const signedPhotos = await Promise.all(
     orderedMedia.map(async (item): Promise<PortfolioPhoto | null> => {

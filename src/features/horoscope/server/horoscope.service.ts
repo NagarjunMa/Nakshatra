@@ -133,3 +133,33 @@ export async function publishHoroscope({ supabase, portfolioId, publishedAt }: {
   const { error } = await repository.publish(portfolioId, publishedAt);
   if (error) throw new HoroscopeError("Could not publish the horoscope attachment", 500);
 }
+
+/** Creates a short-lived owner-only URL for the current horoscope attachment. */
+export async function createOwnerHoroscopeViewUrl({
+  supabase,
+  userId,
+}: {
+  supabase: SupabaseClient;
+  userId: string;
+}) {
+  const repository = new HoroscopeRepository(supabase);
+  const { data: portfolio, error: portfolioError } = await repository.findPortfolioForOwner(userId);
+  if (portfolioError || !portfolio) throw new HoroscopeError("Portfolio not found", 404);
+
+  const { data: horoscope, error: horoscopeError } = await repository.findByPortfolio(portfolio.id);
+  if (horoscopeError || !horoscope) {
+    throw new HoroscopeError("Horoscope attachment not found", 404);
+  }
+  const download = horoscope.file_extension === "doc" || horoscope.file_extension === "docx"
+    ? `horoscope.${horoscope.file_extension}`
+    : undefined;
+  const { data: signed, error: signedError } = await repository.createSignedUrl(
+    horoscope.storage_path,
+    5 * 60,
+    download
+  );
+  if (signedError || !signed?.signedUrl) {
+    throw new HoroscopeError("Unable to open horoscope attachment", 500);
+  }
+  return signed.signedUrl;
+}

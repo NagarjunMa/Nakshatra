@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const repository = vi.hoisted(() => ({
   findOwnedPortfolio: vi.fn(),
+  findPortfolioForOwner: vi.fn(),
   findByPortfolio: vi.fn(),
   findById: vi.fn(),
   save: vi.fn(),
@@ -9,6 +10,7 @@ const repository = vi.hoisted(() => ({
   publish: vi.fn(),
   upload: vi.fn(),
   remove: vi.fn(),
+  createSignedUrl: vi.fn(),
 }));
 const sharpPipeline = vi.hoisted(() => ({
   timeout: vi.fn(),
@@ -34,6 +36,7 @@ import {
   MAX_HOROSCOPE_BYTES,
 } from "../src/features/horoscope/server/horoscope.contract";
 import {
+  createOwnerHoroscopeViewUrl,
   deleteHoroscope,
   HoroscopeError,
   publishHoroscope,
@@ -86,10 +89,12 @@ describe("horoscope lifecycle service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     repository.findOwnedPortfolio.mockResolvedValue({ data: { id: portfolioId }, error: null });
+    repository.findPortfolioForOwner.mockResolvedValue({ data: { id: portfolioId }, error: null });
     repository.findByPortfolio.mockResolvedValue({ data: null, error: null });
     repository.upload.mockResolvedValue({ error: null });
     repository.save.mockImplementation(async (payload) => ({ data: { id: "new-id", created_at: "now", updated_at: "now", ...payload }, error: null }));
     repository.remove.mockResolvedValue({ error: null });
+    repository.createSignedUrl.mockResolvedValue({ data: { signedUrl: "https://signed.test/horoscope" }, error: null });
     repository.delete.mockResolvedValue({ data: previous, error: null });
     repository.publish.mockResolvedValue({ error: null });
     sharpPipeline.rotate.mockReturnValue(sharpPipeline);
@@ -144,5 +149,24 @@ describe("horoscope lifecycle service", () => {
 
     await publishHoroscope({ supabase: {} as never, portfolioId, publishedAt: "2026-08-04T00:00:00.000Z" });
     expect(repository.publish).toHaveBeenCalledWith(portfolioId, "2026-08-04T00:00:00.000Z");
+  });
+
+  it("creates owner-only view URLs and maps lookup or signing failures", async () => {
+    repository.findByPortfolio.mockResolvedValue({ data: previous, error: null });
+    await expect(createOwnerHoroscopeViewUrl({ supabase: {} as never, userId: "owner" }))
+      .resolves.toBe("https://signed.test/horoscope");
+    expect(repository.createSignedUrl).toHaveBeenCalledWith(previous.storage_path, 300, undefined);
+
+    repository.findPortfolioForOwner.mockResolvedValueOnce({ data: null, error: { message: "missing" } });
+    await expect(createOwnerHoroscopeViewUrl({ supabase: {} as never, userId: "owner" }))
+      .rejects.toMatchObject({ status: 404 });
+
+    repository.findByPortfolio.mockResolvedValueOnce({ data: null, error: { message: "missing" } });
+    await expect(createOwnerHoroscopeViewUrl({ supabase: {} as never, userId: "owner" }))
+      .rejects.toMatchObject({ status: 404 });
+
+    repository.createSignedUrl.mockResolvedValueOnce({ data: null, error: { message: "storage" } });
+    await expect(createOwnerHoroscopeViewUrl({ supabase: {} as never, userId: "owner" }))
+      .rejects.toMatchObject({ status: 500 });
   });
 });

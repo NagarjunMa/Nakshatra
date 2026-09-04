@@ -21,6 +21,9 @@ const mocks = vi.hoisted(() => ({
   imageResponse: vi.fn(),
   authUser: null as { id: string; email?: string; email_confirmed_at?: string } | null,
   apiAuthStatus: "missing_session" as "missing_session" | "authenticated",
+  loadDashboardView: vi.fn(),
+  loadOwnerPublicPreview: vi.fn(),
+  loadOwnerApprovedPreview: vi.fn(),
 }));
 
 function databaseClient() {
@@ -65,6 +68,13 @@ vi.mock("@/lib/auth", () => ({
 }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => databaseClient() }));
 vi.mock("@/features/media/server/photo-url.service", () => ({ createPortfolioPhotoUrls: mocks.photoUrls }));
+vi.mock("@/features/portfolio/server/dashboard-view.service", () => ({
+  loadDashboardView: mocks.loadDashboardView,
+}));
+vi.mock("@/features/portfolio/server/owner-preview.service", () => ({
+  loadOwnerPublicPreview: mocks.loadOwnerPublicPreview,
+  loadOwnerApprovedPreview: mocks.loadOwnerApprovedPreview,
+}));
 vi.mock("@/components/templates", () => ({
   BiodataTemplate: (props: { data: PortfolioData; accessMode?: string; interestAction?: React.ReactNode }) => (
     <div data-testid="template">{props.data.personal.name}:{props.accessMode}{props.interestAction}</div>
@@ -105,6 +115,30 @@ beforeEach(() => {
   mocks.outcomes = {};
   mocks.authUser = null;
   mocks.apiAuthStatus = "missing_session";
+  mocks.loadDashboardView.mockImplementation(async () => {
+    const dashboardPortfolio = (mocks.outcomes.portfolios?.data ?? null) as typeof portfolio | null;
+    return {
+      portfolio: dashboardPortfolio,
+      viewCount: mocks.outcomes.portfolio_views?.count ?? 0,
+      media: mocks.outcomes.portfolio_media?.data ?? [],
+      mediaUrls: {},
+      horoscope: mocks.outcomes.portfolio_horoscopes?.data ?? null,
+      interests: mocks.outcomes.interest_requests?.data ?? [],
+      accessSummary: { grants: [], events: [] },
+    };
+  });
+  mocks.loadOwnerPublicPreview.mockImplementation(async () => {
+    const ownerPortfolio = (mocks.outcomes.portfolios?.data ?? null) as typeof portfolio | null;
+    return ownerPortfolio
+      ? { portfolio: ownerPortfolio, data: ownerPortfolio.draft_data, photos: await mocks.photoUrls() }
+      : null;
+  });
+  mocks.loadOwnerApprovedPreview.mockImplementation(async () => {
+    const ownerPortfolio = (mocks.outcomes.portfolios?.data ?? null) as typeof portfolio | null;
+    return ownerPortfolio
+      ? { portfolio: ownerPortfolio, data: ownerPortfolio.draft_data, photos: await mocks.photoUrls(), horoscopeAttachment: undefined }
+      : null;
+  });
 });
 
 describe("authenticated server pages", () => {
@@ -146,7 +180,7 @@ describe("authenticated server pages", () => {
     expect(screen.getByText("Public preview · Draft")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Back to editing" })).toHaveAttribute("href", "/dashboard?edit=1");
     expect(screen.getByTestId("template")).toHaveTextContent("Aditi Rao:public");
-    expect(mocks.photoUrls).toHaveBeenCalledWith(expect.objectContaining({ viewer: "public" }));
+    expect(mocks.loadOwnerPublicPreview).toHaveBeenCalledWith(expect.anything(), "user-1");
     mocks.outcomes.portfolios = { data: null };
     await expect(PreviewPage()).rejects.toThrow("REDIRECT:/dashboard?edit=1");
   });
@@ -158,7 +192,7 @@ describe("authenticated server pages", () => {
     render(await ApprovedPreviewPage());
     expect(screen.getByText(/Full Approved View · Owner preview/)).toBeInTheDocument();
     expect(screen.getByTestId("template")).toHaveTextContent("Aditi Rao:approved");
-    expect(mocks.photoUrls).toHaveBeenCalledWith(expect.objectContaining({ viewer: "approved" }));
+    expect(mocks.loadOwnerApprovedPreview).toHaveBeenCalledWith(expect.anything(), "user-1");
   });
 });
 

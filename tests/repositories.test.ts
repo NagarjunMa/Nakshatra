@@ -1,12 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 import { PortfolioMediaRepository } from "../src/features/media/server/media.repository";
 import { DashboardRepository } from "../src/features/portfolio/server/dashboard.repository";
+import { HoroscopeRepository } from "../src/features/horoscope/server/horoscope.repository";
+import { InterestRepository } from "../src/features/interest/server/interest.repository";
 
 type QueryResult = { data?: unknown; error: unknown; count?: number };
 
 function query(result: QueryResult = { data: { id: "row" }, error: null }) {
   const value: Record<string, unknown> = {};
-  for (const method of ["select", "eq", "neq", "in", "insert", "update", "upsert", "delete"]) {
+  for (const method of ["select", "eq", "neq", "in", "order", "limit", "insert", "update", "upsert", "delete"]) {
     value[method] = vi.fn(() => value);
   }
   value.single = vi.fn().mockResolvedValue(result);
@@ -22,9 +24,10 @@ describe("PortfolioMediaRepository", () => {
     const upload = vi.fn().mockResolvedValue({ error: null });
     const remove = vi.fn().mockResolvedValue({ error: null });
     const download = vi.fn().mockResolvedValue({ data: new Blob(), error: null });
+    const createSignedUrl = vi.fn().mockResolvedValue({ data: { signedUrl: "https://signed.test/photo" }, error: null });
     const from = vi.fn(() => q);
     const rpc = vi.fn().mockResolvedValue({ data: true, error: null });
-    const supabase = { from, rpc, storage: { from: vi.fn(() => ({ upload, remove, download })) } } as never;
+    const supabase = { from, rpc, storage: { from: vi.fn(() => ({ upload, remove, download, createSignedUrl })) } } as never;
     const repository = new PortfolioMediaRepository(supabase);
 
     await repository.findOwnedPortfolio("portfolio", "owner");
@@ -39,12 +42,14 @@ describe("PortfolioMediaRepository", () => {
     await repository.findPortfolioPhotos("portfolio");
     await repository.setPrimaryHero("media");
     await repository.deleteMedia("media");
+    await repository.createSignedPhotoUrl("path.webp", 3600);
 
     expect(from).toHaveBeenCalledWith("portfolios");
     expect(from).toHaveBeenCalledWith("portfolio_media");
     expect(upload).toHaveBeenCalledWith("path.webp", expect.any(Buffer), { contentType: "image/webp" });
     expect(remove).toHaveBeenCalledWith(["path.webp"]);
     expect(download).toHaveBeenCalledWith("path.webp");
+    expect(createSignedUrl).toHaveBeenCalledWith("path.webp", 3600);
     expect(rpc).toHaveBeenCalledWith("set_portfolio_hero", { p_media_id: "media" });
     expect(q.in).toHaveBeenCalledWith("media_type", ["hero", "gallery"]);
   });
@@ -58,6 +63,9 @@ describe("DashboardRepository", () => {
     const repository = new DashboardRepository(supabase);
 
     await repository.findPortfolioForUser("owner");
+    await repository.findDashboardPortfolioForUser("owner");
+    await repository.findOwnerPreviewPortfolioForUser("owner");
+    await repository.countPortfolioViews("portfolio");
     await repository.saveDashboardDraftTransaction({
       portfolio: { draft_data: {} },
       candidate: null,
@@ -90,4 +98,34 @@ describe("DashboardRepository", () => {
     expect(rpc).toHaveBeenCalledWith("renew_portfolio_transaction", { p_expires_at: "2099-01-01" });
   });
 
+});
+
+describe("dashboard read repositories", () => {
+  it("builds bounded interest and horoscope owner reads", async () => {
+    const q = query({ data: { id: "row" }, error: null });
+    const createSignedUrl = vi.fn().mockResolvedValue({
+      data: { signedUrl: "https://signed.test/horoscope" },
+      error: null,
+    });
+    const supabase = {
+      from: vi.fn(() => q),
+      rpc: vi.fn(),
+      storage: { from: vi.fn(() => ({ createSignedUrl })) },
+    } as never;
+
+    const interests = new InterestRepository(supabase);
+    const horoscopes = new HoroscopeRepository(supabase);
+    await interests.listForPortfolio("portfolio", 12);
+    await horoscopes.findPortfolioForOwner("owner");
+    await horoscopes.findByPortfolio("portfolio");
+    await horoscopes.createSignedUrl("owner/chart.webp", 300, "horoscope.webp");
+
+    expect(q.limit).toHaveBeenCalledWith(12);
+    expect(q.order).toHaveBeenCalledWith("created_at", { ascending: false });
+    expect(createSignedUrl).toHaveBeenCalledWith(
+      "owner/chart.webp",
+      300,
+      { download: "horoscope.webp" }
+    );
+  });
 });

@@ -8,8 +8,7 @@ import type { Portfolio, PortfolioData, PortfolioMedia } from "../src/types/port
 const mocks = vi.hoisted(() => ({
   push: vi.fn(),
   refresh: vi.fn(),
-  signOut: vi.fn(),
-  createSignedUrl: vi.fn(async (path: string) => ({ data: { signedUrl: `https://signed.test/${path}` } })),
+  clearLocalSession: vi.fn(),
   save: vi.fn(),
   publish: vi.fn(),
   renew: vi.fn(),
@@ -22,11 +21,8 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: mocks.push, refresh: mocks.refresh }) }));
-vi.mock("@/lib/supabase/client", () => ({
-  createClient: () => ({
-    auth: { signOut: mocks.signOut },
-    storage: { from: () => ({ createSignedUrl: mocks.createSignedUrl }) },
-  }),
+vi.mock("@/features/account/client/account.api", () => ({
+  clearLocalAccountSession: mocks.clearLocalSession,
 }));
 vi.mock("@/features/portfolio/client/portfolio-dashboard.api", () => ({
   saveDashboardDraftRequest: mocks.save,
@@ -66,7 +62,8 @@ const accessGrantId = "11111111-1111-4111-8111-111111111111";
 
 function renderDashboard(overrides: Partial<React.ComponentProps<typeof DashboardClient>> = {}) {
   return render(<DashboardClient portfolio={portfolio} viewCount={12} userEmail="aditi@example.com"
-    shareUrl="https://nakshatra.test/p/token" isExpired daysLeft={0} media={[media]} {...overrides} />);
+    shareUrl="https://nakshatra.test/p/token" isExpired daysLeft={0} media={[media]}
+    mediaUrls={{ "media-1": "https://signed.test/one-thumb.webp" }} {...overrides} />);
 }
 
 beforeEach(() => {
@@ -82,7 +79,10 @@ beforeEach(() => {
   mocks.manageAccess.mockResolvedValue({ ok: true, status: "renewed", expiresAt: "2099-02-01T12:00:00.000Z" });
   mocks.remove.mockResolvedValue({ ok: true, data: {} });
   mocks.update.mockImplementation(async (_id, changes) => ({ ok: true, data: { media: { ...media, ...changes } } }));
-  mocks.upload.mockResolvedValue({ ok: true, data: { media: { ...media, id: "media-2" } } });
+  mocks.upload.mockResolvedValue({
+    ok: true,
+    data: { media: { ...media, id: "media-2" }, previewUrl: "https://signed.test/media-2.webp" },
+  });
 });
 
 afterEach(() => {
@@ -143,7 +143,6 @@ describe("dashboard client", () => {
   it("operates published-link controls and signs out", async () => {
     renderDashboard();
     expect(screen.getByRole("link", { name: /full approved view/i })).toHaveAttribute("href", "/approved-preview");
-    await waitFor(() => expect(mocks.createSignedUrl).toHaveBeenCalledWith("one-thumb.webp", 3600));
     fireEvent.click(screen.getByRole("button", { name: "Copy" }));
     await waitFor(() => expect(navigator.clipboard.writeText).toHaveBeenCalled());
     fireEvent.click(screen.getByRole("button", { name: /share on whatsapp/i }));
@@ -155,7 +154,7 @@ describe("dashboard client", () => {
     fireEvent.click(screen.getByRole("button", { name: /unpublish/i }));
     await waitFor(() => expect(mocks.unpublish).toHaveBeenCalled());
     fireEvent.click(screen.getByRole("button", { name: /sign out/i }));
-    await waitFor(() => expect(mocks.signOut).toHaveBeenCalled());
+    await waitFor(() => expect(mocks.clearLocalSession).toHaveBeenCalled());
     expect(mocks.push).toHaveBeenCalledWith("/");
   });
 
@@ -231,7 +230,9 @@ describe("dashboard client", () => {
     fireEvent.click(screen.getByRole("button", { name: /edit portfolio/i }));
     expect(screen.getByText("1/8")).toBeInTheDocument();
     expect(screen.getByRole("article", { name: "Profile photo" })).toHaveClass("w-36", "sm:w-40");
-    expect((await screen.findByAltText("Portrait")).parentElement).toHaveClass("h-36", "sm:h-40");
+    const portrait = await screen.findByAltText("Portrait");
+    expect(portrait).toHaveAttribute("src", "https://signed.test/one-thumb.webp");
+    expect(portrait.parentElement).toHaveClass("h-36", "sm:h-40");
     expect(screen.getByRole("button", { name: /add photos/i })).toHaveClass("h-36", "w-36", "sm:h-40", "sm:w-40");
     fireEvent.change(screen.getByLabelText("Photo visibility"), { target: { value: "hidden" } });
     await waitFor(() => expect(mocks.update).toHaveBeenCalledWith("media-1", { visibility: "hidden" }));
