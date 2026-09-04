@@ -5,16 +5,16 @@ owner and dated evidence in the approved private compliance store. Do not put
 provider credentials, session identifiers, identity evidence, or personal data
 in this repository, GitHub issues, Linear, or routine logs.
 
-## Deployment state
+## Deployment gate
 
-- The linked Supabase project is `Nakshatra`. On 2026-09-04 its migration
-  ledger stopped at `20260824002314`; the NAK-51 migrations
-  `20260902141433` and `20260902143932` were not applied.
+- The linked Supabase project must be `Nakshatra` with project host
+  `xizzzczzhqzabcipbgep.supabase.co`.
 - Apply all pending migrations only through the protected `CD` workflow on
   `main`. The workflow must complete its dry run before its actual database
   push. A repository-local `supabase db push` is not an approved substitute.
-- After deployment, verify `npx supabase migration list --linked` shows both
-  versions in the remote column before enabling the worker.
+- After deployment, verify `npx supabase migration list --linked` shows NAK-51
+  versions `20260902141433` and `20260902143932` in the remote column before
+  enabling the worker.
 
 ## Trusted worker schedule
 
@@ -27,8 +27,13 @@ Create an isolated GitHub environment named
 `identity-verification-worker-production` with these environment secrets:
 
 - `DIDIT_API_KEY`
-- `NEXT_PUBLIC_SUPABASE_URL`
+- `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
+
+Set the repository variable `DIDIT_ALERT_ASSIGNEE` to the GitHub username of
+the accountable on-call operator. Worker alerts use a bot-controlled
+`ops-worker-failure` label and that assignee; title-only matching is not trusted
+because this repository accepts public issues.
 
 Restrict environment deployment branches to `main`. Scheduled jobs cannot
 wait for a human reviewer, so this environment must use branch restrictions
@@ -89,10 +94,3 @@ system.
    output and the alert recovery path.
 7. Enable the live Didit workflow only after the scheduler and external
    missing-run monitor are healthy.
-
-## Current decision
-
-**NO-GO.** The NAK-51 migrations are not deployed, GitHub CLI access is not
-currently authenticated for protected-workflow verification, and the external
-provider/legal evidence has not been supplied. The scheduling code may be
-merged and configured, but live verification must remain disabled.

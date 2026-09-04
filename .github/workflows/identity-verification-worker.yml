@@ -19,9 +19,7 @@ jobs:
     permissions:
       contents: read
     env:
-      DIDIT_API_KEY: ${{ secrets.DIDIT_API_KEY }}
-      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      EXPECTED_SUPABASE_HOST: xizzzczzhqzabcipbgep.supabase.co
       IDENTITY_VERIFICATION_BATCH_SIZE: "25"
 
     steps:
@@ -38,13 +36,35 @@ jobs:
         run: npm ci --omit=dev --ignore-scripts
 
       - name: Validate isolated worker secrets
+        env:
+          DIDIT_API_KEY: ${{ secrets.DIDIT_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           test -n "$DIDIT_API_KEY" || { echo "DIDIT_API_KEY is not configured"; exit 1; }
-          test -n "$NEXT_PUBLIC_SUPABASE_URL" || { echo "NEXT_PUBLIC_SUPABASE_URL is not configured"; exit 1; }
+          test -n "$SUPABASE_URL" || { echo "SUPABASE_URL is not configured"; exit 1; }
           test -n "$SUPABASE_SERVICE_ROLE_KEY" || { echo "SUPABASE_SERVICE_ROLE_KEY is not configured"; exit 1; }
-          node --input-type=module -e 'const url = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL); if (url.protocol !== "https:") process.exit(1)'
+          node --input-type=module -e '
+            const url = new URL(process.env.SUPABASE_URL);
+            const valid = url.protocol === "https:"
+              && url.hostname === process.env.EXPECTED_SUPABASE_HOST
+              && url.port === ""
+              && url.username === ""
+              && url.password === ""
+              && url.pathname === "/"
+              && url.search === ""
+              && url.hash === "";
+            if (!valid) {
+              console.error("SUPABASE_URL does not identify the approved Nakshatra project");
+              process.exit(1);
+            }
+          '
 
       - name: Process bounded verification batch
+        env:
+          DIDIT_API_KEY: ${{ secrets.DIDIT_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: npm run identity-verification:process
 
   alert:
@@ -59,6 +79,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       WORKER_RESULT: ${{ needs.process.result }}
       RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      ALERT_ASSIGNEE: ${{ vars.DIDIT_ALERT_ASSIGNEE }}
 
     steps:
       - name: Open the operational alert
@@ -66,9 +87,23 @@ jobs:
         run: |
           set -euo pipefail
           alert_title="[Operational Alert] Identity verification worker is failing"
+          alert_label="ops-worker-failure"
+          test -n "$ALERT_ASSIGNEE" || { echo "DIDIT_ALERT_ASSIGNEE is not configured"; exit 1; }
+
+          if ! gh api "repos/$GITHUB_REPOSITORY/labels/$alert_label" >/dev/null 2>&1; then
+            gh api \
+              --method POST \
+              "repos/$GITHUB_REPOSITORY/labels" \
+              -f name="$alert_label" \
+              -f color="B60205" \
+              -f description="Trusted identity-verification worker failure" \
+              >/dev/null
+          fi
+
           issue_number="$(gh issue list \
             --repo "$GITHUB_REPOSITORY" \
             --state open \
+            --label "$alert_label" \
             --search 'Identity verification worker is failing in:title' \
             --json number,title \
             --jq 'map(select(.title == "[Operational Alert] Identity verification worker is failing")) | first | .number // empty')"
@@ -81,5 +116,7 @@ jobs:
             gh issue create \
               --repo "$GITHUB_REPOSITORY" \
               --title "$alert_title" \
+              --label "$alert_label" \
+              --assignee "$ALERT_ASSIGNEE" \
               --body "The trusted five-minute identity-verification worker did not complete successfully. No candidate or provider identifiers are included in this alert. Review the protected run logs: $RUN_URL"
           fi
