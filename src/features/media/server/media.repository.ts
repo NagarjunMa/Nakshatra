@@ -2,6 +2,8 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+export const PORTFOLIO_MEDIA_COLUMNS = "id, portfolio_id, storage_path, thumbnail_path, media_type, visibility, sort_order, alt_text, metadata";
+
 /**
  * Performs private photo storage and portfolio-media persistence operations.
  * Input: an authenticated Supabase client at construction and typed method arguments.
@@ -46,7 +48,7 @@ export class PortfolioMediaRepository {
     return this.supabase
       .from("portfolio_media")
       .insert(payload)
-      .select("id, portfolio_id, storage_path, thumbnail_path, media_type, visibility, sort_order, alt_text, metadata")
+      .select(PORTFOLIO_MEDIA_COLUMNS)
       .single();
   }
 
@@ -55,14 +57,14 @@ export class PortfolioMediaRepository {
       .from("portfolio_media")
       .update(updates)
       .eq("id", mediaId)
-      .select("id, portfolio_id, storage_path, thumbnail_path, media_type, visibility, sort_order, alt_text, metadata")
+      .select(PORTFOLIO_MEDIA_COLUMNS)
       .single();
   }
 
   async findMedia(mediaId: string) {
     return this.supabase
       .from("portfolio_media")
-      .select("id, portfolio_id, storage_path, thumbnail_path, media_type, visibility, sort_order, alt_text, metadata")
+      .select(PORTFOLIO_MEDIA_COLUMNS)
       .eq("id", mediaId)
       .single();
   }
@@ -70,9 +72,10 @@ export class PortfolioMediaRepository {
   async findPortfolioPhotos(portfolioId: string) {
     return this.supabase
       .from("portfolio_media")
-      .select("id, portfolio_id, storage_path, thumbnail_path, media_type, visibility, sort_order, alt_text, metadata")
+      .select(PORTFOLIO_MEDIA_COLUMNS)
       .eq("portfolio_id", portfolioId)
-      .in("media_type", ["hero", "gallery"]);
+      .in("media_type", ["hero", "gallery"])
+      .order("sort_order");
   }
 
   async setPrimaryHero(mediaId: string) {
@@ -86,5 +89,9 @@ export class PortfolioMediaRepository {
       .eq("id", mediaId)
       .select("storage_path, thumbnail_path, metadata")
       .single();
+  }
+
+  async createSignedPhotoUrl(path: string, expiresInSeconds: number) {
+    return this.supabase.storage.from("photos").createSignedUrl(path, expiresInSeconds);
   }
 }

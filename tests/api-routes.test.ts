@@ -11,8 +11,10 @@ const managePortfolioGrant = vi.hoisted(() => vi.fn());
 const uploadPortfolioPhoto = vi.hoisted(() => vi.fn());
 const updatePortfolioPhoto = vi.hoisted(() => vi.fn());
 const deletePortfolioPhoto = vi.hoisted(() => vi.fn());
+const createOwnerPortfolioMediaPreviewUrls = vi.hoisted(() => vi.fn());
 const uploadHoroscope = vi.hoisted(() => vi.fn());
 const deleteHoroscope = vi.hoisted(() => vi.fn());
+const createOwnerHoroscopeViewUrl = vi.hoisted(() => vi.fn());
 const enforceRateLimit = vi.hoisted(() => vi.fn());
 
 vi.mock("../src/lib/auth", () => ({ getApiUser }));
@@ -41,9 +43,13 @@ vi.mock("../src/features/media/server/media.service", async (importOriginal) => 
   const actual = await importOriginal<typeof import("../src/features/media/server/media.service")>();
   return { ...actual, uploadPortfolioPhoto, updatePortfolioPhoto, deletePortfolioPhoto };
 });
+vi.mock("../src/features/media/server/photo-url.service", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../src/features/media/server/photo-url.service")>();
+  return { ...actual, createOwnerPortfolioMediaPreviewUrls };
+});
 vi.mock("../src/features/horoscope/server/horoscope.service", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../src/features/horoscope/server/horoscope.service")>();
-  return { ...actual, uploadHoroscope, deleteHoroscope };
+  return { ...actual, uploadHoroscope, deleteHoroscope, createOwnerHoroscopeViewUrl };
 });
 vi.mock("../src/features/security/server/rate-limit.service", () => ({ enforceRateLimit }));
 
@@ -209,6 +215,7 @@ describe("portfolio media route", () => {
     enforceRateLimit.mockResolvedValue(null);
     getApiUser.mockResolvedValue(actor);
     uploadPortfolioPhoto.mockResolvedValue({ id: "media" });
+    createOwnerPortfolioMediaPreviewUrls.mockResolvedValue({ media: "https://storage.test/media" });
     updatePortfolioPhoto.mockResolvedValue({ id: "media", visibility: "public" });
     deletePortfolioPhoto.mockResolvedValue(undefined);
   });
@@ -220,7 +227,10 @@ describe("portfolio media route", () => {
     form.set("photo", new File(["image"], "photo.png", { type: "image/png" }));
     form.set("portfolioId", "portfolio");
     form.set("visibility", "public");
-    expect(await (await mediaPost(mutationRequest("http://local/api/portfolio-media", "POST", form))).json()).toEqual({ media: { id: "media" } });
+    expect(await (await mediaPost(mutationRequest("http://local/api/portfolio-media", "POST", form))).json()).toEqual({
+      media: { id: "media" },
+      previewUrl: "https://storage.test/media",
+    });
   });
 
   it("validates, updates, and deletes media", async () => {
@@ -255,6 +265,7 @@ describe("horoscope attachment route", () => {
     getApiUser.mockResolvedValue(actor);
     uploadHoroscope.mockResolvedValue({ id: "horoscope", portfolio_id: portfolioId });
     deleteHoroscope.mockResolvedValue(undefined);
+    createOwnerHoroscopeViewUrl.mockResolvedValue("https://storage.test/chart.pdf?token=short-lived");
   });
 
   it("requires authentication and validates upload identity", async () => {
@@ -293,44 +304,14 @@ describe("horoscope attachment route", () => {
   });
 
   it("opens the owner's attachment through a short-lived signed URL", async () => {
-    const portfolioSingle = vi.fn().mockResolvedValue({ data: { id: portfolioId } });
-    const horoscopeSingle = vi.fn().mockResolvedValue({
-      data: {
-        id: "horoscope-id",
-        portfolio_id: portfolioId,
-        storage_path: `${portfolioId}/original/chart.pdf`,
-        mime_type: "application/pdf",
-        file_extension: "pdf",
-        byte_size: 1024,
-        language_label: "Kannada",
-        page_count: 2,
-        published_at: null,
-        created_at: "2026-08-04T00:00:00Z",
-        updated_at: "2026-08-04T00:00:00Z",
-      },
-    });
-    const from = vi.fn((table: string) => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => table === "portfolios"
-          ? { single: portfolioSingle }
-          : { maybeSingle: horoscopeSingle }),
-      })),
-    }));
-    const createSignedUrl = vi.fn().mockResolvedValue({
-      data: { signedUrl: "https://storage.test/chart.pdf?token=short-lived" },
-      error: null,
-    });
-    getApiUser.mockResolvedValueOnce({
-      status: "authenticated",
-      user: { id: "owner" },
-      supabase: { from, storage: { from: vi.fn(() => ({ createSignedUrl })) } },
-    });
-
     const response = await horoscopeView(new Request("http://local/api/portfolio-horoscope/view"));
 
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toBe("https://storage.test/chart.pdf?token=short-lived");
-    expect(createSignedUrl).toHaveBeenCalledWith(`${portfolioId}/original/chart.pdf`, 300, undefined);
+    expect(createOwnerHoroscopeViewUrl).toHaveBeenCalledWith({
+      supabase: actor.supabase,
+      userId: "owner",
+    });
   });
 });
 

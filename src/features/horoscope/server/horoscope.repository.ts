@@ -11,6 +11,10 @@ export class HoroscopeRepository {
     return this.supabase.from("portfolios").select("id").eq("id", portfolioId).eq("user_id", userId).single();
   }
 
+  findPortfolioForOwner(userId: string) {
+    return this.supabase.from("portfolios").select("id").eq("user_id", userId).maybeSingle();
+  }
+
   findByPortfolio(portfolioId: string) {
     return this.supabase.from("portfolio_horoscopes").select(HOROSCOPE_COLUMNS).eq("portfolio_id", portfolioId).maybeSingle();
   }
@@ -42,5 +46,11 @@ export class HoroscopeRepository {
   remove(paths: string[]) {
     if (!paths.length) return Promise.resolve({ error: null });
     return this.supabase.storage.from("horoscopes").remove(paths);
+  }
+
+  createSignedUrl(path: string, expiresInSeconds: number, download?: string) {
+    return this.supabase.storage
+      .from("horoscopes")
+      .createSignedUrl(path, expiresInSeconds, download ? { download } : undefined);
   }
 }

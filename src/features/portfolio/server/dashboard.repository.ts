@@ -2,6 +2,9 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+export const DASHBOARD_PORTFOLIO_COLUMNS = "id, user_id, candidate_id, share_token, draft_data, published_data, template_id, theme_color, sun_sign, is_published, published_at, expires_at, last_renewed_at, privacy_mode, visibility_settings, created_at, updated_at";
+export const OWNER_PREVIEW_PORTFOLIO_COLUMNS = "id, draft_data, template_id, theme_color, sun_sign, privacy_mode";
+
 export interface StoredPortfolio {
   id: string;
   candidate_id: string | null;
@@ -65,6 +68,31 @@ export class DashboardRepository {
       .select("id, candidate_id, theme_color, is_published, share_token, expires_at")
       .eq("user_id", userId)
       .maybeSingle();
+  }
+
+  /** Loads the complete owner dashboard projection without using an unrestricted select. */
+  async findDashboardPortfolioForUser(userId: string) {
+    return this.supabase
+      .from("portfolios")
+      .select(DASHBOARD_PORTFOLIO_COLUMNS)
+      .eq("user_id", userId)
+      .maybeSingle();
+  }
+
+  /** Loads only the portfolio fields needed by owner preview pages. */
+  async findOwnerPreviewPortfolioForUser(userId: string) {
+    return this.supabase
+      .from("portfolios")
+      .select(OWNER_PREVIEW_PORTFOLIO_COLUMNS)
+      .eq("user_id", userId)
+      .maybeSingle();
+  }
+
+  async countPortfolioViews(portfolioId: string) {
+    return this.supabase
+      .from("portfolio_views")
+      .select("id", { count: "exact", head: true })
+      .eq("portfolio_id", portfolioId);
   }
 
   /** Persists the complete dashboard draft graph in one database transaction. */

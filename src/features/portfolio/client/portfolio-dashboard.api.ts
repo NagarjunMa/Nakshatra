@@ -75,7 +75,7 @@ export function unpublishPortfolioRequest() {
 
 /** Uploads one owner photo and returns the persisted media record. */
 export function uploadPortfolioPhotoRequest(formData: FormData) {
-  return requestPortfolioApi<{ media: PortfolioMedia }>("/api/portfolio-media", {
+  return requestPortfolioApi<{ media: PortfolioMedia; previewUrl: string | null }>("/api/portfolio-media", {
     method: "POST",
     body: formData,
   });

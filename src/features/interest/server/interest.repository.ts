@@ -27,4 +27,14 @@ export class InterestRepository {
       p_city: input.city ?? null,
     });
   }
+
+  /** Lists the newest owner-visible requests without exposing verification internals. */
+  listForPortfolio(portfolioId: string, limit = 12) {
+    return this.supabase
+      .from("interest_requests")
+      .select("id, viewer_name, viewer_phone, viewer_email, viewer_family_context, message, status, requester_user_id, metadata, created_at")
+      .eq("portfolio_id", portfolioId)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+  }
 }

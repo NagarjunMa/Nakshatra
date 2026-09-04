@@ -12,6 +12,7 @@ import {
   updatePortfolioPhoto,
   uploadPortfolioPhoto,
 } from "@/features/media/server/media.service";
+import { createOwnerPortfolioMediaPreviewUrls } from "@/features/media/server/photo-url.service";
 import {
   readFormDataBody,
   readJsonBody,
@@ -77,7 +78,11 @@ export async function POST(request: Request) {
       file,
       visibility: visibility.data,
     });
-    return NextResponse.json({ media });
+    const previewUrls = await createOwnerPortfolioMediaPreviewUrls({
+      supabase: auth.supabase,
+      media: [media],
+    });
+    return NextResponse.json({ media, previewUrl: previewUrls[media.id] ?? null });
   } catch (error) {
     return errorResponse(error);
   }

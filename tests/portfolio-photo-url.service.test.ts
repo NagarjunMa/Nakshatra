@@ -3,7 +3,10 @@ import {
   classifyPhotoOrientation,
   orderPortfolioPhotos,
 } from "../src/features/media/portfolio-photo";
-import { createPortfolioPhotoUrls } from "../src/features/media/server/photo-url.service";
+import {
+  createOwnerPortfolioMediaPreviewUrls,
+  createPortfolioPhotoUrls,
+} from "../src/features/media/server/photo-url.service";
 import type { PortfolioMedia } from "../src/types/portfolio";
 
 const media = [
@@ -31,6 +34,28 @@ const media = [
 ] satisfies PortfolioMedia[];
 
 describe("portfolio hero photo URLs", () => {
+  it("creates an owner dashboard map from thumbnail paths", async () => {
+    const createSignedUrl = vi.fn(async (path: string) => ({
+      data: path.includes("gallery") ? { signedUrl: `https://photos.test/${path}` } : null,
+    }));
+    const supabase = { storage: { from: vi.fn(() => ({ createSignedUrl })) } } as never;
+
+    await expect(createOwnerPortfolioMediaPreviewUrls({ supabase, media })).resolves.toEqual({
+      "gallery-id": "https://photos.test/owner/portfolio/gallery.webp",
+    });
+    expect(createSignedUrl).toHaveBeenCalledWith("owner/portfolio/gallery.webp", 3600);
+  });
+
+  it("keeps the dashboard usable when signing a thumbnail throws", async () => {
+    const createSignedUrl = vi.fn().mockRejectedValue(new Error("storage unavailable"));
+    const supabase = { storage: { from: vi.fn(() => ({ createSignedUrl })) } } as never;
+
+    await expect(createOwnerPortfolioMediaPreviewUrls({
+      supabase,
+      media: [media[0]],
+    })).resolves.toEqual({});
+  });
+
   it("classifies post-rotation image dimensions", () => {
     expect(classifyPhotoOrientation(900, 1200)).toBe("portrait");
     expect(classifyPhotoOrientation(1600, 900)).toBe("landscape");
@@ -195,6 +220,21 @@ describe("portfolio hero photo URLs", () => {
         viewer: "public",
       })
     ).resolves.toEqual([]);
+    expect(createSignedUrl).not.toHaveBeenCalled();
+  });
+
+  it("never signs hidden or owner-only photos for public and approved previews", async () => {
+    const createSignedUrl = vi.fn();
+    const supabase = { storage: { from: vi.fn(() => ({ createSignedUrl })) } } as never;
+    const privateMedia: PortfolioMedia[] = [
+      { ...media[0], id: "hidden", visibility: "hidden" },
+      { ...media[0], id: "owner-only", visibility: "owner_only" },
+    ];
+
+    await expect(createPortfolioPhotoUrls({ supabase, media: privateMedia, viewer: "public" }))
+      .resolves.toEqual([]);
+    await expect(createPortfolioPhotoUrls({ supabase, media: privateMedia, viewer: "approved" }))
+      .resolves.toEqual([]);
     expect(createSignedUrl).not.toHaveBeenCalled();
   });
 });

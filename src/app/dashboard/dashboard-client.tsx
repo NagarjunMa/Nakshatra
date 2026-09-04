@@ -1,7 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -56,6 +55,7 @@ interface Props {
   isExpired: boolean;
   daysLeft: number | null;
   media: PortfolioMedia[];
+  mediaUrls?: Record<string, string>;
   horoscope?: PortfolioHoroscope | null;
   initialEditorOpen?: boolean;
   interests?: InterestSummary[];
@@ -85,6 +85,7 @@ export default function DashboardClient({
   isExpired,
   daysLeft,
   media,
+  mediaUrls: initialMediaUrls = {},
   horoscope = null,
   initialEditorOpen = false,
   interests = [],
@@ -103,7 +104,7 @@ export default function DashboardClient({
   const [unpublishing, setUnpublishing] = useState(false);
   const [draftError, setDraftError] = useState<string | null>(null);
   const [portfolioMedia, setPortfolioMedia] = useState(media);
-  const [mediaUrls, setMediaUrls] = useState<Record<string, string>>({});
+  const [mediaUrls, setMediaUrls] = useState<Record<string, string>>(initialMediaUrls);
   const [uploadingMedia, setUploadingMedia] = useState(false);
   const [portfolioHoroscope, setPortfolioHoroscope] = useState(horoscope);
   const [uploadingHoroscope, setUploadingHoroscope] = useState(false);
@@ -114,36 +115,6 @@ export default function DashboardClient({
   const photoInputRef = useRef<HTMLInputElement>(null);
   const horoscopeInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
-  const supabase = useMemo(() => createClient(), []);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadMediaUrls() {
-      const signedUrls = await Promise.all(
-        portfolioMedia.map(async (item) => {
-          const path = item.thumbnail_path || item.storage_path;
-          const { data } = await supabase.storage
-            .from("photos")
-            .createSignedUrl(path, 60 * 60);
-          return [item.id, data?.signedUrl] as const;
-        })
-      );
-
-      if (!cancelled) {
-        setMediaUrls(
-          Object.fromEntries(
-            signedUrls.filter((entry): entry is [string, string] => Boolean(entry[1]))
-          )
-        );
-      }
-    }
-
-    void loadMediaUrls();
-    return () => {
-      cancelled = true;
-    };
-  }, [portfolioMedia, supabase]);
 
   async function copyLink() {
     if (!shareUrl) return;
@@ -249,7 +220,8 @@ export default function DashboardClient({
   }
 
   async function handleSignOut() {
-    await supabase.auth.signOut();
+    const { clearLocalAccountSession } = await import("@/features/account/client/account.api");
+    await clearLocalAccountSession();
     router.push("/");
   }
 
@@ -306,6 +278,7 @@ export default function DashboardClient({
         "@/features/portfolio/client/portfolio-dashboard.api"
       );
       const uploaded: PortfolioMedia[] = [];
+      const uploadedUrls: Record<string, string> = {};
       for (const file of selectedFiles) {
         const formData = new FormData();
         formData.append("photo", file);
@@ -313,8 +286,12 @@ export default function DashboardClient({
         const result = await uploadPortfolioPhotoRequest(formData);
         if (!result.ok) return void handlePortfolioApiFailure(result);
         uploaded.push(result.data.media);
+        if (result.data.previewUrl) {
+          uploadedUrls[result.data.media.id] = result.data.previewUrl;
+        }
       }
       setPortfolioMedia((current) => [...current, ...uploaded]);
+      setMediaUrls((current) => ({ ...current, ...uploadedUrls }));
       router.refresh();
     } catch (error) {
       setDraftError(error instanceof Error ? error.message : "Photo upload failed.");
@@ -351,6 +328,9 @@ export default function DashboardClient({
     const result = await deletePortfolioPhotoRequest(mediaId);
     if (!result.ok) return void handlePortfolioApiFailure(result);
     setPortfolioMedia((current) => current.filter((item) => item.id !== mediaId));
+    setMediaUrls((current) => Object.fromEntries(
+      Object.entries(current).filter(([id]) => id !== mediaId)
+    ));
   }
 
   async function uploadHoroscopeFile(file: File | null, language: string) {
@@ -379,20 +359,9 @@ export default function DashboardClient({
     }
   }
 
-  async function reviewHoroscope() {
+  function reviewHoroscope() {
     if (!portfolioHoroscope) return;
-    const downloadName = `horoscope.${portfolioHoroscope.file_extension}`;
-    const options = portfolioHoroscope.file_extension === "doc" || portfolioHoroscope.file_extension === "docx"
-      ? { download: downloadName }
-      : undefined;
-    const { data, error } = await supabase.storage
-      .from("horoscopes")
-      .createSignedUrl(portfolioHoroscope.storage_path, 5 * 60, options);
-    if (error || !data?.signedUrl) {
-      setDraftError("We could not open the horoscope attachment. Please try again.");
-      return;
-    }
-    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+    window.open("/api/portfolio-horoscope/view", "_blank", "noopener,noreferrer");
   }
 
   async function removeHoroscope() {
