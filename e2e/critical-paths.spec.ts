@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 test("landing page presents the product and reaches account creation", async ({ page }) => {
   await page.goto("/");
   await expect(page).toHaveTitle("Nakshatra - Digital Marriage Portfolio");
-  await expect(page.getByRole("heading", { name: /one marriage portfolio\. always current\. shared on your terms/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /stop resending your biodata every time something changes/i })).toBeVisible();
   const primaryCta = page.getByRole("main").getByRole("link", { name: /create my portfolio/i }).first();
   await expect(primaryCta).toHaveAttribute("href", "/signup");
   await page.goto("/signup");
@@ -49,13 +49,13 @@ test("landing page remains usable with reduced motion", async ({ page }) => {
   await page.goto("/");
   const main = page.getByRole("main");
   await expect(main.getByRole("link", { name: /create my portfolio/i }).first()).toBeVisible();
-  await expect(main.getByRole("link", { name: /see how it works/i })).toBeVisible();
+  await expect(main.getByRole("link", { name: /see what changes/i })).toBeVisible();
 });
 
 test("landing concepts keep the same clear path to account creation", async ({ page }) => {
   const concepts = [
-    ["/landing/control", /share your story without sharing everything at once/i],
-    ["/landing/family", /one beautiful introduction\. easy for every family to open/i],
+    ["/landing/control", /share your story\. not your privacy/i],
+    ["/landing/story", /a biodata is a list\. this is how you’re introduced/i],
   ] as const;
 
   for (const [path, heading] of concepts) {

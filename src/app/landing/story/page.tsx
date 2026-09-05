@@ -6,6 +6,6 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function LegacyFamilyLandingPage() {
+export default function StoryLandingPage() {
   return <LandingExperience variant="story" />;
 }

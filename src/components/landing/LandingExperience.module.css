@@ -36,7 +36,6 @@
 
 .header,
 .hero,
-.assuranceStrip,
 .problemSection,
 .stepsSection > *,
 .controlSection,
@@ -144,6 +143,11 @@
   text-wrap: balance;
 }
 
+.clarity .hero h1 {
+  max-width: 14ch;
+  font-size: clamp(3.3rem, 5vw, 4.7rem);
+}
+
 .heroLead {
   max-width: 55ch;
   margin-top: 1.8rem !important;
@@ -225,18 +229,6 @@
 .floatingMessage svg, .floatingNote svg { width: 1rem; height: 1rem; color: #1f7880; }
 .floatingNote { right: 0; bottom: 0.2rem; padding: 0.72rem 0.9rem; font-weight: 700; }
 
-.assuranceStrip {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  border-block: 1px solid var(--line);
-}
-
-.assuranceStrip div { display: grid; gap: 0.25rem; padding: 1.25rem 1.5rem; border-right: 1px solid var(--line); }
-.assuranceStrip div:first-child { padding-left: 0; }
-.assuranceStrip div:last-child { border: 0; }
-.assuranceStrip strong { font-size: 0.86rem; }
-.assuranceStrip span { color: var(--muted); font-size: 0.76rem; }
-
 .problemSection,
 .pricingSection,
 .faqSection { padding-block: clamp(4.5rem, 7vw, 6rem); }
@@ -271,7 +263,7 @@
 .outcomeCard a svg { width: 1rem; height: 1rem; }
 
 .stepsSection { padding-block: clamp(4.5rem, 7vw, 6rem); background: #efede5; }
-.stepsGrid { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 3rem; border-block: 1px solid #cfcec6; }
+.stepsGrid { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 3rem; border-block: 1px solid #cfcec6; }
 .stepsGrid article { min-height: 205px; padding: 1.6rem; border-right: 1px solid #cfcec6; }
 .stepsGrid article:first-child { padding-left: 0; }
 .stepsGrid article:last-child { border: 0; }
@@ -285,11 +277,18 @@
 .accessFlow span, .accessFlow strong { border: 1px solid #c9cec9; border-radius: 99px; padding: 0.55rem 0.72rem; }
 .accessFlow strong { border-color: #8db7b1; background: var(--teal-soft); color: #1a696e; }
 .accessFlow svg { width: 0.85rem; height: 0.85rem; }
-.controlGrid { display: grid; grid-template-columns: repeat(2, 1fr); border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
-.controlGrid article { min-height: 190px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 1.5rem; }
+.controlGrid { display: grid; grid-template-columns: 1fr; border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+.controlGrid article { position: relative; min-height: 140px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 1.25rem 1.5rem 1.25rem 4rem; }
 .controlGrid svg { width: 1.35rem; height: 1.35rem; color: #21717a; }
-.controlGrid h3 { margin-top: 2rem; font-size: 0.95rem; }
+.controlGrid article > svg { position: absolute; top: 1.35rem; left: 1.4rem; }
+.controlGrid article > span { color: var(--gold); font-size: 0.65rem; font-weight: 780; letter-spacing: 0.16em; text-transform: uppercase; }
+.controlGrid h3 { margin-top: 0.45rem; font-family: var(--font-portfolio-display), Georgia, serif; font-size: 1.35rem; font-weight: 500; }
 .controlGrid p { margin-top: 0.5rem; color: var(--muted); font-size: 0.82rem; line-height: 1.55; }
+.trustFacts { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 0.25rem; border-block: 1px solid var(--line); }
+.trustFacts span { display: flex; align-items: center; gap: 0.55rem; min-height: 70px; border-right: 1px solid var(--line); padding: 0.8rem 1rem; color: #4d6269; font-size: 0.74rem; line-height: 1.45; }
+.trustFacts span:first-child { padding-left: 0; }
+.trustFacts span:last-child { border: 0; }
+.trustFacts svg { width: 1rem; height: 1rem; color: #21717a; }
 
 .pricingSection { border-top: 1px solid var(--line); }
 .pricingGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem; margin-top: 2.5rem; }
@@ -335,8 +334,8 @@
 .footer > div a { min-height: 44px; display: inline-flex; align-items: center; }
 
 .control { --teal: #173e49; --teal-soft: #e4eeeb; }
-.family { --teal: #244f50; --teal-soft: #e8efea; --gold: #94702f; }
-.family .portrait { background: #c7bfa9; color: #4e625e; }
+.story { --teal: #244f50; --teal-soft: #e8efea; --gold: #94702f; }
+.story .portrait { background: #c7bfa9; color: #4e625e; }
 
 .page a:focus-visible,
 .page summary:focus-visible { outline: 3px solid rgb(35 118 125 / 0.32); outline-offset: 4px; border-radius: 0.3rem; }
@@ -348,11 +347,15 @@
 }
 
 @media (max-width: 860px) {
-  .header, .hero, .assuranceStrip, .problemSection, .stepsSection > *, .controlSection, .pricingSection, .faqSection, .finalCta, .footer { width: min(100% - 2rem, 680px); }
+  .header, .hero, .problemSection, .stepsSection > *, .controlSection, .pricingSection, .faqSection, .finalCta, .footer { width: min(100% - 2rem, 680px); }
   .hero { min-height: auto; grid-template-columns: 1fr; padding-block: 3.5rem; }
   .heroCopy { max-width: 640px; }
   .hero h1 { max-width: 13ch; }
   .visual { margin-top: 1rem; }
+  .stepsGrid { grid-template-columns: repeat(2, 1fr); }
+  .stepsGrid article { border-bottom: 1px solid #cfcec6; }
+  .stepsGrid article:nth-child(2n) { border-right: 0; }
+  .stepsGrid article:nth-last-child(-n + 2) { border-bottom: 0; }
   .problemGrid, .controlSection, .faqSection { grid-template-columns: 1fr; }
   .problemGrid { gap: 1.5rem; }
   .controlSection { gap: 2.5rem; }
@@ -370,6 +373,7 @@
   .navigation { gap: 0; }
   .hero { gap: 2.25rem; padding-block: 2.8rem 3.5rem; }
   .hero h1 { margin-top: 1rem; font-size: clamp(2.75rem, 14vw, 4rem); line-height: 0.98; }
+  .clarity .hero h1 { max-width: 13ch; font-size: clamp(2.6rem, 12.5vw, 3.45rem); }
   .heroLead { margin-top: 1.25rem !important; font-size: 0.98rem; line-height: 1.6; }
   .heroActions { flex-direction: column; align-items: stretch; margin-top: 1.5rem; }
   .heroActions a { width: 100%; }
@@ -384,9 +388,6 @@
   .introduction > p:nth-of-type(1) { margin-top: 1rem; }
   .introduction h2 { font-size: 2.4rem; }
   .portfolioCard > footer span { padding: 0.75rem 0.3rem; text-align: center; font-size: 0.58rem; }
-  .assuranceStrip { grid-template-columns: 1fr; }
-  .assuranceStrip div, .assuranceStrip div:first-child { padding: 1rem 0; border-right: 0; border-bottom: 1px solid var(--line); }
-  .assuranceStrip div:last-child { border-bottom: 0; }
   .problemSection, .pricingSection, .faqSection, .stepsSection, .controlSection { padding-block: 3.1rem; }
   .sectionHeading h2, .controlIntro h2, .finalCta h2 { font-size: clamp(2.35rem, 11vw, 3.3rem); }
   .problemGrid, .stepsGrid, .pricingGrid { margin-top: 2.2rem; }
@@ -394,9 +395,10 @@
   .stepsGrid article, .stepsGrid article:first-child { min-height: auto; padding: 1.4rem 0; border-right: 0; border-bottom: 1px solid #cfcec6; }
   .stepsGrid article:last-child { border-bottom: 0; }
   .stepsGrid h3 { margin-top: 1rem; }
-  .controlGrid { grid-template-columns: 1fr; }
-  .controlGrid article { min-height: 140px; padding: 1.25rem; }
-  .controlGrid h3 { margin-top: 1.25rem; }
+  .controlGrid article { min-height: 130px; }
+  .trustFacts { grid-template-columns: 1fr; }
+  .trustFacts span, .trustFacts span:first-child { min-height: 54px; border-right: 0; border-bottom: 1px solid var(--line); padding: 0.7rem 0; }
+  .trustFacts span:last-child { border-bottom: 0; }
   .accessFlow svg { transform: rotate(90deg); }
   .pricingGrid article { min-height: 185px; padding: 1.25rem; }
   .pricingGrid strong { margin-top: 1.65rem; }
