@@ -142,8 +142,8 @@ describe("dashboard client", () => {
 
   it("operates published-link controls and signs out", async () => {
     renderDashboard();
-    expect(screen.getByRole("link", { name: /full approved view/i })).toHaveAttribute("href", "/approved-preview");
-    fireEvent.click(screen.getByRole("button", { name: "Copy" }));
+    expect(screen.getByRole("link", { name: /full portfolio preview/i })).toHaveAttribute("href", "/approved-preview");
+    fireEvent.click(screen.getByRole("button", { name: "Copy link" }));
     await waitFor(() => expect(navigator.clipboard.writeText).toHaveBeenCalled());
     fireEvent.click(screen.getByRole("button", { name: /share on whatsapp/i }));
     expect(window.open).toHaveBeenCalledWith(expect.stringContaining("wa.me"), "_blank");
@@ -180,7 +180,7 @@ describe("dashboard client", () => {
 
     fireEvent.click(screen.getByText("Rohan Mehta"));
     expect(screen.getByText(/Toronto, Ontario, Canada/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Approve Full View" }));
+    fireEvent.click(screen.getByRole("button", { name: "Approve access" }));
 
     await waitFor(() => expect(decisionFetch).toHaveBeenCalledWith(
       "/api/interest/interest-1",
@@ -213,16 +213,16 @@ describe("dashboard client", () => {
     });
 
     expect(screen.getByText("Active until Jan 1, 2099")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Renew 30 days" }));
+    fireEvent.click(screen.getByRole("button", { name: "Renew 7 days" }));
     await waitFor(() => expect(mocks.manageAccess).toHaveBeenCalledWith(accessGrantId, "renew"));
     expect(await screen.findByText("Active until Feb 1, 2099")).toBeInTheDocument();
 
     mocks.manageAccess.mockResolvedValueOnce({ ok: true, status: "revoked" });
-    fireEvent.click(screen.getByRole("button", { name: "Revoke" }));
+    fireEvent.click(screen.getByRole("button", { name: "End access" }));
     await waitFor(() => expect(mocks.manageAccess).toHaveBeenCalledWith(accessGrantId, "revoke"));
-    expect(await screen.findByText("Access revoked")).toBeInTheDocument();
+    expect(await screen.findByText("Access ended")).toBeInTheDocument();
     fireEvent.click(screen.getByText("Access history"));
-    expect(screen.getByText("Full View granted to Rohan Mehta")).toBeInTheDocument();
+    expect(screen.getByText("Full portfolio access granted to Rohan Mehta")).toBeInTheDocument();
   });
 
   it("updates, deletes, and uploads owner photos", async () => {

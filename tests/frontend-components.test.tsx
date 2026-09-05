@@ -75,20 +75,21 @@ describe("landing and shared frontend components", () => {
     render(<Home />);
     expect(screen.getAllByText(/Nakshatra/i).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /create/i }).length).toBeGreaterThan(0);
-    expect(screen.getByRole("heading", { name: /stop resending your biodata every time something changes/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /share your introduction without losing control of it/i })).toBeInTheDocument();
     expect(screen.getAllByText(/first view/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/full view/i).length).toBeGreaterThan(0);
-    expect(screen.getByRole("heading", { name: /build first\. pay only when you are ready to publish/i })).toBeInTheDocument();
+    expect(screen.getAllByText(/full portfolio/i).length).toBeGreaterThan(0);
+    expect(screen.getByRole("heading", { name: /build for free\. pay when you are ready to publish/i })).toBeInTheDocument();
     expect(screen.getByText("₹2,450")).toBeInTheDocument();
     expect(screen.getByText(/outside india\? view pricing in usd/i)).toBeInTheDocument();
     expect(screen.getByText(/plans do not renew automatically/i)).toBeInTheDocument();
     expect(screen.getAllByText(/identity verified/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/these are not real Nakshatra users/i)).toBeInTheDocument();
   });
 
   it("offers distinct privacy and story-led landing concepts", () => {
     const { rerender } = render(<LandingExperience variant="control" />);
     expect(screen.getByRole("heading", { name: /share your story\. not your privacy/i })).toBeInTheDocument();
-    expect(screen.getByText(/full view needs your approval/i)).toBeInTheDocument();
+    expect(screen.getByText(/full portfolio needs approval/i)).toBeInTheDocument();
 
     rerender(<LandingExperience variant="story" />);
     expect(screen.getByRole("heading", { name: /a biodata is a list\. this is how you’re introduced/i })).toBeInTheDocument();

@@ -5,6 +5,7 @@ import {
   Check,
   ChevronDown,
   FileText,
+  Globe2,
   Images,
   LockKeyhole,
   MessageCircle,
@@ -21,78 +22,73 @@ export type LandingVariant = "clarity" | "control" | "story";
 const concepts = {
   clarity: {
     className: styles.clarity,
-    eyebrow: "One link instead of another file",
-    headline: "Stop resending your biodata every time something changes.",
-    lead: "One link replaces the PDF, scattered photos, horoscope files, and repeated WhatsApp forwards. Update it once—every family sees the same current portfolio.",
+    eyebrow: "A digital marriage portfolio",
+    headline: "Share your introduction without losing control of it.",
+    lead: "Your story, photographs, family details, and horoscope in one portfolio. Every family opens the same current link. Contact details stay private until you approve a viewer.",
     primary: "Create my portfolio",
-    secondary: "See what changes",
-    visualMode: "Balanced View",
-    visualNote: "One link, always current",
-    problemTitle: "From scattered files to one clear introduction.",
-    outcomeTitle: "Update once. Every family sees the current version.",
-    outcomeBody: "Your story, photographs, family details, and horoscope stay together in a clear portfolio you can manage from one place.",
-    controlTitle: "One link does not have to mean everyone sees everything.",
-    controlBody: "Choose the first view, keep contact details protected, and approve Full View only after a viewer verifies their email and sends an interest request.",
-    closingTitle: "Your story deserves better than another PDF.",
+    secondary: "View a sample portfolio",
+    visualMode: "Standard introduction",
+    visualNote: "Contact details protected",
   },
   control: {
     className: styles.control,
     eyebrow: "Privacy is part of the introduction",
     headline: "Share your story. Not your privacy.",
-    lead: "Choose what a first-time viewer sees, keep contact details protected, and approve seven-day Full View access only when an introduction feels relevant.",
+    lead: "Choose what a first-time viewer sees, keep contact details protected, and approve seven-day full portfolio access only when an introduction feels relevant.",
     primary: "Create my portfolio",
     secondary: "See how control works",
-    visualMode: "Private View",
-    visualNote: "Full View needs your approval",
-    problemTitle: "A forwarded PDF gives you no control after it leaves your phone.",
-    outcomeTitle: "Keep the link. Change the access.",
-    outcomeBody: "Nakshatra separates the first introduction from the complete portfolio, so sensitive details do not need to travel in every message.",
-    controlTitle: "You decide what is visible—and when.",
-    controlBody: "Share a useful first view with your link, review verified-email interest in your dashboard, and open or close Full View access from one place.",
-    closingTitle: "Tell your story with privacy built in.",
+    visualMode: "Short introduction",
+    visualNote: "Full portfolio needs approval",
   },
   story: {
     className: styles.story,
     eyebrow: "More than a list of facts",
     headline: "A biodata is a list. This is how you’re introduced.",
-    lead: "Bring your story, photographs, family, and horoscope together in the way you would actually want someone to understand you—not as another form or attachment.",
+    lead: "Bring your story, photographs, family, and horoscope together in the way you would actually want someone to understand you. Not as another form or attachment.",
     primary: "Create my portfolio",
     secondary: "See the portfolio structure",
-    visualMode: "Balanced View",
+    visualMode: "Standard introduction",
     visualNote: "Story · Journey · Family · Gallery",
-    problemTitle: "The best version of your story—not the flattest.",
-    outcomeTitle: "A thoughtful introduction, not a document bundle.",
-    outcomeBody: "Nakshatra gives your words, journey, family background, and photographs room to feel considered while keeping the information easy to follow.",
-    controlTitle: "Beautifully presented without becoming publicly discoverable.",
-    controlBody: "There is no public directory, score, or comparison feed. Your portfolio is found through the link you choose to share, and sensitive details remain controlled.",
-    closingTitle: "Introduce the person, not just the particulars.",
   },
 } as const;
 
 const problems = [
-  { icon: FileText, title: "Outdated biodata", body: "A small edit creates another PDF to resend." },
-  { icon: Images, title: "Details sent separately", body: "Photos and horoscope files disappear inside busy chats." },
-  { icon: MessageCircle, title: "Repeated explanations", body: "Families ask for the same information in different places." },
+  { icon: FileText, title: "It goes out of date", body: "One small correction means sending a new file to everyone all over again." },
+  { icon: Images, title: "It arrives in pieces", body: "Photographs and horoscope files get separated and lost inside long chats." },
+  { icon: LockKeyhole, title: "You cannot take it back", body: "Once a file is forwarded, you have no way to know where it went or who still has it." },
 ] as const;
 
 const steps = [
-  { number: "01", title: "Create", body: "Add your story, important details, photographs, family background, and horoscope." },
-  { number: "02", title: "Preview & verify", body: "Review exactly what families will see. Complete an identity check to add a verified badge." },
-  { number: "03", title: "Share", body: "Publish when ready and send the same mobile-friendly link through WhatsApp or email." },
-  { number: "04", title: "Approve", body: "Review verified-email interest and decide who receives seven-day Full View access." },
+  { number: "01", title: "Create", body: "Add your story, family background, photographs, and horoscope in a guided form. Save as you go and finish in your own time." },
+  { number: "02", title: "Preview and verify", body: "See exactly what each family will see before anyone else does. Complete a short identity check to add your verified badge." },
+  { number: "03", title: "Share", body: "Publish when you are ready and send one link through WhatsApp, email, or wherever your family already talks." },
+  { number: "04", title: "Approve", body: "Review interest requests in your dashboard and decide who sees your full portfolio." },
 ] as const;
 
 const viewModes = [
-  { icon: ShieldCheck, label: "First view", title: "Balanced View", body: "A useful introduction with the details most families expect." },
-  { icon: LockKeyhole, label: "First view", title: "Private View", body: "A shorter introduction that keeps more information behind approval." },
-  { icon: UserCheck, label: "After approval", title: "Full View", body: "The complete portfolio for an approved viewer, available for seven days." },
+  { icon: LockKeyhole, label: "First view", title: "Short introduction", body: "A brief introduction that keeps most details behind your approval." },
+  { icon: ShieldCheck, label: "First view", title: "Standard introduction", body: "The details most families expect to see when they first read a portfolio." },
+  { icon: UserCheck, label: "After approval", title: "Full portfolio", body: "Your complete portfolio, opened only for a viewer you have approved." },
 ] as const;
 
 const trustFacts = [
-  { icon: LockKeyhole, text: "Contact details stay out of the first view" },
-  { icon: BadgeCheck, text: "Verified badge follows a successful identity check" },
-  { icon: RefreshCw, text: "Close or renew Full View from your dashboard" },
-  { icon: Smartphone, text: "Opens in a browser—no app to install" },
+  { icon: LockKeyhole, text: "Contact details are never in the first view." },
+  { icon: BadgeCheck, text: "Viewers confirm their email before they can request more." },
+  { icon: UserCheck, text: "You approve or set aside every request from your dashboard." },
+  { icon: RefreshCw, text: "You can end someone's access at any time." },
+] as const;
+
+const familyBenefits = [
+  { icon: Smartphone, title: "Clear on every phone", body: "Large, readable text and plain labels. Comfortable for parents and grandparents to read." },
+  { icon: Globe2, title: "Nothing to install", body: "The link opens straight in a browser. There is no app to download and no account needed to read the first view." },
+  { icon: BadgeCheck, title: "Identity check available", body: "Complete an identity check to add a verified badge before you share your portfolio." },
+  { icon: RefreshCw, title: "Always current", body: "Change a detail, update your published portfolio, and the same link shows the current version." },
+] as const;
+
+const samplePortfolios = [
+  { initials: "AR", name: "Ananya Rao", detail: "Product designer · Bengaluru", accent: "sea" },
+  { initials: "AM", name: "Arjun Mehta", detail: "Architect · Pune", accent: "sand" },
+  { initials: "MI", name: "Meera Iyer", detail: "Physician · Chennai", accent: "rose" },
 ] as const;
 
 const plans = [
@@ -108,12 +104,13 @@ const internationalPlans = [
 ] as const;
 
 const faqs = [
-  { question: "Is Nakshatra a matchmaking website?", answer: "No. It helps you create and share your own marriage portfolio. There is no public profile feed." },
-  { question: "Does someone need to sign in to open my link?", answer: "No. Anyone with the link can open the first view you selected. To request Full View, a viewer verifies their email before the interest request is sent." },
+  { question: "Is Nakshatra a matchmaking website?", answer: "No. Nakshatra does not suggest matches or search for people on your behalf. It gives you one clear portfolio to share with the families you choose." },
+  { question: "Can I see my portfolio before I pay?", answer: "Yes. You can build your portfolio and preview every view for free. You only choose a plan when you are ready to publish." },
+  { question: "Does someone need to sign in to open my link?", answer: "No. Anyone with your link can read your first view straight away. A viewer verifies their email before asking to see your full portfolio." },
   { question: "What does Identity Verified mean?", answer: "It means the portfolio owner successfully completed an identity check. It does not guarantee that every detail entered in the portfolio is accurate." },
-  { question: "How long does approved Full View access last?", answer: "An approval creates seven-day access for that verified viewer. You can close it early or renew it from your dashboard." },
-  { question: "Can someone find my portfolio by searching my name?", answer: "Nakshatra has no public profile directory, and portfolio pages tell search engines not to index them. Anyone who receives or is forwarded your link can still open its first view." },
-  { question: "Can I see the portfolio before paying?", answer: "Yes. Build and preview first. Choose a publishing period only when you are ready to share." },
+  { question: "How long does approved access last?", answer: "Full portfolio access lasts for seven days. You can end it earlier or renew it from your dashboard." },
+  { question: "Can someone find my portfolio by searching my name?", answer: "No. Nakshatra has no public portfolio directory, and portfolio pages tell search engines not to list them. Anyone who receives or is forwarded your link can still open its first view." },
+  { question: "What happens when my plan ends?", answer: "Your shared link stops opening. Your saved portfolio remains in your account, and you can publish it again when you are ready." },
 ] as const;
 
 export function LandingExperience({ variant }: { variant: LandingVariant }) {
@@ -129,7 +126,7 @@ export function LandingExperience({ variant }: { variant: LandingVariant }) {
         </Link>
         <nav className={styles.navigation} aria-label="Main navigation">
           <div className={styles.navigationLinks}>
-            <a href="#why">Why it helps</a><a href="#how">How it works</a><a href="#control">Your control</a><a href="#pricing">Pricing</a><a href="#questions">Questions</a>
+            <a href="#how">How it works</a><a href="#control">Your control</a><a href="#pricing">Pricing</a><a href="#questions">Questions</a>
           </div>
           <Link href="/login" className={styles.signIn}>Sign in</Link>
           <Link href="/signup" className={styles.primaryButton}>Create portfolio</Link>
@@ -144,7 +141,7 @@ export function LandingExperience({ variant }: { variant: LandingVariant }) {
             <p className={styles.heroLead}>{concept.lead}</p>
             <div className={styles.heroActions}>
               <Link href="/signup" className={styles.primaryButton}>{concept.primary} <ArrowRight aria-hidden="true" /></Link>
-              <a href="#why" className={styles.secondaryButton}>{concept.secondary}</a>
+              <a href={variant === "control" ? "#control" : "#samples"} className={styles.secondaryButton}>{concept.secondary}</a>
             </div>
             <p className={styles.heroNote}><Check aria-hidden="true" /> Create and preview before choosing a plan.</p>
           </div>
@@ -152,42 +149,46 @@ export function LandingExperience({ variant }: { variant: LandingVariant }) {
         </section>
 
         <section id="why" className={styles.problemSection}>
-          <div className={styles.sectionHeading}><p className={styles.eyebrow}>A familiar problem, solved</p><h2>{concept.problemTitle}</h2></div>
-          <div className={styles.problemGrid}>
-            <div className={styles.problemList}>
-              {problems.map(({ icon: Icon, title, body }) => <article key={title}><Icon aria-hidden="true" /><div><h3>{title}</h3><p>{body}</p></div></article>)}
-            </div>
-            <article className={styles.outcomeCard}>
-              <RefreshCw aria-hidden="true" /><p className={styles.cardLabel}>With Nakshatra</p><h3>{concept.outcomeTitle}</h3><p>{concept.outcomeBody}</p>
-              <Link href="/signup">Create the first version <ArrowRight aria-hidden="true" /></Link>
-            </article>
-          </div>
-        </section>
-
-        <section id="how" className={styles.stepsSection}>
-          <div className={styles.sectionHeading}><p className={styles.eyebrow}>How it works</p><h2>From a guided form to a shareable portfolio.</h2></div>
-          <div className={styles.stepsGrid}>{steps.map((step) => <article key={step.number}><span>{step.number}</span><h3>{step.title}</h3><p>{step.body}</p></article>)}</div>
+          <div className={styles.sectionHeading}><p className={styles.eyebrow}>A familiar problem</p><h2>The biodata file was never built for this.</h2></div>
+          <div className={styles.problemGrid}>{problems.map(({ icon: Icon, title, body }) => <article key={title}><Icon aria-hidden="true" /><div><h3>{title}</h3><p>{body}</p></div></article>)}</div>
         </section>
 
         <section id="control" className={styles.controlSection}>
           <div className={styles.controlIntro}>
-            <p className={styles.eyebrow}>Your information, your decision</p><h2>{concept.controlTitle}</h2><p>{concept.controlBody}</p>
-            <div className={styles.accessFlow} aria-label="Portfolio access flow"><span>First View</span><ArrowRight aria-hidden="true" /><span>Verified-email interest</span><ArrowRight aria-hidden="true" /><strong>7-day Full View</strong></div>
+            <p className={styles.eyebrow}>Your information, your decision</p><h2>One link does not mean everyone sees everything.</h2><p>You choose how much a new family sees when they first open your link. Contact details and personal information stay protected until you approve that viewer yourself.</p>
+            <div className={styles.accessFlow} aria-label="Portfolio access flow"><span>First introduction</span><ArrowRight aria-hidden="true" /><span>Verified email request</span><ArrowRight aria-hidden="true" /><strong>Full portfolio</strong></div>
           </div>
           <div className={styles.controlGrid}>{viewModes.map(({ icon: Icon, label, title, body }) => <article key={title}><Icon aria-hidden="true" /><span>{label}</span><h3>{title}</h3><p>{body}</p></article>)}</div>
           <div className={styles.trustFacts}>{trustFacts.map(({ icon: Icon, text }) => <span key={text}><Icon aria-hidden="true" />{text}</span>)}</div>
         </section>
 
+        <section id="how" className={styles.stepsSection}>
+          <div className={styles.sectionHeading}><p className={styles.eyebrow}>How it works</p><h2>Four steps from a blank page to a shared link.</h2></div>
+          <div className={styles.stepsGrid}>{steps.map((step) => <article key={step.number}><span>{step.number}</span><h3>{step.title}</h3><p>{step.body}</p></article>)}</div>
+        </section>
+
+        <section className={styles.familySection}>
+          <div className={styles.sectionHeading}><p className={styles.eyebrow}>Built for every family</p><h2>Easy to read on any phone, for any generation.</h2></div>
+          <div className={styles.familyGrid}>{familyBenefits.map(({ icon: Icon, title, body }) => <article key={title}><Icon aria-hidden="true" /><h3>{title}</h3><p>{body}</p></article>)}</div>
+        </section>
+
+        <section id="samples" className={styles.samplesSection}>
+          <div className={styles.samplesHeading}><div className={styles.sectionHeading}><p className={styles.eyebrow}>See the format</p><h2>Every portfolio follows the same clear layout.</h2></div><p>There are no themes to choose between and no templates to compare. Every portfolio is presented in the same way, so families can read each one on its own terms.</p></div>
+          <div className={styles.samplesGrid}>{samplePortfolios.map((sample) => <article key={sample.name} data-accent={sample.accent}><div className={styles.samplePortrait}>{sample.initials}</div><div><span>Sample portfolio</span><h3>{sample.name}</h3><p>{sample.detail}</p><small>Story · Journey · Family · Gallery</small></div></article>)}</div>
+          <p className={styles.sampleNote}>Sample layouts. These are not real Nakshatra users.</p>
+        </section>
+
         <section id="pricing" className={styles.pricingSection}>
-          <div className={styles.sectionHeading}><p className={styles.eyebrow}>Simple, one-time pricing</p><h2>Build first. Pay only when you are ready to publish.</h2><p>Every publishing period includes the same portfolio, updates, sharing, and access controls. Plans do not renew automatically.</p></div>
+          <div className={styles.sectionHeading}><p className={styles.eyebrow}>Simple, one-time pricing</p><h2>Build for free. Pay when you are ready to publish.</h2><p>Every plan includes the same portfolio, the same updates, and the same access controls. The only difference is how long your portfolio stays published. Plans do not renew automatically.</p></div>
           <div className={styles.pricingGrid}>
-            {plans.map((plan) => <article key={plan.duration} className={plan.recommended ? styles.recommendedPlan : undefined}>{plan.recommended && <span>Most popular</span>}<h3>{plan.duration}</h3><strong>{plan.price}</strong><p>{plan.rate}</p><Link href="/signup">Start creating</Link></article>)}
+            {plans.map((plan) => <article key={plan.duration} className={plan.recommended ? styles.recommendedPlan : undefined}>{plan.recommended && <span>Most chosen</span>}<h3>{plan.duration}</h3><strong>{plan.price}</strong><p>{plan.rate}</p><Link href="/signup">Start creating</Link></article>)}
           </div>
-          <details className={styles.pricingDetails}><summary>What every plan includes <ChevronDown aria-hidden="true" /></summary><div><span><BadgeCheck aria-hidden="true" /> Identity verification and verified badge</span><span><RefreshCw aria-hidden="true" /> Unlimited updates</span><span><LockKeyhole aria-hidden="true" /> Full View approval controls</span></div></details>
+          <details className={styles.pricingDetails}><summary>Every plan includes <ChevronDown aria-hidden="true" /></summary><div><span><BadgeCheck aria-hidden="true" /> Identity verification and verified badge</span><span><RefreshCw aria-hidden="true" /> Unlimited updates on the same link</span><span><LockKeyhole aria-hidden="true" /> Interest requests and approval dashboard</span></div></details>
           <details className={styles.internationalPricing}>
             <summary>Outside India? View pricing in USD <ChevronDown aria-hidden="true" /></summary>
             <div>{internationalPlans.map((plan) => <span key={plan.duration}><strong>{plan.duration}</strong><b>{plan.price}</b><small>{plan.rate}</small></span>)}</div>
           </details>
+          <p className={styles.planEndNote}>When your publishing period ends, the shared link stops opening. Your saved portfolio remains in your account, and you can publish it again when you are ready.</p>
         </section>
 
         <section id="questions" className={styles.faqSection}>
@@ -196,14 +197,14 @@ export function LandingExperience({ variant }: { variant: LandingVariant }) {
         </section>
 
         <section className={styles.finalCta}>
-          <div><p className={styles.eyebrow}>Ready when you are</p><h2>{concept.closingTitle}</h2><p>Create privately, preview everything, and publish only when you are ready.</p></div>
-          <Link href="/signup" className={styles.lightButton}>Create my portfolio <ArrowRight aria-hidden="true" /></Link>
+          <div><p className={styles.eyebrow}>Ready when you are</p><h2>Your introduction deserves more than another file.</h2><p>Create your portfolio privately, preview every view, and publish only when it feels right.</p></div>
+          <div className={styles.finalAction}><Link href="/signup" className={styles.lightButton}>Create my portfolio <ArrowRight aria-hidden="true" /></Link><span>Free to create. Choose a plan when you publish.</span></div>
         </section>
       </main>
 
       <footer className={styles.footer}>
-        <Link href="/" className={styles.brand}><Sparkles aria-hidden="true" /><span>NAKSHATRA</span></Link><p>A clearer, more considerate marriage introduction.</p>
-        <div><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><Link href="/login">Sign in</Link></div>
+        <Link href="/" className={styles.brand}><Sparkles aria-hidden="true" /><span>NAKSHATRA</span></Link><p>One clear portfolio for the introduction that matters most.</p>
+        <div><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><a href="#questions">Questions</a><Link href="/login">Sign in</Link></div>
       </footer>
     </div>
   );
@@ -211,8 +212,8 @@ export function LandingExperience({ variant }: { variant: LandingVariant }) {
 
 function PortfolioPreview({ mode, note, variant }: { mode: string; note: string; variant: LandingVariant }) {
   const FloatingIcon = variant === "clarity" ? FileText : MessageCircle;
-  const floatingTitle = variant === "clarity" ? "Profile_final_v3.pdf" : variant === "control" ? "Access approved" : "Shared with family";
-  const floatingBody = variant === "clarity" ? "Outdated after one change" : variant === "story" ? "Opens in their browser" : "For one verified viewer";
+  const floatingTitle = variant === "clarity" ? "One link, always current" : variant === "control" ? "Access approved" : "Shared with family";
+  const floatingBody = variant === "clarity" ? "Updates stay in one place" : variant === "story" ? "Opens in their browser" : "For one verified viewer";
 
   return (
     <div className={styles.visual} aria-label="Example Nakshatra portfolio">

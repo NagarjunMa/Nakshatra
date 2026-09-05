@@ -194,7 +194,7 @@ describe("celestial union portfolio", () => {
     const { rerender } = render(
       <CelestialUnion data={createApprovedPortfolioSnapshot(complete)} themeColor="" sunSign="kanya" accessMode="approved" horoscopeAttachment={attachment} />
     );
-    expect(screen.getByText("Full Approved View")).toBeInTheDocument();
+    expect(screen.getByText("Full portfolio")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Personal details" })).not.toBeInTheDocument();
     const approvedPersonalStory = document.getElementById("personal-story");
     expect(approvedPersonalStory).toBeTruthy();

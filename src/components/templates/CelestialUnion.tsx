@@ -497,7 +497,7 @@ export default function CelestialUnion({
             </nav>
           )}
           <span className="portfolio-mode-label">
-            <ShieldCheck aria-hidden="true" /> {ownerPreview ? "Owner view" : approvedViewer ? "Full Approved View" : `${privacyLabel(privacyMode)} view`}
+            <ShieldCheck aria-hidden="true" /> {ownerPreview ? "Owner preview" : approvedViewer ? "Full portfolio" : privacyLabel(privacyMode)}
           </span>
         </div>
       </header>
@@ -694,8 +694,8 @@ function firstName(value?: string) {
 }
 
 function privacyLabel(mode: PortfolioData["privacy_mode"]) {
-  if (mode === "private") return "Private";
-  return "Balanced";
+  if (mode === "private") return "Short introduction";
+  return "Standard introduction";
 }
 
 function preferenceCommunity(preferences?: PortfolioData["preferences"]) {

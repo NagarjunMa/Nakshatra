@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 test("landing page presents the product and reaches account creation", async ({ page }) => {
   await page.goto("/");
   await expect(page).toHaveTitle("Nakshatra - Digital Marriage Portfolio");
-  await expect(page.getByRole("heading", { name: /stop resending your biodata every time something changes/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /share your introduction without losing control of it/i })).toBeVisible();
   const primaryCta = page.getByRole("main").getByRole("link", { name: /create my portfolio/i }).first();
   await expect(primaryCta).toHaveAttribute("href", "/signup");
   await page.goto("/signup");
@@ -49,7 +49,7 @@ test("landing page remains usable with reduced motion", async ({ page }) => {
   await page.goto("/");
   const main = page.getByRole("main");
   await expect(main.getByRole("link", { name: /create my portfolio/i }).first()).toBeVisible();
-  await expect(main.getByRole("link", { name: /see what changes/i })).toBeVisible();
+  await expect(main.getByRole("link", { name: /view a sample portfolio/i })).toBeVisible();
 });
 
 test("landing concepts keep the same clear path to account creation", async ({ page }) => {

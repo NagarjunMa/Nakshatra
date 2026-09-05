@@ -509,7 +509,7 @@ export default function DashboardClient({
                       onClick={copyLink}
                       className="dashboard-secondary-action"
                     >
-                      {copied ? "Copied!" : "Copy"}
+                      {copied ? "Link copied" : "Copy link"}
                     </button>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -566,14 +566,14 @@ export default function DashboardClient({
                   className="dashboard-secondary-action"
                 >
                   <Eye className="mr-2 h-4 w-4" />
-                  Preview Balanced / Private view
+                  Preview Short / Standard introduction
                 </Link>
                 <Link
                   href="/approved-preview"
                   className="dashboard-secondary-action"
                 >
                   <ShieldCheck className="mr-2 h-4 w-4" />
-                  Full Approved View
+                  Full portfolio preview
                 </Link>
               </div>
             </div>
@@ -856,11 +856,11 @@ function InterestInbox({
                     {interest.viewer_phone && <a href={`tel:${interest.viewer_phone}`} className="dashboard-secondary-action">Call</a>}
                     {interest.viewer_email && <a href={`mailto:${interest.viewer_email}`} className="dashboard-secondary-action">Email</a>}
                     {portfolioUrl && <a href={portfolioUrl} target="_blank" rel="noreferrer" className="dashboard-secondary-action">Open their portfolio</a>}
-                    <button type="button" className="dashboard-secondary-action" disabled={workingId === interest.id} onClick={() => void decide(interest, "rejected")}>Decline</button>
+                    <button type="button" className="dashboard-secondary-action" disabled={workingId === interest.id} onClick={() => void decide(interest, "rejected")}>Not right now</button>
                     {interest.requester_user_id ? (
-                      <button type="button" className="dashboard-primary-action" disabled={workingId === interest.id} onClick={() => void decide(interest, "approved")}>{workingId === interest.id ? "Saving..." : "Approve Full View"}</button>
+                      <button type="button" className="dashboard-primary-action" disabled={workingId === interest.id} onClick={() => void decide(interest, "approved")}>{workingId === interest.id ? "Saving..." : "Approve access"}</button>
                     ) : (
-                      <span className="dashboard-action-note">Ask the viewer to sign in before approving Full View.</span>
+                      <span className="dashboard-action-note">Ask the viewer to verify their email before approving access.</span>
                     )}
                   </div>
                 </div>
@@ -871,12 +871,12 @@ function InterestInbox({
       )}
       {rejectedInterests.length > 0 && (
         <div className="dashboard-past-interests">
-          <h3>Declined requests</h3>
+          <h3>Requests set aside</h3>
           {rejectedInterests.slice(0, 5).map((interest) => (
             <div key={interest.id} className="dashboard-access-row">
               <span>
                 <strong>{interest.viewer_name || "Unnamed viewer"}</strong>
-                <small>Declined {formatInterestDate(interest.created_at)}</small>
+                <small>Set aside {formatInterestDate(interest.created_at)}</small>
               </span>
               <button
                 type="button"
@@ -908,8 +908,8 @@ function AccessControls({
 
   async function manage(grant: AccessGrant, action: "renew" | "revoke") {
     const prompt = action === "revoke"
-      ? `Revoke Full View for ${grant.viewerName || "this viewer"}?`
-      : `Extend Full View for ${grant.viewerName || "this viewer"} by 30 days?`;
+      ? `End access for ${grant.viewerName || "this viewer"}? They will no longer be able to open the full portfolio.`
+      : `Renew full portfolio access for ${grant.viewerName || "this viewer"} for seven days?`;
     if (!confirm(prompt)) return;
     setWorkingId(grant.id);
     setError(null);
@@ -932,14 +932,14 @@ function AccessControls({
     <section className="dashboard-glass dashboard-access-controls">
       <div className="dashboard-section-heading">
         <div>
-          <h2>Full View access</h2>
-          <p>Approvals expire after 30 days. You can renew or revoke them at any time.</p>
+          <h2>Full portfolio access</h2>
+          <p>Approvals expire after seven days. You can renew or end access at any time.</p>
         </div>
         <UserRoundCheck className="h-5 w-5" aria-hidden="true" />
       </div>
       {error && <p className="dashboard-action-error" role="alert">{error}</p>}
       {grants.length === 0 ? (
-        <p className="dashboard-empty-state">No Full View access has been granted yet.</p>
+        <p className="dashboard-empty-state">No full portfolio access has been granted yet.</p>
       ) : (
         <div className="dashboard-access-list">
           {grants.map((grant) => (
@@ -951,7 +951,7 @@ function AccessControls({
                     ? `Active until ${formatAccessDate(grant.expiresAt)}`
                     : grant.status === "expired"
                       ? `Expired ${formatAccessDate(grant.expiresAt)}`
-                      : "Access revoked"}
+                      : "Access ended"}
                 </small>
               </span>
               {grant.status !== "revoked" && (
@@ -962,7 +962,7 @@ function AccessControls({
                     disabled={workingId === grant.id}
                     onClick={() => void manage(grant, "renew")}
                   >
-                    Renew 30 days
+                    Renew 7 days
                   </button>
                   <button
                     type="button"
@@ -970,7 +970,7 @@ function AccessControls({
                     disabled={workingId === grant.id}
                     onClick={() => void manage(grant, "revoke")}
                   >
-                    Revoke
+                    End access
                   </button>
                 </div>
               )}
@@ -1010,12 +1010,12 @@ function accessEventLabel(type: AccessAuditEvent["eventType"], viewerName?: stri
   const labels: Record<AccessAuditEvent["eventType"], string> = {
     request_submitted: `${viewer} submitted a request`,
     request_reopened: `${viewer}'s request was reopened`,
-    request_rejected: `${viewer}'s request was declined`,
-    grant_created: `Full View granted to ${viewer}`,
-    grant_renewed: `Full View renewed for ${viewer}`,
-    grant_accessed: `${viewer} used Full View`,
-    grant_revoked: `Full View revoked for ${viewer}`,
-    grant_expired: `Full View expired for ${viewer}`,
+    request_rejected: `${viewer}'s request was set aside`,
+    grant_created: `Full portfolio access granted to ${viewer}`,
+    grant_renewed: `Full portfolio access renewed for ${viewer}`,
+    grant_accessed: `${viewer} opened the full portfolio`,
+    grant_revoked: `Access ended for ${viewer}`,
+    grant_expired: `Full portfolio access expired for ${viewer}`,
     portfolio_rotated: "Portfolio link rotated",
     portfolio_unpublished: "Portfolio unpublished",
   };
