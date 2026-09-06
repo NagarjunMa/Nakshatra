@@ -8,6 +8,8 @@ import {
 const readyPortfolio: PortfolioData = {
   personal: {
     name: "Aditi Rao",
+    first_name: "Aditi",
+    last_name: "Rao",
     dob: "1996-08-12",
     gender: "female",
     place_of_birth: "Bengaluru",
@@ -25,6 +27,7 @@ const readyPortfolio: PortfolioData = {
     time_of_birth: "09:15",
     lagnam: "Mithuna",
     maternal_gotra: "Bharadwaj",
+    manglik_status: "No",
   },
   family: {
     father: { name: "Rao", occupation: "Engineer" },
@@ -42,32 +45,38 @@ const readyPortfolio: PortfolioData = {
 };
 
 describe("portfolio publish readiness", () => {
-  it("accepts the complete mandatory profile and a public hero photo", () => {
-    expect(() => requirePortfolioPublishReadiness({ data: readyPortfolio, hasPublicHeroPhoto: true })).not.toThrow();
+  it("accepts the complete mandatory profile and a shareable primary photo", () => {
+    expect(() => requirePortfolioPublishReadiness({ data: readyPortfolio, hasShareablePrimaryPhoto: true })).not.toThrow();
   });
 
   it.each([
-    [{ ...readyPortfolio, personal: { ...readyPortfolio.personal, name: "" } }, true, "full name"],
+    [{ ...readyPortfolio, personal: { ...readyPortfolio.personal, name: "", first_name: "", last_name: "" } }, true, "first name"],
     [{ ...readyPortfolio, personal: { ...readyPortfolio.personal, current_location: "" } }, true, "current location"],
     [{ ...readyPortfolio, career: { ...readyPortfolio.career, title: "" } }, true, "profession or role"],
     [{ ...readyPortfolio, personal: { ...readyPortfolio.personal, profile_summary: "", short_bio: "" } }, true, "short introduction"],
-    [readyPortfolio, false, "profile photo"],
-  ] as const)("rejects incomplete generation state", (data, hasPublicHeroPhoto, message) => {
-    expect(() => requirePortfolioPublishReadiness({ data, hasPublicHeroPhoto })).toThrow(PortfolioPublishReadinessError);
-    expect(() => requirePortfolioPublishReadiness({ data, hasPublicHeroPhoto })).toThrow(message);
+    [{ ...readyPortfolio, astrology: { ...readyPortfolio.astrology, time_of_birth: "" } }, true, "time of birth"],
+    [{ ...readyPortfolio, personal: { ...readyPortfolio.personal, place_of_birth: "" } }, true, "place of birth"],
+    [{ ...readyPortfolio, astrology: { ...readyPortfolio.astrology, rashi: "" } }, true, "moon sign (Rashi)"],
+    [{ ...readyPortfolio, astrology: { ...readyPortfolio.astrology, nakshatra: "" } }, true, "birth star (Nakshatra)"],
+    [{ ...readyPortfolio, astrology: { ...readyPortfolio.astrology, pada: "" } }, true, "pada"],
+    [{ ...readyPortfolio, vitals: { ...readyPortfolio.vitals, gotra: "" } }, true, "gotra"],
+    [{ ...readyPortfolio, astrology: { ...readyPortfolio.astrology, manglik_status: "" } }, true, "Manglik status"],
+    [readyPortfolio, false, "primary photo"],
+  ] as const)("rejects incomplete generation state", (data, hasShareablePrimaryPhoto, message) => {
+    expect(() => requirePortfolioPublishReadiness({ data, hasShareablePrimaryPhoto })).toThrow(PortfolioPublishReadinessError);
+    expect(() => requirePortfolioPublishReadiness({ data, hasShareablePrimaryPhoto })).toThrow(message);
   });
 
-  it("allows detailed sections to remain incomplete", () => {
+  it("allows non-required detailed sections to remain incomplete", () => {
     expect(() => requirePortfolioPublishReadiness({
       data: {
         ...readyPortfolio,
-        astrology: {},
         family: { sibling_count: 2, siblings: [] },
         lifestyle: {},
         preferences: {},
         contact: {},
       },
-      hasPublicHeroPhoto: true,
+      hasShareablePrimaryPhoto: true,
     })).not.toThrow();
   });
 
@@ -77,6 +86,8 @@ describe("portfolio publish readiness", () => {
       personal: {
         ...readyPortfolio.personal,
         name: "",
+        first_name: "",
+        last_name: "",
         dob: "",
         gender: "" as PortfolioData["personal"]["gender"],
         current_location: "",
@@ -86,7 +97,7 @@ describe("portfolio publish readiness", () => {
       career: undefined,
     };
 
-    expect(() => requirePortfolioPublishReadiness({ data: incomplete, hasPublicHeroPhoto: false }))
+    expect(() => requirePortfolioPublishReadiness({ data: incomplete, hasShareablePrimaryPhoto: false }))
       .toThrow(" and 2 more");
   });
 });

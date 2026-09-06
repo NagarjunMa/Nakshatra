@@ -5,7 +5,8 @@ import { createPublicPortfolioSnapshot } from "../src/features/portfolio/server/
 const portfolio: PortfolioData = {
   personal: {
     name: "Aditi Rao",
-    preferred_name: "Aditi",
+    first_name: "Aditi",
+    last_name: "Rao",
     photo_url: "https://private.example/original.webp",
     photo_thumb_url: "https://private.example/thumb.webp",
     dob: "1996-08-12",
@@ -17,6 +18,7 @@ const portfolio: PortfolioData = {
     short_bio: "Warm, grounded, and curious about the world.",
     profile_summary: "A thoughtful public introduction.",
     long_term_goals: "Build a generous and grounded life.",
+    shared_life_plans: "Build a thoughtful shared life together.",
     marital_status: "Never Married",
     citizenship: "India",
     religion: "Hindu",
@@ -73,7 +75,8 @@ describe("public portfolio snapshot", () => {
 
     expect(snapshot.personal).toMatchObject({
       name: "Aditi Rao",
-      preferred_name: "Aditi",
+      first_name: "Aditi",
+      last_name: "Rao",
       current_location: "New York",
       short_bio: "Warm, grounded, and curious about the world.",
     });
@@ -114,9 +117,7 @@ describe("public portfolio snapshot", () => {
     expect(snapshot.astrology).toEqual({
       rashi: "kanya",
       nakshatra: "Uttara Phalguni",
-      pada: "2",
       maternal_gotra: "Bharadwaj",
-      manglik_status: "No",
     });
     expect(snapshot.astrology).not.toHaveProperty("time_of_birth");
     expect(snapshot.astrology).not.toHaveProperty("lagnam");
@@ -136,6 +137,10 @@ describe("public portfolio snapshot", () => {
       privacy_mode: "private",
     });
     expect(privateSnapshot.career).toMatchObject({ title: "Engineer" });
+    expect(privateSnapshot.personal.name).toBe("Aditi");
+    expect(privateSnapshot.personal.first_name).toBe("Aditi");
+    expect(privateSnapshot.personal).not.toHaveProperty("last_name");
+    expect(privateSnapshot.personal).not.toHaveProperty("gender");
     expect(privateSnapshot.vitals?.height).toBe("5 ft 5 in");
     expect(privateSnapshot.astrology).toEqual({
       rashi: "kanya",
@@ -145,7 +150,8 @@ describe("public portfolio snapshot", () => {
     expect(privateSnapshot).not.toHaveProperty("family");
     expect(privateSnapshot.personal).not.toHaveProperty("long_term_goals");
     expect(privateSnapshot.personal).not.toHaveProperty("immigration_status");
-    expect(privateSnapshot.personal).not.toHaveProperty("community");
+    expect(privateSnapshot.personal.community).toBe("Brahmin");
+    expect(privateSnapshot.personal).not.toHaveProperty("profile_summary");
     expect(privateSnapshot.personal).toMatchObject({
       marital_status: "Never Married",
       citizenship: "India",
@@ -175,11 +181,17 @@ describe("public portfolio snapshot", () => {
       },
     });
     expect(balancedSnapshot.personal).toMatchObject({
+      name: "Aditi Rao",
+      first_name: "Aditi",
+      last_name: "Rao",
+      gender: "female",
       marital_status: "Never Married",
       citizenship: "India",
       religion: "Hindu",
       sub_community: "Smartha",
+      shared_life_plans: "Build a thoughtful shared life together.",
     });
+    expect(balancedSnapshot.personal).not.toHaveProperty("long_term_goals");
     expect(balancedSnapshot.lifestyle).toMatchObject({
       languages: "English, Hindi",
       values_statement: "Kindness, Mutual respect",
@@ -240,7 +252,7 @@ describe("public portfolio snapshot", () => {
       rashi: "kanya",
       nakshatra: "Uttara Phalguni",
     });
-    expect(privateSnapshot.personal.profile_summary).toBe("A ".repeat(200).trim());
+    expect(privateSnapshot.personal).not.toHaveProperty("profile_summary");
     expect(privateSnapshot.personal.short_bio).toBe("Warm, grounded, and curious about the world.");
   });
 });

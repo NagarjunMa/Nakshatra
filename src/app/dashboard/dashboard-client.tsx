@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -17,7 +17,10 @@ import type {
   AccessGrant,
   PortfolioAccessSummary,
 } from "@/features/access/server/access.contract";
-import { MAX_PORTFOLIO_PHOTOS } from "@/features/media/portfolio-photo";
+import {
+  isShareablePrimaryPhoto,
+  MAX_PORTFOLIO_PHOTOS,
+} from "@/features/media/portfolio-photo";
 import { BlueprintForm } from "@/components/portfolio/BlueprintForm";
 import { IdentityVerificationDashboard } from "@/features/identity-verification/client/identity-verification-dashboard";
 import {
@@ -46,6 +49,7 @@ import {
   UserRoundCheck,
   Settings,
 } from "lucide-react";
+import { normalizePortfolioName } from "@/features/portfolio/name";
 
 interface Props {
   portfolio: Portfolio | null;
@@ -115,6 +119,24 @@ export default function DashboardClient({
   const photoInputRef = useRef<HTMLInputElement>(null);
   const horoscopeInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    if (draftSaveState === "saved") return;
+    const warnBeforeLeaving = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warnBeforeLeaving);
+    return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
+  }, [draftSaveState]);
+
+  function closePortfolioEditor() {
+    if (
+      draftSaveState !== "saved"
+      && !confirm("You have changes that are not saved. Close the form and keep them only on this screen?")
+    ) return;
+    setFormOpen(false);
+  }
 
   async function copyLink() {
     if (!shareUrl) return;
@@ -509,7 +531,7 @@ export default function DashboardClient({
                       onClick={copyLink}
                       className="dashboard-secondary-action"
                     >
-                      {copied ? "Copied!" : "Copy"}
+                      {copied ? "Link copied" : "Copy link"}
                     </button>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -566,14 +588,14 @@ export default function DashboardClient({
                   className="dashboard-secondary-action"
                 >
                   <Eye className="mr-2 h-4 w-4" />
-                  Preview Balanced / Private view
+                  Preview Short / Standard introduction
                 </Link>
                 <Link
                   href="/approved-preview"
                   className="dashboard-secondary-action"
                 >
                   <ShieldCheck className="mr-2 h-4 w-4" />
-                  Full Approved View
+                  Full portfolio preview
                 </Link>
               </div>
             </div>
@@ -594,89 +616,103 @@ export default function DashboardClient({
       {formOpen && (
         <div className="dashboard-editor fixed inset-0 z-50 bg-[#18272e]/45 backdrop-blur-sm">
           <div className="dashboard-editor-surface absolute inset-0 flex h-full w-full flex-col overflow-hidden shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-              <div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <h2 className="text-lg font-semibold">Portfolio details</h2>
-                  <span className={`dashboard-save-state is-${draftSaveState}`} aria-live="polite">
-                    {draftSaveState === "saving" ? "Saving..." : draftSaveState === "saved" ? "Saved" : "Changes not saved"}
-                  </span>
+            <div className="flex-none border-b border-slate-200 px-4 py-4 sm:px-6 lg:px-8">
+              <div className="mx-auto flex w-full max-w-[90rem] items-center justify-between gap-4">
+                <div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h2 className="text-lg font-semibold">Portfolio details</h2>
+                    <span className={`dashboard-save-state is-${draftSaveState}`} aria-live="polite">
+                      {draftSaveState === "saving" ? "Saving..." : draftSaveState === "saved" ? "Saved" : "Changes not saved"}
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-500">
+                    Complete what you know. Save your work and continue later.
+                  </p>
                 </div>
-                <p className="text-sm text-slate-500">
-                  Complete what you know. Save your work and continue later.
-                </p>
+                <button
+                  type="button"
+                  onClick={closePortfolioEditor}
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition-colors hover:bg-slate-100"
+                  aria-label="Close portfolio details"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setFormOpen(false)}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition-colors hover:bg-slate-100"
-                aria-label="Close portfolio details"
-              >
-                <X className="h-4 w-4" />
-              </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-5 py-5 lg:px-8">
-              <BlueprintForm
-                data={draftData}
-                onUpdate={updateSection}
-                photoManager={
-                  <PhotoManager
-                    media={portfolioMedia}
-                    urls={mediaUrls}
-                    uploading={uploadingMedia}
-                    inputRef={photoInputRef}
-                    onUpload={uploadPhotos}
-                    onUpdate={updatePhoto}
-                    onDelete={deletePhoto}
-                  />
-                }
-                horoscopeManager={
-                  <HoroscopeManager
-                    horoscope={portfolioHoroscope}
-                    uploading={uploadingHoroscope}
-                    inputRef={horoscopeInputRef}
-                    onUpload={uploadHoroscopeFile}
-                    onReview={reviewHoroscope}
-                    onDelete={removeHoroscope}
-                  />
-                }
-              />
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 [scrollbar-gutter:stable] sm:px-6 lg:px-8">
+              <div className="mx-auto w-full max-w-[90rem]">
+                <BlueprintForm
+                  data={draftData}
+                  onUpdate={updateSection}
+                  hasShareablePrimaryPhoto={portfolioMedia.some(isShareablePrimaryPhoto)}
+                  photoManager={
+                    <PhotoManager
+                      media={portfolioMedia}
+                      urls={mediaUrls}
+                      uploading={uploadingMedia}
+                      inputRef={photoInputRef}
+                      onUpload={uploadPhotos}
+                      onUpdate={updatePhoto}
+                      onDelete={deletePhoto}
+                    />
+                  }
+                  horoscopeManager={
+                    <HoroscopeManager
+                      horoscope={portfolioHoroscope}
+                      uploading={uploadingHoroscope}
+                      inputRef={horoscopeInputRef}
+                      onUpload={uploadHoroscopeFile}
+                      onReview={reviewHoroscope}
+                      onDelete={removeHoroscope}
+                    />
+                  }
+                />
+              </div>
             </div>
 
-            <div className="border-t border-slate-200 bg-[#f3f0e8] px-5 py-4">
-              {draftError && (
-                <p className="mb-3 rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-2 text-sm text-red-200">
-                  Save failed: {draftError}
-                </p>
-              )}
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm leading-6 text-slate-500">
-                  Saving keeps your changes. Publishing updates the portfolio people can view.
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={saveDashboardDraft}
-                    disabled={savingDraft}
-                    className="dashboard-secondary-action"
-                  >
-                    <Save className="h-4 w-4" />
-                    {savingDraft ? "Saving..." : "Save draft"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={publishPortfolio}
-                    disabled={publishing}
-                    className="dashboard-primary-action"
-                  >
-                    <Send className={`h-4 w-4 ${publishing ? "animate-pulse" : ""}`} />
-                    {publishing
-                      ? "Generating..."
-                      : portfolio?.is_published
-                        ? "Update published"
-                        : "Review and publish"}
-                  </button>
+            <div className="flex-none border-t border-slate-200 bg-[#f3f0e8] px-4 py-4 sm:px-6 lg:px-8">
+              <div className="mx-auto w-full max-w-[90rem]">
+                {draftError && (
+                  <div role="alert" className="mb-3 rounded-lg border border-[#d8a7a1] bg-[#fff0ee] px-4 py-3 text-sm text-[#7f3535]">
+                    <p className="font-semibold">We couldn&apos;t complete that action.</p>
+                    <p className="mt-1 leading-5">{draftError}</p>
+                    <p className="mt-1 leading-5">Your answers are still on this screen.</p>
+                    {draftSaveState === "unsaved" && (
+                      <button type="button" onClick={saveDashboardDraft} disabled={savingDraft} className="mt-2 min-h-10 rounded-lg border border-[#b96a63] bg-white px-3 font-semibold text-[#7f3535] hover:bg-[#fff8f6]">
+                        Try saving again
+                      </button>
+                    )}
+                  </div>
+                )}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-sm leading-6 text-slate-500">
+                    Saving keeps your changes. Publishing updates the portfolio people can view.
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={saveDashboardDraft}
+                      disabled={savingDraft}
+                      className="dashboard-secondary-action flex-1 sm:flex-none"
+                    >
+                      <Save className="h-4 w-4" />
+                      {savingDraft ? "Saving..." : "Save draft"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={publishPortfolio}
+                      disabled={publishing || savingDraft}
+                      className="dashboard-primary-action flex-1 sm:flex-none"
+                    >
+                      <Send className={`h-4 w-4 ${publishing ? "animate-pulse" : ""}`} />
+                      {publishing
+                        ? "Generating..."
+                        : portfolio?.is_published
+                          ? "Update published"
+                          : "Review and publish"}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -856,11 +892,11 @@ function InterestInbox({
                     {interest.viewer_phone && <a href={`tel:${interest.viewer_phone}`} className="dashboard-secondary-action">Call</a>}
                     {interest.viewer_email && <a href={`mailto:${interest.viewer_email}`} className="dashboard-secondary-action">Email</a>}
                     {portfolioUrl && <a href={portfolioUrl} target="_blank" rel="noreferrer" className="dashboard-secondary-action">Open their portfolio</a>}
-                    <button type="button" className="dashboard-secondary-action" disabled={workingId === interest.id} onClick={() => void decide(interest, "rejected")}>Decline</button>
+                    <button type="button" className="dashboard-secondary-action" disabled={workingId === interest.id} onClick={() => void decide(interest, "rejected")}>Not right now</button>
                     {interest.requester_user_id ? (
-                      <button type="button" className="dashboard-primary-action" disabled={workingId === interest.id} onClick={() => void decide(interest, "approved")}>{workingId === interest.id ? "Saving..." : "Approve Full View"}</button>
+                      <button type="button" className="dashboard-primary-action" disabled={workingId === interest.id} onClick={() => void decide(interest, "approved")}>{workingId === interest.id ? "Saving..." : "Approve access"}</button>
                     ) : (
-                      <span className="dashboard-action-note">Ask the viewer to sign in before approving Full View.</span>
+                      <span className="dashboard-action-note">Ask the viewer to verify their email before approving access.</span>
                     )}
                   </div>
                 </div>
@@ -871,12 +907,12 @@ function InterestInbox({
       )}
       {rejectedInterests.length > 0 && (
         <div className="dashboard-past-interests">
-          <h3>Declined requests</h3>
+          <h3>Requests set aside</h3>
           {rejectedInterests.slice(0, 5).map((interest) => (
             <div key={interest.id} className="dashboard-access-row">
               <span>
                 <strong>{interest.viewer_name || "Unnamed viewer"}</strong>
-                <small>Declined {formatInterestDate(interest.created_at)}</small>
+                <small>Set aside {formatInterestDate(interest.created_at)}</small>
               </span>
               <button
                 type="button"
@@ -908,8 +944,8 @@ function AccessControls({
 
   async function manage(grant: AccessGrant, action: "renew" | "revoke") {
     const prompt = action === "revoke"
-      ? `Revoke Full View for ${grant.viewerName || "this viewer"}?`
-      : `Extend Full View for ${grant.viewerName || "this viewer"} by 30 days?`;
+      ? `End access for ${grant.viewerName || "this viewer"}? They will no longer be able to open the full portfolio.`
+      : `Renew full portfolio access for ${grant.viewerName || "this viewer"} for seven days?`;
     if (!confirm(prompt)) return;
     setWorkingId(grant.id);
     setError(null);
@@ -932,14 +968,14 @@ function AccessControls({
     <section className="dashboard-glass dashboard-access-controls">
       <div className="dashboard-section-heading">
         <div>
-          <h2>Full View access</h2>
-          <p>Approvals expire after 30 days. You can renew or revoke them at any time.</p>
+          <h2>Full portfolio access</h2>
+          <p>Approvals expire after seven days. You can renew or end access at any time.</p>
         </div>
         <UserRoundCheck className="h-5 w-5" aria-hidden="true" />
       </div>
       {error && <p className="dashboard-action-error" role="alert">{error}</p>}
       {grants.length === 0 ? (
-        <p className="dashboard-empty-state">No Full View access has been granted yet.</p>
+        <p className="dashboard-empty-state">No full portfolio access has been granted yet.</p>
       ) : (
         <div className="dashboard-access-list">
           {grants.map((grant) => (
@@ -951,7 +987,7 @@ function AccessControls({
                     ? `Active until ${formatAccessDate(grant.expiresAt)}`
                     : grant.status === "expired"
                       ? `Expired ${formatAccessDate(grant.expiresAt)}`
-                      : "Access revoked"}
+                      : "Access ended"}
                 </small>
               </span>
               {grant.status !== "revoked" && (
@@ -962,7 +998,7 @@ function AccessControls({
                     disabled={workingId === grant.id}
                     onClick={() => void manage(grant, "renew")}
                   >
-                    Renew 30 days
+                    Renew 7 days
                   </button>
                   <button
                     type="button"
@@ -970,7 +1006,7 @@ function AccessControls({
                     disabled={workingId === grant.id}
                     onClick={() => void manage(grant, "revoke")}
                   >
-                    Revoke
+                    End access
                   </button>
                 </div>
               )}
@@ -1010,12 +1046,12 @@ function accessEventLabel(type: AccessAuditEvent["eventType"], viewerName?: stri
   const labels: Record<AccessAuditEvent["eventType"], string> = {
     request_submitted: `${viewer} submitted a request`,
     request_reopened: `${viewer}'s request was reopened`,
-    request_rejected: `${viewer}'s request was declined`,
-    grant_created: `Full View granted to ${viewer}`,
-    grant_renewed: `Full View renewed for ${viewer}`,
-    grant_accessed: `${viewer} used Full View`,
-    grant_revoked: `Full View revoked for ${viewer}`,
-    grant_expired: `Full View expired for ${viewer}`,
+    request_rejected: `${viewer}'s request was set aside`,
+    grant_created: `Full portfolio access granted to ${viewer}`,
+    grant_renewed: `Full portfolio access renewed for ${viewer}`,
+    grant_accessed: `${viewer} opened the full portfolio`,
+    grant_revoked: `Access ended for ${viewer}`,
+    grant_expired: `Full portfolio access expired for ${viewer}`,
     portfolio_rotated: "Portfolio link rotated",
     portfolio_unpublished: "Portfolio unpublished",
   };
@@ -1038,7 +1074,7 @@ function formatInterestLocation(metadata: Record<string, unknown> | null) {
 
 const EMPTY_DATA: PortfolioData = {
   privacy_mode: "balanced",
-  personal: { name: "", dob: "", gender: "prefer_not_to_say" },
+  personal: { name: "", first_name: "", middle_name: "", last_name: "", dob: "", gender: undefined },
   vitals: {},
   astrology: {},
   education: {},
@@ -1079,7 +1115,7 @@ function normalizePortfolioData(
     ...EMPTY_DATA,
     ...(data || {}),
     privacy_mode: normalizePortfolioPrivacyMode(data?.privacy_mode || privacyMode),
-    personal: { ...EMPTY_DATA.personal, ...(data?.personal || {}) },
+    personal: normalizePortfolioName({ ...EMPTY_DATA.personal, ...(data?.personal || {}) }),
     vitals: { ...(data?.vitals || {}) },
     astrology: { ...(data?.astrology || {}) },
     education: { ...(data?.education || {}) },
@@ -1115,10 +1151,8 @@ function PhotoManager({
   onDelete: (id: string) => void;
 }) {
   const visibilityLabels: { value: PortfolioMediaVisibility; label: string }[] = [
-    { value: "interest_required", label: "Blur for free viewers" },
+    { value: "interest_required", label: "Blurred until approval" },
     { value: "public", label: "Visible to all" },
-    { value: "approved_only", label: "Approved interest only" },
-    { value: "hidden", label: "Only me" },
   ];
 
   return (
@@ -1177,19 +1211,27 @@ function PhotoManager({
             </div>
             <div className="space-y-2 p-2">
               <select
-                value={item.visibility}
+                value={visibilityLabels.some((option) => option.value === item.visibility) ? item.visibility : ""}
                 onChange={(event) =>
                   onUpdate(item.id, { visibility: event.target.value as PortfolioMediaVisibility })
                 }
                 className="h-10 w-full rounded-md border border-white/10 bg-white/[0.06] px-2 text-xs text-white outline-none"
                 aria-label="Photo visibility"
               >
+                {!visibilityLabels.some((option) => option.value === item.visibility) && (
+                  <option value="" disabled>Choose visibility</option>
+                )}
                 {visibilityLabels.map((option) => (
                   <option key={option.value} value={option.value} className="bg-[#1a1b27]">
                     {option.label}
                   </option>
                 ))}
               </select>
+              {!visibilityLabels.some((option) => option.value === item.visibility) && (
+                <p className="text-xs leading-4 text-[color:var(--workspace-ink-muted)]">
+                  Choose how this photo should be shared. Its existing privacy remains unchanged until then.
+                </p>
+              )}
               {item.media_type !== "hero" && (
                 <button
                   type="button"

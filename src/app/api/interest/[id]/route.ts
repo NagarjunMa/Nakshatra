@@ -56,7 +56,7 @@ export async function PATCH(
   }
   if (result === "signin_required") {
     return NextResponse.json(
-      { code: "INTEREST_SIGNIN_REQUIRED", error: "Ask this viewer to sign in before approving Full View." },
+      { code: "INTEREST_SIGNIN_REQUIRED", error: "Ask this viewer to verify their email before approving access." },
       { status: 409 }
     );
   }

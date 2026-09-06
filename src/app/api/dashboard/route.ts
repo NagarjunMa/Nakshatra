@@ -46,9 +46,15 @@ export async function PUT(request: Request) {
     });
     return NextResponse.json(result);
   } catch (error) {
-    const message = error instanceof DashboardSaveError
-      ? error.message
-      : "Unable to save portfolio details";
-    return NextResponse.json({ code: "DASHBOARD_SAVE_FAILED", error: message }, { status: 500 });
+    if (error instanceof DashboardSaveError) {
+      return NextResponse.json(
+        { code: error.code, error: error.message },
+        { status: error.status }
+      );
+    }
+    return NextResponse.json(
+      { code: "DASHBOARD_SAVE_FAILED", error: "Unable to save portfolio details" },
+      { status: 500 }
+    );
   }
 }

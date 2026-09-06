@@ -4,7 +4,7 @@ import type { PortfolioData } from "../src/types/portfolio";
 const repository = vi.hoisted(() => ({
   findPortfolioForUser: vi.fn(),
   publishPortfolioTransaction: vi.fn(),
-  findPublicHeroPhoto: vi.fn(),
+  findShareablePrimaryPhoto: vi.fn(),
   renewPortfolioTransaction: vi.fn(),
 }));
 const ensurePortfolioPhotoPreviews = vi.hoisted(() => vi.fn());
@@ -50,6 +50,7 @@ const draft: PortfolioData = {
     time_of_birth: "09:15",
     lagnam: "Mithuna",
     maternal_gotra: "Bharadwaj",
+    manglik_status: "No",
   },
   family: {
     father: { name: "Rao", occupation: "Engineer" },
@@ -81,7 +82,7 @@ describe("portfolio lifecycle services", () => {
       },
       error: null,
     });
-    repository.findPublicHeroPhoto.mockResolvedValue({ data: { id: "hero-photo-id" }, error: null });
+    repository.findShareablePrimaryPhoto.mockResolvedValue({ data: { id: "hero-photo-id" }, error: null });
     repository.renewPortfolioTransaction.mockResolvedValue({
       data: { status: "renewed", expiresAt: "2099-01-01T00:00:00.000Z" },
       error: null,

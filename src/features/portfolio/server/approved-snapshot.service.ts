@@ -5,6 +5,7 @@ import {
   portfolioDataSchema,
   type PortfolioData,
 } from "@/types/portfolio";
+import { normalizePortfolioName } from "@/features/portfolio/name";
 
 const APPROVED_EXCLUDED_PREFERENCE_KEYS = new Set([
   "private_notes",
@@ -17,10 +18,11 @@ const APPROVED_EXCLUDED_PREFERENCE_KEYS = new Set([
 
 /**
  * Builds the full blueprint that an authenticated, approved requester may see.
- * Direct contact, internal notes, legacy photo URLs, credit information, and
- * geographic reference IDs are deliberately excluded from this projection.
+ * Approved contact details are included, while internal notes, legacy photo
+ * URLs, credit information, and geographic reference IDs are excluded.
  */
 export function createApprovedPortfolioSnapshot(data: PortfolioData): PortfolioData {
+  const personalName = normalizePortfolioName(data.personal);
   const approvedPreferences = data.preferences
     ? Object.fromEntries(
         Object.entries(data.preferences).filter(
@@ -31,8 +33,10 @@ export function createApprovedPortfolioSnapshot(data: PortfolioData): PortfolioD
   return portfolioDataSchema.parse({
     privacy_mode: normalizePortfolioPrivacyMode(data.privacy_mode),
     personal: {
-      name: data.personal.name,
-      preferred_name: data.personal.preferred_name,
+      name: personalName.name,
+      first_name: personalName.first_name,
+      middle_name: personalName.middle_name,
+      last_name: personalName.last_name,
       dob: data.personal.dob,
       age: data.personal.age,
       place_of_birth: data.personal.place_of_birth,
@@ -88,6 +92,20 @@ export function createApprovedPortfolioSnapshot(data: PortfolioData): PortfolioD
           smoking: data.lifestyle.smoking,
           drinking: data.lifestyle.drinking,
           values_statement: data.lifestyle.values_statement,
+        }
+      : undefined,
+    contact: data.contact
+      ? {
+          contact_person: data.contact.contact_person,
+          phone: data.contact.phone,
+          email: data.contact.email,
+          contacts: data.contact.contacts
+            ?.filter(
+              (contact) =>
+                contact.name?.trim() &&
+                (contact.phone?.trim() || contact.email?.trim())
+            )
+            .map(({ relationship, name, phone, email }) => ({ relationship, name, phone, email })),
         }
       : undefined,
     preferences: approvedPreferences,

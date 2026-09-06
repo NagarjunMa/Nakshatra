@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   classifyPhotoOrientation,
+  isShareablePrimaryPhoto,
   orderPortfolioPhotos,
 } from "../src/features/media/portfolio-photo";
 import {
@@ -221,6 +222,13 @@ describe("portfolio hero photo URLs", () => {
       })
     ).resolves.toEqual([]);
     expect(createSignedUrl).not.toHaveBeenCalled();
+  });
+
+  it("accepts clear and protected primary photos but rejects private or non-primary media", () => {
+    expect(isShareablePrimaryPhoto(media[1])).toBe(true);
+    expect(isShareablePrimaryPhoto({ ...media[1], visibility: "interest_required" })).toBe(true);
+    expect(isShareablePrimaryPhoto({ ...media[1], visibility: "owner_only" })).toBe(false);
+    expect(isShareablePrimaryPhoto({ ...media[1], media_type: "gallery" })).toBe(false);
   });
 
   it("never signs hidden or owner-only photos for public and approved previews", async () => {

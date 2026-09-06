@@ -95,6 +95,7 @@ export default function CelestialUnion({
   const languages = splitValues([data.lifestyle?.languages]);
   const values = splitValues([data.lifestyle?.values_statement]);
   const hasPersonalDetails = hasAny([
+    data.personal.gender,
     data.personal.marital_status,
     data.personal.citizenship,
     data.personal.religion,
@@ -176,7 +177,7 @@ export default function CelestialUnion({
   ]);
   const contactEntries = normalizedContacts(data.contact);
   const quickFacts = compactPairs([
-    ["Zodiac", visibleRashi && rashiOption ? `${ZODIAC_SYMBOLS[visibleRashi]} ${rashiOption.label}` : undefined],
+    ["Moon sign (Rashi)", visibleRashi && rashiOption ? `${ZODIAC_SYMBOLS[visibleRashi]} ${rashiOption.label}` : undefined],
     ["Age", age ? `${age} years` : undefined],
     ["Height", clean(data.vitals?.height)],
     ["Lives in", currentLocation],
@@ -186,7 +187,7 @@ export default function CelestialUnion({
     blurredPhotos: blurredPhotos.length,
     hasApprovedAccess,
   });
-  const showProtectedSection = protectedItems.length > 0 || (ownerPreview && contactEntries.length > 0);
+  const showProtectedSection = protectedItems.length > 0 || (hasApprovedAccess && contactEntries.length > 0);
   const chapters: ChapterDefinition[] = [];
 
   if (profileSummary || hasPersonalDetails || languages.length > 0 || values.length > 0) {
@@ -199,6 +200,7 @@ export default function CelestialUnion({
           {profileSummary && <p className="portfolio-long-copy">{profileSummary}</p>}
           {hasPersonalDetails && (
             <div className="portfolio-detail-grid portfolio-personal-details">
+              <DataPair label="Gender" value={genderLabel(data.personal.gender)} />
               <DataPair label="Marital status" value={clean(data.personal.marital_status)} />
               <DataPair label="Citizenship" value={clean(data.personal.citizenship)} />
               <DataPair label="Religion or outlook" value={clean(data.personal.religion)} />
@@ -350,8 +352,8 @@ export default function CelestialUnion({
       content: (
         <>
           <div className="portfolio-astrology-grid">
-            <DataPair label="Rashi" value={rashiOption?.label} />
-            <DataPair label="Nakshatra" value={clean(data.astrology?.nakshatra)} />
+            <DataPair label="Moon sign (Rashi)" value={rashiOption?.label} />
+            <DataPair label="Birth star (Nakshatra)" value={clean(data.astrology?.nakshatra)} />
             <DataPair label="Pada" value={clean(data.astrology?.pada)} />
             {hasApprovedAccess && <DataPair label="Date of birth" value={validDate(data.personal.dob)} />}
             {hasApprovedAccess && <DataPair label="Time of birth" value={clean(data.astrology?.time_of_birth)} />}
@@ -443,7 +445,14 @@ export default function CelestialUnion({
       id: "shared-life",
       eyebrow: "Shared future",
       title: "The life I hope to build",
-      content: <p className="portfolio-long-copy">{sharedLifeStatement}</p>,
+      content: hasApprovedAccess && clean(data.personal.long_term_goals) && clean(data.personal.shared_life_plans)
+        ? (
+            <div className="portfolio-personal-content">
+              <div><h3>Life direction</h3><p className="portfolio-long-copy">{data.personal.long_term_goals}</p></div>
+              <div><h3>What I hope to share</h3><p className="portfolio-long-copy">{data.personal.shared_life_plans}</p></div>
+            </div>
+          )
+        : <p className="portfolio-long-copy">{sharedLifeStatement}</p>,
     });
   }
 
@@ -497,7 +506,7 @@ export default function CelestialUnion({
             </nav>
           )}
           <span className="portfolio-mode-label">
-            <ShieldCheck aria-hidden="true" /> {ownerPreview ? "Owner view" : approvedViewer ? "Full Approved View" : `${privacyLabel(privacyMode)} view`}
+            <ShieldCheck aria-hidden="true" /> {ownerPreview ? "Owner preview" : approvedViewer ? "Full portfolio" : privacyLabel(privacyMode)}
           </span>
         </div>
       </header>
@@ -554,11 +563,13 @@ export default function CelestialUnion({
           <section id="protected-details" className="portfolio-protected-section">
             <div className="portfolio-protected-copy">
               <p className="portfolio-eyebrow">Respectful access</p>
-              <h2>{ownerPreview ? "Protected information preview" : "More can be shared after approval."}</h2>
+              <h2>{ownerPreview ? "Protected information preview" : approvedViewer ? "Contact shared by the profile owner" : "More can be shared after approval."}</h2>
               <p>
                 {ownerPreview
                   ? "These details are visible only in the authenticated owner view."
-                  : "Only information that exists is listed below. The profile owner reviews each request before deciding what to share."}
+                  : approvedViewer
+                    ? "These contact details became visible when the profile owner approved your request."
+                    : "Only information that exists is listed below. The profile owner reviews each request before deciding what to share."}
               </p>
             </div>
             {protectedItems.length > 0 && (
@@ -566,7 +577,7 @@ export default function CelestialUnion({
                 {protectedItems.map((item) => <span key={item}><LockKeyhole aria-hidden="true" />{item}</span>)}
               </div>
             )}
-            {ownerPreview && contactEntries.length > 0 ? (
+            {hasApprovedAccess && contactEntries.length > 0 ? (
               <div className="portfolio-contact-list">
                 {contactEntries.map((contact, index) => (
                   <div key={`${contact.name}-${index}`}>
@@ -576,7 +587,7 @@ export default function CelestialUnion({
                   </div>
                 ))}
               </div>
-            ) : !ownerPreview && interestAction ? (
+            ) : !hasApprovedAccess && interestAction ? (
               interestAction
             ) : null}
           </section>
@@ -694,8 +705,14 @@ function firstName(value?: string) {
 }
 
 function privacyLabel(mode: PortfolioData["privacy_mode"]) {
-  if (mode === "private") return "Private";
-  return "Balanced";
+  if (mode === "private") return "Short introduction";
+  return "Standard introduction";
+}
+
+function genderLabel(value?: PortfolioData["personal"]["gender"]) {
+  if (!value || value === "prefer_not_to_say") return undefined;
+  if (value === "non_binary") return "Non-binary";
+  return value === "male" ? "Male" : "Female";
 }
 
 function preferenceCommunity(preferences?: PortfolioData["preferences"]) {

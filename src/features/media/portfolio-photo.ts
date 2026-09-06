@@ -1,9 +1,25 @@
 import type {
   PortfolioMedia,
+  PortfolioMediaVisibility,
   PortfolioPhotoOrientation,
 } from "@/types/portfolio";
 
 export const MAX_PORTFOLIO_PHOTOS = 8;
+
+/** Visibility values that can safely serve as the portfolio's primary photo. */
+export const SHAREABLE_PRIMARY_PHOTO_VISIBILITIES = [
+  "public",
+  "interest_required",
+] as const satisfies readonly PortfolioMediaVisibility[];
+
+export function isShareablePrimaryPhoto(
+  media: Pick<PortfolioMedia, "media_type" | "visibility">
+) {
+  return media.media_type === "hero"
+    && SHAREABLE_PRIMARY_PHOTO_VISIBILITIES.includes(
+      media.visibility as (typeof SHAREABLE_PRIMARY_PHOTO_VISIBILITIES)[number]
+    );
+}
 
 export interface PortfolioPhoto {
   id: string;

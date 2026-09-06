@@ -98,4 +98,30 @@ describe("saveDashboardDraft", () => {
       saveDashboardDraft({ supabase: {} as never, userId: "user-id", data: baseDraft })
     ).rejects.toBeInstanceOf(DashboardSaveError);
   });
+
+  it("classifies a missing database migration without exposing database details", async () => {
+    repository.saveDashboardDraftTransaction.mockResolvedValue({
+      data: null,
+      error: { code: "PGRST202", message: "function details that must stay private" },
+    });
+
+    await expect(
+      saveDashboardDraft({ supabase: {} as never, userId: "user-id", data: baseDraft })
+    ).rejects.toMatchObject({
+      code: "DASHBOARD_DATABASE_UPDATE_REQUIRED",
+      status: 503,
+      message: expect.not.stringContaining("function details"),
+    });
+  });
+
+  it("maps database payload rejection to a safe correction message", async () => {
+    repository.saveDashboardDraftTransaction.mockResolvedValue({
+      data: null,
+      error: { code: "22023", message: "private payload detail" },
+    });
+
+    await expect(
+      saveDashboardDraft({ supabase: {} as never, userId: "user-id", data: baseDraft })
+    ).rejects.toMatchObject({ code: "DASHBOARD_DATA_REJECTED", status: 400 });
+  });
 });
