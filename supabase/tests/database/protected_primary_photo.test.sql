@@ -17,26 +17,53 @@ select pg_temp.create_auth_actor(
   'owner-only-primary@portfolio.test'
 );
 
-insert into public.portfolios (id, user_id, draft_data, is_published)
+insert into public.candidates (id, primary_owner_user_id, display_name, created_by)
+values
+  (
+    '64000000-0000-4000-8000-000000000001',
+    '61000000-0000-4000-8000-000000000001',
+    'Protected Primary',
+    '61000000-0000-4000-8000-000000000001'
+  ),
+  (
+    '64000000-0000-4000-8000-000000000002',
+    '61000000-0000-4000-8000-000000000002',
+    'Owner Only Primary',
+    '61000000-0000-4000-8000-000000000002'
+  );
+
+update app_private.identity_verification_subjects
+set status = 'verified',
+    verified_at = now() - interval '1 day',
+    expires_at = now() + interval '365 days'
+where candidate_id in (
+  '64000000-0000-4000-8000-000000000001',
+  '64000000-0000-4000-8000-000000000002'
+);
+
+insert into public.portfolios (id, user_id, candidate_id, draft_data, is_published)
 values
   (
     '63000000-0000-4000-8000-000000000001',
     '61000000-0000-4000-8000-000000000001',
+    '64000000-0000-4000-8000-000000000001',
     '{"personal":{"name":"Protected Primary"}}',
     false
   ),
   (
     '63000000-0000-4000-8000-000000000002',
     '61000000-0000-4000-8000-000000000002',
+    '64000000-0000-4000-8000-000000000002',
     '{"personal":{"name":"Owner Only Primary"}}',
     false
   );
 
 insert into public.portfolio_media (
-  portfolio_id, media_type, storage_path, visibility, sort_order, metadata
+  portfolio_id, candidate_id, media_type, storage_path, visibility, sort_order, metadata
 ) values
   (
     '63000000-0000-4000-8000-000000000001',
+    '64000000-0000-4000-8000-000000000001',
     'hero',
     '61000000-0000-4000-8000-000000000001/63000000-0000-4000-8000-000000000001/hero.webp',
     'interest_required',
@@ -45,6 +72,7 @@ insert into public.portfolio_media (
   ),
   (
     '63000000-0000-4000-8000-000000000002',
+    '64000000-0000-4000-8000-000000000002',
     'hero',
     '61000000-0000-4000-8000-000000000002/63000000-0000-4000-8000-000000000002/hero.webp',
     'owner_only',
