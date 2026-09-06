@@ -42,8 +42,8 @@ select ok(exists(select 1 from pg_policies where schemaname = 'storage' and tabl
 select ok(exists(select 1 from pg_policies where schemaname = 'public' and tablename = 'portfolio_horoscopes' and policyname = 'Approved viewers can read published horoscope attachments'), 'approved viewers have an identity-bound horoscope policy');
 select ok(not exists(select 1 from pg_policies where schemaname = 'public' and tablename = 'portfolio_horoscopes' and roles @> array['anon'::name]), 'anonymous users have no horoscope table policy');
 select ok(exists(select 1 from pg_policies where schemaname = 'storage' and tablename = 'objects' and policyname = 'Approved viewers can read horoscope files'), 'approved viewers have a private storage policy');
-select ok(exists(select 1 from pg_policies where schemaname = 'storage' and tablename = 'objects' and policyname = 'Active portfolio protected previews are readable' and qual like '%public_portfolio_snapshots%'), 'protected previews require an active snapshot');
-select ok(exists(select 1 from pg_policies where schemaname = 'storage' and tablename = 'objects' and policyname = 'Active portfolio public photos are readable' and qual like '%privacy_mode%'), 'private portfolios expose only the first public gallery original');
+select ok(exists(select 1 from pg_policies where schemaname = 'storage' and tablename = 'objects' and policyname = 'Active portfolio protected previews are readable' and qual like '%is_public_portfolio_media_path%'), 'protected previews use the active public-media allowlist');
+select ok(exists(select 1 from pg_policies where schemaname = 'storage' and tablename = 'objects' and policyname = 'Active portfolio public photos are readable' and qual like '%is_public_portfolio_media_path%'), 'public originals use the active public-media allowlist');
 
 select has_trigger('public', 'portfolios', 'portfolios_updated_at', 'portfolio timestamp trigger exists');
 select has_trigger('public', 'public_portfolio_snapshots', 'public_portfolio_snapshots_updated_at', 'snapshot timestamp trigger exists');

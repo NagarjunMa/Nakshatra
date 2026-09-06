@@ -12,7 +12,7 @@ select ok(not has_function_privilege('anon', 'public.is_current_session_active()
 select ok(has_function_privilege('authenticated', 'public.is_current_session_active()', 'EXECUTE'), 'authenticated callers can validate their own session');
 select ok(not has_function_privilege('authenticated', 'app_private.require_current_session()', 'EXECUTE'), 'the throwing guard is internal only');
 select has_function('public', 'is_public_portfolio_media_path', array['text', 'text'], 'public-media Storage predicate exists');
-select ok(not has_function_privilege('anon', 'public.is_public_portfolio_media_path(text,text)', 'EXECUTE'), 'anonymous callers cannot use the internal Storage policy helper as an RPC');
+select ok(has_function_privilege('anon', 'public.is_public_portfolio_media_path(text,text)', 'EXECUTE'), 'anonymous Storage requests can evaluate the non-enumerating public-media allowlist');
 
 select is(
   (

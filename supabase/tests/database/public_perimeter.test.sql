@@ -4,7 +4,7 @@ create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 \ir auth-fixtures.psql
 
-select plan(25);
+select plan(27);
 
 select pg_temp.create_auth_actor('11111111-1111-4111-8111-111111111111', '11111111-1111-4111-8111-111111111112', 'owner@perimeter.test');
 select pg_temp.create_auth_actor('22222222-2222-4222-8222-222222222222', '22222222-2222-4222-8222-222222222223', 'viewer@perimeter.test');
@@ -62,6 +62,15 @@ insert into public.approved_portfolio_snapshots (
   'kanya',
   now()
 );
+
+insert into storage.buckets (id, name, public)
+values ('photos', 'photos', false)
+on conflict (id) do update set public = false;
+
+insert into storage.objects (bucket_id, name)
+values
+  ('photos', '11111111-1111-4111-8111-111111111111/33333333-3333-4333-8333-333333333333/hero.webp'),
+  ('photos', '11111111-1111-4111-8111-111111111111/33333333-3333-4333-8333-333333333333/private-unpublished.webp');
 
 set local role anon;
 set local request.jwt.claims = '{"role":"anon"}';
@@ -129,6 +138,16 @@ select throws_ok(
 select ok(
   public.record_public_portfolio_view('phase1_secure_token_1'),
   'the token-scoped view command accepts an active portfolio'
+);
+select is(
+  (select count(*)::integer from storage.objects where name like '%/hero.webp'),
+  1,
+  'anonymous visitors can read an active public hero through Storage RLS'
+);
+select is(
+  (select count(*)::integer from storage.objects where name like '%/private-unpublished.webp'),
+  0,
+  'anonymous visitors cannot read an unlisted private Storage object'
 );
 
 set local role authenticated;
