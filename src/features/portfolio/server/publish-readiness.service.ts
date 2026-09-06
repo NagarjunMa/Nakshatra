@@ -33,6 +33,13 @@ export function requirePortfolioPublishReadiness({
   if (!data.personal.short_bio?.trim() && !data.personal.profile_summary?.trim()) {
     missing.push("short introduction");
   }
+  requireValue(data.astrology?.time_of_birth, "time of birth");
+  requireValue(data.personal.place_of_birth, "place of birth");
+  requireValue(data.astrology?.rashi, "moon sign (Rashi)");
+  requireValue(data.astrology?.nakshatra, "birth star (Nakshatra)");
+  requireValue(data.astrology?.pada, "pada");
+  requireValue(data.vitals?.gotra, "gotra");
+  requireValue(data.astrology?.manglik_status, "Manglik status");
 
   if (missing.length) {
     const firstItems = missing.slice(0, 4).join(", ");

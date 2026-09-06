@@ -44,6 +44,7 @@ const completeBlueprint: PortfolioData = {
     time_of_birth: "09:15",
     lagnam: "Mithuna",
     maternal_gotra: "Bharadwaj",
+    manglik_status: "No",
   },
   contact: {
     contacts: [{ relationship: "father", name: "Rao", phone: "+91 90000 00000" }],
@@ -71,7 +72,7 @@ describe("blueprint form", () => {
     fireEvent.change(screen.getByLabelText("First name"), { target: { value: "Updated" } });
     fireEvent.change(screen.getByLabelText("Short introduction"), { target: { value: "A concise new bio" } });
     fireEvent.click(screen.getByRole("button", { name: /Astrology/ }));
-    fireEvent.change(screen.getByLabelText("Rashi"), { target: { value: "kumbha" } });
+    fireEvent.change(screen.getByLabelText("Moon sign (Rashi)"), { target: { value: "kumbha" } });
     fireEvent.click(screen.getByRole("button", { name: /Family/ }));
     fireEvent.change(screen.getByLabelText("Number of siblings"), { target: { value: "2" } });
     fireEvent.click(screen.getByRole("button", { name: /Privacy & contact/ }));
@@ -102,7 +103,7 @@ describe("blueprint form", () => {
     };
     render(<BlueprintForm data={minimal} onUpdate={onUpdate} />);
 
-    expect(screen.getByText(/0 of 6 essentials complete/)).toBeInTheDocument();
+    expect(screen.getByText(/0 of 13 required details complete/)).toBeInTheDocument();
     expect(screen.getByText("Step 1 of 9 · Foundation")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Next: About you/ })).toHaveClass("dashboard-primary-action");
     fireEvent.blur(screen.getByLabelText("First name"));
@@ -200,5 +201,26 @@ describe("blueprint form", () => {
     expect(onUpdate).toHaveBeenCalledWith("preferences", expect.objectContaining({
       living_arrangement: "Near family, in a separate home",
     }));
+  });
+
+  it("marks publishing requirements and uses clear astrology terminology", () => {
+    render(<BlueprintForm data={completeBlueprint} onUpdate={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: /05Astrology/ }));
+
+    for (const label of [
+      "Time of birth",
+      "Place of birth",
+      "Moon sign (Rashi)",
+      "Birth star (Nakshatra)",
+      "Pada",
+      "Gotra",
+      "Manglik status",
+    ]) {
+      expect(screen.getByLabelText(label)).toBeRequired();
+    }
+    expect(screen.getByLabelText("Lagnam")).not.toBeRequired();
+    expect(screen.getByLabelText("Maternal gotra")).not.toBeRequired();
+    expect(screen.getAllByText("Shown in: Every portfolio view").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Shown in: Full only").length).toBeGreaterThan(0);
   });
 });

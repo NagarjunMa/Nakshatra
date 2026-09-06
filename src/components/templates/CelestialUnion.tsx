@@ -177,7 +177,7 @@ export default function CelestialUnion({
   ]);
   const contactEntries = normalizedContacts(data.contact);
   const quickFacts = compactPairs([
-    ["Zodiac", visibleRashi && rashiOption ? `${ZODIAC_SYMBOLS[visibleRashi]} ${rashiOption.label}` : undefined],
+    ["Moon sign (Rashi)", visibleRashi && rashiOption ? `${ZODIAC_SYMBOLS[visibleRashi]} ${rashiOption.label}` : undefined],
     ["Age", age ? `${age} years` : undefined],
     ["Height", clean(data.vitals?.height)],
     ["Lives in", currentLocation],
@@ -352,8 +352,8 @@ export default function CelestialUnion({
       content: (
         <>
           <div className="portfolio-astrology-grid">
-            <DataPair label="Rashi" value={rashiOption?.label} />
-            <DataPair label="Nakshatra" value={clean(data.astrology?.nakshatra)} />
+            <DataPair label="Moon sign (Rashi)" value={rashiOption?.label} />
+            <DataPair label="Birth star (Nakshatra)" value={clean(data.astrology?.nakshatra)} />
             <DataPair label="Pada" value={clean(data.astrology?.pada)} />
             {hasApprovedAccess && <DataPair label="Date of birth" value={validDate(data.personal.dob)} />}
             {hasApprovedAccess && <DataPair label="Time of birth" value={clean(data.astrology?.time_of_birth)} />}

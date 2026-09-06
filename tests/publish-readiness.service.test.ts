@@ -27,6 +27,7 @@ const readyPortfolio: PortfolioData = {
     time_of_birth: "09:15",
     lagnam: "Mithuna",
     maternal_gotra: "Bharadwaj",
+    manglik_status: "No",
   },
   family: {
     father: { name: "Rao", occupation: "Engineer" },
@@ -53,17 +54,23 @@ describe("portfolio publish readiness", () => {
     [{ ...readyPortfolio, personal: { ...readyPortfolio.personal, current_location: "" } }, true, "current location"],
     [{ ...readyPortfolio, career: { ...readyPortfolio.career, title: "" } }, true, "profession or role"],
     [{ ...readyPortfolio, personal: { ...readyPortfolio.personal, profile_summary: "", short_bio: "" } }, true, "short introduction"],
+    [{ ...readyPortfolio, astrology: { ...readyPortfolio.astrology, time_of_birth: "" } }, true, "time of birth"],
+    [{ ...readyPortfolio, personal: { ...readyPortfolio.personal, place_of_birth: "" } }, true, "place of birth"],
+    [{ ...readyPortfolio, astrology: { ...readyPortfolio.astrology, rashi: "" } }, true, "moon sign (Rashi)"],
+    [{ ...readyPortfolio, astrology: { ...readyPortfolio.astrology, nakshatra: "" } }, true, "birth star (Nakshatra)"],
+    [{ ...readyPortfolio, astrology: { ...readyPortfolio.astrology, pada: "" } }, true, "pada"],
+    [{ ...readyPortfolio, vitals: { ...readyPortfolio.vitals, gotra: "" } }, true, "gotra"],
+    [{ ...readyPortfolio, astrology: { ...readyPortfolio.astrology, manglik_status: "" } }, true, "Manglik status"],
     [readyPortfolio, false, "profile photo"],
   ] as const)("rejects incomplete generation state", (data, hasPublicHeroPhoto, message) => {
     expect(() => requirePortfolioPublishReadiness({ data, hasPublicHeroPhoto })).toThrow(PortfolioPublishReadinessError);
     expect(() => requirePortfolioPublishReadiness({ data, hasPublicHeroPhoto })).toThrow(message);
   });
 
-  it("allows detailed sections to remain incomplete", () => {
+  it("allows non-required detailed sections to remain incomplete", () => {
     expect(() => requirePortfolioPublishReadiness({
       data: {
         ...readyPortfolio,
-        astrology: {},
         family: { sibling_count: 2, siblings: [] },
         lifestyle: {},
         preferences: {},

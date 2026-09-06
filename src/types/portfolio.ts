@@ -83,7 +83,7 @@ export const vitalsSchema = z.object({
 export const astrologySchema = z.object({
   rashi: z.enum(["", ...RASHI_KEYS]).optional(),
   nakshatra: z.string().max(100).optional(),
-  pada: z.string().max(50).optional(),
+  pada: z.enum(["", "1", "2", "3", "4"]).optional(),
   time_of_birth: z
     .union([
       z.string().regex(/^\d{2}:\d{2}$/, "Invalid time format"),

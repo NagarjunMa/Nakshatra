@@ -8,7 +8,7 @@ drop function if exists app_private.submit_public_interest(
   text, text, text, text, text, text, text, text, text
 );
 
-create function app_private.submit_public_interest(
+create or replace function app_private.submit_public_interest(
   p_share_token text,
   p_name text,
   p_profile_for text,
@@ -127,7 +127,7 @@ begin
 end;
 $$;
 
-create function public.submit_public_interest(
+create or replace function public.submit_public_interest(
   p_share_token text,
   p_name text,
   p_profile_for text,

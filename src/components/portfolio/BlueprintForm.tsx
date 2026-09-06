@@ -71,7 +71,7 @@ const SECTIONS: Array<{ id: SectionId; label: string; optional?: boolean }> = [
   { id: "story", label: "About you", optional: true },
   { id: "work", label: "Education & work", optional: true },
   { id: "family", label: "Family", optional: true },
-  { id: "astrology", label: "Astrology", optional: true },
+  { id: "astrology", label: "Astrology" },
   { id: "lifestyle", label: "Lifestyle", optional: true },
   { id: "preferences", label: "Partner preferences", optional: true },
   { id: "future", label: "Future plans", optional: true },
@@ -79,8 +79,16 @@ const SECTIONS: Array<{ id: SectionId; label: string; optional?: boolean }> = [
 ];
 
 const RASHI_SELECT_OPTIONS: BlueprintOption[] = [
-  { value: "", label: "Select rashi" },
+  { value: "", label: "Select moon sign" },
   ...RASHI_OPTIONS.map((rashi) => ({ value: rashi.key, label: rashi.label })),
+];
+
+const PADA_OPTIONS: BlueprintOption[] = [
+  { value: "", label: "Select pada" },
+  { value: "1", label: "Pada 1" },
+  { value: "2", label: "Pada 2" },
+  { value: "3", label: "Pada 3" },
+  { value: "4", label: "Pada 4" },
 ];
 
 const PRIVACY_PRESETS = [
@@ -129,7 +137,17 @@ export function BlueprintForm({
     data.career?.title,
     data.personal.short_bio || data.personal.profile_summary,
   ];
-  const foundationReady = foundationFields.filter(hasValue).length;
+  const requiredFields = [
+    ...foundationFields,
+    data.astrology?.time_of_birth,
+    data.personal.place_of_birth,
+    data.astrology?.rashi,
+    data.astrology?.nakshatra,
+    data.astrology?.pada,
+    data.vitals?.gotra,
+    data.astrology?.manglik_status,
+  ];
+  const requiredReady = requiredFields.filter(hasValue).length;
   const contacts = data.contact?.contacts?.length
     ? data.contact.contacts
     : data.contact?.contact_person || data.contact?.phone || data.contact?.email
@@ -213,12 +231,12 @@ export function BlueprintForm({
         <div className="biodata-editor-sidebar rounded-2xl p-3">
           <div className="biodata-editor-progress mb-3 rounded-xl p-3">
             <p className="text-sm font-semibold text-[color:var(--workspace-teal)]">
-              {foundationReady === foundationFields.length ? "Essentials complete" : "Start with the essentials"}
+              {requiredReady === requiredFields.length ? "Required details complete" : "Complete required details"}
             </p>
             <p className="mt-1 text-sm leading-5 text-[color:var(--workspace-ink-muted)]">
-              {foundationReady === foundationFields.length
-                ? "Optional sections can be finished now or later."
-                : `${foundationReady} of ${foundationFields.length} essentials complete`}
+              {requiredReady === requiredFields.length
+                ? "Recommended fields can be finished now or later."
+                : `${requiredReady} of ${requiredFields.length} required details complete`}
             </p>
           </div>
           <nav aria-label="Portfolio form sections" className="space-y-1">
@@ -249,7 +267,7 @@ export function BlueprintForm({
         <div className="biodata-editor-mobile-nav sticky top-0 z-30 mb-4 rounded-xl p-3 lg:hidden">
           <div className="mb-2 flex items-center justify-between gap-3 text-sm">
             <strong className="text-[color:var(--workspace-ink)]">Section {activeIndex + 1} of {SECTIONS.length}</strong>
-            <span className="text-[color:var(--workspace-ink-muted)]">{foundationReady} of {foundationFields.length} essentials</span>
+            <span className="text-[color:var(--workspace-ink-muted)]">{requiredReady} of {requiredFields.length} required</span>
           </div>
           <div
             className="mb-3 h-1.5 overflow-hidden rounded-full bg-[color:var(--workspace-border)]"
@@ -284,8 +302,8 @@ export function BlueprintForm({
           </p>
         )}
         {activeSection === "foundation" && (
-          <FormSection eyebrow="Start here" title="Portfolio essentials" description="Complete these first. You can save your draft and return to every optional section later.">
-            <InfoCard title="You control what gets shared" audience="Private draft" text="These answers create your biodata. Nothing becomes public until you publish, and protected details stay outside the public introduction." />
+          <FormSection eyebrow="Start here" title="Portfolio essentials" description="Complete these first. You can save your draft and return to the remaining sections later.">
+            <InfoCard title="Required, recommended, and optional" audience="Private draft" text="Required details must be complete before publishing. Recommended details help families understand the portfolio. Optional details add context only when they feel useful." />
               <SelectInput label="Who are you creating this portfolio for?" value={data.personal.profile_for || ""} options={PROFILE_FOR_OPTIONS} onChange={(value) => updatePersonal({ profile_for: value })} requirement="Recommended" audience="Only you" />
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <TextInput label="First name" value={nameParts.first_name} onChange={(value) => updateNamePart("first_name", value)} required requirement="Required" audience="All portfolio views" />
@@ -297,7 +315,7 @@ export function BlueprintForm({
               <TextInput label="Date of birth" type="date" value={data.personal.dob || ""} onChange={(value) => updatePersonal({ dob: value })} required requirement="Required" audience="Age in initial views · Exact date in Full" hint="Used to calculate age. The exact date is not public." />
               <SelectInput label="Gender" value={data.personal.gender || ""} options={GENDER_OPTIONS} onChange={(value) => updatePersonal({ gender: value ? value as PortfolioData["personal"]["gender"] : undefined })} requirement="Recommended" audience="Standard and Full" hint="Optional. It is not shown in the Short introduction." />
               <TextInput label="Profession or role" value={data.career?.title || ""} onChange={(value) => onUpdate("career", { ...(data.career || {}), title: value })} required requirement="Required" audience="All portfolio views" hint="A broad role is enough; employer details can come later." />
-              <SelectInput label="Height" value={data.vitals?.height || ""} options={HEIGHT_OPTIONS} onChange={(value) => onUpdate("vitals", { ...(data.vitals || {}), height: value })} requirement="Optional" audience="All portfolio views" />
+              <SelectInput label="Height" value={data.vitals?.height || ""} options={HEIGHT_OPTIONS} onChange={(value) => onUpdate("vitals", { ...(data.vitals || {}), height: value })} requirement="Recommended" audience="All portfolio views" />
               <SelectInput label="Marital status" value={data.personal.marital_status || ""} options={MARITAL_STATUS_OPTIONS} onChange={(value) => updatePersonal({ marital_status: value })} requirement="Recommended" audience="All portfolio views" />
             </div>
             <LocationFields value={{ country: data.personal.country, countryCode: data.personal.country_code, region: data.personal.region, regionCode: data.personal.region_code, city: data.personal.city, cityGeonameId: data.personal.city_geoname_id }} onChange={updateResidence} labels={{ country: "Current country", region: "Current state or region", city: "Current city" }} requireCountryAndCity />
@@ -317,14 +335,14 @@ export function BlueprintForm({
           <FormSection eyebrow="Journey" title="Education and work" description="Share the level of detail that helps someone understand your path and present situation.">
             <div className="grid gap-4 sm:grid-cols-2">
               <SelectInput label="Highest qualification" value={data.education?.qualification_level || ""} options={QUALIFICATION_OPTIONS} onChange={(value) => onUpdate("education", { ...(data.education || {}), qualification_level: value })} requirement="Recommended" audience="All portfolio views" />
-              <TextInput label="Degree or qualification" value={data.education?.degree || ""} onChange={(value) => onUpdate("education", { ...(data.education || {}), degree: value })} requirement="Optional" audience="All portfolio views" />
+              <TextInput label="Degree or qualification" value={data.education?.degree || ""} onChange={(value) => onUpdate("education", { ...(data.education || {}), degree: value })} requirement="Recommended" audience="All portfolio views" />
               <TextInput label="Institution" value={data.education?.institution || ""} onChange={(value) => onUpdate("education", { ...(data.education || {}), institution: value })} requirement="Optional" audience="Standard and Full" />
               <TextInput label="Education location" value={data.education?.location || ""} onChange={(value) => onUpdate("education", { ...(data.education || {}), location: value })} requirement="Optional" audience="Standard and Full" />
               <SelectInput label="Work status" value={data.career?.job_type || ""} options={JOB_TYPE_OPTIONS} onChange={(value) => onUpdate("career", { ...(data.career || {}), job_type: value })} requirement="Optional" audience="Standard and Full" />
               <TextInput label="Employer or organisation" value={data.career?.company || ""} onChange={(value) => onUpdate("career", { ...(data.career || {}), company: value })} audience="Full portfolio" />
-              <TextInput label="Work location" value={data.career?.location || ""} onChange={(value) => onUpdate("career", { ...(data.career || {}), location: value })} requirement="Optional" audience="All portfolio views" />
+              <TextInput label="Work location" value={data.career?.location || ""} onChange={(value) => onUpdate("career", { ...(data.career || {}), location: value })} requirement="Recommended" audience="All portfolio views" />
               <SelectInput label="Visa or residency status" value={data.personal.immigration_status || ""} options={VISA_OPTIONS} onChange={(value) => updatePersonal({ immigration_status: value })} requirement="Optional" audience="Standard and Full" />
-              <TextInput label="Citizenship" value={data.personal.citizenship || ""} onChange={(value) => updatePersonal({ citizenship: value })} requirement="Optional" audience="All portfolio views" />
+              <TextInput label="Citizenship" value={data.personal.citizenship || ""} onChange={(value) => updatePersonal({ citizenship: value })} requirement="Recommended" audience="All portfolio views" />
               <SelectInput label="Annual income range" value={data.career?.annual_income || ""} options={INCOME_RANGE_OPTIONS} onChange={(value) => onUpdate("career", { ...(data.career || {}), annual_income: value })} audience="Full portfolio" hint="Shown only after you approve a viewer." />
               {hasValue(data.career?.annual_income) && data.career?.annual_income !== "Prefer not to say" && <SelectInput label="Income currency" value={data.career?.income_currency || ""} options={CURRENCY_OPTIONS} onChange={(value) => onUpdate("career", { ...(data.career || {}), income_currency: value })} audience="Full portfolio" />}
             </div>
@@ -336,9 +354,9 @@ export function BlueprintForm({
           <FormSection eyebrow="Roots" title="Family and background" description="Introduce your family in a warm, respectful way. Personal contact details remain protected.">
             <TextArea label="How would you describe your family?" value={data.family?.public_summary || ""} onChange={(value) => updateFamily({ public_summary: value })} maxLength={600} requirement="Recommended" audience="All portfolio views" hint="Describe the family without phone numbers, exact addresses, or private documents. The Short introduction uses a concise version." />
             <div className="grid gap-4 sm:grid-cols-2">
-              <SelectInput label="Religion or outlook" value={data.personal.religion || ""} options={RELIGION_OPTIONS} onChange={(value) => updatePersonal({ religion: value })} requirement="Optional" audience="All portfolio views" />
-              <TextInput label="Community" value={data.personal.community || ""} onChange={(value) => updatePersonal({ community: value })} list="community-options" requirement="Optional" audience="All portfolio views" />
-              <TextInput label="Sub-community" value={data.personal.sub_community || ""} onChange={(value) => updatePersonal({ sub_community: value })} requirement="Optional" audience="All portfolio views" />
+              <SelectInput label="Religion or outlook" value={data.personal.religion || ""} options={RELIGION_OPTIONS} onChange={(value) => updatePersonal({ religion: value })} requirement="Recommended" audience="All portfolio views" />
+              <TextInput label="Community" value={data.personal.community || ""} onChange={(value) => updatePersonal({ community: value })} list="community-options" requirement="Recommended" audience="All portfolio views" />
+              <TextInput label="Sub-community" value={data.personal.sub_community || ""} onChange={(value) => updatePersonal({ sub_community: value })} requirement="Recommended" audience="All portfolio views" />
               <TextInput label="Parents' current location" value={data.family?.parents_location || ""} onChange={(value) => updateFamily({ parents_location: value })} requirement="Optional" audience="Full portfolio" />
               <TextInput label="Father or guardian name" value={data.family?.father?.name || ""} onChange={(value) => updateFamily({ father: { ...(data.family?.father || {}), name: value } })} requirement="Optional" audience="Full portfolio" />
               <TextInput label="Father or guardian profession" value={data.family?.father?.occupation || ""} onChange={(value) => updateFamily({ father: { ...(data.family?.father || {}), occupation: value } })} requirement="Optional" audience="Full portfolio" />
@@ -367,13 +385,13 @@ export function BlueprintForm({
         {activeSection === "lifestyle" && (
           <FormSection eyebrow="Everyday life" title="Lifestyle and interests" description="Choose what genuinely reflects you.">
             <div className="grid gap-4 sm:grid-cols-3">
-              <SelectInput label="Dietary preference" value={data.lifestyle?.diet || ""} options={DIET_OPTIONS} onChange={(value) => onUpdate("lifestyle", { ...(data.lifestyle || {}), diet: value })} requirement="Optional" audience="All portfolio views" />
+              <SelectInput label="Dietary preference" value={data.lifestyle?.diet || ""} options={DIET_OPTIONS} onChange={(value) => onUpdate("lifestyle", { ...(data.lifestyle || {}), diet: value })} requirement="Recommended" audience="All portfolio views" />
               <SelectInput label="Alcohol use" value={data.lifestyle?.drinking || ""} options={FREQUENCY_OPTIONS} onChange={(value) => onUpdate("lifestyle", { ...(data.lifestyle || {}), drinking: value })} requirement="Optional" audience="Standard and Full" />
               <SelectInput label="Tobacco use" value={data.lifestyle?.smoking || ""} options={FREQUENCY_OPTIONS} onChange={(value) => onUpdate("lifestyle", { ...(data.lifestyle || {}), smoking: value })} requirement="Optional" audience="Standard and Full" />
             </div>
-            <MultiSelectInput label="Languages" value={data.lifestyle?.languages || ""} options={LANGUAGE_OPTIONS} onChange={(value) => onUpdate("lifestyle", { ...(data.lifestyle || {}), languages: value })} audience="All portfolio views" />
-            <MultiSelectInput label="Interests and hobbies" value={data.lifestyle?.hobbies || ""} options={HOBBY_OPTIONS} onChange={(value) => onUpdate("lifestyle", { ...(data.lifestyle || {}), hobbies: value })} audience="All portfolio views" />
-            <MultiSelectInput label="Values that matter to you" value={data.lifestyle?.values_statement || ""} options={VALUE_OPTIONS} onChange={(value) => onUpdate("lifestyle", { ...(data.lifestyle || {}), values_statement: value })} audience="All portfolio views" hint="Choose a few that genuinely guide your decisions and relationships." />
+            <MultiSelectInput label="Languages" value={data.lifestyle?.languages || ""} options={LANGUAGE_OPTIONS} onChange={(value) => onUpdate("lifestyle", { ...(data.lifestyle || {}), languages: value })} requirement="Recommended" audience="All portfolio views" />
+            <MultiSelectInput label="Interests and hobbies" value={data.lifestyle?.hobbies || ""} options={HOBBY_OPTIONS} onChange={(value) => onUpdate("lifestyle", { ...(data.lifestyle || {}), hobbies: value })} requirement="Recommended" audience="All portfolio views" />
+            <MultiSelectInput label="Values that matter to you" value={data.lifestyle?.values_statement || ""} options={VALUE_OPTIONS} onChange={(value) => onUpdate("lifestyle", { ...(data.lifestyle || {}), values_statement: value })} requirement="Recommended" audience="All portfolio views" hint="Choose a few that genuinely guide your decisions and relationships." />
           </FormSection>
         )}
 
@@ -405,17 +423,17 @@ export function BlueprintForm({
         )}
 
         {activeSection === "astrology" && (
-          <FormSection eyebrow="Cultural alignment" title="Astrology" description="Add only what you know. Sensitive details stay protected.">
+          <FormSection eyebrow="Cultural alignment" title="Astrology" description="Complete the required birth and astrology details. Lagnam and maternal gotra remain optional. Sensitive details stay protected.">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <TextInput label="Time of birth" type="time" value={data.astrology?.time_of_birth || ""} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), time_of_birth: value })} requirement="Optional" audience="Full portfolio" />
-              <TextInput label="Place of birth" value={data.personal.place_of_birth || ""} onChange={(value) => updatePersonal({ place_of_birth: value })} requirement="Optional" audience="Full portfolio" />
-              <SelectInput label="Rashi" value={data.astrology?.rashi || ""} options={RASHI_SELECT_OPTIONS} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), rashi: value as NonNullable<PortfolioData["astrology"]>["rashi"] })} requirement="Optional" audience="All portfolio views" />
-              <SelectInput label="Nakshatra" value={data.astrology?.nakshatra || ""} options={NAKSHATRA_OPTIONS} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), nakshatra: value })} requirement="Optional" audience="All portfolio views" />
-              <TextInput label="Pada" value={data.astrology?.pada || ""} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), pada: value })} requirement="Optional" audience="Full portfolio" />
+              <TextInput label="Time of birth" type="time" value={data.astrology?.time_of_birth || ""} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), time_of_birth: value })} required audience="Full portfolio" />
+              <TextInput label="Place of birth" value={data.personal.place_of_birth || ""} onChange={(value) => updatePersonal({ place_of_birth: value })} required audience="Full portfolio" />
+              <SelectInput label="Moon sign (Rashi)" value={data.astrology?.rashi || ""} options={RASHI_SELECT_OPTIONS} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), rashi: value as NonNullable<PortfolioData["astrology"]>["rashi"] })} required audience="All portfolio views" hint="Your Vedic moon sign. The English zodiac equivalent appears in the option." />
+              <SelectInput label="Birth star (Nakshatra)" value={data.astrology?.nakshatra || ""} options={NAKSHATRA_OPTIONS} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), nakshatra: value })} required audience="All portfolio views" hint="Nakshatra is your Vedic birth star, which is different from a zodiac sign." />
+              <SelectInput label="Pada" value={data.astrology?.pada || ""} options={PADA_OPTIONS} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), pada: value as NonNullable<PortfolioData["astrology"]>["pada"] })} required audience="Full portfolio" />
               <TextInput label="Lagnam" value={data.astrology?.lagnam || ""} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), lagnam: value })} requirement="Optional" audience="Full portfolio" />
-              <TextInput label="Gotra" value={data.vitals?.gotra || ""} onChange={(value) => onUpdate("vitals", { ...(data.vitals || {}), gotra: value })} requirement="Optional" audience="Standard and Full" />
+              <TextInput label="Gotra" value={data.vitals?.gotra || ""} onChange={(value) => onUpdate("vitals", { ...(data.vitals || {}), gotra: value })} required audience="Standard and Full" />
               <TextInput label="Maternal gotra" value={data.astrology?.maternal_gotra || ""} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), maternal_gotra: value })} requirement="Optional" audience="Standard and Full" />
-              <SelectInput label="Manglik status" value={data.astrology?.manglik_status || ""} options={MANGLIK_OPTIONS} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), manglik_status: value })} requirement="Optional" audience="Full portfolio" />
+              <SelectInput label="Manglik status" value={data.astrology?.manglik_status || ""} options={MANGLIK_OPTIONS} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), manglik_status: value })} required audience="Full portfolio" />
             </div>
             {horoscopeManager && <EmbeddedPanel title="Original horoscope attachment" description="Only approved viewers can open it as a separate document.">{horoscopeManager}</EmbeddedPanel>}
           </FormSection>
@@ -495,7 +513,7 @@ function EmbeddedPanel({ title, description, children }: { title: string; descri
 function FieldLabel({ label, hint, required, requirement, audience }: { label: string; hint?: string; required?: boolean; requirement?: string; audience?: string }) {
   const visibleRequirement = required ? "Required" : requirement || "Optional";
   const visibleAudience = audience ? audienceCopy(audience) : undefined;
-  return <span><span className="flex flex-wrap items-center gap-2"><span>{label}{required && <span className="ml-1 text-[color:var(--workspace-teal)]" aria-hidden="true">*</span>}</span>{visibleRequirement && <span className="rounded-full border border-[color:var(--workspace-border)] bg-white px-2 py-0.5 text-xs font-semibold text-[color:var(--workspace-ink-muted)]">{visibleRequirement}</span>}</span>{visibleAudience && <span className="mt-1 block text-xs font-medium text-[color:var(--workspace-teal)]">Visible: {visibleAudience}</span>}{hint && <span className="mt-1 block text-sm font-normal leading-5 text-[color:var(--workspace-ink-muted)]">{hint}</span>}</span>;
+  return <span><span className="flex flex-wrap items-center gap-2"><span>{label}{required && <span className="ml-1 text-[color:var(--workspace-teal)]" aria-hidden="true">*</span>}</span>{visibleRequirement && <span className="rounded-full border border-[color:var(--workspace-border)] bg-white px-2 py-0.5 text-xs font-semibold text-[color:var(--workspace-ink-muted)]">{visibleRequirement}</span>}</span>{visibleAudience && <span className="mt-1 block text-xs font-medium text-[color:var(--workspace-teal)]">Shown in: {visibleAudience}</span>}{hint && <span className="mt-1 block text-sm font-normal leading-5 text-[color:var(--workspace-ink-muted)]">{hint}</span>}</span>;
 }
 
 function TextInput({ label, value, onChange, type = "text", placeholder, hint, required, min, max, requirement, audience, list, name }: { label: string; value: string; onChange: (value: string) => void; type?: HTMLInputTypeAttribute; placeholder?: string; hint?: string; required?: boolean; min?: string; max?: string; requirement?: string; audience?: string; list?: string; name?: string }) {
@@ -546,7 +564,7 @@ function RangeSelectInput({ label, value, options, onChange, audience }: { label
   );
 }
 
-function MultiSelectInput({ label, value, options, onChange, audience, hint, allowCustom = true }: { label: string; value: string; options: BlueprintOption[]; onChange: (value: string) => void; audience?: string; hint?: string; allowCustom?: boolean }) {
+function MultiSelectInput({ label, value, options, onChange, audience, hint, requirement, allowCustom = true }: { label: string; value: string; options: BlueprintOption[]; onChange: (value: string) => void; audience?: string; hint?: string; requirement?: string; allowCustom?: boolean }) {
   const [draft, setDraft] = useState("");
   const [open, setOpen] = useState(false);
   const values = splitValues(value);
@@ -562,7 +580,7 @@ function MultiSelectInput({ label, value, options, onChange, audience, hint, all
     setDraft("");
     setOpen(false);
   }
-  return <div className="space-y-2 text-[15px] font-semibold text-[color:var(--workspace-ink)]"><FieldLabel label={label} hint={hint} audience={audience} /><div className="flex flex-col gap-2 sm:flex-row"><div className="relative min-w-0 flex-1" onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false); }}><input name={label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "")} autoComplete="off" aria-label={label} role="combobox" aria-autocomplete="list" aria-expanded={open} aria-controls={listId} value={draft} onFocus={() => setOpen(true)} onChange={(event) => { setDraft(event.target.value); setOpen(true); }} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addValue(); } else if (event.key === "Escape") { setOpen(false); } }} placeholder="Search or type to add…" className="biodata-field min-h-12 w-full" />{open && suggestions.length > 0 && <ul id={listId} role="listbox" aria-label={`${label} suggestions`} className="absolute inset-x-0 top-full z-40 mt-2 max-h-64 overflow-y-auto rounded-xl border border-[color:var(--workspace-border)] bg-white p-1.5 shadow-2xl shadow-[#233443]/15">{suggestions.map((item) => <li key={item.value} role="none"><button type="button" role="option" aria-selected="false" onMouseDown={(event) => event.preventDefault()} onClick={() => addValue(item.value)} className="workspace-focus min-h-11 w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-[color:var(--workspace-ink)] hover:bg-[color:var(--workspace-teal-soft)]">{item.label}</button></li>)}</ul>}</div><button type="button" onClick={() => addValue()} className="workspace-focus min-h-12 rounded-lg border border-[color:var(--workspace-border)] bg-white px-5 text-sm font-semibold text-[color:var(--workspace-ink)] hover:bg-[color:var(--workspace-surface-muted)]">Add</button></div>{values.length > 0 && <div className="flex flex-wrap gap-2" aria-label={`${label} selected`}>{values.map((item) => <button key={item} type="button" onClick={() => onChange(values.filter((valueItem) => valueItem !== item).join(", "))} className="workspace-focus inline-flex min-h-10 items-center gap-1.5 rounded-full border border-[#b7cbc6] bg-[#eef5f2] px-3 text-sm font-medium text-[color:var(--workspace-ink)]" aria-label={`Remove ${item}`}>{item}<span aria-hidden="true">×</span></button>)}</div>}</div>;
+  return <div className="space-y-2 text-[15px] font-semibold text-[color:var(--workspace-ink)]"><FieldLabel label={label} hint={hint} requirement={requirement} audience={audience} /><div className="flex flex-col gap-2 sm:flex-row"><div className="relative min-w-0 flex-1" onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false); }}><input name={label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "")} autoComplete="off" aria-label={label} role="combobox" aria-autocomplete="list" aria-expanded={open} aria-controls={listId} value={draft} onFocus={() => setOpen(true)} onChange={(event) => { setDraft(event.target.value); setOpen(true); }} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addValue(); } else if (event.key === "Escape") { setOpen(false); } }} placeholder="Search or type to add…" className="biodata-field min-h-12 w-full" />{open && suggestions.length > 0 && <ul id={listId} role="listbox" aria-label={`${label} suggestions`} className="absolute inset-x-0 top-full z-40 mt-2 max-h-64 overflow-y-auto rounded-xl border border-[color:var(--workspace-border)] bg-white p-1.5 shadow-2xl shadow-[#233443]/15">{suggestions.map((item) => <li key={item.value} role="none"><button type="button" role="option" aria-selected="false" onMouseDown={(event) => event.preventDefault()} onClick={() => addValue(item.value)} className="workspace-focus min-h-11 w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-[color:var(--workspace-ink)] hover:bg-[color:var(--workspace-teal-soft)]">{item.label}</button></li>)}</ul>}</div><button type="button" onClick={() => addValue()} className="workspace-focus min-h-12 rounded-lg border border-[color:var(--workspace-border)] bg-white px-5 text-sm font-semibold text-[color:var(--workspace-ink)] hover:bg-[color:var(--workspace-surface-muted)]">Add</button></div>{values.length > 0 && <div className="flex flex-wrap gap-2" aria-label={`${label} selected`}>{values.map((item) => <button key={item} type="button" onClick={() => onChange(values.filter((valueItem) => valueItem !== item).join(", "))} className="workspace-focus inline-flex min-h-10 items-center gap-1.5 rounded-full border border-[#b7cbc6] bg-[#eef5f2] px-3 text-sm font-medium text-[color:var(--workspace-ink)]" aria-label={`Remove ${item}`}>{item}<span aria-hidden="true">×</span></button>)}</div>}</div>;
 }
 
 function parseRange(value: string, options: BlueprintOption[]) {
@@ -590,12 +608,14 @@ function splitValues(value: string) {
 }
 
 function audienceCopy(audience: string) {
-  if (audience === "Portfolio") return "public introduction";
-  if (audience === "Portfolio, if you choose") return "public when selected";
-  if (audience === "Approved people") return "after you approve an introduction";
-  if (audience === "Protected") return "not in the public introduction";
-  if (audience === "Only you") return "only you";
-  return audience.toLowerCase();
+  if (audience === "All portfolio views") return "Every portfolio view";
+  if (audience === "Standard and Full") return "Standard and Full";
+  if (audience === "Full portfolio" || audience === "Approved people") return "Full only";
+  if (audience === "Portfolio") return "Public introduction";
+  if (audience === "Portfolio, if you choose") return "Public when selected";
+  if (audience === "Protected") return "Not in the public introduction";
+  if (audience === "Only you") return "Private draft only";
+  return audience;
 }
 
 function hasValue(value: unknown) {

@@ -50,6 +50,7 @@ const draft: PortfolioData = {
     time_of_birth: "09:15",
     lagnam: "Mithuna",
     maternal_gotra: "Bharadwaj",
+    manglik_status: "No",
   },
   family: {
     father: { name: "Rao", occupation: "Engineer" },
