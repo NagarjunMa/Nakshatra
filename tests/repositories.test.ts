@@ -86,7 +86,7 @@ describe("DashboardRepository", () => {
       themeColor: "#fff",
       sunSign: "kanya",
     });
-    await repository.findPublicHeroPhoto("portfolio");
+    await repository.findShareablePrimaryPhoto("portfolio");
     await repository.renewPortfolioTransaction("2099-01-01");
     await repository.rotatePortfolioTransaction("123456789012345678901");
     await repository.unpublishPortfolioTransaction();
@@ -96,6 +96,7 @@ describe("DashboardRepository", () => {
     });
     expect(rpc).toHaveBeenCalledWith("publish_portfolio_transaction", expect.objectContaining({ p_portfolio_id: "portfolio" }));
     expect(rpc).toHaveBeenCalledWith("renew_portfolio_transaction", { p_expires_at: "2099-01-01" });
+    expect(q.in).toHaveBeenCalledWith("visibility", ["public", "interest_required"]);
   });
 
 });

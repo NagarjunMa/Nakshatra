@@ -17,7 +17,10 @@ import type {
   AccessGrant,
   PortfolioAccessSummary,
 } from "@/features/access/server/access.contract";
-import { MAX_PORTFOLIO_PHOTOS } from "@/features/media/portfolio-photo";
+import {
+  isShareablePrimaryPhoto,
+  MAX_PORTFOLIO_PHOTOS,
+} from "@/features/media/portfolio-photo";
 import { BlueprintForm } from "@/components/portfolio/BlueprintForm";
 import { IdentityVerificationDashboard } from "@/features/identity-verification/client/identity-verification-dashboard";
 import {
@@ -642,6 +645,7 @@ export default function DashboardClient({
                 <BlueprintForm
                   data={draftData}
                   onUpdate={updateSection}
+                  hasShareablePrimaryPhoto={portfolioMedia.some(isShareablePrimaryPhoto)}
                   photoManager={
                     <PhotoManager
                       media={portfolioMedia}

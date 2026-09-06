@@ -7,15 +7,15 @@ export class PortfolioPublishReadinessError extends Error {}
 
 /**
  * Validates the minimum content required for a public portfolio generation.
- * Input: validated portfolio data and whether the owner has an explicitly public primary photo.
+ * Input: validated portfolio data and whether the owner has a shareable primary photo.
  * Output: resolves when ready or throws a user-safe readiness error.
  */
 export function requirePortfolioPublishReadiness({
   data,
-  hasPublicHeroPhoto,
+  hasShareablePrimaryPhoto,
 }: {
   data: PortfolioData;
-  hasPublicHeroPhoto: boolean;
+  hasShareablePrimaryPhoto: boolean;
 }) {
   const missing: string[] = [];
   const requireValue = (value: unknown, label: string) => {
@@ -49,9 +49,9 @@ export function requirePortfolioPublishReadiness({
     );
   }
 
-  if (!hasPublicHeroPhoto) {
+  if (!hasShareablePrimaryPhoto) {
     throw new PortfolioPublishReadinessError(
-      "Choose one profile photo as your public primary photo before publishing your portfolio"
+      "Choose one primary photo and set it to Visible to all or Blurred until approval before publishing"
     );
   }
 }

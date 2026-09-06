@@ -58,16 +58,16 @@ export async function publishPortfolio({
     throw new PortfolioPublishError("Save your portfolio before generating it.", "PORTFOLIO_DRAFT_MISSING", 400);
   }
 
-  const { data: publicHeroPhoto, error: publicHeroPhotoError } =
-    await repository.findPublicHeroPhoto(portfolio.id);
-  if (publicHeroPhotoError) {
-    throw new PortfolioPublishError("We could not verify your public primary photo. Please try again.", "PUBLIC_HERO_CHECK_FAILED");
+  const { data: shareablePrimaryPhoto, error: shareablePrimaryPhotoError } =
+    await repository.findShareablePrimaryPhoto(portfolio.id);
+  if (shareablePrimaryPhotoError) {
+    throw new PortfolioPublishError("We could not verify your primary photo. Please try again.", "PRIMARY_PHOTO_CHECK_FAILED");
   }
 
   try {
     requirePortfolioPublishReadiness({
       data,
-      hasPublicHeroPhoto: Boolean(publicHeroPhoto),
+      hasShareablePrimaryPhoto: Boolean(shareablePrimaryPhoto),
     });
   } catch (error) {
     if (error instanceof PortfolioPublishReadinessError) {
@@ -116,7 +116,11 @@ export async function publishPortfolio({
     throw new PortfolioPublishError("We could not publish your portfolio. Please try again.", "PORTFOLIO_TRANSACTION_FAILED");
   }
   if (transaction.data.status === "not_ready") {
-    throw new PortfolioPublishError("Choose one public primary photo before publishing.", "PORTFOLIO_NOT_READY", 400);
+    throw new PortfolioPublishError(
+      "Choose one primary photo and set it to Visible to all or Blurred until approval before publishing.",
+      "PORTFOLIO_NOT_READY",
+      400
+    );
   }
   if (transaction.data.status !== "ok" || !transaction.data.action || !transaction.data.shareToken || !transaction.data.expiresAt) {
     throw new PortfolioPublishError("We could not authorize this portfolio update.", "PORTFOLIO_NOT_FOUND", 404);

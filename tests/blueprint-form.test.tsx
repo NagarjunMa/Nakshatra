@@ -103,7 +103,7 @@ describe("blueprint form", () => {
     };
     render(<BlueprintForm data={minimal} onUpdate={onUpdate} />);
 
-    expect(screen.getByText(/0 of 13 required details complete/)).toBeInTheDocument();
+    expect(screen.getByText(/0 of 14 required details complete/)).toBeInTheDocument();
     expect(screen.getByText("Step 1 of 9 · Foundation")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Next: About you/ })).toHaveClass("dashboard-primary-action");
     fireEvent.blur(screen.getByLabelText("First name"));

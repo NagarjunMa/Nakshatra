@@ -120,11 +120,13 @@ export function BlueprintForm({
   onUpdate,
   photoManager,
   horoscopeManager,
+  hasShareablePrimaryPhoto = false,
 }: {
   data: PortfolioData;
   onUpdate: UpdatePortfolioSection;
   photoManager?: ReactNode;
   horoscopeManager?: ReactNode;
+  hasShareablePrimaryPhoto?: boolean;
 }) {
   const [activeSection, setActiveSection] = useState<SectionId>("foundation");
   const activeIndex = SECTIONS.findIndex((section) => section.id === activeSection);
@@ -146,6 +148,7 @@ export function BlueprintForm({
     data.astrology?.pada,
     data.vitals?.gotra,
     data.astrology?.manglik_status,
+    hasShareablePrimaryPhoto ? "primary-photo-ready" : "",
   ];
   const requiredReady = requiredFields.filter(hasValue).length;
   const contacts = data.contact?.contacts?.length

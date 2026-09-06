@@ -45,8 +45,8 @@ const readyPortfolio: PortfolioData = {
 };
 
 describe("portfolio publish readiness", () => {
-  it("accepts the complete mandatory profile and a public hero photo", () => {
-    expect(() => requirePortfolioPublishReadiness({ data: readyPortfolio, hasPublicHeroPhoto: true })).not.toThrow();
+  it("accepts the complete mandatory profile and a shareable primary photo", () => {
+    expect(() => requirePortfolioPublishReadiness({ data: readyPortfolio, hasShareablePrimaryPhoto: true })).not.toThrow();
   });
 
   it.each([
@@ -61,10 +61,10 @@ describe("portfolio publish readiness", () => {
     [{ ...readyPortfolio, astrology: { ...readyPortfolio.astrology, pada: "" } }, true, "pada"],
     [{ ...readyPortfolio, vitals: { ...readyPortfolio.vitals, gotra: "" } }, true, "gotra"],
     [{ ...readyPortfolio, astrology: { ...readyPortfolio.astrology, manglik_status: "" } }, true, "Manglik status"],
-    [readyPortfolio, false, "profile photo"],
-  ] as const)("rejects incomplete generation state", (data, hasPublicHeroPhoto, message) => {
-    expect(() => requirePortfolioPublishReadiness({ data, hasPublicHeroPhoto })).toThrow(PortfolioPublishReadinessError);
-    expect(() => requirePortfolioPublishReadiness({ data, hasPublicHeroPhoto })).toThrow(message);
+    [readyPortfolio, false, "primary photo"],
+  ] as const)("rejects incomplete generation state", (data, hasShareablePrimaryPhoto, message) => {
+    expect(() => requirePortfolioPublishReadiness({ data, hasShareablePrimaryPhoto })).toThrow(PortfolioPublishReadinessError);
+    expect(() => requirePortfolioPublishReadiness({ data, hasShareablePrimaryPhoto })).toThrow(message);
   });
 
   it("allows non-required detailed sections to remain incomplete", () => {
@@ -76,7 +76,7 @@ describe("portfolio publish readiness", () => {
         preferences: {},
         contact: {},
       },
-      hasPublicHeroPhoto: true,
+      hasShareablePrimaryPhoto: true,
     })).not.toThrow();
   });
 
@@ -97,7 +97,7 @@ describe("portfolio publish readiness", () => {
       career: undefined,
     };
 
-    expect(() => requirePortfolioPublishReadiness({ data: incomplete, hasPublicHeroPhoto: false }))
+    expect(() => requirePortfolioPublishReadiness({ data: incomplete, hasShareablePrimaryPhoto: false }))
       .toThrow(" and 2 more");
   });
 });

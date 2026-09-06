@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { SHAREABLE_PRIMARY_PHOTO_VISIBILITIES } from "@/features/media/portfolio-photo";
 
 export const DASHBOARD_PORTFOLIO_COLUMNS = "id, user_id, candidate_id, share_token, draft_data, published_data, template_id, theme_color, sun_sign, is_published, published_at, expires_at, last_renewed_at, privacy_mode, visibility_settings, created_at, updated_at";
 export const OWNER_PREVIEW_PORTFOLIO_COLUMNS = "id, draft_data, template_id, theme_color, sun_sign, privacy_mode";
@@ -118,16 +119,16 @@ export class DashboardRepository {
   }
 
   /**
-   * Finds whether a portfolio has a photo intentionally selected for public hero display.
-   * Input: portfolio ID. Output: a minimal public-hero row or null.
+   * Finds whether a portfolio has a primary photo that can be shown clearly or as a protected preview.
+   * Input: portfolio ID. Output: a minimal shareable-primary-photo row or null.
    */
-  async findPublicHeroPhoto(portfolioId: string) {
+  async findShareablePrimaryPhoto(portfolioId: string) {
     return this.supabase
       .from("portfolio_media")
       .select("id")
       .eq("portfolio_id", portfolioId)
       .eq("media_type", "hero")
-      .eq("visibility", "public")
+      .in("visibility", [...SHAREABLE_PRIMARY_PHOTO_VISIBILITIES])
       .maybeSingle();
   }
 

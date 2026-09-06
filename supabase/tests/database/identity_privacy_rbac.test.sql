@@ -146,7 +146,7 @@ select throws_ok(
   $$insert into public.portfolios (user_id, draft_data, is_published)
     values ('41000000-0000-4000-8000-000000000006', '{"personal":{}}', true)$$,
   '23514', null,
-  'a direct portfolio insert cannot bypass the public hero requirement'
+  'a direct portfolio insert cannot bypass the shareable primary-photo requirement'
 );
 reset role;
 insert into public.candidates (id, primary_owner_user_id, display_name, created_by)
