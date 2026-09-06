@@ -110,7 +110,8 @@ describe("dashboard client", () => {
     renderDashboard({ portfolio: null, shareUrl: null, media: [] });
     expect(screen.getByText(/one clear introduction/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /start with the basics/i }));
-    fireEvent.change(screen.getByLabelText("Full name"), { target: { value: "New Name" } });
+    fireEvent.change(screen.getByLabelText("First name"), { target: { value: "New" } });
+    fireEvent.change(screen.getByLabelText("Last name"), { target: { value: "Name" } });
     fireEvent.change(
       screen.getByLabelText("Short introduction"),
       { target: { value: "A story" } }

@@ -6,7 +6,8 @@ const complete: PortfolioData = {
   privacy_mode: "balanced",
   personal: {
     name: "Aditi Rao",
-    preferred_name: "Aditi",
+    first_name: "Aditi",
+    last_name: "Rao",
     dob: "1996-08-12",
     place_of_birth: "Bengaluru",
     current_location: "Boston, MA, United States",
@@ -45,6 +46,9 @@ describe("approved portfolio snapshot", () => {
 
     expect(snapshot.personal).toMatchObject({
       name: "Aditi Rao",
+      first_name: "Aditi",
+      last_name: "Rao",
+      gender: "female",
       dob: "1996-08-12",
       place_of_birth: "Bengaluru",
       marital_status: "Never Married",
@@ -57,7 +61,8 @@ describe("approved portfolio snapshot", () => {
     expect(snapshot.preferences?.age_range).toBe("28–34");
     expect(snapshot.preferences?.living_arrangement).toBe("Our own home");
 
-    expect(snapshot).not.toHaveProperty("contact");
+    expect(snapshot.contact).toMatchObject({ contact_person: "Ramesh", phone: "+1 555 0100" });
+    expect(snapshot.contact).not.toHaveProperty("secure_note");
     expect(snapshot.preferences).not.toHaveProperty("private_notes");
     expect(snapshot.preferences).not.toHaveProperty("location_preferences");
     expect(snapshot.preferences).not.toHaveProperty("wedding_expectations");

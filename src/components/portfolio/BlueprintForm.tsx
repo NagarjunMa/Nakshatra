@@ -14,6 +14,10 @@ import {
 import { LocationFields, type LocationValue } from "@/components/portfolio/LocationFields";
 import { CELESTIAL_THEME_COLORS } from "@/features/portfolio/celestial-theme";
 import {
+  composePortfolioName,
+  resolvePortfolioNameParts,
+} from "@/features/portfolio/name";
+import {
   AGE_OPTIONS,
   CAREER_AFTER_MARRIAGE_OPTIONS,
   CASTE_PREFERENCE_OPTIONS,
@@ -82,14 +86,14 @@ const RASHI_SELECT_OPTIONS: BlueprintOption[] = [
 const PRIVACY_PRESETS = [
   {
     value: "balanced" as const,
-    label: "Balanced",
-    description: "Your story, journey, interests, family introduction, and selected astrology are visible. Sensitive details still require your approval.",
+    label: "Standard introduction",
+    description: "Shows your story, journey, interests, family introduction, and selected astrology. Sensitive details still require approval.",
     icon: ShieldCheck,
   },
   {
     value: "private" as const,
-    label: "Private",
-    description: "Only a brief introduction is visible until you approve an introduction request.",
+    label: "Short introduction",
+    description: "Shows your first name, essential facts, short introduction, and a limited photo preview until you approve a request.",
     icon: LockKeyhole,
   },
 ];
@@ -116,10 +120,11 @@ export function BlueprintForm({
 }) {
   const [activeSection, setActiveSection] = useState<SectionId>("foundation");
   const activeIndex = SECTIONS.findIndex((section) => section.id === activeSection);
+  const nameParts = resolvePortfolioNameParts(data.personal);
   const foundationFields = [
-    data.personal.name,
+    nameParts.first_name,
+    nameParts.last_name,
     data.personal.dob,
-    data.personal.gender,
     data.personal.country && data.personal.city ? `${data.personal.city}, ${data.personal.country}` : "",
     data.career?.title,
     data.personal.short_bio || data.personal.profile_summary,
@@ -142,6 +147,14 @@ export function BlueprintForm({
       next.current_location = [next.city, next.region, next.country].filter(Boolean).join(", ");
     }
     onUpdate("personal", next);
+  }
+
+  function updateNamePart(
+    key: "first_name" | "middle_name" | "last_name",
+    value: string
+  ) {
+    const nextParts = { ...nameParts, [key]: value };
+    updatePersonal({ ...nextParts, name: composePortfolioName(nextParts) });
   }
 
   function updateResidence(changes: LocationValue) {
@@ -267,17 +280,18 @@ export function BlueprintForm({
           <FormSection eyebrow="Start here" title="Portfolio essentials" description="Complete these first. You can save your draft and return to every optional section later.">
             <InfoCard title="You control what gets shared" audience="Private draft" text="These answers create your biodata. Nothing becomes public until you publish, and protected details stay outside the public introduction." />
               <SelectInput label="Who are you creating this portfolio for?" value={data.personal.profile_for || ""} options={PROFILE_FOR_OPTIONS} onChange={(value) => updatePersonal({ profile_for: value })} requirement="Recommended" audience="Only you" />
-            <div className="grid gap-4 sm:grid-cols-2">
-              <TextInput label="Full name" value={data.personal.name || ""} onChange={(value) => updatePersonal({ name: value })} required requirement="Required" audience="Portfolio" />
-              <TextInput label="Preferred name" value={data.personal.preferred_name || ""} onChange={(value) => updatePersonal({ preferred_name: value })} audience="Public introduction" hint="The name friends and family usually use." />
-            </div>
-            <TextArea label="Short introduction" value={data.personal.short_bio || ""} onChange={(value) => updatePersonal({ short_bio: value })} maxLength={240} required requirement="Required" audience="Public introduction" hint="Write one or two warm sentences shown beside the main photo. A fuller story can come later." />
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <TextInput label="Date of birth" type="date" value={data.personal.dob || ""} onChange={(value) => updatePersonal({ dob: value })} required requirement="Required" audience="Protected" hint="Used to calculate age. The exact date is not public." />
-              <SelectInput label="Gender" value={data.personal.gender || ""} options={GENDER_OPTIONS} onChange={(value) => updatePersonal({ gender: value as PortfolioData["personal"]["gender"] })} required requirement="Required" audience="Portfolio" />
-              <TextInput label="Profession or role" value={data.career?.title || ""} onChange={(value) => onUpdate("career", { ...(data.career || {}), title: value })} required requirement="Required" audience="Portfolio" hint="A broad role is enough; employer details can come later." />
-              <SelectInput label="Height" value={data.vitals?.height || ""} options={HEIGHT_OPTIONS} onChange={(value) => onUpdate("vitals", { ...(data.vitals || {}), height: value })} requirement="Optional" audience="Portfolio" />
-              <SelectInput label="Marital status" value={data.personal.marital_status || ""} options={MARITAL_STATUS_OPTIONS} onChange={(value) => updatePersonal({ marital_status: value })} requirement="Recommended" audience="Approved people" />
+              <TextInput label="First name" value={nameParts.first_name} onChange={(value) => updateNamePart("first_name", value)} required requirement="Required" audience="All portfolio views" />
+              <TextInput label="Middle name" value={nameParts.middle_name} onChange={(value) => updateNamePart("middle_name", value)} requirement="Optional" audience="Standard and Full" />
+              <TextInput label="Last name" value={nameParts.last_name} onChange={(value) => updateNamePart("last_name", value)} required requirement="Required" audience="Standard and Full" hint="Short introduction displays your first name only." />
+            </div>
+            <TextArea label="Short introduction" value={data.personal.short_bio || ""} onChange={(value) => updatePersonal({ short_bio: value })} maxLength={240} required requirement="Required" audience="All portfolio views" hint="Write one or two warm sentences shown beside the main photo. A fuller story can come later." />
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <TextInput label="Date of birth" type="date" value={data.personal.dob || ""} onChange={(value) => updatePersonal({ dob: value })} required requirement="Required" audience="Age in initial views · Exact date in Full" hint="Used to calculate age. The exact date is not public." />
+              <SelectInput label="Gender" value={data.personal.gender || ""} options={GENDER_OPTIONS} onChange={(value) => updatePersonal({ gender: value ? value as PortfolioData["personal"]["gender"] : undefined })} requirement="Recommended" audience="Standard and Full" hint="Optional. It is not shown in the Short introduction." />
+              <TextInput label="Profession or role" value={data.career?.title || ""} onChange={(value) => onUpdate("career", { ...(data.career || {}), title: value })} required requirement="Required" audience="All portfolio views" hint="A broad role is enough; employer details can come later." />
+              <SelectInput label="Height" value={data.vitals?.height || ""} options={HEIGHT_OPTIONS} onChange={(value) => onUpdate("vitals", { ...(data.vitals || {}), height: value })} requirement="Optional" audience="All portfolio views" />
+              <SelectInput label="Marital status" value={data.personal.marital_status || ""} options={MARITAL_STATUS_OPTIONS} onChange={(value) => updatePersonal({ marital_status: value })} requirement="Recommended" audience="All portfolio views" />
             </div>
             <LocationFields value={{ country: data.personal.country, countryCode: data.personal.country_code, region: data.personal.region, regionCode: data.personal.region_code, city: data.personal.city, cityGeonameId: data.personal.city_geoname_id }} onChange={updateResidence} labels={{ country: "Current country", region: "Current state or region", city: "Current city" }} requireCountryAndCity />
             {photoManager && <EmbeddedPanel title="Photos" description="Choose a portrait and gallery moments.">{photoManager}</EmbeddedPanel>}
@@ -286,56 +300,56 @@ export function BlueprintForm({
 
         {activeSection === "story" && (
           <FormSection eyebrow="Your voice" title="About you" description="Use your own words. A warm, specific answer is more helpful than a formal résumé-style summary.">
-            <TextArea label="What would you like someone to understand about you?" value={data.personal.profile_summary || ""} onChange={(value) => updatePersonal({ profile_summary: value })} maxLength={1600} requirement="Recommended" audience="Portfolio" hint="A natural personal story, not a resume summary." />
-            <TextArea label="What kind of life are you building?" value={data.personal.long_term_goals || ""} onChange={(value) => updatePersonal({ long_term_goals: value })} maxLength={1200} requirement="Optional" audience="Portfolio" hint="Share the direction that matters to you: family, work, learning, community, or something else." />
-            <TextArea label="What would you enjoy doing together?" value={data.personal.shared_life_plans || ""} onChange={(value) => updatePersonal({ shared_life_plans: value })} maxLength={1200} requirement="Optional" audience="Portfolio" hint="Small everyday hopes are often more meaningful than a perfect answer." />
+            <TextArea label="What would you like someone to understand about you?" value={data.personal.profile_summary || ""} onChange={(value) => updatePersonal({ profile_summary: value })} maxLength={1600} requirement="Recommended" audience="Standard and Full" hint="A natural personal story, not a resume summary. The Short introduction uses the shorter answer from Foundation." />
+            <TextArea label="What kind of life are you building?" value={data.personal.long_term_goals || ""} onChange={(value) => updatePersonal({ long_term_goals: value })} maxLength={1200} requirement="Optional" audience="Full portfolio" hint="Share the direction that matters to you: family, work, learning, community, or something else." />
+            <TextArea label="What would you enjoy doing together?" value={data.personal.shared_life_plans || ""} onChange={(value) => updatePersonal({ shared_life_plans: value })} maxLength={1200} requirement="Optional" audience="Standard and Full" hint="The Standard introduction uses a concise version. Full access shows your complete answer." />
           </FormSection>
         )}
 
         {activeSection === "work" && (
           <FormSection eyebrow="Journey" title="Education and work" description="Share the level of detail that helps someone understand your path and present situation.">
             <div className="grid gap-4 sm:grid-cols-2">
-              <SelectInput label="Highest qualification" value={data.education?.qualification_level || ""} options={QUALIFICATION_OPTIONS} onChange={(value) => onUpdate("education", { ...(data.education || {}), qualification_level: value })} requirement="Recommended" audience="Portfolio" />
-              <TextInput label="Degree or qualification" value={data.education?.degree || ""} onChange={(value) => onUpdate("education", { ...(data.education || {}), degree: value })} requirement="Optional" audience="Portfolio" />
-              <TextInput label="Institution" value={data.education?.institution || ""} onChange={(value) => onUpdate("education", { ...(data.education || {}), institution: value })} requirement="Optional" audience="Portfolio" />
-              <TextInput label="Education location" value={data.education?.location || ""} onChange={(value) => onUpdate("education", { ...(data.education || {}), location: value })} requirement="Optional" audience="Portfolio" />
-              <SelectInput label="Work status" value={data.career?.job_type || ""} options={JOB_TYPE_OPTIONS} onChange={(value) => onUpdate("career", { ...(data.career || {}), job_type: value })} requirement="Optional" audience="Portfolio" />
-              <TextInput label="Employer or organisation" value={data.career?.company || ""} onChange={(value) => onUpdate("career", { ...(data.career || {}), company: value })} audience="Approved people" />
-              <TextInput label="Work location" value={data.career?.location || ""} onChange={(value) => onUpdate("career", { ...(data.career || {}), location: value })} requirement="Optional" audience="Portfolio" />
-              <SelectInput label="Visa or residency status" value={data.personal.immigration_status || ""} options={VISA_OPTIONS} onChange={(value) => updatePersonal({ immigration_status: value })} audience="Approved people" />
-              <TextInput label="Citizenship" value={data.personal.citizenship || ""} onChange={(value) => updatePersonal({ citizenship: value })} requirement="Optional" audience="Approved people" />
-              <SelectInput label="Annual income range" value={data.career?.annual_income || ""} options={INCOME_RANGE_OPTIONS} onChange={(value) => onUpdate("career", { ...(data.career || {}), annual_income: value })} audience="Protected" hint="Never shown publicly." />
-              {hasValue(data.career?.annual_income) && data.career?.annual_income !== "Prefer not to say" && <SelectInput label="Income currency" value={data.career?.income_currency || ""} options={CURRENCY_OPTIONS} onChange={(value) => onUpdate("career", { ...(data.career || {}), income_currency: value })} audience="Protected" />}
+              <SelectInput label="Highest qualification" value={data.education?.qualification_level || ""} options={QUALIFICATION_OPTIONS} onChange={(value) => onUpdate("education", { ...(data.education || {}), qualification_level: value })} requirement="Recommended" audience="All portfolio views" />
+              <TextInput label="Degree or qualification" value={data.education?.degree || ""} onChange={(value) => onUpdate("education", { ...(data.education || {}), degree: value })} requirement="Optional" audience="All portfolio views" />
+              <TextInput label="Institution" value={data.education?.institution || ""} onChange={(value) => onUpdate("education", { ...(data.education || {}), institution: value })} requirement="Optional" audience="Standard and Full" />
+              <TextInput label="Education location" value={data.education?.location || ""} onChange={(value) => onUpdate("education", { ...(data.education || {}), location: value })} requirement="Optional" audience="Standard and Full" />
+              <SelectInput label="Work status" value={data.career?.job_type || ""} options={JOB_TYPE_OPTIONS} onChange={(value) => onUpdate("career", { ...(data.career || {}), job_type: value })} requirement="Optional" audience="Standard and Full" />
+              <TextInput label="Employer or organisation" value={data.career?.company || ""} onChange={(value) => onUpdate("career", { ...(data.career || {}), company: value })} audience="Full portfolio" />
+              <TextInput label="Work location" value={data.career?.location || ""} onChange={(value) => onUpdate("career", { ...(data.career || {}), location: value })} requirement="Optional" audience="All portfolio views" />
+              <SelectInput label="Visa or residency status" value={data.personal.immigration_status || ""} options={VISA_OPTIONS} onChange={(value) => updatePersonal({ immigration_status: value })} requirement="Optional" audience="Standard and Full" />
+              <TextInput label="Citizenship" value={data.personal.citizenship || ""} onChange={(value) => updatePersonal({ citizenship: value })} requirement="Optional" audience="All portfolio views" />
+              <SelectInput label="Annual income range" value={data.career?.annual_income || ""} options={INCOME_RANGE_OPTIONS} onChange={(value) => onUpdate("career", { ...(data.career || {}), annual_income: value })} audience="Full portfolio" hint="Shown only after you approve a viewer." />
+              {hasValue(data.career?.annual_income) && data.career?.annual_income !== "Prefer not to say" && <SelectInput label="Income currency" value={data.career?.income_currency || ""} options={CURRENCY_OPTIONS} onChange={(value) => onUpdate("career", { ...(data.career || {}), income_currency: value })} audience="Full portfolio" />}
             </div>
-            <TextArea label="Where would you like your career to grow?" value={data.career?.career_goals || ""} onChange={(value) => onUpdate("career", { ...(data.career || {}), career_goals: value })} maxLength={800} requirement="Optional" audience="Approved people" />
+            <TextArea label="Where would you like your career to grow?" value={data.career?.career_goals || ""} onChange={(value) => onUpdate("career", { ...(data.career || {}), career_goals: value })} maxLength={800} requirement="Optional" audience="Standard and Full" />
           </FormSection>
         )}
 
         {activeSection === "family" && (
           <FormSection eyebrow="Roots" title="Family and background" description="Introduce your family in a warm, respectful way. Personal contact details remain protected.">
-            <TextArea label="How would you describe your family?" value={data.family?.public_summary || ""} onChange={(value) => updateFamily({ public_summary: value })} maxLength={600} requirement="Recommended" audience="Portfolio" hint="Describe the family without phone numbers, exact addresses, or private documents." />
+            <TextArea label="How would you describe your family?" value={data.family?.public_summary || ""} onChange={(value) => updateFamily({ public_summary: value })} maxLength={600} requirement="Recommended" audience="All portfolio views" hint="Describe the family without phone numbers, exact addresses, or private documents. The Short introduction uses a concise version." />
             <div className="grid gap-4 sm:grid-cols-2">
-              <SelectInput label="Religion or outlook" value={data.personal.religion || ""} options={RELIGION_OPTIONS} onChange={(value) => updatePersonal({ religion: value })} requirement="Optional" audience="Approved people" />
-              <TextInput label="Community" value={data.personal.community || ""} onChange={(value) => updatePersonal({ community: value })} list="community-options" requirement="Optional" audience="Approved people" />
-              <TextInput label="Sub-community" value={data.personal.sub_community || ""} onChange={(value) => updatePersonal({ sub_community: value })} requirement="Optional" audience="Approved people" />
-              <TextInput label="Parents' current location" value={data.family?.parents_location || ""} onChange={(value) => updateFamily({ parents_location: value })} requirement="Optional" audience="Approved people" />
-              <TextInput label="Father or guardian name" value={data.family?.father?.name || ""} onChange={(value) => updateFamily({ father: { ...(data.family?.father || {}), name: value } })} requirement="Optional" audience="Approved people" />
-              <TextInput label="Father or guardian profession" value={data.family?.father?.occupation || ""} onChange={(value) => updateFamily({ father: { ...(data.family?.father || {}), occupation: value } })} requirement="Optional" audience="Approved people" />
-              <TextInput label="Mother or guardian name" value={data.family?.mother?.name || ""} onChange={(value) => updateFamily({ mother: { ...(data.family?.mother || {}), name: value } })} requirement="Optional" audience="Approved people" />
-              <TextInput label="Mother or guardian profession" value={data.family?.mother?.occupation || ""} onChange={(value) => updateFamily({ mother: { ...(data.family?.mother || {}), occupation: value } })} requirement="Optional" audience="Approved people" />
-              <TextInput label="Paternal family origin" value={data.family?.paternal_origin || data.family?.ancestral_origin || ""} onChange={(value) => updateFamily({ paternal_origin: value })} requirement="Optional" audience="Portfolio" />
-              <TextInput label="Maternal family origin" value={data.family?.maternal_origin || ""} onChange={(value) => updateFamily({ maternal_origin: value })} requirement="Optional" audience="Portfolio" />
-              <TextInput label="Number of siblings" type="number" min="0" max="10" value={String(data.family?.sibling_count ?? "")} onChange={setSiblingCount} requirement="Optional" audience="Approved people" />
-              <SelectInput label="Your position among siblings" value={data.family?.sibling_position || ""} options={SIBLING_POSITION_OPTIONS} onChange={(value) => updateFamily({ sibling_position: value })} requirement="Optional" audience="Approved people" />
+              <SelectInput label="Religion or outlook" value={data.personal.religion || ""} options={RELIGION_OPTIONS} onChange={(value) => updatePersonal({ religion: value })} requirement="Optional" audience="All portfolio views" />
+              <TextInput label="Community" value={data.personal.community || ""} onChange={(value) => updatePersonal({ community: value })} list="community-options" requirement="Optional" audience="All portfolio views" />
+              <TextInput label="Sub-community" value={data.personal.sub_community || ""} onChange={(value) => updatePersonal({ sub_community: value })} requirement="Optional" audience="All portfolio views" />
+              <TextInput label="Parents' current location" value={data.family?.parents_location || ""} onChange={(value) => updateFamily({ parents_location: value })} requirement="Optional" audience="Full portfolio" />
+              <TextInput label="Father or guardian name" value={data.family?.father?.name || ""} onChange={(value) => updateFamily({ father: { ...(data.family?.father || {}), name: value } })} requirement="Optional" audience="Full portfolio" />
+              <TextInput label="Father or guardian profession" value={data.family?.father?.occupation || ""} onChange={(value) => updateFamily({ father: { ...(data.family?.father || {}), occupation: value } })} requirement="Optional" audience="Full portfolio" />
+              <TextInput label="Mother or guardian name" value={data.family?.mother?.name || ""} onChange={(value) => updateFamily({ mother: { ...(data.family?.mother || {}), name: value } })} requirement="Optional" audience="Full portfolio" />
+              <TextInput label="Mother or guardian profession" value={data.family?.mother?.occupation || ""} onChange={(value) => updateFamily({ mother: { ...(data.family?.mother || {}), occupation: value } })} requirement="Optional" audience="Full portfolio" />
+              <TextInput label="Paternal family origin" value={data.family?.paternal_origin || data.family?.ancestral_origin || ""} onChange={(value) => updateFamily({ paternal_origin: value })} requirement="Optional" audience="Standard and Full" />
+              <TextInput label="Maternal family origin" value={data.family?.maternal_origin || ""} onChange={(value) => updateFamily({ maternal_origin: value })} requirement="Optional" audience="Standard and Full" />
+              <TextInput label="Number of siblings" type="number" min="0" max="10" value={String(data.family?.sibling_count ?? "")} onChange={setSiblingCount} requirement="Optional" audience="Standard and Full" />
+              <SelectInput label="Your position among siblings" value={data.family?.sibling_position || ""} options={SIBLING_POSITION_OPTIONS} onChange={(value) => updateFamily({ sibling_position: value })} requirement="Optional" audience="Standard and Full" />
             </div>
             {(data.family?.siblings || []).map((sibling, index) => (
               <div key={index} className="rounded-xl border border-[color:var(--workspace-border)] bg-[color:var(--workspace-surface-muted)] p-4">
                 <p className="mb-3 text-base font-semibold text-[color:var(--workspace-ink)]">Sibling {index + 1} <span className="ml-2 text-sm font-normal text-[color:var(--workspace-ink-muted)]">Optional details</span></p>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <TextInput label="Name" value={sibling.name || ""} onChange={(value) => updateSibling(index, { name: value })} audience="Approved people" />
-                  <TextInput label="Occupation" value={sibling.occupation || ""} onChange={(value) => updateSibling(index, { occupation: value })} audience="Approved people" />
-                  <TextInput label="Location" value={sibling.location || ""} onChange={(value) => updateSibling(index, { location: value })} audience="Approved people" />
-                  <SelectInput label="Marital status" value={sibling.marital_status || ""} options={MARITAL_STATUS_OPTIONS} onChange={(value) => updateSibling(index, { marital_status: value })} audience="Approved people" />
+                  <TextInput label="Name" value={sibling.name || ""} onChange={(value) => updateSibling(index, { name: value })} audience="Full portfolio" />
+                  <TextInput label="Occupation" value={sibling.occupation || ""} onChange={(value) => updateSibling(index, { occupation: value })} audience="Full portfolio" />
+                  <TextInput label="Location" value={sibling.location || ""} onChange={(value) => updateSibling(index, { location: value })} audience="Full portfolio" />
+                  <SelectInput label="Marital status" value={sibling.marital_status || ""} options={MARITAL_STATUS_OPTIONS} onChange={(value) => updateSibling(index, { marital_status: value })} audience="Full portfolio" />
                 </div>
               </div>
             ))}
@@ -346,19 +360,19 @@ export function BlueprintForm({
         {activeSection === "lifestyle" && (
           <FormSection eyebrow="Everyday life" title="Lifestyle and interests" description="Choose what genuinely reflects you.">
             <div className="grid gap-4 sm:grid-cols-3">
-              <SelectInput label="Dietary preference" value={data.lifestyle?.diet || ""} options={DIET_OPTIONS} onChange={(value) => onUpdate("lifestyle", { ...(data.lifestyle || {}), diet: value })} requirement="Optional" audience="Portfolio" />
-              <SelectInput label="Alcohol use" value={data.lifestyle?.drinking || ""} options={FREQUENCY_OPTIONS} onChange={(value) => onUpdate("lifestyle", { ...(data.lifestyle || {}), drinking: value })} requirement="Optional" audience="Approved people" />
-              <SelectInput label="Tobacco use" value={data.lifestyle?.smoking || ""} options={FREQUENCY_OPTIONS} onChange={(value) => onUpdate("lifestyle", { ...(data.lifestyle || {}), smoking: value })} requirement="Optional" audience="Approved people" />
+              <SelectInput label="Dietary preference" value={data.lifestyle?.diet || ""} options={DIET_OPTIONS} onChange={(value) => onUpdate("lifestyle", { ...(data.lifestyle || {}), diet: value })} requirement="Optional" audience="All portfolio views" />
+              <SelectInput label="Alcohol use" value={data.lifestyle?.drinking || ""} options={FREQUENCY_OPTIONS} onChange={(value) => onUpdate("lifestyle", { ...(data.lifestyle || {}), drinking: value })} requirement="Optional" audience="Standard and Full" />
+              <SelectInput label="Tobacco use" value={data.lifestyle?.smoking || ""} options={FREQUENCY_OPTIONS} onChange={(value) => onUpdate("lifestyle", { ...(data.lifestyle || {}), smoking: value })} requirement="Optional" audience="Standard and Full" />
             </div>
-            <MultiSelectInput label="Languages" value={data.lifestyle?.languages || ""} options={LANGUAGE_OPTIONS} onChange={(value) => onUpdate("lifestyle", { ...(data.lifestyle || {}), languages: value })} audience="Portfolio" />
-            <MultiSelectInput label="Interests and hobbies" value={data.lifestyle?.hobbies || ""} options={HOBBY_OPTIONS} onChange={(value) => onUpdate("lifestyle", { ...(data.lifestyle || {}), hobbies: value })} audience="Portfolio" />
-            <MultiSelectInput label="Values that matter to you" value={data.lifestyle?.values_statement || ""} options={VALUE_OPTIONS} onChange={(value) => onUpdate("lifestyle", { ...(data.lifestyle || {}), values_statement: value })} audience="Portfolio" hint="Choose a few that genuinely guide your decisions and relationships." />
+            <MultiSelectInput label="Languages" value={data.lifestyle?.languages || ""} options={LANGUAGE_OPTIONS} onChange={(value) => onUpdate("lifestyle", { ...(data.lifestyle || {}), languages: value })} audience="All portfolio views" />
+            <MultiSelectInput label="Interests and hobbies" value={data.lifestyle?.hobbies || ""} options={HOBBY_OPTIONS} onChange={(value) => onUpdate("lifestyle", { ...(data.lifestyle || {}), hobbies: value })} audience="All portfolio views" />
+            <MultiSelectInput label="Values that matter to you" value={data.lifestyle?.values_statement || ""} options={VALUE_OPTIONS} onChange={(value) => onUpdate("lifestyle", { ...(data.lifestyle || {}), values_statement: value })} audience="All portfolio views" hint="Choose a few that genuinely guide your decisions and relationships." />
           </FormSection>
         )}
 
         {activeSection === "preferences" && (
-          <FormSection eyebrow="Compatibility" title="Partner preferences" description="Share thoughtful preferences without making the section feel like a screening checklist. These answers are shown only after approval.">
-            <TextArea label="What qualities would support a good partnership?" value={data.preferences?.narrative || ""} onChange={(value) => onUpdate("preferences", { ...(data.preferences || {}), narrative: value })} maxLength={1200} requirement="Recommended" audience="Approved people" />
+          <FormSection eyebrow="Compatibility" title="Partner preferences" description="Your written introduction may appear in the initial portfolio. Detailed preferences are shown only after approval.">
+            <TextArea label="What qualities would support a good partnership?" value={data.preferences?.narrative || ""} onChange={(value) => onUpdate("preferences", { ...(data.preferences || {}), narrative: value })} maxLength={1200} requirement="Recommended" audience="All portfolio views" hint="The Short introduction uses a concise version." />
             <div className="grid gap-4 sm:grid-cols-2">
               <RangeSelectInput label="Preferred age range" value={data.preferences?.age_range || ""} options={AGE_OPTIONS} onChange={(value) => onUpdate("preferences", { ...(data.preferences || {}), age_range: value })} audience="Approved people" />
               <RangeSelectInput label="Preferred height range" value={data.preferences?.height_range || ""} options={HEIGHT_OPTIONS} onChange={(value) => onUpdate("preferences", { ...(data.preferences || {}), height_range: value })} audience="Approved people" />
@@ -386,17 +400,17 @@ export function BlueprintForm({
         {activeSection === "astrology" && (
           <FormSection eyebrow="Cultural alignment" title="Astrology" description="Add only what you know. Sensitive details stay protected.">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <TextInput label="Time of birth" type="time" value={data.astrology?.time_of_birth || ""} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), time_of_birth: value })} requirement="Optional" audience="Protected" />
-              <TextInput label="Place of birth" value={data.personal.place_of_birth || ""} onChange={(value) => updatePersonal({ place_of_birth: value })} requirement="Optional" audience="Protected" />
-              <SelectInput label="Rashi" value={data.astrology?.rashi || ""} options={RASHI_SELECT_OPTIONS} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), rashi: value as NonNullable<PortfolioData["astrology"]>["rashi"] })} requirement="Optional" audience="Portfolio, if you choose" />
-              <SelectInput label="Nakshatra" value={data.astrology?.nakshatra || ""} options={NAKSHATRA_OPTIONS} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), nakshatra: value })} requirement="Optional" audience="Approved people" />
-              <TextInput label="Pada" value={data.astrology?.pada || ""} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), pada: value })} requirement="Optional" audience="Approved people" />
-              <TextInput label="Lagnam" value={data.astrology?.lagnam || ""} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), lagnam: value })} requirement="Optional" audience="Protected" />
-              <TextInput label="Gotra" value={data.vitals?.gotra || ""} onChange={(value) => onUpdate("vitals", { ...(data.vitals || {}), gotra: value })} requirement="Optional" audience="Protected" />
-              <TextInput label="Maternal gotra" value={data.astrology?.maternal_gotra || ""} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), maternal_gotra: value })} requirement="Optional" audience="Protected" />
-              <SelectInput label="Manglik status" value={data.astrology?.manglik_status || ""} options={MANGLIK_OPTIONS} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), manglik_status: value })} requirement="Optional" audience="Approved people" />
+              <TextInput label="Time of birth" type="time" value={data.astrology?.time_of_birth || ""} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), time_of_birth: value })} requirement="Optional" audience="Full portfolio" />
+              <TextInput label="Place of birth" value={data.personal.place_of_birth || ""} onChange={(value) => updatePersonal({ place_of_birth: value })} requirement="Optional" audience="Full portfolio" />
+              <SelectInput label="Rashi" value={data.astrology?.rashi || ""} options={RASHI_SELECT_OPTIONS} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), rashi: value as NonNullable<PortfolioData["astrology"]>["rashi"] })} requirement="Optional" audience="All portfolio views" />
+              <SelectInput label="Nakshatra" value={data.astrology?.nakshatra || ""} options={NAKSHATRA_OPTIONS} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), nakshatra: value })} requirement="Optional" audience="All portfolio views" />
+              <TextInput label="Pada" value={data.astrology?.pada || ""} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), pada: value })} requirement="Optional" audience="Full portfolio" />
+              <TextInput label="Lagnam" value={data.astrology?.lagnam || ""} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), lagnam: value })} requirement="Optional" audience="Full portfolio" />
+              <TextInput label="Gotra" value={data.vitals?.gotra || ""} onChange={(value) => onUpdate("vitals", { ...(data.vitals || {}), gotra: value })} requirement="Optional" audience="Standard and Full" />
+              <TextInput label="Maternal gotra" value={data.astrology?.maternal_gotra || ""} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), maternal_gotra: value })} requirement="Optional" audience="Standard and Full" />
+              <SelectInput label="Manglik status" value={data.astrology?.manglik_status || ""} options={MANGLIK_OPTIONS} onChange={(value) => onUpdate("astrology", { ...(data.astrology || {}), manglik_status: value })} requirement="Optional" audience="Full portfolio" />
             </div>
-            {horoscopeManager && <EmbeddedPanel title="Original horoscope attachment" description="Approved people can open it as a separate document.">{horoscopeManager}</EmbeddedPanel>}
+            {horoscopeManager && <EmbeddedPanel title="Original horoscope attachment" description="Only approved viewers can open it as a separate document.">{horoscopeManager}</EmbeddedPanel>}
           </FormSection>
         )}
 
@@ -427,7 +441,7 @@ export function BlueprintForm({
               </div>
             </div>
             <div className="space-y-4 border-t border-[color:var(--workspace-border)] pt-5">
-              <InfoCard title="Protected contact" audience="Optional · Never public" text="Add a preferred contact only if you want one ready for approved introductions." />
+              <InfoCard title="Protected contact" audience="Optional · Full portfolio" text="These contacts stay out of both initial views and unlock only for a viewer you approve. Approved viewers may save the details they receive." />
               {contacts.map((contact, index) => (
                 <div key={index} className="rounded-xl border border-[color:var(--workspace-border)] bg-[color:var(--workspace-surface-muted)] p-4">
                   <div className="mb-3 flex items-center justify-between gap-3">
@@ -435,10 +449,10 @@ export function BlueprintForm({
                     <button type="button" onClick={() => updateContacts(contacts.filter((_, itemIndex) => itemIndex !== index))} className="workspace-focus inline-flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm font-semibold text-[#9f2f2f] hover:bg-[#fff0ee]"><Trash2 className="h-4 w-4" aria-hidden="true" /> Remove</button>
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <SelectInput label="Who is this?" value={contact.relationship || "self"} options={CONTACT_RELATIONSHIPS} onChange={(value) => updateContacts(contacts.map((item, itemIndex) => itemIndex === index ? { ...item, relationship: value } : item))} audience="Protected" />
-                    <TextInput label="Name of contact" value={contact.name || ""} onChange={(value) => updateContacts(contacts.map((item, itemIndex) => itemIndex === index ? { ...item, name: value } : item))} audience="Protected" />
-                    <TextInput label="Phone" type="tel" value={contact.phone || ""} onChange={(value) => updateContacts(contacts.map((item, itemIndex) => itemIndex === index ? { ...item, phone: value } : item))} audience="Protected" hint="Provide a phone number, an email, or both." />
-                    <TextInput label="Email" type="email" value={contact.email || ""} onChange={(value) => updateContacts(contacts.map((item, itemIndex) => itemIndex === index ? { ...item, email: value } : item))} audience="Protected" />
+                    <SelectInput label="Who is this?" value={contact.relationship || "self"} options={CONTACT_RELATIONSHIPS} onChange={(value) => updateContacts(contacts.map((item, itemIndex) => itemIndex === index ? { ...item, relationship: value } : item))} audience="Full portfolio" />
+                    <TextInput label="Name of contact" value={contact.name || ""} onChange={(value) => updateContacts(contacts.map((item, itemIndex) => itemIndex === index ? { ...item, name: value } : item))} audience="Full portfolio" />
+                    <TextInput label="Phone" type="tel" value={contact.phone || ""} onChange={(value) => updateContacts(contacts.map((item, itemIndex) => itemIndex === index ? { ...item, phone: value } : item))} audience="Full portfolio" hint="Provide a phone number, an email, or both." />
+                    <TextInput label="Email" type="email" value={contact.email || ""} onChange={(value) => updateContacts(contacts.map((item, itemIndex) => itemIndex === index ? { ...item, email: value } : item))} audience="Full portfolio" />
                   </div>
                 </div>
               ))}

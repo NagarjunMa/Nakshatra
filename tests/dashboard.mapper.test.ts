@@ -131,6 +131,32 @@ describe("dashboard portfolio mapping", () => {
     ).toBe(true);
   });
 
+  it("persists an explicit three-part name as one canonical candidate name", () => {
+    const namedDraft: PortfolioData = {
+      ...draft,
+      personal: {
+        ...draft.personal,
+        name: "Legacy Name",
+        first_name: "Ananya",
+        middle_name: "Meera",
+        last_name: "Rao",
+      },
+    };
+
+    expect(mapCandidate(namedDraft, "user-id")).toMatchObject({
+      display_name: "Ananya Meera Rao",
+      legal_name: "Ananya Meera Rao",
+    });
+    expect(mapPortfolioDraft(namedDraft, null).draft_data).toMatchObject({
+      personal: {
+        name: "Ananya Meera Rao",
+        first_name: "Ananya",
+        middle_name: "Meera",
+        last_name: "Rao",
+      },
+    });
+  });
+
   it("maps populated education and career records", () => {
     const populated = {
       ...draft,

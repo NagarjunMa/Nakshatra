@@ -8,6 +8,8 @@ import {
 const readyPortfolio: PortfolioData = {
   personal: {
     name: "Aditi Rao",
+    first_name: "Aditi",
+    last_name: "Rao",
     dob: "1996-08-12",
     gender: "female",
     place_of_birth: "Bengaluru",
@@ -47,7 +49,7 @@ describe("portfolio publish readiness", () => {
   });
 
   it.each([
-    [{ ...readyPortfolio, personal: { ...readyPortfolio.personal, name: "" } }, true, "full name"],
+    [{ ...readyPortfolio, personal: { ...readyPortfolio.personal, name: "", first_name: "", last_name: "" } }, true, "first name"],
     [{ ...readyPortfolio, personal: { ...readyPortfolio.personal, current_location: "" } }, true, "current location"],
     [{ ...readyPortfolio, career: { ...readyPortfolio.career, title: "" } }, true, "profession or role"],
     [{ ...readyPortfolio, personal: { ...readyPortfolio.personal, profile_summary: "", short_bio: "" } }, true, "short introduction"],
@@ -77,6 +79,8 @@ describe("portfolio publish readiness", () => {
       personal: {
         ...readyPortfolio.personal,
         name: "",
+        first_name: "",
+        last_name: "",
         dob: "",
         gender: "" as PortfolioData["personal"]["gender"],
         current_location: "",

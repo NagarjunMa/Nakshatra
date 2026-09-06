@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { PortfolioData } from "@/types/portfolio";
+import { resolvePortfolioNameParts } from "@/features/portfolio/name";
 
 export class PortfolioPublishReadinessError extends Error {}
 
@@ -23,9 +24,10 @@ export function requirePortfolioPublishReadiness({
     }
   };
 
-  requireValue(data.personal.name, "full name");
+  const name = resolvePortfolioNameParts(data.personal);
+  requireValue(name.first_name, "first name");
+  requireValue(name.last_name, "last name");
   requireValue(data.personal.dob, "date of birth");
-  requireValue(data.personal.gender, "gender");
   requireValue(data.personal.current_location, "current location");
   requireValue(data.career?.title, "profession or role");
   if (!data.personal.short_bio?.trim() && !data.personal.profile_summary?.trim()) {

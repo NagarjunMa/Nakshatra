@@ -7,6 +7,7 @@ import {
   withCanonicalTemplate,
 } from "@/features/portfolio/template";
 import { getCelestialBackground } from "@/features/portfolio/celestial-theme";
+import { normalizePortfolioName } from "@/features/portfolio/name";
 
 const EMPTY_VALUES = new Set(["", undefined, null]);
 
@@ -59,6 +60,7 @@ export function mapPortfolioDraft(
   const privacyMode = normalizePortfolioPrivacyMode(data.privacy_mode);
   const canonicalData = {
     ...data,
+    personal: normalizePortfolioName(data.personal),
     privacy_mode: privacyMode,
     style: withCanonicalTemplate(data.style),
   };
@@ -81,9 +83,10 @@ export function mapPortfolioDraft(
  * Input: validated portfolio data and authenticated owner ID. Output: a candidates upsert payload.
  */
 export function mapCandidate(data: PortfolioData, userId: string) {
+  const personal = normalizePortfolioName(data.personal);
   return {
-    display_name: data.personal.name.trim(),
-    legal_name: data.personal.name.trim(),
+    display_name: personal.name,
+    legal_name: personal.name,
     gender: nullable(data.personal.gender),
     birth_date: nullable(data.personal.dob),
     current_city: nullable(data.personal.city || data.personal.current_location),

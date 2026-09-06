@@ -38,6 +38,9 @@ const RASHI_KEYS = RASHI_OPTIONS.map((r) => r.key) as [string, ...string[]];
 
 export const personalSchema = z.object({
   name: z.string().min(1, "Name is required").max(100, "Name too long"),
+  first_name: z.string().max(100).optional(),
+  middle_name: z.string().max(100).optional(),
+  last_name: z.string().max(100).optional(),
   preferred_name: z.string().max(100).optional(),
   photo_url: z.string().url().optional(),
   photo_thumb_url: z.string().url().optional(),
@@ -50,7 +53,7 @@ export const personalSchema = z.object({
   age: z.number().int().min(18).max(120).optional(),
   place_of_birth: z.string().max(200).optional(),
   current_location: z.string().max(200).optional(),
-  gender: z.enum(["male", "female", "non_binary", "prefer_not_to_say"]),
+  gender: z.enum(["male", "female", "non_binary", "prefer_not_to_say"]).optional(),
   marital_status: z.string().max(100).optional(),
   immigration_status: z.string().max(200).optional(),
   relocation_preference: z.string().max(200).optional(),

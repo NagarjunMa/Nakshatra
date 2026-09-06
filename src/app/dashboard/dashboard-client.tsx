@@ -46,6 +46,7 @@ import {
   UserRoundCheck,
   Settings,
 } from "lucide-react";
+import { normalizePortfolioName } from "@/features/portfolio/name";
 
 interface Props {
   portfolio: Portfolio | null;
@@ -594,89 +595,95 @@ export default function DashboardClient({
       {formOpen && (
         <div className="dashboard-editor fixed inset-0 z-50 bg-[#18272e]/45 backdrop-blur-sm">
           <div className="dashboard-editor-surface absolute inset-0 flex h-full w-full flex-col overflow-hidden shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-              <div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <h2 className="text-lg font-semibold">Portfolio details</h2>
-                  <span className={`dashboard-save-state is-${draftSaveState}`} aria-live="polite">
-                    {draftSaveState === "saving" ? "Saving..." : draftSaveState === "saved" ? "Saved" : "Changes not saved"}
-                  </span>
+            <div className="flex-none border-b border-slate-200 px-4 py-4 sm:px-6 lg:px-8">
+              <div className="mx-auto flex w-full max-w-[90rem] items-center justify-between gap-4">
+                <div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h2 className="text-lg font-semibold">Portfolio details</h2>
+                    <span className={`dashboard-save-state is-${draftSaveState}`} aria-live="polite">
+                      {draftSaveState === "saving" ? "Saving..." : draftSaveState === "saved" ? "Saved" : "Changes not saved"}
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-500">
+                    Complete what you know. Save your work and continue later.
+                  </p>
                 </div>
-                <p className="text-sm text-slate-500">
-                  Complete what you know. Save your work and continue later.
-                </p>
+                <button
+                  type="button"
+                  onClick={() => setFormOpen(false)}
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition-colors hover:bg-slate-100"
+                  aria-label="Close portfolio details"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setFormOpen(false)}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition-colors hover:bg-slate-100"
-                aria-label="Close portfolio details"
-              >
-                <X className="h-4 w-4" />
-              </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-5 py-5 lg:px-8">
-              <BlueprintForm
-                data={draftData}
-                onUpdate={updateSection}
-                photoManager={
-                  <PhotoManager
-                    media={portfolioMedia}
-                    urls={mediaUrls}
-                    uploading={uploadingMedia}
-                    inputRef={photoInputRef}
-                    onUpload={uploadPhotos}
-                    onUpdate={updatePhoto}
-                    onDelete={deletePhoto}
-                  />
-                }
-                horoscopeManager={
-                  <HoroscopeManager
-                    horoscope={portfolioHoroscope}
-                    uploading={uploadingHoroscope}
-                    inputRef={horoscopeInputRef}
-                    onUpload={uploadHoroscopeFile}
-                    onReview={reviewHoroscope}
-                    onDelete={removeHoroscope}
-                  />
-                }
-              />
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 [scrollbar-gutter:stable] sm:px-6 lg:px-8">
+              <div className="mx-auto w-full max-w-[90rem]">
+                <BlueprintForm
+                  data={draftData}
+                  onUpdate={updateSection}
+                  photoManager={
+                    <PhotoManager
+                      media={portfolioMedia}
+                      urls={mediaUrls}
+                      uploading={uploadingMedia}
+                      inputRef={photoInputRef}
+                      onUpload={uploadPhotos}
+                      onUpdate={updatePhoto}
+                      onDelete={deletePhoto}
+                    />
+                  }
+                  horoscopeManager={
+                    <HoroscopeManager
+                      horoscope={portfolioHoroscope}
+                      uploading={uploadingHoroscope}
+                      inputRef={horoscopeInputRef}
+                      onUpload={uploadHoroscopeFile}
+                      onReview={reviewHoroscope}
+                      onDelete={removeHoroscope}
+                    />
+                  }
+                />
+              </div>
             </div>
 
-            <div className="border-t border-slate-200 bg-[#f3f0e8] px-5 py-4">
-              {draftError && (
-                <p className="mb-3 rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-2 text-sm text-red-200">
-                  Save failed: {draftError}
-                </p>
-              )}
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm leading-6 text-slate-500">
-                  Saving keeps your changes. Publishing updates the portfolio people can view.
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={saveDashboardDraft}
-                    disabled={savingDraft}
-                    className="dashboard-secondary-action"
-                  >
-                    <Save className="h-4 w-4" />
-                    {savingDraft ? "Saving..." : "Save draft"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={publishPortfolio}
-                    disabled={publishing}
-                    className="dashboard-primary-action"
-                  >
-                    <Send className={`h-4 w-4 ${publishing ? "animate-pulse" : ""}`} />
-                    {publishing
-                      ? "Generating..."
-                      : portfolio?.is_published
-                        ? "Update published"
-                        : "Review and publish"}
-                  </button>
+            <div className="flex-none border-t border-slate-200 bg-[#f3f0e8] px-4 py-4 sm:px-6 lg:px-8">
+              <div className="mx-auto w-full max-w-[90rem]">
+                {draftError && (
+                  <p className="mb-3 rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-2 text-sm text-red-200">
+                    Save failed: {draftError}
+                  </p>
+                )}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-sm leading-6 text-slate-500">
+                    Saving keeps your changes. Publishing updates the portfolio people can view.
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={saveDashboardDraft}
+                      disabled={savingDraft}
+                      className="dashboard-secondary-action flex-1 sm:flex-none"
+                    >
+                      <Save className="h-4 w-4" />
+                      {savingDraft ? "Saving..." : "Save draft"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={publishPortfolio}
+                      disabled={publishing}
+                      className="dashboard-primary-action flex-1 sm:flex-none"
+                    >
+                      <Send className={`h-4 w-4 ${publishing ? "animate-pulse" : ""}`} />
+                      {publishing
+                        ? "Generating..."
+                        : portfolio?.is_published
+                          ? "Update published"
+                          : "Review and publish"}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1038,7 +1045,7 @@ function formatInterestLocation(metadata: Record<string, unknown> | null) {
 
 const EMPTY_DATA: PortfolioData = {
   privacy_mode: "balanced",
-  personal: { name: "", dob: "", gender: "prefer_not_to_say" },
+  personal: { name: "", first_name: "", middle_name: "", last_name: "", dob: "", gender: undefined },
   vitals: {},
   astrology: {},
   education: {},
@@ -1079,7 +1086,7 @@ function normalizePortfolioData(
     ...EMPTY_DATA,
     ...(data || {}),
     privacy_mode: normalizePortfolioPrivacyMode(data?.privacy_mode || privacyMode),
-    personal: { ...EMPTY_DATA.personal, ...(data?.personal || {}) },
+    personal: normalizePortfolioName({ ...EMPTY_DATA.personal, ...(data?.personal || {}) }),
     vitals: { ...(data?.vitals || {}) },
     astrology: { ...(data?.astrology || {}) },
     education: { ...(data?.education || {}) },
@@ -1115,7 +1122,7 @@ function PhotoManager({
   onDelete: (id: string) => void;
 }) {
   const visibilityLabels: { value: PortfolioMediaVisibility; label: string }[] = [
-    { value: "interest_required", label: "Blur for free viewers" },
+    { value: "interest_required", label: "Blurred until approval" },
     { value: "public", label: "Visible to all" },
     { value: "approved_only", label: "Approved interest only" },
     { value: "hidden", label: "Only me" },

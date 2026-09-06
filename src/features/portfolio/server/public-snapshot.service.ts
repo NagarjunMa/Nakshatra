@@ -5,6 +5,7 @@ import {
   portfolioDataSchema,
   type PortfolioData,
 } from "@/types/portfolio";
+import { normalizePortfolioName } from "@/features/portfolio/name";
 
 function ageFromDate(dateOfBirth?: string) {
   if (!dateOfBirth) return undefined;
@@ -21,10 +22,12 @@ function ageFromDate(dateOfBirth?: string) {
 
 /** Builds the only payload available through an unauthenticated portfolio URL. */
 export function createPublicPortfolioSnapshot(data: PortfolioData): PortfolioData {
+  const personalName = normalizePortfolioName(data.personal);
   const privacyMode = normalizePortfolioPrivacyMode(data.privacy_mode);
   const privateMode = privacyMode === "private";
   const originalStory = clean(data.personal.profile_summary);
   const publicStory = originalStory;
+  const publicSharedLifePlans = clean(data.personal.shared_life_plans);
   const hasJourney = hasAny([
     data.education?.degree,
     data.education?.qualification_level,
@@ -137,8 +140,8 @@ export function createPublicPortfolioSnapshot(data: PortfolioData): PortfolioDat
   );
 
   const displayName = privateMode
-    ? clean(data.personal.preferred_name) || firstName(data.personal.name)
-    : clean(data.personal.name);
+    ? clean(personalName.first_name) || firstName(personalName.name)
+    : clean(personalName.name);
   const visibility = compactVisibility({
     ...(privateMode && hasJourney && !hasPrivateJourney ? { journey: "restricted" as const } : {}),
     ...(privateMode && hasLifestyle && !hasPrivateLifestyle ? { lifestyle: "restricted" as const } : {}),
@@ -173,22 +176,29 @@ export function createPublicPortfolioSnapshot(data: PortfolioData): PortfolioDat
     privacy_mode: privacyMode,
     personal: {
       name: displayName || "Personal portfolio",
-      preferred_name: data.personal.preferred_name,
+      first_name: personalName.first_name,
+      ...(!privateMode
+        ? {
+            middle_name: personalName.middle_name,
+            last_name: personalName.last_name,
+          }
+        : {}),
       age: ageFromDate(data.personal.dob),
       current_location: data.personal.current_location,
-      gender: data.personal.gender,
+      ...(!privateMode ? { gender: data.personal.gender } : {}),
       short_bio: clean(data.personal.short_bio),
-      profile_summary: publicStory,
+      ...(!privateMode ? { profile_summary: publicStory } : {}),
       marital_status: data.personal.marital_status,
       citizenship: data.personal.citizenship,
       religion: data.personal.religion,
+      community: data.personal.community,
       sub_community: data.personal.sub_community,
       ...(!privateMode
         ? {
             immigration_status: data.personal.immigration_status,
-            community: data.personal.community,
-            long_term_goals: data.personal.long_term_goals,
-            shared_life_plans: data.personal.shared_life_plans,
+            shared_life_plans: publicSharedLifePlans
+              ? excerpt(publicSharedLifePlans, 360)
+              : undefined,
           }
         : {}),
     },
@@ -216,9 +226,7 @@ export function createPublicPortfolioSnapshot(data: PortfolioData): PortfolioDat
       nakshatra: data.astrology?.nakshatra,
       ...(!privateMode
         ? {
-            pada: data.astrology?.pada,
             maternal_gotra: data.astrology?.maternal_gotra,
-            manglik_status: data.astrology?.manglik_status,
           }
         : {}),
     },

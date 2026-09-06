@@ -16,7 +16,8 @@ import type { PortfolioData } from "../src/types/portfolio";
 const complete: PortfolioData = {
   personal: {
     name: "Aditi Rao",
-    preferred_name: "Aditi",
+    first_name: "Aditi",
+    last_name: "Rao",
     dob: "1996-08-12",
     gender: "female",
     current_location: "Boston",
@@ -158,7 +159,9 @@ describe("celestial union portfolio", () => {
     expect(screen.getByText("1")).toBeInTheDocument();
     expect(screen.getByText("Oldest")).toBeInTheDocument();
     expect(screen.getByText("Bharadwaj")).toBeInTheDocument();
-    expect(screen.getByText("No")).toBeInTheDocument();
+    expect(screen.queryByText("No")).not.toBeInTheDocument();
+    expect(screen.queryByText("Pada")).not.toBeInTheDocument();
+    expect(screen.getByText("Female")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Explore profile" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "How privacy works" })).not.toBeInTheDocument();
     expect(screen.queryByText("1996-08-12")).not.toBeInTheDocument();
@@ -207,10 +210,12 @@ describe("celestial union portfolio", () => {
     expect(screen.getByText("Kashyap")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Future plans" })).toBeInTheDocument();
     expect(screen.getByText("Near family, in a separate home")).toBeInTheDocument();
-    expect(screen.queryByText("family@example.com")).not.toBeInTheDocument();
+    expect(screen.getByText("family@example.com")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Contact shared by the profile owner" })).toBeInTheDocument();
 
     rerender(<CelestialUnion data={createPublicPortfolioSnapshot(complete)} themeColor="" sunSign="kanya" accessMode="public" />);
     expect(screen.queryByRole("link", { name: /original horoscope/i })).not.toBeInTheDocument();
+    expect(screen.queryByText("family@example.com")).not.toBeInTheDocument();
   });
 
   it("renders family and contact values for the full owner preview", () => {
@@ -323,6 +328,8 @@ describe("celestial union portfolio", () => {
     expect(screen.getByText("India")).toBeInTheDocument();
     expect(screen.getByText("Hindu")).toBeInTheDocument();
     expect(screen.getByText("Smartha")).toBeInTheDocument();
+    expect(screen.queryByText("A thoughtful introduction")).not.toBeInTheDocument();
+    expect(screen.queryByText("Female")).not.toBeInTheDocument();
     expect(screen.queryByText("Drinking")).not.toBeInTheDocument();
     expect(screen.queryByText("Smoking")).not.toBeInTheDocument();
 
