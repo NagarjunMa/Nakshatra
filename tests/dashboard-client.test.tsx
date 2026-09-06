@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Portfolio, PortfolioData, PortfolioMedia } from "../src/types/portfolio";
 
@@ -235,8 +235,13 @@ describe("dashboard client", () => {
     expect(portrait).toHaveAttribute("src", "https://signed.test/one-thumb.webp");
     expect(portrait.parentElement).toHaveClass("h-36", "sm:h-40");
     expect(screen.getByRole("button", { name: /add photos/i })).toHaveClass("h-36", "w-36", "sm:h-40", "sm:w-40");
-    fireEvent.change(screen.getByLabelText("Photo visibility"), { target: { value: "hidden" } });
-    await waitFor(() => expect(mocks.update).toHaveBeenCalledWith("media-1", { visibility: "hidden" }));
+    const visibility = screen.getByLabelText("Photo visibility");
+    expect(within(visibility).getByRole("option", { name: "Blurred until approval" })).toBeInTheDocument();
+    expect(within(visibility).getByRole("option", { name: "Visible to all" })).toBeInTheDocument();
+    expect(within(visibility).queryByRole("option", { name: "Approved interest only" })).not.toBeInTheDocument();
+    expect(within(visibility).queryByRole("option", { name: "Only me" })).not.toBeInTheDocument();
+    fireEvent.change(visibility, { target: { value: "interest_required" } });
+    await waitFor(() => expect(mocks.update).toHaveBeenCalledWith("media-1", { visibility: "interest_required" }));
     fireEvent.click(screen.getByRole("button", { name: /make primary photo/i }));
     await waitFor(() => expect(mocks.update).toHaveBeenCalledWith("media-1", { media_type: "hero" }));
     fireEvent.click(screen.getByRole("button", { name: /delete photo/i }));
@@ -255,6 +260,32 @@ describe("dashboard client", () => {
     await waitFor(() => expect(mocks.push).toHaveBeenCalledWith("/login?error=session_expired"));
     fireEvent.click(screen.getByRole("button", { name: /update published/i }));
     expect(await screen.findByText(/complete required fields/i)).toBeInTheDocument();
+  });
+
+  it("preserves unsaved answers, offers retry, and warns before closing", async () => {
+    mocks.save.mockResolvedValueOnce({
+      ok: false,
+      error: { code: "DASHBOARD_SAVE_FAILED", message: "We could not save your portfolio right now." },
+    });
+    renderDashboard();
+    fireEvent.click(screen.getByRole("button", { name: /edit portfolio/i }));
+    fireEvent.change(screen.getByLabelText("First name"), { target: { value: "Changed" } });
+    vi.mocked(confirm).mockReturnValueOnce(false);
+    fireEvent.click(screen.getByRole("button", { name: /close portfolio details/i }));
+    expect(screen.getByRole("heading", { name: "Portfolio details" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /save draft/i }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Your answers are still on this screen.");
+    fireEvent.click(screen.getByRole("button", { name: "Try saving again" }));
+    await waitFor(() => expect(mocks.save).toHaveBeenCalledTimes(2));
+  });
+
+  it("requires an explicit choice for legacy photo privacy without expanding access", () => {
+    renderDashboard({ media: [{ ...media, visibility: "hidden" }] });
+    fireEvent.click(screen.getByRole("button", { name: /edit portfolio/i }));
+    expect(screen.getByLabelText("Photo visibility")).toHaveValue("");
+    expect(screen.getByText(/existing privacy remains unchanged/i)).toBeInTheDocument();
+    expect(mocks.update).not.toHaveBeenCalled();
   });
 
   it("uses a distinct redirect reason for an explicitly revoked session", async () => {

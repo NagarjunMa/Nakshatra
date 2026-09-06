@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -116,6 +116,24 @@ export default function DashboardClient({
   const photoInputRef = useRef<HTMLInputElement>(null);
   const horoscopeInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    if (draftSaveState === "saved") return;
+    const warnBeforeLeaving = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warnBeforeLeaving);
+    return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
+  }, [draftSaveState]);
+
+  function closePortfolioEditor() {
+    if (
+      draftSaveState !== "saved"
+      && !confirm("You have changes that are not saved. Close the form and keep them only on this screen?")
+    ) return;
+    setFormOpen(false);
+  }
 
   async function copyLink() {
     if (!shareUrl) return;
@@ -610,7 +628,7 @@ export default function DashboardClient({
                 </div>
                 <button
                   type="button"
-                  onClick={() => setFormOpen(false)}
+                  onClick={closePortfolioEditor}
                   className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition-colors hover:bg-slate-100"
                   aria-label="Close portfolio details"
                 >
@@ -652,9 +670,16 @@ export default function DashboardClient({
             <div className="flex-none border-t border-slate-200 bg-[#f3f0e8] px-4 py-4 sm:px-6 lg:px-8">
               <div className="mx-auto w-full max-w-[90rem]">
                 {draftError && (
-                  <p className="mb-3 rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-2 text-sm text-red-200">
-                    Save failed: {draftError}
-                  </p>
+                  <div role="alert" className="mb-3 rounded-lg border border-[#d8a7a1] bg-[#fff0ee] px-4 py-3 text-sm text-[#7f3535]">
+                    <p className="font-semibold">We couldn&apos;t complete that action.</p>
+                    <p className="mt-1 leading-5">{draftError}</p>
+                    <p className="mt-1 leading-5">Your answers are still on this screen.</p>
+                    {draftSaveState === "unsaved" && (
+                      <button type="button" onClick={saveDashboardDraft} disabled={savingDraft} className="mt-2 min-h-10 rounded-lg border border-[#b96a63] bg-white px-3 font-semibold text-[#7f3535] hover:bg-[#fff8f6]">
+                        Try saving again
+                      </button>
+                    )}
+                  </div>
                 )}
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-sm leading-6 text-slate-500">
@@ -673,7 +698,7 @@ export default function DashboardClient({
                     <button
                       type="button"
                       onClick={publishPortfolio}
-                      disabled={publishing}
+                      disabled={publishing || savingDraft}
                       className="dashboard-primary-action flex-1 sm:flex-none"
                     >
                       <Send className={`h-4 w-4 ${publishing ? "animate-pulse" : ""}`} />
@@ -1124,8 +1149,6 @@ function PhotoManager({
   const visibilityLabels: { value: PortfolioMediaVisibility; label: string }[] = [
     { value: "interest_required", label: "Blurred until approval" },
     { value: "public", label: "Visible to all" },
-    { value: "approved_only", label: "Approved interest only" },
-    { value: "hidden", label: "Only me" },
   ];
 
   return (
@@ -1184,19 +1207,27 @@ function PhotoManager({
             </div>
             <div className="space-y-2 p-2">
               <select
-                value={item.visibility}
+                value={visibilityLabels.some((option) => option.value === item.visibility) ? item.visibility : ""}
                 onChange={(event) =>
                   onUpdate(item.id, { visibility: event.target.value as PortfolioMediaVisibility })
                 }
                 className="h-10 w-full rounded-md border border-white/10 bg-white/[0.06] px-2 text-xs text-white outline-none"
                 aria-label="Photo visibility"
               >
+                {!visibilityLabels.some((option) => option.value === item.visibility) && (
+                  <option value="" disabled>Choose visibility</option>
+                )}
                 {visibilityLabels.map((option) => (
                   <option key={option.value} value={option.value} className="bg-[#1a1b27]">
                     {option.label}
                   </option>
                 ))}
               </select>
+              {!visibilityLabels.some((option) => option.value === item.visibility) && (
+                <p className="text-xs leading-4 text-[color:var(--workspace-ink-muted)]">
+                  Choose how this photo should be shared. Its existing privacy remains unchanged until then.
+                </p>
+              )}
               {item.media_type !== "hero" && (
                 <button
                   type="button"

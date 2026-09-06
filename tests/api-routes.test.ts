@@ -147,10 +147,21 @@ describe("dashboard and portfolio lifecycle routes", () => {
   });
 
   it("maps dashboard failures without leaking unknown errors", async () => {
-    saveDashboardDraft.mockRejectedValueOnce(new DashboardSaveError("Could not save portfolio"));
-    expect(await (await dashboardPut(jsonRequest("http://local/api/dashboard", "PUT", { data }))).json()).toMatchObject({ error: "Could not save portfolio" });
+    saveDashboardDraft.mockRejectedValueOnce(new DashboardSaveError(
+      "Database update required",
+      "DASHBOARD_DATABASE_UPDATE_REQUIRED",
+      503
+    ));
+    const classified = await dashboardPut(jsonRequest("http://local/api/dashboard", "PUT", { data }));
+    expect(classified.status).toBe(503);
+    expect(await classified.json()).toMatchObject({
+      code: "DASHBOARD_DATABASE_UPDATE_REQUIRED",
+      error: "Database update required",
+    });
     saveDashboardDraft.mockRejectedValueOnce(new Error("database password"));
-    expect(await (await dashboardPut(jsonRequest("http://local/api/dashboard", "PUT", { data }))).json()).toMatchObject({ error: "Unable to save portfolio details" });
+    const unknown = await dashboardPut(jsonRequest("http://local/api/dashboard", "PUT", { data }));
+    expect(unknown.status).toBe(500);
+    expect(await unknown.json()).toMatchObject({ error: "Unable to save portfolio details" });
   });
 
   it("publishes valid data and reports validation and domain errors", async () => {

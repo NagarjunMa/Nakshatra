@@ -213,10 +213,12 @@ export function BlueprintForm({
         <div className="biodata-editor-sidebar rounded-2xl p-3">
           <div className="biodata-editor-progress mb-3 rounded-xl p-3">
             <p className="text-sm font-semibold text-[color:var(--workspace-teal)]">
-              {foundationReady === foundationFields.length ? "Ready to preview" : "Start with the essentials"}
+              {foundationReady === foundationFields.length ? "Essentials complete" : "Start with the essentials"}
             </p>
             <p className="mt-1 text-sm leading-5 text-[color:var(--workspace-ink-muted)]">
-              {foundationReady} of {foundationFields.length} essentials complete
+              {foundationReady === foundationFields.length
+                ? "Optional sections can be finished now or later."
+                : `${foundationReady} of ${foundationFields.length} essentials complete`}
             </p>
           </div>
           <nav aria-label="Portfolio form sections" className="space-y-1">
@@ -276,6 +278,11 @@ export function BlueprintForm({
         <p className="mb-3 text-sm font-semibold text-[color:var(--workspace-ink-muted)]">
           Step {activeIndex + 1} of {SECTIONS.length} · {SECTIONS[activeIndex].label}
         </p>
+        {SECTIONS[activeIndex].optional && (
+          <p className="mb-3 rounded-xl border border-[color:var(--workspace-border)] bg-[color:var(--workspace-surface-muted)] px-4 py-3 text-sm leading-6 text-[color:var(--workspace-ink-muted)]">
+            This section is optional. Add what feels useful, or move on and return later.
+          </p>
+        )}
         {activeSection === "foundation" && (
           <FormSection eyebrow="Start here" title="Portfolio essentials" description="Complete these first. You can save your draft and return to every optional section later.">
             <InfoCard title="You control what gets shared" audience="Private draft" text="These answers create your biodata. Nothing becomes public until you publish, and protected details stay outside the public introduction." />
@@ -465,7 +472,7 @@ export function BlueprintForm({
           <button type="button" disabled={activeIndex === 0} onClick={() => goTo(SECTIONS[activeIndex - 1].id)} className="workspace-focus inline-flex min-h-12 items-center gap-2 rounded-lg border border-[color:var(--workspace-border)] bg-white px-4 text-sm font-semibold text-[color:var(--workspace-ink)] hover:bg-[color:var(--workspace-surface-muted)] disabled:invisible"><ArrowLeft className="h-4 w-4" aria-hidden="true" /> Previous</button>
           <p className="hidden text-sm text-[color:var(--workspace-ink-muted)] sm:block">You can change saved answers at any time.</p>
           {activeIndex < SECTIONS.length - 1 ? (
-            <button type="button" onClick={() => goTo(SECTIONS[activeIndex + 1].id)} className="workspace-focus inline-flex min-h-12 items-center gap-2 rounded-lg bg-[color:var(--workspace-navy)] px-5 text-sm font-semibold text-white hover:bg-[#183d59]">{SECTIONS[activeIndex + 1].optional ? "Continue" : "Review privacy"}<ArrowRight className="h-4 w-4" aria-hidden="true" /></button>
+            <button type="button" onClick={() => goTo(SECTIONS[activeIndex + 1].id)} className="dashboard-primary-action workspace-focus min-h-12 px-5">Next: {SECTIONS[activeIndex + 1].label}<ArrowRight className="h-4 w-4" aria-hidden="true" /></button>
           ) : <span className="inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--workspace-teal)]"><Check className="h-4 w-4" aria-hidden="true" /> Ready to save</span>}
         </div>
       </div>

@@ -104,6 +104,7 @@ describe("blueprint form", () => {
 
     expect(screen.getByText(/0 of 6 essentials complete/)).toBeInTheDocument();
     expect(screen.getByText("Step 1 of 9 · Foundation")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Next: About you/ })).toHaveClass("dashboard-primary-action");
     fireEvent.blur(screen.getByLabelText("First name"));
     expect(screen.getByText("This field is required.")).toBeInTheDocument();
     expect(screen.getByLabelText("First name")).toHaveAttribute("aria-invalid", "true");
@@ -113,6 +114,7 @@ describe("blueprint form", () => {
     expect(screen.queryByLabelText("Name of contact")).not.toBeInTheDocument();
     expect(screen.getByText(/contacts stay out of both initial views/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Family/ }));
+    expect(screen.getByText(/This section is optional/)).toBeInTheDocument();
     expect(screen.queryByText("Sibling 1")).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("Number of siblings"), { target: { value: "1" } });
@@ -158,7 +160,7 @@ describe("blueprint form", () => {
       values_statement: "Kindness",
     }));
 
-    fireEvent.click(screen.getByRole("button", { name: /preferences/i }));
+    fireEvent.click(within(sectionNavigation).getByRole("button", { name: /Partner preferences/i }));
     fireEvent.change(screen.getByLabelText("Minimum age"), { target: { value: "25" } });
     fireEvent.change(screen.getByLabelText("Maximum height"), { target: { value: `5'10"` } });
     expect(onUpdate).toHaveBeenCalledWith("preferences", expect.objectContaining({ age_range: "25–28" }));
@@ -175,7 +177,7 @@ describe("blueprint form", () => {
     const onUpdate = vi.fn();
     render(<BlueprintForm data={{ ...completeBlueprint, preferences: {} }} onUpdate={onUpdate} />);
 
-    fireEvent.click(screen.getByRole("button", { name: /preferences/i }));
+    fireEvent.click(within(screen.getByRole("navigation", { name: "Portfolio form sections" })).getByRole("button", { name: /Partner preferences/i }));
     fireEvent.change(screen.getByLabelText("Maximum height"), { target: { value: `5'10"` } });
 
     expect(onUpdate).toHaveBeenCalledWith("preferences", expect.objectContaining({
