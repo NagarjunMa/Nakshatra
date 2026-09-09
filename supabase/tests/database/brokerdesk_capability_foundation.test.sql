@@ -91,6 +91,7 @@ select
 select ok(workspace_a like 'wrk\_%' escape '\', 'workspace references use the dedicated opaque prefix') from brokerdesk_refs;
 select ok(relationship_a1 like 'bcr\_%' escape '\', 'relationship references use the dedicated opaque prefix') from brokerdesk_refs;
 select isnt(relationship_a1, relationship_b1, 'relationship references are distinct across agencies') from brokerdesk_refs;
+grant select on brokerdesk_refs to authenticated;
 
 set local role authenticated;
 select pg_temp.set_authenticated_claims('91000000-0000-4000-8000-000000000001', '92000000-0000-4000-8000-000000000001');
