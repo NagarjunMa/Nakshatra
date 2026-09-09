@@ -152,7 +152,7 @@ Customer workspace:
 | 0E — URL, API, and security contract | Approved baseline | Endpoint projections, identifiers, tokens, rate limits, abuse and penetration cases |
 | 0F — Complete operational wireframes | Approved baseline | Onboarding, dashboard, bulk import, queues, tasks, renewals, RBAC, privacy |
 | 1 — Implementation planning | Approved baseline | Ordered engineering plan, migrations, acceptance tests, rollout |
-| 2 — Implementation | Slice 1 implemented; database execution pending | Dependency security, customer ownership boundary, private defaults, opaque IDs, multi-agency tests |
+| 2 — Implementation | Slice 1 merged and database-verified | Dependency security, customer ownership boundary, private defaults, opaque IDs, multi-agency tests |
 
 ## Detailed planning documents
 
@@ -208,8 +208,12 @@ Customer workspace:
 - At the user's direction, stopped Linear operations and retained all implementation decisions and progress in the local BrokerDesk documents.
 - Began Slice 1 in the isolated latest-main worktree: remediated all six known dependency advisories, separated customer ownership from agency access, added private default privileges and typed opaque references, and added a Broker A/B plus Customer A/B isolation fixture.
 - Replaced unkeyed anonymous rate-limit fingerprints with a server-only keyed HMAC and explicit trusted-proxy handling; production fails closed if the key is missing.
-- Completed the Slice 1 application gates: 421 tests and feature coverage passed, TypeScript passed, the production build passed, lint had no errors, and the dependency audit reported zero vulnerabilities. Executable pgTAP verification remains pending because Docker/Podman is unavailable on the host.
-- Recorded the unavailable Docker/Podman runtime as an explicit database-verification gap; static checks pass, but the new SQL is not accepted as executable until pgTAP runs.
+- Completed the Slice 1 application gates: 421 tests and feature coverage passed, TypeScript passed, the production build passed, lint had no errors, and the dependency audit reported zero vulnerabilities.
+- Reconciled the original checkout with the latest `main`, intentionally excluded obsolete landing-page changes and duplicate authentication CSS, and preserved the current keyboard skip-link behavior.
+- Opened PR [#40](https://github.com/NagarjunMa/Nakshatra/pull/40) from `security/nak-68-brokerdesk-safety-foundation` with a detailed security, reconciliation, and verification record.
+- The first CI database run identified a schema-invalid inactive membership fixture and a stale lifecycle assertion from the newer approved-contact contract. Corrected the fixtures to use `suspended` membership and an owner-only `private_notes` field.
+- Confirmed all three PR checks, including clean migration replay and the full pgTAP database suite, then squash-merged PR #40 as `22faf86`.
+- Synchronized local `main` exactly with `origin/main`, removed the merged security branch and clean isolated phase worktree after equivalence checks, and created `feat/nak-68-brokerdesk-capability-foundation` for the next slice.
 
 ## Maintenance rule
 

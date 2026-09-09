@@ -1,23 +1,21 @@
 # BrokerDesk Phase 2 — Implementation Progress
 
-Status: Slice 1 implemented; executable database verification pending  
+Status: Slice 1 merged and database-verified; Slice 2 ready
 Started: 2026-09-08  
 Approved plan: [Phase 1 Implementation Plan](./phase-1-implementation-plan.md)
 
 ## Tracking approach
 
-The user has opted out of Linear updates for this work. Decisions, changed files, verification results, risks, and deviations are recorded here and in the master plan.
-
-The original checkout contains pre-existing modified and untracked work. Implementation therefore continues in an isolated detached worktree rather than rebasing, stashing, overwriting, or committing the user's existing changes. No branch or commit has been created because the repository branch convention requires a real issue number; implementation work is preserved in the worktree until a compliant branch can be attached.
+The user has opted out of Linear updates for this work. Decisions, changed files, verification results, risks, and deviations are recorded here, in the master plan, and in the associated GitHub pull request. Slice 1 was reconciled through PR #40 and squash-merged to `main`; the next slice continues from the clean branch `feat/nak-68-brokerdesk-capability-foundation`.
 
 ## Repository preparation
 
-- Original checkout: retained on local `main`; existing modified and untracked files are untouched.
-- Remote checked: `origin/main` fetched on 2026-09-08.
-- Original local `main`: `6520f5c`.
-- Latest fetched `origin/main`: `c67337d`.
-- Isolated worktree: `C:\Users\Lenovo\Documents\personalProjects\Nakshatra-brokerdesk-phase1`.
-- Worktree state: detached from `origin/main`, with Slice 1 changes present and uncommitted.
+- Original checkout: reconciled with the latest remote state; obsolete landing-page edits and duplicate authentication CSS were intentionally excluded.
+- Integration branch: `security/nak-68-brokerdesk-safety-foundation`.
+- Pull request: [#40 — BrokerDesk safety foundation](https://github.com/NagarjunMa/Nakshatra/pull/40).
+- Merge: squash commit `22faf86` on `main` after all required checks passed.
+- Completed branch and isolated phase worktree: removed after clean-state, tree-equivalence, and patch-equivalence verification.
+- Current branch: `feat/nak-68-brokerdesk-capability-foundation`, created directly from synchronized `main`.
 
 ## Latest-main baseline
 
@@ -32,7 +30,7 @@ The original checkout contains pre-existing modified and untracked work. Impleme
 | Dependency audit before remediation | Failed: 6 advisories — 3 moderate, 2 high, 1 critical |
 | Dependency audit after remediation | Passed: 0 known vulnerabilities |
 | Static database fixture check | Passed |
-| Executable local database/pgTAP suite | Not run: Docker and Podman are unavailable on the host |
+| Executable database/pgTAP suite | Passed in PR CI after clean migration replay |
 
 ## Slice 1 changes implemented
 
@@ -74,15 +72,15 @@ The original checkout contains pre-existing modified and untracked work. Impleme
 
 ### Multi-agency tests
 
-- Added `brokerdesk_ownership_boundary.test.sql` with Customer A, Customer B, Broker A, Broker B, and a disabled employee.
+- Added `brokerdesk_ownership_boundary.test.sql` with Customer A, Customer B, Broker A, Broker B, and a suspended employee.
 - Both customers are represented in both agency relationship tables.
 - Each broker sees only its own agency relationships.
 - Neither broker directly reads or mutates customer candidate or portfolio rows.
 - Updated the former RBAC expectation that incorrectly required a broker-agent candidate mutation to persist.
 
-## Current validation constraint
+## Database verification outcome
 
-The Supabase/pgTAP suite requires Docker or Podman. Neither runtime is installed or available on `PATH` on this host. The migration and multi-identity test pass repository static checks, but the SQL must not be described as database-verified until a clean reset and full pgTAP run succeed locally or in CI.
+Docker and Podman remain unavailable on the local host, so executable database validation ran in PR CI. CI replayed all migrations from a clean database and ran the full pgTAP suite successfully. The first run correctly exposed two fixture-contract mismatches; both were fixed before merge, and the rerun passed all required checks.
 
 ## Ownership-predicate impact review
 
@@ -92,9 +90,7 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 
 1. Add explicit capability, scope, assignment, and mandate structures without restoring direct agency access to customer tables.
 2. Add server-enforced BrokerDesk entitlements and an endpoint inventory foundation.
-3. Run the clean database reset and complete pgTAP suite when a container runtime or CI is available.
-4. Add targeted end-to-end tests after the first BrokerDesk route surface exists.
-5. Attach the isolated worktree to a compliant branch before the first commit when a valid repository issue number exists.
+3. Add targeted end-to-end tests after the first BrokerDesk route surface exists.
 
 ## Progress log
 
@@ -112,3 +108,9 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 - Reviewed every current ownership-predicate caller and confirmed it belongs to a customer-controlled operation; no implicit agency ownership is required.
 - Confirmed lint (one pre-existing warning), TypeScript, all 421 tests, the per-feature coverage policy, production build, static database checks, and a zero-vulnerability audit.
 - Recorded the unavailable Docker/Podman runtime as an explicit database-verification gap.
+- Reconciled all intended Slice 1 work onto `security/nak-68-brokerdesk-safety-foundation`; excluded obsolete UI changes and duplicate CSS that would have regressed the current B2C implementation.
+- Opened PR #40 with reconciliation, security, and verification notes.
+- Corrected the CI-discovered inactive-member fixture and stale approved-contact lifecycle assertion.
+- Confirmed all three required checks, including clean migration replay and the full pgTAP suite.
+- Squash-merged PR #40 as `22faf86`, synchronized local `main`, and removed the completed phase branch and isolated worktree after equivalence checks.
+- Created `feat/nak-68-brokerdesk-capability-foundation` from the clean merged `main` for the next executable slice.
