@@ -144,6 +144,7 @@ describe("database-backed rate limits", () => {
   }
 
   it("hashes anonymous network hints before calling the fixed database command", async () => {
+    vi.stubEnv("RATE_LIMIT_SUBJECT_HMAC_KEY", "test-rate-limit-key-with-more-than-32-characters");
     const supabase = client({ allowed: true, retryAfter: 0 });
     const result = await consumeRateLimit(supabase as never, new Request("http://local", {
       headers: { "X-Forwarded-For": "203.0.113.4", "User-Agent": "test-browser" },
@@ -153,6 +154,84 @@ describe("database-backed rate limits", () => {
       p_action: "auth_email",
       p_subject_hash: expect.stringMatching(/^[a-f0-9]{64}$/),
     });
+  });
+
+  it("keys anonymous subjects and ignores untrusted production forwarding headers", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("RATE_LIMIT_SUBJECT_HMAC_KEY", "first-rate-limit-key-with-more-than-32-characters");
+    const firstClient = client({ allowed: true, retryAfter: 0 });
+    await consumeRateLimit(firstClient as never, new Request("https://nakshatra.test", {
+      headers: { "X-Forwarded-For": "203.0.113.4", "User-Agent": "test-browser" },
+    }), "auth_email");
+
+    const secondClient = client({ allowed: true, retryAfter: 0 });
+    await consumeRateLimit(secondClient as never, new Request("https://nakshatra.test", {
+      headers: { "X-Forwarded-For": "198.51.100.7", "User-Agent": "test-browser" },
+    }), "auth_email");
+
+    const firstHash = firstClient.rpc.mock.calls[0]?.[1]?.p_subject_hash;
+    const secondHash = secondClient.rpc.mock.calls[0]?.[1]?.p_subject_hash;
+    expect(firstHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(secondHash).toBe(firstHash);
+
+    vi.stubEnv("RATE_LIMIT_SUBJECT_HMAC_KEY", "second-rate-limit-key-with-more-than-32-characters");
+    const rotatedClient = client({ allowed: true, retryAfter: 0 });
+    await consumeRateLimit(rotatedClient as never, new Request("https://nakshatra.test", {
+      headers: { "X-Forwarded-For": "203.0.113.4", "User-Agent": "test-browser" },
+    }), "auth_email");
+    expect(rotatedClient.rpc.mock.calls[0]?.[1]?.p_subject_hash).not.toBe(firstHash);
+  });
+
+  it("normalizes addresses supplied by configured trusted proxies", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv(
+      "RATE_LIMIT_SUBJECT_HMAC_KEY",
+      "phase-three-test-rate-limit-subject-key",
+    );
+    vi.stubEnv("VERCEL", "1");
+
+    const vercelClient = client({ allowed: true, retryAfter: 0 });
+    await consumeRateLimit(
+      vercelClient as never,
+      new Request("https://nakshatra.test", {
+        headers: {
+          "User-Agent": "Nakshatra security test",
+          "X-Vercel-Forwarded-For": "[2001:db8::1]:443",
+        },
+      }),
+      "dashboard_save",
+    );
+    const vercelHash = vercelClient.rpc.mock.calls[0]?.[1]?.p_subject_hash;
+
+    vi.stubEnv("VERCEL", "");
+    vi.stubEnv("NAKSHATRA_TRUSTED_PROXY", "cloudflare");
+
+    const cloudflareClient = client({ allowed: true, retryAfter: 0 });
+    await consumeRateLimit(
+      cloudflareClient as never,
+      new Request("https://nakshatra.test", {
+        headers: {
+          "CF-Connecting-IP": "2001:db8::1",
+          "User-Agent": "Nakshatra security test",
+        },
+      }),
+      "dashboard_save",
+    );
+    const cloudflareHash = cloudflareClient.rpc.mock.calls[0]?.[1]?.p_subject_hash;
+
+    expect(vercelHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(cloudflareHash).toBe(vercelHash);
+  });
+
+  it("fails closed when the production HMAC key is unavailable", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("RATE_LIMIT_SUBJECT_HMAC_KEY", "");
+    const response = await enforceRateLimit(
+      client({ allowed: true, retryAfter: 0 }) as never,
+      new Request("https://nakshatra.test"),
+      "auth_google"
+    );
+    expect(response?.status).toBe(503);
   });
 
   it("fails closed for malformed persistence responses and unavailable quotas", async () => {

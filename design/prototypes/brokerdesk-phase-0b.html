@@ -1,0 +1,1822 @@
+<!doctype html>
+<html lang="en" data-visualize-standalone>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; style-src 'unsafe-inline' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Nakshatra BrokerDesk Phase 0B</title>
+<style>:root{color-scheme:light dark;background:light-dark(rgb(255 255 255), rgb(24 24 24))}html,body{margin:0}body{box-sizing:border-box;padding:1rem;background:inherit}iframe{display:block;width:100%;height:calc(100vh - 2rem);margin:0 auto;border:0}</style>
+</head>
+<body>
+<iframe sandbox="allow-scripts" referrerpolicy="no-referrer" title="Nakshatra BrokerDesk Phase 0B" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot; data-visualize-standalone&gt;
+&lt;head&gt;
+&lt;meta charset=&quot;utf-8&quot;&gt;
+&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+&lt;meta name=&quot;referrer&quot; content=&quot;no-referrer&quot;&gt;
+&lt;meta http-equiv=&quot;Content-Security-Policy&quot; content=&quot;default-src &#x27;none&#x27;; script-src &#x27;unsafe-inline&#x27; &#x27;unsafe-eval&#x27; &#x27;wasm-unsafe-eval&#x27; blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; style-src &#x27;unsafe-inline&#x27; blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src &#x27;none&#x27;; object-src &#x27;none&#x27;; base-uri &#x27;none&#x27;; form-action &#x27;none&#x27;&quot;&gt;
+&lt;title&gt;Nakshatra BrokerDesk Phase 0B&lt;/title&gt;
+&lt;style&gt;:root {
+  color-scheme: light dark;
+  background-color: var(
+    --background,
+    var(--color-background-primary, light-dark(rgb(255 255 255), rgb(24 24 24)))
+  ) !important;
+
+  /* Agent-facing contract; keep in sync with SKILL.md. */
+  --background: var(
+    --color-background-primary,
+    light-dark(rgb(255 255 255), rgb(24 24 24))
+  );
+  --foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --card: color-mix(in oklab, var(--foreground) 5%, var(--background));
+  --card-foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --popover: var(
+    --color-background-secondary,
+    light-dark(rgb(255 255 255), rgb(45 45 45))
+  );
+  --popover-foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --primary: var(
+    --color-text-info,
+    light-dark(rgb(51 156 255), rgb(131 195 255))
+  );
+  --primary-foreground: var(
+    --color-text-inverse,
+    light-dark(rgb(255 255 255), rgb(13 13 13))
+  );
+  --secondary: var(
+    --color-background-secondary,
+    light-dark(rgb(255 255 255 / 96%), rgb(54 54 54 / 96%))
+  );
+  --secondary-foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --muted: color-mix(in srgb, var(--foreground) 10%, transparent);
+  --muted-foreground: var(
+    --color-text-secondary,
+    light-dark(rgb(26 28 31 / 49.4%), rgb(255 255 255 / 49.8%))
+  );
+  --accent: var(
+    --color-background-info,
+    light-dark(rgb(229 242 255), rgb(13 39 63))
+  );
+  --accent-foreground: var(
+    --color-text-info,
+    light-dark(rgb(51 156 255), rgb(131 195 255))
+  );
+  --destructive: var(
+    --color-text-warning,
+    light-dark(rgb(226 85 7), rgb(255 133 73))
+  );
+  --border: var(
+    --color-border-secondary,
+    light-dark(rgb(26 28 31 / 8%), rgb(255 255 255 / 8.2%))
+  );
+  --input: var(
+    --color-border-primary,
+    light-dark(
+      rgb(26 28 31 / 11.8%),
+      color-mix(in oklab, rgb(0 0 0) 10%, transparent)
+    )
+  );
+  --ring: var(
+    --color-ring-primary,
+    light-dark(rgb(51 156 255), rgb(131 195 255 / 76%))
+  );
+  --font-size-base: var(--font-text-md-size, 14px);
+  --blue: light-dark(rgb(51 156 255), rgb(51 156 255));
+  --orange: light-dark(rgb(226 85 7), rgb(251 106 34));
+  --green: light-dark(rgb(0 162 64), rgb(64 201 119));
+  --red: light-dark(rgb(224 46 42), rgb(255 103 100));
+  --purple: light-dark(rgb(146 79 247), rgb(173 123 249));
+  --yellow: light-dark(rgb(255 195 0), rgb(255 210 64));
+  --viz-series-1: var(--primary);
+  --viz-series-2: light-dark(rgb(243 136 59), rgb(245 154 86));
+  --viz-series-3: light-dark(rgb(93 201 119), rgb(116 213 139));
+  --viz-series-4: light-dark(rgb(235 119 177), rgb(240 143 192));
+  --viz-series-5: light-dark(rgb(155 121 236), rgb(170 145 239));
+  --viz-series-6: light-dark(rgb(58 185 177), rgb(90 203 194));
+
+  /* Internal implementation variables; not part of the agent contract. */
+  --font-sans: -apple-system, system-ui, &quot;Segoe UI&quot;, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, &quot;SF Mono&quot;, Menlo, Consolas, &quot;Liberation Mono&quot;,
+    monospace;
+  --font-size-normal: max(11px, var(--font-size-base));
+  --font-size-tooltip: calc(var(--font-size-base) - 1px);
+  --font-size-small: max(11px, calc(var(--font-size-base) - 2px));
+  --font-size-h1: calc(var(--font-size-normal) * 1.7142857143);
+  --font-size-h2: calc(var(--font-size-normal) * 1.4285714286);
+  --font-size-h3: calc(var(--font-size-normal) * 1.2857142857);
+  --font-weight-normal: 430;
+  --font-weight-medium: 500;
+  --icon-size: 16px;
+  --line-height-normal: calc(var(--font-size-normal) * 1.5);
+  --line-height-tooltip: calc(var(--font-size-tooltip) * 1.4285714286);
+  --line-height-small: calc(var(--font-size-small) + 4px);
+  --corner-shape: round;
+  --radius: var(--border-radius-lg, 10px);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-2xl: calc(var(--radius) * 1.6);
+  --radius-full: 9999px;
+  --shadow-sm: 0 1px 2px -1px rgb(0 0 0 / 8%);
+  --checkmark-image: url(&quot;data:image/svg+xml,%3Csvg xmlns=&#x27;http://www.w3.org/2000/svg&#x27; viewBox=&#x27;0 0 17 17&#x27;%3E%3Cpath d=&#x27;M12.8961 3.64101C13.1297 3.41418 13.4984 3.37523 13.7779 3.56581C14.0571 3.75635 14.1554 4.11331 14.0299 4.41347L13.9615 4.53847L7.71151 13.7045C7.59411 13.8767 7.4063 13.9877 7.19881 14.0072C6.99136 14.0267 6.78564 13.9533 6.63826 13.806L2.88826 10.056L2.79842 9.9457C2.6192 9.67407 2.64927 9.30496 2.88826 9.06581C3.12738 8.82669 3.49647 8.79676 3.76815 8.97597L3.8785 9.06581L7.03084 12.2182L12.8053 3.74941L12.8961 3.64101Z&#x27;/%3E%3C/svg%3E&quot;);
+
+  /* Legacy aliases; not part of the current agent contract. */
+  --viz-bg: transparent;
+  --viz-panel: var(--card);
+  --viz-border: var(--border);
+  --viz-text: var(--foreground);
+  --viz-muted: var(--muted-foreground);
+  --viz-accent: var(--primary);
+  --viz-accent-text: var(--primary-foreground);
+  --viz-accent-bg: var(--accent);
+  --viz-font-size: var(--font-size-base);
+  --viz-warning: var(--destructive);
+}
+
+:root[data-theme=&quot;light&quot;] {
+  color-scheme: light;
+}
+
+:root[data-theme=&quot;dark&quot;] {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html &gt; body {
+  /* Preserve MCP aliases for older inline renderers without creating :root cycles. */
+  --color-background-primary: var(
+    --background,
+    light-dark(rgb(255 255 255), rgb(24 24 24))
+  );
+  --color-text-primary: var(
+    --foreground,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --color-border-secondary: var(
+    --border,
+    light-dark(rgb(26 28 31 / 8%), rgb(255 255 255 / 8.2%))
+  );
+
+  margin: 0;
+  padding: var(--visualize-paint-gutter, 0px);
+  color: var(--foreground);
+  background: transparent !important;
+  font-family: var(--font-sans) !important;
+  font-size: var(--font-size-normal);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-normal);
+}
+
+a {
+  color: color-mix(in srgb, var(--viz-accent) 80%, var(--viz-text) 20%);
+  cursor: pointer;
+  font-weight: var(--font-weight-medium, 500);
+  text-decoration: none;
+  text-underline-offset: 2px;
+}
+
+a:is(:hover, :focus-visible) {
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+  text-decoration-thickness: 0.5px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin-block: 0;
+}
+
+h1 {
+  font-size: var(--font-size-h1);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h2 {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h3,
+h4,
+h5,
+h6 {
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.3;
+}
+
+b,
+strong,
+th {
+  font-weight: var(--font-weight-medium);
+}
+
+code:not(pre code) {
+  display: inline;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  corner-shape: var(--corner-shape);
+  background: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  overflow-wrap: anywhere;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  word-break: break-word;
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--foreground);
+  font: inherit;
+  text-align: start;
+}
+
+.table :is(th, td) {
+  padding-block: 10px;
+  padding-inline: 0 24px;
+  overflow-wrap: anywhere;
+  border-bottom: 1px solid var(--border);
+  text-align: start;
+  vertical-align: top;
+}
+
+.table-responsive &gt; .table :is(th, td) {
+  overflow-wrap: break-word;
+}
+
+.table :is(th, td):last-child {
+  padding-inline-end: 0;
+}
+
+.table :is(caption, thead th) {
+  font-weight: 600;
+}
+
+.table thead th {
+  padding-block: 8px;
+  border-bottom-color: color-mix(in srgb, var(--foreground) 16%, transparent);
+}
+
+.table tbody tr:last-child :is(th, td) {
+  border-bottom: 0;
+}
+
+.table.table-sm :is(th, td) {
+  padding-block: 6px;
+}
+
+.table.table-sm :is(th, td):not(:last-child) {
+  padding-inline-end: 16px;
+}
+
+.table :is(.text-end, [align=&quot;right&quot;]) {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.table :is(.text-center, [align=&quot;center&quot;]) {
+  text-align: center;
+}
+
+.table .text-nowrap {
+  white-space: nowrap;
+}
+
+#widget {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  background: transparent !important;
+}
+
+.card {
+  min-width: 0;
+  padding: 12px;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  border-radius: var(--radius-2xl);
+  corner-shape: var(--corner-shape);
+  color: var(--card-foreground);
+  background: var(--card);
+}
+
+#widget &gt; :not(.card, .progress) {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.tooltip {
+  position: fixed;
+  z-index: 50;
+  top: 0;
+  left: 0;
+  width: max-content;
+  max-width: min(
+    20rem,
+    var(--tooltip-available-width, calc(100vw - 10px)),
+    calc(100vw - 10px)
+  );
+  max-height: min(
+    var(--tooltip-available-height, calc(100vh - 10px)),
+    calc(100vh - 10px)
+  );
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  corner-shape: var(--corner-shape);
+  color: var(--popover-foreground);
+  background: var(--popover);
+  box-shadow: none;
+  font-size: var(--font-size-tooltip);
+  line-height: var(--line-height-tooltip);
+  overflow-wrap: break-word;
+  white-space: normal;
+  pointer-events: none;
+  user-select: none;
+}
+
+.viz-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(max(180px, 24%), 1fr));
+  gap: 10px;
+}
+
+.viz-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.viz-stat-value {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+.viz-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+hr {
+  width: 100%;
+  height: 1px;
+  margin-block: 6px;
+  border: 0;
+  background: var(--border);
+}
+
+.nav {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+}
+
+.progress {
+  display: flex;
+  height: 8px;
+  margin-block: calc((var(--line-height-normal, 1.5em) - 8px) / 2);
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--muted);
+}
+
+.progress-bar:only-child {
+  border-radius: var(--radius-full);
+}
+
+.progress-bar {
+  height: 100%;
+  flex-shrink: 0;
+  border: 0;
+  background: var(--viz-series-1);
+}
+
+.viz-badge {
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  color: var(--accent-foreground);
+  background: var(--accent);
+  font-weight: var(--font-weight-medium);
+}
+
+small,
+.text-small,
+.viz-badge {
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
+}
+
+.text-muted {
+  color: var(--muted-foreground);
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.viz-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.viz-controls &gt; .form-label {
+  display: grid;
+  min-width: min(100%, 260px);
+  flex: 1 1 280px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 2px 12px;
+  margin-bottom: 0;
+}
+
+.viz-controls &gt; .form-label &gt; :is(.form-control, .form-range, .form-select) {
+  grid-column: 1 / -1;
+}
+
+.btn,
+.nav-link,
+.form-check-input,
+.form-control,
+.form-range,
+.form-select {
+  font: inherit;
+}
+
+.btn,
+.nav-link {
+  appearance: button;
+  display: inline-flex;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0 8px;
+  -webkit-app-region: no-drag;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: var(--corner-shape);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: var(--cursor-interaction, pointer);
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.btn:is(.btn-block, .viz-tile) {
+  inline-size: 100%;
+}
+
+.btn.viz-tile {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+a.btn {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn:not(:disabled):hover,
+.nav-link:not(:disabled):not([aria-disabled=&quot;true&quot;]):hover {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.btn-primary {
+  border-color: transparent;
+  color: var(--primary-foreground);
+  background: var(--foreground);
+  background-clip: padding-box;
+}
+
+.btn-primary .text-muted {
+  color: color-mix(in srgb, var(--primary-foreground) 50%, transparent);
+}
+
+.btn-primary:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 80%, transparent);
+  background-clip: padding-box;
+}
+
+.btn-ghost {
+  border-color: transparent;
+  color: var(--muted-foreground);
+  background: transparent;
+}
+
+.btn-ghost:not(:disabled):hover {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.nav-pills .nav-link {
+  min-width: 0;
+  border-color: transparent;
+  color: var(--muted-foreground);
+  background: transparent;
+}
+
+.nav-justified .nav-link {
+  flex: 1 1 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.nav-pills .nav-link.active {
+  color: var(--foreground);
+  background: var(--muted);
+}
+
+.btn:disabled,
+.nav-link:disabled,
+.nav-link[aria-disabled=&quot;true&quot;] {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+[data-lucide] {
+  stroke-width: 1.6;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--foreground);
+}
+
+.form-control {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  padding: 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: var(--corner-shape);
+  color: var(--foreground);
+  background: var(--secondary);
+}
+
+.form-control::placeholder {
+  color: var(--muted-foreground);
+}
+
+.form-control[type=&quot;file&quot;] {
+  padding: 0;
+  overflow: hidden;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control[type=&quot;file&quot;]::file-selector-button {
+  min-height: 26px;
+  margin-right: 8px;
+  padding: 0 8px;
+  border: 0;
+  border-right: 1px solid var(--input);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: inherit;
+  font: inherit;
+}
+
+.form-control[type=&quot;file&quot;]:not(:disabled):hover::file-selector-button {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-control-color[type=&quot;color&quot;] {
+  width: 40px;
+  height: 28px;
+  padding: 3px;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control-color[type=&quot;color&quot;]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.form-control-color[type=&quot;color&quot;]::-webkit-color-swatch {
+  border: 0;
+  border-radius: calc(var(--radius-lg) - 4px);
+  corner-shape: var(--corner-shape);
+}
+
+textarea.form-control {
+  height: auto;
+  min-height: 72px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.form-control:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-control:disabled,
+.form-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.form-select {
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  margin: 0;
+  padding: 0 32px 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: var(--corner-shape);
+  color: var(--foreground);
+  background-color: var(--secondary);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted-foreground) 50%),
+    linear-gradient(135deg, var(--muted-foreground) 50%, transparent 50%);
+  background-position:
+    calc(100% - 14px) 50%,
+    calc(100% - 10px) 50%;
+  background-repeat: no-repeat;
+  background-size: 4px 4px;
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-select:not(:disabled):hover {
+  background-color: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-select:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-check {
+  display: flex;
+  min-height: 20px;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-check-input {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  margin: 0;
+  border: 1px solid var(--input);
+  color: var(--primary-foreground);
+  background-color: transparent;
+  cursor: var(--cursor-interaction, default);
+  transition:
+    background-color 150ms,
+    border-color 150ms,
+    box-shadow 150ms;
+}
+
+.form-check:not(.form-switch) .form-check-input[type=&quot;checkbox&quot;] {
+  border-color: var(--input);
+  border-radius: var(--radius-sm);
+  corner-shape: var(--corner-shape);
+  background-color: var(--secondary);
+  box-shadow: var(--shadow-sm);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input:not(:disabled):not(:checked):hover {
+  background-color: var(--card);
+}
+
+.form-check:not(.form-switch) .form-check-input[type=&quot;checkbox&quot;]:checked {
+  border-color: var(--primary);
+  background-color: var(--primary);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input[type=&quot;checkbox&quot;]:checked::before {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--primary-foreground);
+  content: &quot;&quot;;
+  mask: var(--checkmark-image) center / 12px 12px no-repeat;
+}
+
+.form-check-input[type=&quot;radio&quot;] {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-full);
+}
+
+.form-check-input[type=&quot;radio&quot;]:checked {
+  border: 2px solid var(--primary);
+  background:
+    radial-gradient(circle, var(--primary-foreground) 0 2.5px, transparent 3px),
+    var(--primary);
+}
+
+.form-check:not(.form-switch) .form-check-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+}
+
+.form-switch .form-check-input:disabled,
+.form-switch .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.form-check-label {
+  color: var(--foreground);
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-switch .form-check-input {
+  position: relative;
+  width: 32px;
+  height: 20px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--muted);
+  box-shadow: none;
+  transition: background-color 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input::before {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border: 1px solid light-dark(var(--primary-foreground), var(--foreground));
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+  box-shadow: var(--shadow-sm);
+  content: &quot;&quot;;
+  transform: translate(2px, -50%);
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input:checked {
+  background: var(--primary);
+}
+
+.form-switch .form-check-input:checked::before {
+  transform: translate(14px, -50%);
+}
+
+.form-switch .form-check-input:focus-visible {
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+.form-range {
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 28px;
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  outline: none;
+  border: 0;
+  accent-color: var(--primary);
+  background: linear-gradient(
+      color-mix(in srgb, var(--foreground) 7%, transparent),
+      color-mix(in srgb, var(--foreground) 7%, transparent)
+    )
+    center / 100% 2px no-repeat;
+}
+
+.form-range::-webkit-slider-runnable-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-webkit-slider-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range::-moz-range-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-moz-range-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.btn:not(.btn-primary, .viz-tile):is(
+  [aria-pressed=&quot;true&quot;],
+  [aria-selected=&quot;true&quot;],
+  .is-selected
+) {
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+  background: var(--primary);
+}
+
+.btn.viz-tile:is([aria-pressed=&quot;true&quot;], [aria-selected=&quot;true&quot;], .is-selected) {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.btn:focus-visible,
+.nav-link:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+@media (pointer: coarse) {
+  .btn,
+  .nav-link,
+  .form-control,
+  .form-select {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Keep small-screen WebKit from zooming when a text field receives focus. */
+  .form-control,
+  .form-select {
+    font-size: max(16px, var(--font-size-normal));
+  }
+
+  .form-control[type=&quot;file&quot;]::file-selector-button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .form-control-color[type=&quot;color&quot;] {
+    width: 44px;
+    height: 44px;
+  }
+
+  .form-control:is(
+    [type=&quot;date&quot;],
+    [type=&quot;datetime-local&quot;],
+    [type=&quot;month&quot;],
+    [type=&quot;time&quot;],
+    [type=&quot;week&quot;]
+  ) {
+    min-width: 0;
+    max-width: 100%;
+    padding-block: 8px;
+  }
+
+  .form-check {
+    min-height: 44px;
+    padding-inline: 15px;
+  }
+
+  .form-check-input {
+    position: relative;
+  }
+
+  .form-check-input::after {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    content: &quot;&quot;;
+    transform: translate(-50%, -50%);
+  }
+
+  .form-check-label {
+    display: inline-flex;
+    min-width: 44px;
+    min-height: 44px;
+    align-items: center;
+  }
+
+  .form-range {
+    height: 44px;
+    touch-action: pan-y;
+  }
+
+  .form-range::-webkit-slider-runnable-track {
+    height: 44px;
+  }
+
+  .form-range::-moz-range-track {
+    height: 44px;
+  }
+
+  .form-range::-webkit-slider-thumb {
+    margin-top: 12px;
+  }
+}
+
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+#widget &gt; svg {
+  width: 100%;
+}
+
+/* Model-authored chart rules can otherwise stretch icons after these styles load. */
+svg.lucide {
+  display: block;
+  width: var(--icon-size) !important;
+  height: var(--icon-size) !important;
+  flex: none;
+  margin: 0 !important;
+  stroke-width: 1.6;
+}
+
+.text-warning,
+.text-destructive {
+  color: var(--destructive);
+}
+
+html&gt;body{padding:0}&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;style&gt;
+#np-phase0b {
+  --np-canvas: light-dark(#f3ede2, #171916);
+  --np-shell: light-dark(#fbf8f1, #20231f);
+  --np-panel: light-dark(#fffdf8, #282c27);
+  --np-panel-soft: light-dark(#f7f1e7, #222621);
+  --np-ink: light-dark(#142b2a, #f3eee4);
+  --np-muted: light-dark(#65706c, #abb5ae);
+  --np-line: light-dark(#ded5c7, #42483f);
+  --np-teal: light-dark(#0f625d, #6fc2b9);
+  --np-teal-soft: light-dark(#dfeee9, #183b38);
+  --np-gold: light-dark(#8a682d, #d9b66b);
+  --np-gold-soft: light-dark(#f3e8cb, #3c3321);
+  --np-broker-nav: light-dark(#142b2a, #101b1a);
+  --np-broker-nav-ink: light-dark(#fbf8f1, #f3eee4);
+  --np-danger: light-dark(#9f3f36, #f09d93);
+  --np-danger-soft: light-dark(#f7e5e2, #412523);
+  --np-shadow: light-dark(rgba(37, 31, 22, .12), rgba(0, 0, 0, .3));
+  --np-radius: 14px;
+  --np-gap: 16px;
+  color: var(--np-ink);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;
+  background: transparent;
+  width: 100%;
+}
+#np-phase0b * { box-sizing: border-box; }
+#np-phase0b button, #np-phase0b input, #np-phase0b select, #np-phase0b textarea { font: inherit; }
+#np-phase0b button { color: inherit; }
+#np-phase0b .np-frame { position: relative; background: var(--np-canvas); padding: 14px; border-radius: calc(var(--np-radius) + 5px); }
+#np-phase0b .np-switcher { display: flex; gap: 6px; flex-wrap: wrap; padding: 6px; background: var(--np-shell); border: 1px solid var(--np-line); border-radius: var(--np-radius); margin-bottom: 12px; box-shadow: 0 10px 28px var(--np-shadow); }
+#np-phase0b .np-view-tab { border: 0; background: transparent; color: var(--np-muted); padding: 9px 12px; border-radius: 10px; min-height: 40px; cursor: pointer; font-weight: 500; }
+#np-phase0b .np-view-tab[aria-selected=&quot;true&quot;] { background: var(--np-ink); color: var(--np-shell); }
+#np-phase0b .np-window { display: grid; grid-template-columns: 190px minmax(0, 1fr); min-height: 690px; overflow: hidden; background: var(--np-shell); border: 1px solid var(--np-line); border-radius: calc(var(--np-radius) + 2px); box-shadow: 0 12px 32px var(--np-shadow); }
+#np-phase0b .np-sidebar { padding: 20px 14px; background: var(--np-broker-nav); color: var(--np-broker-nav-ink); display: flex; flex-direction: column; gap: 22px; }
+#np-phase0b .np-brand { display: flex; align-items: center; gap: 9px; padding: 0 7px; }
+#np-phase0b .np-mark { width: 27px; height: 27px; border: 1px solid currentColor; transform: rotate(45deg); display: grid; place-items: center; border-radius: 7px; }
+#np-phase0b .np-mark::after { content: &quot;&quot;; width: 7px; height: 7px; background: var(--np-gold); border-radius: 50%; }
+#np-phase0b .np-brand strong { font-family: Georgia, serif; font-weight: 500; letter-spacing: .02em; }
+#np-phase0b .np-brand small { display: block; color: color-mix(in srgb, var(--np-broker-nav-ink) 65%, transparent); margin-top: 2px; }
+#np-phase0b .np-nav { display: grid; gap: 5px; }
+#np-phase0b .np-nav button { border: 0; background: transparent; color: color-mix(in srgb, var(--np-broker-nav-ink) 72%, transparent); text-align: left; padding: 10px 11px; border-radius: 9px; cursor: pointer; display: flex; gap: 9px; align-items: center; min-height: 40px; }
+#np-phase0b .np-nav button[data-active=&quot;true&quot;] { background: color-mix(in srgb, var(--np-broker-nav-ink) 12%, transparent); color: var(--np-broker-nav-ink); }
+#np-phase0b .np-nav svg { width: 17px; height: 17px; }
+#np-phase0b .np-sidebar-foot { margin-top: auto; border-top: 1px solid color-mix(in srgb, var(--np-broker-nav-ink) 18%, transparent); padding: 14px 7px 0; color: color-mix(in srgb, var(--np-broker-nav-ink) 72%, transparent); }
+#np-phase0b .np-sidebar-foot strong { color: var(--np-broker-nav-ink); display: block; font-weight: 500; }
+#np-phase0b .np-app { min-width: 0; }
+#np-phase0b .np-topbar { height: 62px; border-bottom: 1px solid var(--np-line); display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 22px; }
+#np-phase0b .np-product { display: flex; align-items: center; gap: 8px; color: var(--np-muted); }
+#np-phase0b .np-product strong { color: var(--np-ink); font-weight: 500; }
+#np-phase0b .np-top-actions { display: flex; align-items: center; gap: 8px; }
+#np-phase0b .np-icon-button { width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid var(--np-line); border-radius: 10px; background: var(--np-panel); cursor: pointer; }
+#np-phase0b .np-avatar { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--np-teal-soft); color: var(--np-teal); font-weight: 500; }
+#np-phase0b .np-main { padding: 22px; }
+#np-phase0b .np-heading { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; margin-bottom: 18px; }
+#np-phase0b .np-heading h1 { font-family: Georgia, serif; font-size: clamp(25px, 3vw, 34px); line-height: 1.1; font-weight: 500; margin: 0 0 6px; }
+#np-phase0b .np-heading p { margin: 0; color: var(--np-muted); }
+#np-phase0b .np-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+#np-phase0b .np-button { border: 1px solid var(--np-line); background: var(--np-panel); color: var(--np-ink); border-radius: 10px; min-height: 40px; padding: 9px 13px; cursor: pointer; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: 7px; text-decoration: none; }
+#np-phase0b .np-button[data-kind=&quot;primary&quot;] { background: var(--np-teal); border-color: var(--np-teal); color: var(--np-shell); }
+#np-phase0b .np-button[data-kind=&quot;quiet&quot;] { background: transparent; border-color: transparent; color: var(--np-teal); }
+#np-phase0b .np-button[data-kind=&quot;danger&quot;] { color: var(--np-danger); background: var(--np-danger-soft); border-color: transparent; }
+#np-phase0b .np-button:disabled { opacity: .48; cursor: not-allowed; }
+#np-phase0b .np-grid { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(250px, .75fr); gap: var(--np-gap); }
+#np-phase0b .np-panel { background: var(--np-panel); border: 1px solid var(--np-line); border-radius: var(--np-radius); padding: 17px; }
+#np-phase0b .np-panel + .np-panel { margin-top: var(--np-gap); }
+#np-phase0b .np-panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+#np-phase0b .np-panel h2, #np-phase0b .np-panel h3 { margin: 0; font-size: 16px; font-weight: 500; }
+#np-phase0b .np-panel-head p { margin: 4px 0 0; color: var(--np-muted); font-size: 13px; }
+#np-phase0b .np-profile { display: grid; grid-template-columns: 82px minmax(0, 1fr); gap: 15px; align-items: center; }
+#np-phase0b .np-photo { width: 82px; height: 96px; border-radius: 12px; background: linear-gradient(150deg, var(--np-teal-soft), var(--np-gold-soft)); display: grid; place-items: center; color: var(--np-teal); }
+#np-phase0b .np-photo svg { width: 36px; height: 36px; }
+#np-phase0b .np-name { font-family: Georgia, serif; font-size: 23px; font-weight: 500; margin: 0 0 3px; }
+#np-phase0b .np-meta { color: var(--np-muted); margin: 0 0 10px; }
+#np-phase0b .np-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+#np-phase0b .np-chip { display: inline-flex; align-items: center; gap: 5px; padding: 5px 8px; border-radius: 999px; background: var(--np-panel-soft); color: var(--np-muted); font-size: 12px; }
+#np-phase0b .np-chip[data-tone=&quot;ready&quot;] { background: var(--np-teal-soft); color: var(--np-teal); }
+#np-phase0b .np-chip[data-tone=&quot;attention&quot;] { background: var(--np-gold-soft); color: var(--np-gold); }
+#np-phase0b .np-section-tabs { display: flex; gap: 14px; border-bottom: 1px solid var(--np-line); margin-top: 18px; overflow-x: auto; }
+#np-phase0b .np-section-tabs button { border: 0; border-bottom: 2px solid transparent; background: transparent; padding: 10px 1px; color: var(--np-muted); cursor: pointer; white-space: nowrap; }
+#np-phase0b .np-section-tabs button[data-active=&quot;true&quot;] { border-color: var(--np-teal); color: var(--np-ink); font-weight: 500; }
+#np-phase0b .np-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px 20px; margin-top: 15px; }
+#np-phase0b .np-field { min-width: 0; }
+#np-phase0b .np-field span { display: block; color: var(--np-muted); font-size: 12px; margin-bottom: 3px; }
+#np-phase0b .np-field strong { display: block; font-weight: 500; }
+#np-phase0b .np-checklist { display: grid; gap: 8px; }
+#np-phase0b .np-check { display: flex; gap: 9px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--np-line); }
+#np-phase0b .np-check:last-child { border-bottom: 0; }
+#np-phase0b .np-check-icon { width: 21px; height: 21px; border-radius: 50%; display: grid; place-items: center; flex: 0 0 auto; background: var(--np-teal-soft); color: var(--np-teal); }
+#np-phase0b .np-check-icon[data-state=&quot;wait&quot;] { background: var(--np-gold-soft); color: var(--np-gold); }
+#np-phase0b .np-action-box { background: var(--np-teal-soft); color: var(--np-ink); border-radius: 11px; padding: 13px; margin-bottom: 12px; }
+#np-phase0b .np-action-box strong { font-weight: 500; display: block; margin-bottom: 4px; }
+#np-phase0b .np-action-box p { color: var(--np-muted); margin: 0; font-size: 13px; }
+#np-phase0b .np-timeline { display: grid; gap: 0; }
+#np-phase0b .np-event { position: relative; padding: 0 0 17px 27px; }
+#np-phase0b .np-event::before { content: &quot;&quot;; position: absolute; left: 8px; top: 8px; bottom: -3px; width: 1px; background: var(--np-line); }
+#np-phase0b .np-event:last-child::before { display: none; }
+#np-phase0b .np-event::after { content: &quot;&quot;; position: absolute; left: 4px; top: 5px; width: 9px; height: 9px; border-radius: 50%; background: var(--np-teal); box-shadow: 0 0 0 3px var(--np-teal-soft); }
+#np-phase0b .np-event strong { display: block; font-weight: 500; }
+#np-phase0b .np-event small { color: var(--np-muted); }
+#np-phase0b .np-wizard { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: var(--np-gap); }
+#np-phase0b .np-steps { background: var(--np-panel-soft); border-radius: var(--np-radius); padding: 11px; align-self: start; }
+#np-phase0b .np-step { width: 100%; display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 9px; align-items: center; text-align: left; border: 0; background: transparent; color: var(--np-muted); padding: 10px; border-radius: 9px; cursor: pointer; }
+#np-phase0b .np-step[data-active=&quot;true&quot;] { background: var(--np-panel); color: var(--np-ink); }
+#np-phase0b .np-step-number { width: 24px; height: 24px; display: grid; place-items: center; border: 1px solid var(--np-line); border-radius: 50%; font-size: 12px; }
+#np-phase0b .np-step[data-done=&quot;true&quot;] .np-step-number { background: var(--np-teal); border-color: var(--np-teal); color: var(--np-shell); }
+#np-phase0b .np-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+#np-phase0b .np-form-label { display: grid; gap: 6px; color: var(--np-muted); font-size: 13px; }
+#np-phase0b .np-input { width: 100%; min-height: 42px; padding: 9px 11px; border-radius: 9px; border: 1px solid var(--np-line); background: var(--np-shell); color: var(--np-ink); }
+#np-phase0b textarea.np-input { min-height: 84px; resize: vertical; }
+#np-phase0b .np-candidate-choice { border: 1px solid var(--np-line); border-radius: 11px; padding: 12px; display: flex; gap: 11px; align-items: center; }
+#np-phase0b .np-mini-photo { width: 46px; height: 50px; flex: 0 0 auto; border-radius: 9px; display: grid; place-items: center; background: var(--np-teal-soft); color: var(--np-teal); }
+#np-phase0b .np-candidate-choice strong { font-family: Georgia, serif; font-weight: 500; display: block; }
+#np-phase0b .np-candidate-choice span { color: var(--np-muted); font-size: 12px; }
+#np-phase0b .np-notice { display: flex; gap: 10px; padding: 12px; background: var(--np-gold-soft); color: var(--np-ink); border-radius: 10px; margin: 14px 0; }
+#np-phase0b .np-notice svg { flex: 0 0 auto; color: var(--np-gold); }
+#np-phase0b .np-notice strong { display: block; font-weight: 500; }
+#np-phase0b .np-notice p { color: var(--np-muted); margin: 3px 0 0; font-size: 13px; }
+#np-phase0b .np-footer-actions { display: flex; justify-content: space-between; gap: 10px; align-items: center; border-top: 1px solid var(--np-line); padding-top: 15px; margin-top: 17px; }
+#np-phase0b .np-list-controls { display: flex; gap: 9px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+#np-phase0b .np-search { flex: 1 1 220px; position: relative; }
+#np-phase0b .np-search svg { position: absolute; left: 11px; top: 12px; color: var(--np-muted); width: 17px; height: 17px; }
+#np-phase0b .np-search .np-input { padding-left: 37px; }
+#np-phase0b .np-intro-list { display: grid; gap: 10px; }
+#np-phase0b .np-intro-row { width: 100%; display: grid; grid-template-columns: 55px minmax(0, 1fr) auto; gap: 13px; align-items: center; text-align: left; border: 1px solid var(--np-line); background: var(--np-panel); border-radius: 12px; padding: 12px; cursor: pointer; }
+#np-phase0b .np-intro-row[data-selected=&quot;true&quot;] { border-color: var(--np-teal); box-shadow: 0 0 0 2px var(--np-teal-soft); }
+#np-phase0b .np-intro-row .np-mini-photo { width: 54px; height: 60px; }
+#np-phase0b .np-row-title { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+#np-phase0b .np-row-title strong { font-family: Georgia, serif; font-size: 17px; font-weight: 500; }
+#np-phase0b .np-intro-row p { color: var(--np-muted); margin: 4px 0 0; font-size: 13px; }
+#np-phase0b .np-row-action { text-align: right; }
+#np-phase0b .np-row-action strong { color: var(--np-gold); font-weight: 500; display: block; }
+#np-phase0b .np-row-action small { color: var(--np-muted); }
+#np-phase0b .np-customer-shell .np-sidebar { background: var(--np-shell); color: var(--np-ink); border-right: 1px solid var(--np-line); }
+#np-phase0b .np-customer-shell .np-nav button { color: var(--np-muted); }
+#np-phase0b .np-customer-shell .np-nav button[data-active=&quot;true&quot;] { background: var(--np-teal-soft); color: var(--np-teal); }
+#np-phase0b .np-customer-shell .np-sidebar-foot { border-color: var(--np-line); color: var(--np-muted); }
+#np-phase0b .np-customer-shell .np-sidebar-foot strong { color: var(--np-ink); }
+#np-phase0b .np-customer-shell .np-brand small { color: var(--np-muted); }
+#np-phase0b .np-customer-shell .np-mark::after { background: var(--np-teal); }
+#np-phase0b .np-counterpart { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 18px; align-items: center; }
+#np-phase0b .np-counterpart .np-photo { width: 110px; height: 128px; }
+#np-phase0b .np-summary-line { display: flex; flex-wrap: wrap; gap: 12px; margin: 10px 0; color: var(--np-muted); }
+#np-phase0b .np-boundary { display: flex; gap: 9px; align-items: flex-start; background: var(--np-panel-soft); padding: 11px; border-radius: 10px; margin-top: 12px; color: var(--np-muted); }
+#np-phase0b .np-boundary svg { color: var(--np-teal); flex: 0 0 auto; }
+#np-phase0b .np-route-list { display: grid; gap: 9px; }
+#np-phase0b .np-route { border: 1px solid var(--np-line); border-radius: 11px; overflow: hidden; }
+#np-phase0b .np-route-head { width: 100%; border: 0; background: var(--np-panel); color: var(--np-ink); padding: 12px; display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 10px; text-align: left; align-items: center; cursor: pointer; }
+#np-phase0b .np-route-logo { width: 36px; height: 36px; border-radius: 9px; background: var(--np-gold-soft); color: var(--np-gold); display: grid; place-items: center; font-weight: 500; }
+#np-phase0b .np-route-head strong { display: block; font-weight: 500; }
+#np-phase0b .np-route-head span { color: var(--np-muted); font-size: 12px; }
+#np-phase0b .np-route-body { border-top: 1px solid var(--np-line); padding: 12px; background: var(--np-panel-soft); }
+#np-phase0b .np-route-body[hidden] { display: none; }
+#np-phase0b .np-route-facts { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; margin-bottom: 11px; }
+#np-phase0b .np-route-facts span { color: var(--np-muted); font-size: 12px; display: block; }
+#np-phase0b .np-decision { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+#np-phase0b .np-decision button { min-height: 47px; border-radius: 10px; border: 1px solid var(--np-line); background: var(--np-panel); cursor: pointer; font-weight: 500; }
+#np-phase0b .np-decision button[data-choice=&quot;interest&quot;] { color: var(--np-teal); }
+#np-phase0b .np-decision button[data-choice=&quot;decline&quot;] { color: var(--np-danger); }
+#np-phase0b .np-decision button[data-chosen=&quot;true&quot;] { background: var(--np-teal-soft); border-color: var(--np-teal); color: var(--np-teal); }
+#np-phase0b .np-lineage-note { display: flex; gap: 9px; padding: 10px 0; color: var(--np-muted); font-size: 13px; }
+#np-phase0b .np-lineage-note svg { flex: 0 0 auto; }
+#np-phase0b .np-outcome { padding: 13px; background: var(--np-teal-soft); border-radius: 11px; margin-top: 12px; display: none; }
+#np-phase0b .np-outcome[data-visible=&quot;true&quot;] { display: block; }
+#np-phase0b .np-outcome strong { display: block; font-weight: 500; margin-bottom: 4px; }
+#np-phase0b .np-modal-backdrop { position: absolute; inset: 0; z-index: 20; display: grid; place-items: center; padding: 20px; background: color-mix(in srgb, var(--np-ink) 58%, transparent); border-radius: calc(var(--np-radius) + 5px); }
+#np-phase0b .np-modal-backdrop[hidden] { display: none; }
+#np-phase0b .np-modal { width: min(440px, 100%); background: var(--np-panel); border: 1px solid var(--np-line); border-radius: var(--np-radius); padding: 24px; box-shadow: 0 18px 50px var(--np-shadow); }
+#np-phase0b .np-modal-icon { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 50%; background: var(--np-teal-soft); color: var(--np-teal); margin-bottom: 14px; }
+#np-phase0b .np-modal h2 { font-family: Georgia, serif; font-size: 26px; font-weight: 500; margin: 0 0 8px; }
+#np-phase0b .np-modal p { color: var(--np-muted); margin: 0 0 18px; }
+#np-phase0b .np-modal-actions { display: grid; gap: 8px; }
+#np-phase0b .np-screen[hidden] { display: none; }
+#np-phase0b[data-density=&quot;compact&quot;] { --np-gap: 10px; }
+#np-phase0b[data-density=&quot;compact&quot;] .np-main { padding: 15px; }
+#np-phase0b[data-density=&quot;compact&quot;] .np-panel { padding: 13px; }
+#np-phase0b[data-density=&quot;compact&quot;] .np-window { min-height: 640px; }
+#np-phase0b[data-lineage=&quot;collapsed&quot;] .np-route[data-secondary=&quot;true&quot;] { display: none; }
+#np-phase0b .np-collapse-hint { display: none; color: var(--np-muted); margin: 8px 0 0; font-size: 12px; }
+#np-phase0b[data-lineage=&quot;collapsed&quot;] .np-collapse-hint { display: block; }
+@media (max-width: 760px) {
+  #np-phase0b .np-window { grid-template-columns: 1fr; min-height: 0; }
+  #np-phase0b .np-sidebar { padding: 12px; gap: 11px; }
+  #np-phase0b .np-sidebar-foot { display: none; }
+  #np-phase0b .np-nav { display: flex; overflow-x: auto; }
+  #np-phase0b .np-nav button { white-space: nowrap; }
+  #np-phase0b .np-topbar { padding: 0 14px; }
+  #np-phase0b .np-main { padding: 15px; }
+  #np-phase0b .np-grid, #np-phase0b .np-wizard { grid-template-columns: 1fr; }
+  #np-phase0b .np-steps { display: flex; overflow-x: auto; }
+  #np-phase0b .np-step { min-width: 155px; }
+}
+@media (max-width: 500px) {
+  #np-phase0b .np-frame { padding: 7px; }
+  #np-phase0b .np-heading { display: grid; }
+  #np-phase0b .np-actions { justify-content: flex-start; }
+  #np-phase0b .np-detail-grid, #np-phase0b .np-form-grid, #np-phase0b .np-decision { grid-template-columns: 1fr; }
+  #np-phase0b .np-profile, #np-phase0b .np-counterpart { grid-template-columns: 1fr; }
+  #np-phase0b .np-intro-row { grid-template-columns: 48px minmax(0, 1fr); }
+  #np-phase0b .np-row-action { grid-column: 2; text-align: left; }
+  #np-phase0b .np-route-facts { grid-template-columns: 1fr; }
+  #np-phase0b .np-product span { display: none; }
+}
+&lt;/style&gt;
+
+&lt;div id=&quot;np-phase0b&quot; data-density=&quot;comfortable&quot; data-lineage=&quot;expanded&quot; aria-label=&quot;Nakshatra BrokerDesk Phase 0B wireframes&quot;&gt;
+  &lt;div class=&quot;np-frame&quot;&gt;
+    &lt;div class=&quot;np-switcher&quot; role=&quot;tablist&quot; aria-label=&quot;Choose wireframe&quot;&gt;
+      &lt;button class=&quot;np-view-tab&quot; type=&quot;button&quot; role=&quot;tab&quot; aria-selected=&quot;true&quot; aria-controls=&quot;np-customer-record&quot; data-screen=&quot;customer-record&quot;&gt;1. Review customer&lt;/button&gt;
+      &lt;button class=&quot;np-view-tab&quot; type=&quot;button&quot; role=&quot;tab&quot; aria-selected=&quot;false&quot; aria-controls=&quot;np-intro-wizard&quot; data-screen=&quot;intro-wizard&quot;&gt;2. Send introduction&lt;/button&gt;
+      &lt;button class=&quot;np-view-tab&quot; type=&quot;button&quot; role=&quot;tab&quot; aria-selected=&quot;false&quot; aria-controls=&quot;np-customer-intros&quot; data-screen=&quot;customer-intros&quot;&gt;3. Customer responds&lt;/button&gt;
+      &lt;button class=&quot;np-view-tab&quot; type=&quot;button&quot; role=&quot;tab&quot; aria-selected=&quot;false&quot; aria-controls=&quot;np-multibroker-detail&quot; data-screen=&quot;multibroker-detail&quot;&gt;4. Two brokers, one introduction&lt;/button&gt;
+    &lt;/div&gt;
+
+    &lt;section class=&quot;np-screen&quot; id=&quot;np-customer-record&quot; role=&quot;tabpanel&quot; data-screen-panel=&quot;customer-record&quot;&gt;
+      &lt;div class=&quot;np-window&quot;&gt;
+        &lt;aside class=&quot;np-sidebar&quot; aria-label=&quot;BrokerDesk navigation&quot;&gt;
+          &lt;div class=&quot;np-brand&quot;&gt;&lt;span class=&quot;np-mark&quot; aria-hidden=&quot;true&quot;&gt;&lt;/span&gt;&lt;div&gt;&lt;strong&gt;Nakshatra&lt;/strong&gt;&lt;small&gt;BrokerDesk&lt;/small&gt;&lt;/div&gt;&lt;/div&gt;
+          &lt;nav class=&quot;np-nav&quot;&gt;
+            &lt;button type=&quot;button&quot;&gt;&lt;i data-lucide=&quot;layout-dashboard&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;Dashboard&lt;/button&gt;
+            &lt;button type=&quot;button&quot; data-active=&quot;true&quot;&gt;&lt;i data-lucide=&quot;users&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;Customers&lt;/button&gt;
+            &lt;button type=&quot;button&quot;&gt;&lt;i data-lucide=&quot;send&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;Introductions&lt;/button&gt;
+            &lt;button type=&quot;button&quot;&gt;&lt;i data-lucide=&quot;check-square&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;Tasks&lt;/button&gt;
+            &lt;button type=&quot;button&quot;&gt;&lt;i data-lucide=&quot;settings&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;Settings&lt;/button&gt;
+          &lt;/nav&gt;
+          &lt;div class=&quot;np-sidebar-foot&quot;&gt;&lt;strong&gt;Shubh Milan&lt;/strong&gt;&lt;small&gt;Owner workspace&lt;/small&gt;&lt;/div&gt;
+        &lt;/aside&gt;
+        &lt;div class=&quot;np-app&quot;&gt;
+          &lt;header class=&quot;np-topbar&quot;&gt;&lt;div class=&quot;np-product&quot;&gt;&lt;strong&gt;Customers&lt;/strong&gt;&lt;span&gt;/ Customer record&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;np-top-actions&quot;&gt;&lt;button class=&quot;np-icon-button&quot; type=&quot;button&quot; aria-label=&quot;Notifications&quot;&gt;&lt;i data-lucide=&quot;bell&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/button&gt;&lt;span class=&quot;np-avatar&quot; aria-label=&quot;Asha Patel&quot;&gt;AP&lt;/span&gt;&lt;/div&gt;&lt;/header&gt;
+          &lt;main class=&quot;np-main&quot;&gt;
+            &lt;div class=&quot;np-heading&quot;&gt;&lt;div&gt;&lt;h1&gt;Arjun Mehta&lt;/h1&gt;&lt;p&gt;Customer since 12 Aug 2026 · Managed by Priya Shah&lt;/p&gt;&lt;/div&gt;&lt;div class=&quot;np-actions&quot;&gt;&lt;button class=&quot;np-button&quot; type=&quot;button&quot;&gt;&lt;i data-lucide=&quot;message-circle&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;Add interaction&lt;/button&gt;&lt;button class=&quot;np-button&quot; data-kind=&quot;primary&quot; type=&quot;button&quot; data-jump=&quot;intro-wizard&quot;&gt;&lt;i data-lucide=&quot;sparkles&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;Find introductions&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;
+            &lt;div class=&quot;np-grid&quot;&gt;
+              &lt;div&gt;
+                &lt;section class=&quot;np-panel&quot;&gt;
+                  &lt;div class=&quot;np-profile&quot;&gt;&lt;div class=&quot;np-photo&quot;&gt;&lt;i data-lucide=&quot;user-round&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/div&gt;&lt;div&gt;&lt;h2 class=&quot;np-name&quot;&gt;Arjun Mehta&lt;/h2&gt;&lt;p class=&quot;np-meta&quot;&gt;31 years · 178 cm · Bengaluru · Software architect&lt;/p&gt;&lt;div class=&quot;np-chips&quot;&gt;&lt;span class=&quot;np-chip&quot; data-tone=&quot;ready&quot;&gt;&lt;i data-lucide=&quot;badge-check&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;Identity verified&lt;/span&gt;&lt;span class=&quot;np-chip&quot; data-tone=&quot;ready&quot;&gt;Portfolio 92%&lt;/span&gt;&lt;span class=&quot;np-chip&quot; data-tone=&quot;attention&quot;&gt;Renewal in 28 days&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;
+                  &lt;div class=&quot;np-section-tabs&quot; aria-label=&quot;Customer record sections&quot;&gt;&lt;button type=&quot;button&quot; data-active=&quot;true&quot;&gt;Overview&lt;/button&gt;&lt;button type=&quot;button&quot;&gt;Preferences&lt;/button&gt;&lt;button type=&quot;button&quot;&gt;Introductions &lt;span class=&quot;np-chip&quot;&gt;7&lt;/span&gt;&lt;/button&gt;&lt;button type=&quot;button&quot;&gt;Activity&lt;/button&gt;&lt;button type=&quot;button&quot;&gt;Access&lt;/button&gt;&lt;/div&gt;
+                  &lt;div class=&quot;np-detail-grid&quot;&gt;&lt;div class=&quot;np-field&quot;&gt;&lt;span&gt;Permission to share&lt;/span&gt;&lt;strong&gt;Ask before sharing each profile&lt;/strong&gt;&lt;/div&gt;&lt;div class=&quot;np-field&quot;&gt;&lt;span&gt;Who owns this profile?&lt;/span&gt;&lt;strong&gt;Arjun controls his profile&lt;/strong&gt;&lt;/div&gt;&lt;div class=&quot;np-field&quot;&gt;&lt;span&gt;Looking for&lt;/span&gt;&lt;strong&gt;Woman, 26–31 years&lt;/strong&gt;&lt;/div&gt;&lt;div class=&quot;np-field&quot;&gt;&lt;span&gt;Preferred cities&lt;/span&gt;&lt;strong&gt;Bengaluru, Mumbai, Pune&lt;/strong&gt;&lt;/div&gt;&lt;div class=&quot;np-field&quot;&gt;&lt;span&gt;Preferred height&lt;/span&gt;&lt;strong&gt;157–173 cm&lt;/strong&gt;&lt;/div&gt;&lt;div class=&quot;np-field&quot;&gt;&lt;span&gt;Horoscope preference&lt;/span&gt;&lt;strong&gt;Manglik accepted&lt;/strong&gt;&lt;/div&gt;&lt;/div&gt;
+                &lt;/section&gt;
+                &lt;section class=&quot;np-panel&quot;&gt;
+                  &lt;div class=&quot;np-panel-head&quot;&gt;&lt;div&gt;&lt;h2&gt;Recent activity&lt;/h2&gt;&lt;p&gt;Everything your team has done for this customer.&lt;/p&gt;&lt;/div&gt;&lt;button class=&quot;np-button&quot; data-kind=&quot;quiet&quot; type=&quot;button&quot;&gt;View all&lt;/button&gt;&lt;/div&gt;
+                  &lt;div class=&quot;np-timeline&quot;&gt;&lt;div class=&quot;np-event&quot;&gt;&lt;strong&gt;Customer approved sharing with Naina Rao&lt;/strong&gt;&lt;small&gt;Today, 10:42 · Customer action&lt;/small&gt;&lt;/div&gt;&lt;div class=&quot;np-event&quot;&gt;&lt;strong&gt;Introduction to Kavya Iyer closed&lt;/strong&gt;&lt;small&gt;Yesterday · No response after 15 days&lt;/small&gt;&lt;/div&gt;&lt;div class=&quot;np-event&quot;&gt;&lt;strong&gt;Preferences updated by customer&lt;/strong&gt;&lt;small&gt;3 Sep · 4 fields changed&lt;/small&gt;&lt;/div&gt;&lt;/div&gt;
+                &lt;/section&gt;
+              &lt;/div&gt;
+              &lt;aside&gt;
+                &lt;section class=&quot;np-panel&quot;&gt;
+                  &lt;div class=&quot;np-panel-head&quot;&gt;&lt;div&gt;&lt;h2&gt;Work on this now&lt;/h2&gt;&lt;p&gt;Only actions that unblock progress.&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;
+                  &lt;div class=&quot;np-action-box&quot;&gt;&lt;strong&gt;3 suggested profiles&lt;/strong&gt;&lt;p&gt;These profiles meet both customers’ important preferences.&lt;/p&gt;&lt;/div&gt;&lt;button class=&quot;np-button&quot; data-kind=&quot;primary&quot; type=&quot;button&quot; data-jump=&quot;intro-wizard&quot;&gt;Review suggested profiles&lt;/button&gt;
+                &lt;/section&gt;
+                &lt;section class=&quot;np-panel&quot;&gt;
+                  &lt;div class=&quot;np-panel-head&quot;&gt;&lt;div&gt;&lt;h2&gt;Sharing readiness&lt;/h2&gt;&lt;p&gt;Required before a standard introduction.&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;
+                  &lt;div class=&quot;np-checklist&quot;&gt;&lt;div class=&quot;np-check&quot;&gt;&lt;span class=&quot;np-check-icon&quot;&gt;&lt;i data-lucide=&quot;check&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/span&gt;&lt;div&gt;&lt;strong&gt;Portfolio approved&lt;/strong&gt;&lt;div class=&quot;np-meta&quot;&gt;Customer published version 8&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;np-check&quot;&gt;&lt;span class=&quot;np-check-icon&quot;&gt;&lt;i data-lucide=&quot;check&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/span&gt;&lt;div&gt;&lt;strong&gt;Consent is active&lt;/strong&gt;&lt;div class=&quot;np-meta&quot;&gt;Per-introduction approval&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;np-check&quot;&gt;&lt;span class=&quot;np-check-icon&quot; data-state=&quot;wait&quot;&gt;&lt;i data-lucide=&quot;clock&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/span&gt;&lt;div&gt;&lt;strong&gt;Renewal follow-up&lt;/strong&gt;&lt;div class=&quot;np-meta&quot;&gt;Due 5 Oct 2026&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;
+                &lt;/section&gt;
+              &lt;/aside&gt;
+            &lt;/div&gt;
+          &lt;/main&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/section&gt;
+
+    &lt;section class=&quot;np-screen&quot; id=&quot;np-intro-wizard&quot; role=&quot;tabpanel&quot; data-screen-panel=&quot;intro-wizard&quot; hidden&gt;
+      &lt;div class=&quot;np-window&quot;&gt;
+        &lt;aside class=&quot;np-sidebar&quot; aria-label=&quot;BrokerDesk navigation&quot;&gt;&lt;div class=&quot;np-brand&quot;&gt;&lt;span class=&quot;np-mark&quot; aria-hidden=&quot;true&quot;&gt;&lt;/span&gt;&lt;div&gt;&lt;strong&gt;Nakshatra&lt;/strong&gt;&lt;small&gt;BrokerDesk&lt;/small&gt;&lt;/div&gt;&lt;/div&gt;&lt;nav class=&quot;np-nav&quot;&gt;&lt;button type=&quot;button&quot;&gt;&lt;i data-lucide=&quot;layout-dashboard&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;Dashboard&lt;/button&gt;&lt;button type=&quot;button&quot;&gt;&lt;i data-lucide=&quot;users&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;Customers&lt;/button&gt;&lt;button type=&quot;button&quot; data-active=&quot;true&quot;&gt;&lt;i data-lucide=&quot;send&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;Introductions&lt;/button&gt;&lt;button type=&quot;button&quot;&gt;&lt;i data-lucide=&quot;check-square&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;Tasks&lt;/button&gt;&lt;button type=&quot;button&quot;&gt;&lt;i data-lucide=&quot;settings&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;Settings&lt;/button&gt;&lt;/nav&gt;&lt;div class=&quot;np-sidebar-foot&quot;&gt;&lt;strong&gt;Shubh Milan&lt;/strong&gt;&lt;small&gt;Owner workspace&lt;/small&gt;&lt;/div&gt;&lt;/aside&gt;
+        &lt;div class=&quot;np-app&quot;&gt;
+          &lt;header class=&quot;np-topbar&quot;&gt;&lt;div class=&quot;np-product&quot;&gt;&lt;strong&gt;New introduction&lt;/strong&gt;&lt;span&gt;/ Draft&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;np-top-actions&quot;&gt;&lt;button class=&quot;np-button&quot; type=&quot;button&quot; data-jump=&quot;customer-record&quot;&gt;Save and exit&lt;/button&gt;&lt;span class=&quot;np-avatar&quot;&gt;AP&lt;/span&gt;&lt;/div&gt;&lt;/header&gt;
+          &lt;main class=&quot;np-main&quot;&gt;
+            &lt;div class=&quot;np-heading&quot;&gt;&lt;div&gt;&lt;h1&gt;Send an introduction&lt;/h1&gt;&lt;p&gt;Choose two customers, check permission, and send.&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;
+            &lt;div class=&quot;np-wizard&quot;&gt;
+              &lt;nav class=&quot;np-steps&quot; aria-label=&quot;Introduction steps&quot;&gt;&lt;button class=&quot;np-step&quot; type=&quot;button&quot; data-wizard-step=&quot;1&quot; data-done=&quot;true&quot;&gt;&lt;span class=&quot;np-step-number&quot;&gt;&lt;i data-lucide=&quot;check&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/span&gt;&lt;span&gt;Choose customers&lt;/span&gt;&lt;/button&gt;&lt;button class=&quot;np-step&quot; type=&quot;button&quot; data-wizard-step=&quot;2&quot; data-active=&quot;true&quot;&gt;&lt;span class=&quot;np-step-number&quot;&gt;2&lt;/span&gt;&lt;span&gt;Check suitability&lt;/span&gt;&lt;/button&gt;&lt;button class=&quot;np-step&quot; type=&quot;button&quot; data-wizard-step=&quot;3&quot;&gt;&lt;span class=&quot;np-step-number&quot;&gt;3&lt;/span&gt;&lt;span&gt;Check permission&lt;/span&gt;&lt;/button&gt;&lt;button class=&quot;np-step&quot; type=&quot;button&quot; data-wizard-step=&quot;4&quot;&gt;&lt;span class=&quot;np-step-number&quot;&gt;4&lt;/span&gt;&lt;span&gt;Confirm and send&lt;/span&gt;&lt;/button&gt;&lt;/nav&gt;
+              &lt;section class=&quot;np-panel&quot; aria-live=&quot;polite&quot;&gt;
+                &lt;div class=&quot;np-wizard-content&quot; data-step-content=&quot;1&quot; hidden&gt;&lt;div class=&quot;np-panel-head&quot;&gt;&lt;div&gt;&lt;h2&gt;Choose two customers&lt;/h2&gt;&lt;p&gt;Only suitable profiles that you are allowed to use are shown here.&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;np-form-grid&quot;&gt;&lt;label class=&quot;np-form-label&quot;&gt;First customer&lt;select class=&quot;np-input&quot;&gt;&lt;option&gt;Arjun Mehta · Customer&lt;/option&gt;&lt;/select&gt;&lt;/label&gt;&lt;label class=&quot;np-form-label&quot;&gt;Second customer&lt;select class=&quot;np-input&quot;&gt;&lt;option&gt;Naina Rao · Customer&lt;/option&gt;&lt;/select&gt;&lt;/label&gt;&lt;/div&gt;&lt;/div&gt;
+                &lt;div class=&quot;np-wizard-content&quot; data-step-content=&quot;2&quot;&gt;&lt;div class=&quot;np-panel-head&quot;&gt;&lt;div&gt;&lt;h2&gt;Review why these profiles may be suitable&lt;/h2&gt;&lt;p&gt;Use your judgement before sending. Nakshatra only checks the preferences shown below.&lt;/p&gt;&lt;/div&gt;&lt;span class=&quot;np-chip&quot; data-tone=&quot;ready&quot;&gt;Ready to review&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;np-form-grid&quot;&gt;&lt;div class=&quot;np-candidate-choice&quot;&gt;&lt;div class=&quot;np-mini-photo&quot;&gt;&lt;i data-lucide=&quot;user&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/div&gt;&lt;div&gt;&lt;strong&gt;Arjun Mehta&lt;/strong&gt;&lt;span&gt;31 years · Bengaluru · Software architect&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;np-candidate-choice&quot;&gt;&lt;div class=&quot;np-mini-photo&quot;&gt;&lt;i data-lucide=&quot;user&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/div&gt;&lt;div&gt;&lt;strong&gt;Naina Rao&lt;/strong&gt;&lt;span&gt;29 years · Bengaluru · Product designer&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;np-notice&quot;&gt;&lt;i data-lucide=&quot;shield-check&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;div&gt;&lt;strong&gt;Only your work is shown here&lt;/strong&gt;&lt;p&gt;You can safely send this introduction. Activity from other brokers is private and will never appear in your workspace.&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;np-detail-grid&quot;&gt;&lt;div class=&quot;np-field&quot;&gt;&lt;span&gt;Age preference&lt;/span&gt;&lt;strong&gt;Suitable for both&lt;/strong&gt;&lt;/div&gt;&lt;div class=&quot;np-field&quot;&gt;&lt;span&gt;City preference&lt;/span&gt;&lt;strong&gt;Suitable for both&lt;/strong&gt;&lt;/div&gt;&lt;div class=&quot;np-field&quot;&gt;&lt;span&gt;Height preference&lt;/span&gt;&lt;strong&gt;Suitable for both&lt;/strong&gt;&lt;/div&gt;&lt;div class=&quot;np-field&quot;&gt;&lt;span&gt;Horoscope preference&lt;/span&gt;&lt;strong&gt;Broker review needed&lt;/strong&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;
+                &lt;div class=&quot;np-wizard-content&quot; data-step-content=&quot;3&quot; hidden&gt;&lt;div class=&quot;np-panel-head&quot;&gt;&lt;div&gt;&lt;h2&gt;Check permission to share&lt;/h2&gt;&lt;p&gt;Only the normal introduction profile will be sent.&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;np-checklist&quot;&gt;&lt;label class=&quot;np-check&quot;&gt;&lt;input type=&quot;checkbox&quot; checked&gt; &lt;span&gt;Arjun approved this introduction on 8 Sep at 11:20&lt;/span&gt;&lt;/label&gt;&lt;label class=&quot;np-check&quot;&gt;&lt;input type=&quot;checkbox&quot; checked&gt; &lt;span&gt;Naina has allowed standard profile sharing&lt;/span&gt;&lt;/label&gt;&lt;label class=&quot;np-check&quot;&gt;&lt;input type=&quot;checkbox&quot; checked&gt; &lt;span&gt;Phone numbers, financial details and private documents will stay hidden&lt;/span&gt;&lt;/label&gt;&lt;/div&gt;&lt;/div&gt;
+                &lt;div class=&quot;np-wizard-content&quot; data-step-content=&quot;4&quot; hidden&gt;&lt;div class=&quot;np-panel-head&quot;&gt;&lt;div&gt;&lt;h2&gt;Confirm and send&lt;/h2&gt;&lt;p&gt;Both customers will see one introduction with both broker names.&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;np-detail-grid&quot;&gt;&lt;div class=&quot;np-field&quot;&gt;&lt;span&gt;Send to&lt;/span&gt;&lt;strong&gt;Arjun Mehta and Naina Rao&lt;/strong&gt;&lt;/div&gt;&lt;div class=&quot;np-field&quot;&gt;&lt;span&gt;They will receive&lt;/span&gt;&lt;strong&gt;Dashboard and email notification&lt;/strong&gt;&lt;/div&gt;&lt;div class=&quot;np-field&quot;&gt;&lt;span&gt;Your introduction closes&lt;/span&gt;&lt;strong&gt;23 Sep 2026 · after 15 days&lt;/strong&gt;&lt;/div&gt;&lt;div class=&quot;np-field&quot;&gt;&lt;span&gt;Final response date&lt;/span&gt;&lt;strong&gt;6 Oct 2026&lt;/strong&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;np-notice&quot;&gt;&lt;i data-lucide=&quot;shield-check&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;div&gt;&lt;strong&gt;Private information stays protected&lt;/strong&gt;&lt;p&gt;Each customer sees the other person once. Broker names and sharing dates are shown separately. Phone numbers are not shared.&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;
+                &lt;div class=&quot;np-footer-actions&quot;&gt;&lt;button class=&quot;np-button&quot; type=&quot;button&quot; data-wizard-back&gt;Back&lt;/button&gt;&lt;span class=&quot;np-meta&quot; id=&quot;np-step-status&quot;&gt;Step 2 of 4&lt;/span&gt;&lt;button class=&quot;np-button&quot; data-kind=&quot;primary&quot; type=&quot;button&quot; data-wizard-next&gt;Continue&lt;/button&gt;&lt;/div&gt;
+              &lt;/section&gt;
+            &lt;/div&gt;
+          &lt;/main&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/section&gt;
+
+    &lt;section class=&quot;np-screen&quot; id=&quot;np-customer-intros&quot; role=&quot;tabpanel&quot; data-screen-panel=&quot;customer-intros&quot; hidden&gt;
+      &lt;div class=&quot;np-window np-customer-shell&quot;&gt;
+        &lt;aside class=&quot;np-sidebar&quot; aria-label=&quot;Customer navigation&quot;&gt;&lt;div class=&quot;np-brand&quot;&gt;&lt;span class=&quot;np-mark&quot; aria-hidden=&quot;true&quot;&gt;&lt;/span&gt;&lt;div&gt;&lt;strong&gt;Nakshatra&lt;/strong&gt;&lt;small&gt;Private portfolio&lt;/small&gt;&lt;/div&gt;&lt;/div&gt;&lt;nav class=&quot;np-nav&quot;&gt;&lt;button type=&quot;button&quot;&gt;&lt;i data-lucide=&quot;home&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;Home&lt;/button&gt;&lt;button type=&quot;button&quot;&gt;&lt;i data-lucide=&quot;user-round&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;My portfolio&lt;/button&gt;&lt;button type=&quot;button&quot; data-active=&quot;true&quot;&gt;&lt;i data-lucide=&quot;heart-handshake&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;Introductions&lt;/button&gt;&lt;button type=&quot;button&quot;&gt;&lt;i data-lucide=&quot;briefcase-business&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;My brokers&lt;/button&gt;&lt;button type=&quot;button&quot;&gt;&lt;i data-lucide=&quot;shield&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;Access &amp; privacy&lt;/button&gt;&lt;/nav&gt;&lt;div class=&quot;np-sidebar-foot&quot;&gt;&lt;strong&gt;Arjun Mehta&lt;/strong&gt;&lt;small&gt;Profile owner&lt;/small&gt;&lt;/div&gt;&lt;/aside&gt;
+        &lt;div class=&quot;np-app&quot;&gt;
+          &lt;header class=&quot;np-topbar&quot;&gt;&lt;div class=&quot;np-product&quot;&gt;&lt;strong&gt;Introductions&lt;/strong&gt;&lt;span&gt;From all your brokers&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;np-top-actions&quot;&gt;&lt;button class=&quot;np-icon-button&quot; type=&quot;button&quot; aria-label=&quot;Notifications&quot;&gt;&lt;i data-lucide=&quot;bell&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/button&gt;&lt;span class=&quot;np-avatar&quot;&gt;AM&lt;/span&gt;&lt;/div&gt;&lt;/header&gt;
+          &lt;main class=&quot;np-main&quot;&gt;
+            &lt;div class=&quot;np-heading&quot;&gt;&lt;div&gt;&lt;h1&gt;Your introductions&lt;/h1&gt;&lt;p&gt;Each person appears once, even when more than one broker introduced you.&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;
+            &lt;div class=&quot;np-list-controls&quot;&gt;&lt;div class=&quot;np-search&quot;&gt;&lt;i data-lucide=&quot;search&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;input class=&quot;np-input&quot; type=&quot;search&quot; placeholder=&quot;Search introductions&quot; aria-label=&quot;Search introductions&quot;&gt;&lt;/div&gt;&lt;select class=&quot;np-input&quot; aria-label=&quot;Filter introductions&quot;&gt;&lt;option&gt;Needs my response (2)&lt;/option&gt;&lt;option&gt;All active&lt;/option&gt;&lt;option&gt;Closed&lt;/option&gt;&lt;/select&gt;&lt;/div&gt;
+            &lt;div class=&quot;np-grid&quot;&gt;
+              &lt;section class=&quot;np-panel&quot;&gt;
+                &lt;div class=&quot;np-panel-head&quot;&gt;&lt;div&gt;&lt;h2&gt;Needs your response&lt;/h2&gt;&lt;p&gt;Your answer is about the person, not the broker route.&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;
+                &lt;div class=&quot;np-intro-list&quot;&gt;&lt;button class=&quot;np-intro-row&quot; type=&quot;button&quot; data-selected=&quot;true&quot; data-jump=&quot;multibroker-detail&quot;&gt;&lt;div class=&quot;np-mini-photo&quot;&gt;&lt;i data-lucide=&quot;user-round&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/div&gt;&lt;div&gt;&lt;div class=&quot;np-row-title&quot;&gt;&lt;strong&gt;Naina Rao&lt;/strong&gt;&lt;span class=&quot;np-chip&quot; data-tone=&quot;attention&quot;&gt;Shared by 2 brokers&lt;/span&gt;&lt;/div&gt;&lt;p&gt;29 years · 165 cm · Bengaluru · Product designer&lt;/p&gt;&lt;/div&gt;&lt;div class=&quot;np-row-action&quot;&gt;&lt;strong&gt;Respond by 21 Sep&lt;/strong&gt;&lt;small&gt;Shared 6 and 8 Sep&lt;/small&gt;&lt;/div&gt;&lt;/button&gt;&lt;button class=&quot;np-intro-row&quot; type=&quot;button&quot;&gt;&lt;div class=&quot;np-mini-photo&quot;&gt;&lt;i data-lucide=&quot;user-round&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/div&gt;&lt;div&gt;&lt;div class=&quot;np-row-title&quot;&gt;&lt;strong&gt;Ananya Desai&lt;/strong&gt;&lt;span class=&quot;np-chip&quot;&gt;Found on Nakshatra&lt;/span&gt;&lt;/div&gt;&lt;p&gt;28 years · 162 cm · Pune · Chartered accountant&lt;/p&gt;&lt;/div&gt;&lt;div class=&quot;np-row-action&quot;&gt;&lt;strong&gt;Respond by 18 Sep&lt;/strong&gt;&lt;small&gt;Shared 3 Sep&lt;/small&gt;&lt;/div&gt;&lt;/button&gt;&lt;/div&gt;
+              &lt;/section&gt;
+              &lt;aside&gt;&lt;section class=&quot;np-panel&quot;&gt;&lt;div class=&quot;np-panel-head&quot;&gt;&lt;div&gt;&lt;h2&gt;What is shared now&lt;/h2&gt;&lt;p&gt;Standard introduction view only.&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;np-checklist&quot;&gt;&lt;div class=&quot;np-check&quot;&gt;&lt;span class=&quot;np-check-icon&quot;&gt;&lt;i data-lucide=&quot;eye&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/span&gt;&lt;span&gt;Core profile and approved photos&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;np-check&quot;&gt;&lt;span class=&quot;np-check-icon&quot;&gt;&lt;i data-lucide=&quot;eye-off&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/span&gt;&lt;span&gt;Contacts and private documents hidden&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;np-check&quot;&gt;&lt;span class=&quot;np-check-icon&quot;&gt;&lt;i data-lucide=&quot;git-branch&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/span&gt;&lt;span&gt;Every broker share is timestamped&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;&lt;/section&gt;&lt;/aside&gt;
+            &lt;/div&gt;
+          &lt;/main&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/section&gt;
+
+    &lt;section class=&quot;np-screen&quot; id=&quot;np-multibroker-detail&quot; role=&quot;tabpanel&quot; data-screen-panel=&quot;multibroker-detail&quot; hidden&gt;
+      &lt;div class=&quot;np-window np-customer-shell&quot;&gt;
+        &lt;aside class=&quot;np-sidebar&quot; aria-label=&quot;Customer navigation&quot;&gt;&lt;div class=&quot;np-brand&quot;&gt;&lt;span class=&quot;np-mark&quot; aria-hidden=&quot;true&quot;&gt;&lt;/span&gt;&lt;div&gt;&lt;strong&gt;Nakshatra&lt;/strong&gt;&lt;small&gt;Private portfolio&lt;/small&gt;&lt;/div&gt;&lt;/div&gt;&lt;nav class=&quot;np-nav&quot;&gt;&lt;button type=&quot;button&quot;&gt;&lt;i data-lucide=&quot;home&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;Home&lt;/button&gt;&lt;button type=&quot;button&quot;&gt;&lt;i data-lucide=&quot;user-round&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;My portfolio&lt;/button&gt;&lt;button type=&quot;button&quot; data-active=&quot;true&quot;&gt;&lt;i data-lucide=&quot;heart-handshake&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;Introductions&lt;/button&gt;&lt;button type=&quot;button&quot;&gt;&lt;i data-lucide=&quot;briefcase-business&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;My brokers&lt;/button&gt;&lt;button type=&quot;button&quot;&gt;&lt;i data-lucide=&quot;shield&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;Access &amp; privacy&lt;/button&gt;&lt;/nav&gt;&lt;div class=&quot;np-sidebar-foot&quot;&gt;&lt;strong&gt;Arjun Mehta&lt;/strong&gt;&lt;small&gt;Profile owner&lt;/small&gt;&lt;/div&gt;&lt;/aside&gt;
+        &lt;div class=&quot;np-app&quot;&gt;
+          &lt;header class=&quot;np-topbar&quot;&gt;&lt;div class=&quot;np-product&quot;&gt;&lt;strong&gt;Introductions&lt;/strong&gt;&lt;span&gt;/ Naina Rao&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;np-top-actions&quot;&gt;&lt;button class=&quot;np-icon-button&quot; type=&quot;button&quot; aria-label=&quot;Privacy information&quot;&gt;&lt;i data-lucide=&quot;shield-check&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/button&gt;&lt;span class=&quot;np-avatar&quot;&gt;AM&lt;/span&gt;&lt;/div&gt;&lt;/header&gt;
+          &lt;main class=&quot;np-main&quot;&gt;
+            &lt;div class=&quot;np-heading&quot;&gt;&lt;div&gt;&lt;h1&gt;Introduction with Naina&lt;/h1&gt;&lt;p&gt;Decide about Naina once · choose your broker separately&lt;/p&gt;&lt;/div&gt;&lt;div class=&quot;np-actions&quot;&gt;&lt;button class=&quot;np-button&quot; type=&quot;button&quot; data-jump=&quot;customer-intros&quot;&gt;&lt;i data-lucide=&quot;arrow-left&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;All introductions&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;
+            &lt;div class=&quot;np-grid&quot;&gt;
+              &lt;div&gt;
+                &lt;section class=&quot;np-panel&quot;&gt;
+                  &lt;div class=&quot;np-counterpart&quot;&gt;&lt;div class=&quot;np-photo&quot;&gt;&lt;i data-lucide=&quot;user-round&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/div&gt;&lt;div&gt;&lt;h2 class=&quot;np-name&quot;&gt;Naina Rao&lt;/h2&gt;&lt;div class=&quot;np-summary-line&quot;&gt;&lt;span&gt;29 years&lt;/span&gt;&lt;span&gt;165 cm&lt;/span&gt;&lt;span&gt;Bengaluru&lt;/span&gt;&lt;span&gt;Product designer&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;np-chips&quot;&gt;&lt;span class=&quot;np-chip&quot; data-tone=&quot;ready&quot;&gt;Identity verified&lt;/span&gt;&lt;span class=&quot;np-chip&quot;&gt;Standard view&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;
+                  &lt;div class=&quot;np-boundary&quot;&gt;&lt;i data-lucide=&quot;lock-keyhole&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;Contact details, private family information, documents, and detailed horoscope stay hidden until both of you express interest and approve contact exchange.&lt;/span&gt;&lt;/div&gt;
+                  &lt;div class=&quot;np-section-tabs&quot;&gt;&lt;button type=&quot;button&quot; data-active=&quot;true&quot;&gt;About&lt;/button&gt;&lt;button type=&quot;button&quot;&gt;Family&lt;/button&gt;&lt;button type=&quot;button&quot;&gt;Education &amp; career&lt;/button&gt;&lt;button type=&quot;button&quot;&gt;Lifestyle&lt;/button&gt;&lt;button type=&quot;button&quot;&gt;Preferences&lt;/button&gt;&lt;/div&gt;
+                  &lt;div class=&quot;np-detail-grid&quot;&gt;&lt;div class=&quot;np-field&quot;&gt;&lt;span&gt;Education&lt;/span&gt;&lt;strong&gt;M.Des, Interaction Design&lt;/strong&gt;&lt;/div&gt;&lt;div class=&quot;np-field&quot;&gt;&lt;span&gt;Occupation&lt;/span&gt;&lt;strong&gt;Senior product designer&lt;/strong&gt;&lt;/div&gt;&lt;div class=&quot;np-field&quot;&gt;&lt;span&gt;Languages&lt;/span&gt;&lt;strong&gt;Kannada, Hindi, English&lt;/strong&gt;&lt;/div&gt;&lt;div class=&quot;np-field&quot;&gt;&lt;span&gt;Interests&lt;/span&gt;&lt;strong&gt;Classical music, trekking, pottery&lt;/strong&gt;&lt;/div&gt;&lt;/div&gt;
+                &lt;/section&gt;
+                &lt;section class=&quot;np-panel&quot;&gt;
+                  &lt;div class=&quot;np-panel-head&quot;&gt;&lt;div&gt;&lt;h2&gt;How this introduction reached you&lt;/h2&gt;&lt;p&gt;See which broker shared it and when. Their private notes stay private.&lt;/p&gt;&lt;/div&gt;&lt;span class=&quot;np-chip&quot; data-tone=&quot;attention&quot;&gt;2 brokers&lt;/span&gt;&lt;/div&gt;
+                  &lt;div class=&quot;np-route-list&quot;&gt;
+                    &lt;div class=&quot;np-route&quot;&gt;&lt;button class=&quot;np-route-head&quot; type=&quot;button&quot; aria-expanded=&quot;true&quot;&gt;&lt;span class=&quot;np-route-logo&quot;&gt;SM&lt;/span&gt;&lt;span&gt;&lt;strong&gt;Shubh Milan&lt;/strong&gt;&lt;span&gt;Shared by Priya Shah · 8 Sep, 11:38&lt;/span&gt;&lt;/span&gt;&lt;i data-lucide=&quot;chevron-up&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/button&gt;&lt;div class=&quot;np-route-body&quot;&gt;&lt;div class=&quot;np-route-facts&quot;&gt;&lt;div&gt;&lt;span&gt;Works with&lt;/span&gt;&lt;strong&gt;You and Naina&lt;/strong&gt;&lt;/div&gt;&lt;div&gt;&lt;span&gt;Respond by&lt;/span&gt;&lt;strong&gt;23 Sep&lt;/strong&gt;&lt;/div&gt;&lt;div&gt;&lt;span&gt;Current status&lt;/span&gt;&lt;strong&gt;Waiting for you&lt;/strong&gt;&lt;/div&gt;&lt;/div&gt;&lt;button class=&quot;np-button&quot; type=&quot;button&quot; data-representative&gt;Choose this broker to represent me&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;
+                    &lt;div class=&quot;np-route&quot; data-secondary=&quot;true&quot;&gt;&lt;button class=&quot;np-route-head&quot; type=&quot;button&quot; aria-expanded=&quot;false&quot;&gt;&lt;span class=&quot;np-route-logo&quot;&gt;SS&lt;/span&gt;&lt;span&gt;&lt;strong&gt;Swayamvar Services&lt;/strong&gt;&lt;span&gt;Shared by Kiran Joshi · 6 Sep, 16:15&lt;/span&gt;&lt;/span&gt;&lt;i data-lucide=&quot;chevron-down&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/button&gt;&lt;div class=&quot;np-route-body&quot; hidden&gt;&lt;div class=&quot;np-route-facts&quot;&gt;&lt;div&gt;&lt;span&gt;Works with&lt;/span&gt;&lt;strong&gt;Naina&lt;/strong&gt;&lt;/div&gt;&lt;div&gt;&lt;span&gt;Respond by&lt;/span&gt;&lt;strong&gt;21 Sep&lt;/strong&gt;&lt;/div&gt;&lt;div&gt;&lt;span&gt;Current status&lt;/span&gt;&lt;strong&gt;Waiting for you&lt;/strong&gt;&lt;/div&gt;&lt;/div&gt;&lt;button class=&quot;np-button&quot; type=&quot;button&quot; data-representative&gt;Choose this broker to represent me&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;
+                  &lt;/div&gt;
+                  &lt;p class=&quot;np-collapse-hint&quot;&gt;One additional broker route is collapsed in this design option.&lt;/p&gt;
+                  &lt;div class=&quot;np-lineage-note&quot;&gt;&lt;i data-lucide=&quot;info&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;You respond about Naina only once. Your broker choice decides who will help you if both of you are interested.&lt;/span&gt;&lt;/div&gt;
+                &lt;/section&gt;
+              &lt;/div&gt;
+              &lt;aside&gt;
+                &lt;section class=&quot;np-panel&quot;&gt;&lt;div class=&quot;np-panel-head&quot;&gt;&lt;div&gt;&lt;h2&gt;Your decision&lt;/h2&gt;&lt;p&gt;Naina will see your answer only after you confirm it.&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;np-decision&quot;&gt;&lt;button type=&quot;button&quot; data-choice=&quot;interest&quot;&gt;&lt;i data-lucide=&quot;heart&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt; I’m interested&lt;/button&gt;&lt;button type=&quot;button&quot; data-choice=&quot;decline&quot;&gt;&lt;i data-lucide=&quot;x&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt; Not for me&lt;/button&gt;&lt;/div&gt;&lt;div class=&quot;np-outcome&quot; aria-live=&quot;polite&quot;&gt;&lt;strong&gt;Interest saved for review&lt;/strong&gt;&lt;span&gt;Your broker route is not selected yet. Contact details remain hidden.&lt;/span&gt;&lt;/div&gt;&lt;/section&gt;
+                &lt;section class=&quot;np-panel&quot;&gt;&lt;div class=&quot;np-panel-head&quot;&gt;&lt;div&gt;&lt;h2&gt;Introduction progress&lt;/h2&gt;&lt;p&gt;Shared milestones across the canonical pair.&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;np-timeline&quot;&gt;&lt;div class=&quot;np-event&quot;&gt;&lt;strong&gt;Two broker routes delivered&lt;/strong&gt;&lt;small&gt;6–8 Sep&lt;/small&gt;&lt;/div&gt;&lt;div class=&quot;np-event&quot;&gt;&lt;strong&gt;Your response is due&lt;/strong&gt;&lt;small&gt;By 21 Sep&lt;/small&gt;&lt;/div&gt;&lt;div class=&quot;np-event&quot;&gt;&lt;strong&gt;Mutual interest&lt;/strong&gt;&lt;small&gt;Waiting&lt;/small&gt;&lt;/div&gt;&lt;div class=&quot;np-event&quot;&gt;&lt;strong&gt;Contact exchange&lt;/strong&gt;&lt;small&gt;Requires both approvals&lt;/small&gt;&lt;/div&gt;&lt;/div&gt;&lt;/section&gt;
+              &lt;/aside&gt;
+            &lt;/div&gt;
+          &lt;/main&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/section&gt;
+    &lt;div class=&quot;np-modal-backdrop&quot; id=&quot;np-sent-dialog&quot; role=&quot;dialog&quot; aria-modal=&quot;true&quot; aria-labelledby=&quot;np-sent-title&quot; hidden&gt;
+      &lt;div class=&quot;np-modal&quot;&gt;&lt;div class=&quot;np-modal-icon&quot;&gt;&lt;i data-lucide=&quot;check&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/div&gt;&lt;h2 id=&quot;np-sent-title&quot;&gt;Introduction sent&lt;/h2&gt;&lt;p&gt;Arjun and Naina can now review each other’s standard profile. Phone numbers and private details remain hidden.&lt;/p&gt;&lt;div class=&quot;np-modal-actions&quot;&gt;&lt;button class=&quot;np-button&quot; data-kind=&quot;primary&quot; type=&quot;button&quot; data-after-send=&quot;customer&quot;&gt;See what the customer receives&lt;/button&gt;&lt;button class=&quot;np-button&quot; type=&quot;button&quot; data-after-send=&quot;broker&quot;&gt;Return to Arjun’s profile&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+
+&lt;script&gt;
+(function () {
+  var root = document.getElementById(&#x27;np-phase0b&#x27;);
+  if (!root) return;
+  var tabs = Array.from(root.querySelectorAll(&#x27;[data-screen]&#x27;));
+  var panels = Array.from(root.querySelectorAll(&#x27;[data-screen-panel]&#x27;));
+  function showScreen(name) {
+    tabs.forEach(function (tab) { tab.setAttribute(&#x27;aria-selected&#x27;, String(tab.getAttribute(&#x27;data-screen&#x27;) === name)); });
+    panels.forEach(function (panel) { panel.hidden = panel.getAttribute(&#x27;data-screen-panel&#x27;) !== name; });
+  }
+  tabs.forEach(function (tab) { tab.addEventListener(&#x27;click&#x27;, function () { showScreen(tab.getAttribute(&#x27;data-screen&#x27;)); }); });
+  root.querySelectorAll(&#x27;[data-jump]&#x27;).forEach(function (button) { button.addEventListener(&#x27;click&#x27;, function () { showScreen(button.getAttribute(&#x27;data-jump&#x27;)); root.scrollIntoView({ behavior: &#x27;smooth&#x27;, block: &#x27;start&#x27; }); }); });
+
+  var wizardStep = 2;
+  var stepButtons = Array.from(root.querySelectorAll(&#x27;[data-wizard-step]&#x27;));
+  var stepContents = Array.from(root.querySelectorAll(&#x27;[data-step-content]&#x27;));
+  var stepStatus = root.querySelector(&#x27;#np-step-status&#x27;);
+  var nextButton = root.querySelector(&#x27;[data-wizard-next]&#x27;);
+  var backButton = root.querySelector(&#x27;[data-wizard-back]&#x27;);
+  function renderWizard() {
+    stepButtons.forEach(function (button) { var n = Number(button.getAttribute(&#x27;data-wizard-step&#x27;)); button.setAttribute(&#x27;data-active&#x27;, String(n === wizardStep)); button.setAttribute(&#x27;data-done&#x27;, String(n &lt; wizardStep)); });
+    stepContents.forEach(function (content) { content.hidden = Number(content.getAttribute(&#x27;data-step-content&#x27;)) !== wizardStep; });
+    if (stepStatus) stepStatus.textContent = &#x27;Step &#x27; + wizardStep + &#x27; of 4&#x27;;
+    if (backButton) backButton.disabled = wizardStep === 1;
+    if (nextButton) nextButton.textContent = wizardStep === 4 ? &#x27;Send introduction&#x27; : &#x27;Continue&#x27;;
+  }
+  stepButtons.forEach(function (button) { button.addEventListener(&#x27;click&#x27;, function () { wizardStep = Number(button.getAttribute(&#x27;data-wizard-step&#x27;)); renderWizard(); }); });
+  if (nextButton) nextButton.addEventListener(&#x27;click&#x27;, function () { if (wizardStep &lt; 4) { wizardStep += 1; renderWizard(); } else { root.querySelector(&#x27;#np-sent-dialog&#x27;).hidden = false; } });
+  if (backButton) backButton.addEventListener(&#x27;click&#x27;, function () { if (wizardStep &gt; 1) wizardStep -= 1; renderWizard(); });
+  renderWizard();
+
+  root.querySelectorAll(&#x27;.np-route-head&#x27;).forEach(function (button) {
+    button.addEventListener(&#x27;click&#x27;, function () {
+      var body = button.nextElementSibling;
+      var expanded = button.getAttribute(&#x27;aria-expanded&#x27;) === &#x27;true&#x27;;
+      button.setAttribute(&#x27;aria-expanded&#x27;, String(!expanded));
+      body.hidden = expanded;
+      var icon = button.querySelector(&#x27;[data-lucide]&#x27;);
+      if (icon) icon.setAttribute(&#x27;data-lucide&#x27;, expanded ? &#x27;chevron-down&#x27; : &#x27;chevron-up&#x27;);
+      if (globalThis.lucide) globalThis.lucide.createIcons({ attrs: { width: 16, height: 16 } });
+    });
+  });
+  root.querySelectorAll(&#x27;.np-decision button&#x27;).forEach(function (button) {
+    button.addEventListener(&#x27;click&#x27;, function () {
+      root.querySelectorAll(&#x27;.np-decision button&#x27;).forEach(function (peer) { peer.removeAttribute(&#x27;data-chosen&#x27;); });
+      button.setAttribute(&#x27;data-chosen&#x27;, &#x27;true&#x27;);
+      var outcome = root.querySelector(&#x27;.np-outcome&#x27;);
+      outcome.setAttribute(&#x27;data-visible&#x27;, &#x27;true&#x27;);
+      var strong = outcome.querySelector(&#x27;strong&#x27;);
+      var span = outcome.querySelector(&#x27;span&#x27;);
+      if (button.getAttribute(&#x27;data-choice&#x27;) === &#x27;interest&#x27;) {
+        strong.textContent = &#x27;Interest saved for review&#x27;;
+        span.textContent = &#x27;Your broker route is not selected yet. Contact details remain hidden.&#x27;;
+      } else {
+        strong.textContent = &#x27;Decline saved for confirmation&#x27;;
+        span.textContent = &#x27;Your reason remains private unless you explicitly share it.&#x27;;
+      }
+    });
+  });
+  root.querySelectorAll(&#x27;[data-representative]&#x27;).forEach(function (button) {
+    button.addEventListener(&#x27;click&#x27;, function () {
+      root.querySelectorAll(&#x27;[data-representative]&#x27;).forEach(function (peer) { peer.textContent = &#x27;Choose this broker to represent me&#x27;; peer.removeAttribute(&#x27;data-kind&#x27;); });
+      button.textContent = &#x27;Selected to represent me&#x27;;
+      button.setAttribute(&#x27;data-kind&#x27;, &#x27;primary&#x27;);
+    });
+  });
+  root.querySelectorAll(&#x27;[data-after-send]&#x27;).forEach(function (button) {
+    button.addEventListener(&#x27;click&#x27;, function () {
+      root.querySelector(&#x27;#np-sent-dialog&#x27;).hidden = true;
+      showScreen(button.getAttribute(&#x27;data-after-send&#x27;) === &#x27;customer&#x27; ? &#x27;customer-intros&#x27; : &#x27;customer-record&#x27;);
+      root.scrollIntoView({ behavior: &#x27;smooth&#x27;, block: &#x27;start&#x27; });
+    });
+  });
+
+  var design = { density: &#x27;comfortable&#x27;, lineage: &#x27;expanded&#x27;, rounded: 14 };
+  function applyDesign() {
+    root.setAttribute(&#x27;data-density&#x27;, design.density);
+    root.setAttribute(&#x27;data-lineage&#x27;, design.lineage);
+    root.style.setProperty(&#x27;--np-radius&#x27;, design.rounded + &#x27;px&#x27;);
+  }
+  applyDesign();
+  if (globalThis.Tweak) {
+    var tweak = new Tweak({ container: root, onChange: applyDesign });
+    tweak.addSelect(design, &#x27;density&#x27;, { label: &#x27;Information density&#x27;, options: [{ label: &#x27;Comfortable&#x27;, value: &#x27;comfortable&#x27; }, { label: &#x27;Compact&#x27;, value: &#x27;compact&#x27; }], reference: &#x27;brokerdesk.density&#x27; });
+    tweak.addSelect(design, &#x27;lineage&#x27;, { label: &#x27;Broker lineage&#x27;, options: [{ label: &#x27;Expanded&#x27;, value: &#x27;expanded&#x27; }, { label: &#x27;Collapsed&#x27;, value: &#x27;collapsed&#x27; }], reference: &#x27;introduction.lineage&#x27; });
+    tweak.addSlider(design, &#x27;rounded&#x27;, { label: &#x27;Corner radius&#x27;, min: 4, max: 20, unit: &#x27;px&#x27;, reference: &#x27;--np-radius&#x27; });
+  }
+})();
+&lt;/script&gt;
+
+&lt;script src=&quot;https://unpkg.com/@floating-ui/core@1.7.3/dist/floating-ui.core.umd.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;https://unpkg.com/@floating-ui/dom@1.7.4/dist/floating-ui.dom.umd.min.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+(() =&gt; {
+  if (window.FloatingUIDOM == null) {
+    return;
+  }
+  const { autoUpdate, computePosition, flip, offset, shift, size } =
+    window.FloatingUIDOM;
+  const tooltipPlacements = new Set([&quot;top&quot;, &quot;right&quot;, &quot;bottom&quot;, &quot;left&quot;]);
+  const tooltipId = `codex-visualization-tooltip-${
+    window.crypto?.randomUUID?.() ?? Date.now().toString(36)
+  }`;
+  const tooltipGap = 5;
+  const hoverDelay = 700;
+  const skipDelay = 300;
+  let activeTrigger = null;
+  let pendingTrigger = null;
+  let tooltip = null;
+  let openTimeout = null;
+  let autoUpdateCleanup = null;
+  let positionRequest = 0;
+  let skipDelayUntil = 0;
+  let lastPointerWasTouch = false;
+  let pinnedByTouch = false;
+
+  const getTrigger = (target) =&gt;
+    target?.nodeType === Node.ELEMENT_NODE
+      ? target.closest(&quot;[data-tooltip]&quot;)
+      : null;
+  const containsTarget = (trigger, target) =&gt;
+    target?.nodeType != null &amp;&amp; trigger.contains(target);
+  const getContent = (trigger) =&gt;
+    trigger.getAttribute(&quot;data-tooltip&quot;)?.trim() ?? &quot;&quot;;
+  const getPlacement = (trigger) =&gt; {
+    const placement = trigger.getAttribute(&quot;data-tooltip-placement&quot;);
+    return tooltipPlacements.has(placement) ? placement : &quot;top&quot;;
+  };
+  const getTooltip = () =&gt; {
+    if (tooltip == null) {
+      tooltip = document.createElement(&quot;div&quot;);
+      tooltip.id = tooltipId;
+      tooltip.className = &quot;tooltip&quot;;
+      tooltip.setAttribute(&quot;role&quot;, &quot;tooltip&quot;);
+    }
+    return tooltip;
+  };
+  const setDescribedBy = (trigger, described) =&gt; {
+    const ids = new Set(
+      (trigger.getAttribute(&quot;aria-describedby&quot;) ?? &quot;&quot;)
+        .split(/\s+/)
+        .filter(Boolean),
+    );
+    if (described) {
+      ids.add(tooltipId);
+    } else {
+      ids.delete(tooltipId);
+    }
+    if (ids.size === 0) {
+      trigger.removeAttribute(&quot;aria-describedby&quot;);
+    } else {
+      trigger.setAttribute(&quot;aria-describedby&quot;, [...ids].join(&quot; &quot;));
+    }
+  };
+  const clearOpenTimeout = () =&gt; {
+    if (openTimeout != null) {
+      window.clearTimeout(openTimeout);
+      openTimeout = null;
+    }
+    pendingTrigger = null;
+  };
+  const closeTooltip = (activateSkipDelay = true) =&gt; {
+    clearOpenTimeout();
+    pinnedByTouch = false;
+    positionRequest += 1;
+    autoUpdateCleanup?.();
+    autoUpdateCleanup = null;
+    if (activeTrigger == null) {
+      return;
+    }
+    setDescribedBy(activeTrigger, false);
+    activeTrigger = null;
+    tooltip?.remove();
+    if (activateSkipDelay) {
+      skipDelayUntil = Date.now() + skipDelay;
+    }
+  };
+  const updatePosition = (trigger, floating) =&gt; {
+    const request = ++positionRequest;
+    void computePosition(trigger, floating, {
+      middleware: [
+        offset(tooltipGap),
+        flip({ padding: tooltipGap }),
+        shift({ padding: tooltipGap }),
+        size({
+          padding: tooltipGap,
+          apply({ availableHeight, availableWidth, elements }) {
+            elements.floating.style.setProperty(
+              &quot;--tooltip-available-width&quot;,
+              `${Math.max(0, availableWidth)}px`,
+            );
+            elements.floating.style.setProperty(
+              &quot;--tooltip-available-height&quot;,
+              `${Math.max(0, availableHeight)}px`,
+            );
+          },
+        }),
+      ],
+      placement: getPlacement(trigger),
+      strategy: &quot;fixed&quot;,
+    })
+      .then(({ x, y }) =&gt; {
+        if (activeTrigger !== trigger || request !== positionRequest) {
+          return;
+        }
+        const scale = window.devicePixelRatio || 1;
+        floating.style.transform = `translate(${Math.round(x * scale) / scale}px, ${Math.round(y * scale) / scale}px)`;
+        floating.style.visibility = &quot;visible&quot;;
+      })
+      .catch(() =&gt; {
+        if (activeTrigger === trigger &amp;&amp; request === positionRequest) {
+          closeTooltip(false);
+        }
+      });
+  };
+  const openTooltip = (trigger) =&gt; {
+    const content = getContent(trigger);
+    if (!trigger.isConnected || content.length === 0) {
+      return;
+    }
+    clearOpenTimeout();
+    if (activeTrigger === trigger) {
+      return;
+    }
+    closeTooltip();
+    const floating = getTooltip();
+    floating.textContent = content;
+    floating.style.visibility = &quot;hidden&quot;;
+    floating.style.transform = &quot;translate(0, 0)&quot;;
+    document.body.appendChild(floating);
+    activeTrigger = trigger;
+    setDescribedBy(trigger, true);
+    autoUpdateCleanup = autoUpdate(trigger, floating, () =&gt; {
+      updatePosition(trigger, floating);
+    });
+  };
+  const requestOpen = (trigger, immediate = false) =&gt; {
+    if (
+      getContent(trigger).length === 0 ||
+      activeTrigger === trigger ||
+      pendingTrigger === trigger
+    ) {
+      return;
+    }
+    clearOpenTimeout();
+    pendingTrigger = trigger;
+    const delay =
+      immediate || activeTrigger != null || Date.now() &lt; skipDelayUntil
+        ? 0
+        : hoverDelay;
+    if (delay === 0) {
+      openTooltip(trigger);
+      return;
+    }
+    openTimeout = window.setTimeout(() =&gt; {
+      openTimeout = null;
+      pendingTrigger = null;
+      openTooltip(trigger);
+    }, delay);
+  };
+  const handlePointerOpen = (event) =&gt; {
+    if (event.pointerType === &quot;touch&quot;) {
+      return;
+    }
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    requestOpen(trigger);
+  };
+  const handlePointer = (event) =&gt; {
+    lastPointerWasTouch =
+      event.type === &quot;pointerdown&quot; &amp;&amp; event.pointerType === &quot;touch&quot;;
+  };
+  const handleTouchClick = (event) =&gt; {
+    const isTouch = event.pointerType === &quot;touch&quot; || lastPointerWasTouch;
+    lastPointerWasTouch = false;
+    if (!isTouch || event.detail === 0) {
+      return;
+    }
+    const trigger = getTrigger(event.target);
+    if (
+      trigger == null ||
+      !trigger.isConnected ||
+      getContent(trigger).length === 0 ||
+      (pinnedByTouch &amp;&amp; activeTrigger === trigger)
+    ) {
+      if (pinnedByTouch) {
+        closeTooltip();
+      }
+      return;
+    }
+    openTooltip(trigger);
+    pinnedByTouch = activeTrigger === trigger;
+    window.setTimeout(() =&gt; {
+      if (activeTrigger === trigger &amp;&amp; !trigger.isConnected) {
+        closeTooltip(false);
+      }
+    }, 0);
+  };
+  const handleLeave = (event) =&gt; {
+    if (pinnedByTouch) {
+      return;
+    }
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const handleFocusIn = (event) =&gt; {
+    const trigger = getTrigger(event.target);
+    if (trigger?.matches(&quot;:focus-visible&quot;)) {
+      requestOpen(trigger, true);
+    }
+  };
+  const handleKeyDown = (event) =&gt; {
+    if (event.key === &quot;Escape&quot;) {
+      closeTooltip();
+    }
+  };
+  const handleContextMenu = (event) =&gt; {
+    lastPointerWasTouch = false;
+    const trigger = getTrigger(event.target);
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const destroy = () =&gt; {
+    closeTooltip(false);
+    lastPointerWasTouch = false;
+    document.removeEventListener(&quot;pointerover&quot;, handlePointerOpen);
+    document.removeEventListener(&quot;pointerdown&quot;, handlePointer);
+    document.removeEventListener(&quot;pointercancel&quot;, handlePointer);
+    document.removeEventListener(&quot;click&quot;, handleTouchClick);
+    document.removeEventListener(&quot;pointerout&quot;, handleLeave);
+    document.removeEventListener(&quot;focusin&quot;, handleFocusIn);
+    document.removeEventListener(&quot;focusout&quot;, handleLeave);
+    document.removeEventListener(&quot;keydown&quot;, handleKeyDown);
+    document.removeEventListener(&quot;contextmenu&quot;, handleContextMenu);
+    tooltip = null;
+  };
+
+  document.addEventListener(&quot;pointerover&quot;, handlePointerOpen);
+  document.addEventListener(&quot;pointerdown&quot;, handlePointer);
+  document.addEventListener(&quot;pointercancel&quot;, handlePointer);
+  document.addEventListener(&quot;click&quot;, handleTouchClick);
+  document.addEventListener(&quot;pointerout&quot;, handleLeave);
+  document.addEventListener(&quot;focusin&quot;, handleFocusIn);
+  document.addEventListener(&quot;focusout&quot;, handleLeave);
+  document.addEventListener(&quot;keydown&quot;, handleKeyDown);
+  document.addEventListener(&quot;contextmenu&quot;, handleContextMenu);
+  window.addEventListener(&quot;pagehide&quot;, destroy, { once: true });
+})();
+&lt;/script&gt;
+&lt;script id=&quot;codex-visualization-tabs&quot;&gt;
+(() =&gt; {
+  const selector = &#x27;.nav[role=&quot;tablist&quot;] [role=&quot;tab&quot;]&#x27;;
+  const disabled = &#x27;:disabled,[aria-disabled=&quot;true&quot;]&#x27;;
+  const selectTab = (selected) =&gt; {
+    const panelId = selected.getAttribute(&quot;aria-controls&quot;);
+    for (const tab of selected.closest(&#x27;[role=&quot;tablist&quot;]&#x27;).querySelectorAll(&#x27;[role=&quot;tab&quot;]&#x27;)) {
+      const active = tab === selected;
+      tab.classList.toggle(&quot;active&quot;, active);
+      tab.setAttribute(&quot;aria-selected&quot;, String(active));
+      const id = tab.getAttribute(&quot;aria-controls&quot;);
+      const panel = id &amp;&amp; document.getElementById(id);
+      if (panel != null) {
+        panel.hidden = id !== panelId;
+        if (!panel.hidden &amp;&amp; selected.id) {
+          panel.setAttribute(&quot;aria-labelledby&quot;, selected.id);
+        }
+      }
+    }
+  };
+  const interact = (event) =&gt; {
+    const tab = event.target?.closest?.(selector);
+    if (event.defaultPrevented || tab == null || tab.matches(disabled)) {
+      return;
+    }
+    if (event.type === &quot;click&quot;) {
+      selectTab(tab);
+      return;
+    }
+    const tabs = Array.from(
+      tab.closest(&#x27;[role=&quot;tablist&quot;]&#x27;).querySelectorAll(&#x27;[role=&quot;tab&quot;]&#x27;),
+    ).filter((candidate) =&gt; !candidate.matches(disabled));
+    const current = tabs.indexOf(tab);
+    let next;
+    if (event.key === &quot;ArrowRight&quot; || event.key === &quot;ArrowDown&quot;) {
+      next = (current + 1) % tabs.length;
+    } else if (event.key === &quot;ArrowLeft&quot; || event.key === &quot;ArrowUp&quot;) {
+      next = (current + tabs.length - 1) % tabs.length;
+    } else if (event.key === &quot;Home&quot;) {
+      next = 0;
+    } else if (event.key === &quot;End&quot;) {
+      next = tabs.length - 1;
+    } else {
+      return;
+    }
+    event.preventDefault();
+    tabs[next].focus();
+    selectTab(tabs[next]);
+  };
+
+  for (const list of document.querySelectorAll(&#x27;.nav[role=&quot;tablist&quot;]&#x27;)) {
+    const selected =
+      list.querySelector(&#x27;[role=&quot;tab&quot;][aria-selected=&quot;true&quot;]&#x27;) ??
+      list.querySelector(&#x27;[role=&quot;tab&quot;].active&#x27;) ??
+      list.querySelector(&#x27;[role=&quot;tab&quot;]&#x27;);
+    if (selected != null) {
+      selectTab(selected);
+    }
+  }
+  document.addEventListener(&quot;click&quot;, interact);
+  document.addEventListener(&quot;keydown&quot;, interact);
+  window.addEventListener(&quot;pagehide&quot;, () =&gt; {
+    document.removeEventListener(&quot;click&quot;, interact);
+    document.removeEventListener(&quot;keydown&quot;, interact);
+  }, { once: true });
+})();
+&lt;/script&gt;
+&lt;script id=&quot;codex-visualization-lucide&quot; async src=&quot;https://unpkg.com/lucide@1.17.0/dist/umd/lucide.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+(() =&gt; {
+  const initialize = () =&gt; {
+    globalThis.lucide?.createIcons({ attrs: { width: 16, height: 16 } });
+  };
+  if (globalThis.lucide != null) {
+    initialize();
+    return;
+  }
+  document
+    .getElementById(&quot;codex-visualization-lucide&quot;)
+    ?.addEventListener(&quot;load&quot;, initialize, { once: true });
+})();
+&lt;/script&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;
+"></iframe>
+</body>
+</html>

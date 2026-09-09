@@ -84,13 +84,13 @@ select throws_ok(
 set local request.jwt.claims = '{"sub":"41000000-0000-4000-8000-000000000005","role":"authenticated","session_id":"42000000-0000-4000-8000-000000000005"}';
 select lives_ok(
   $$update public.candidates set display_name = 'Broker Mutation' where id = '43000000-0000-4000-8000-000000000001'$$,
-  'a broker-agent can perform candidate operations'
+  'a broker-agent candidate update is filtered without revealing the row'
 );
 reset role;
 select is(
   (select display_name from public.candidates where id = '43000000-0000-4000-8000-000000000001'),
-  'Broker Mutation',
-  'the broker-agent operation persists'
+  'Organization Candidate',
+  'organization membership and record creation do not grant candidate ownership'
 );
 
 set local role authenticated;
