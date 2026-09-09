@@ -1,6 +1,6 @@
 # BrokerDesk Phase 2 — Implementation Progress
 
-Status: Slice 1 merged and database-verified; Slice 2 ready
+Status: Slice 1 capability foundation implemented; PR verification pending
 Started: 2026-09-08  
 Approved plan: [Phase 1 Implementation Plan](./phase-1-implementation-plan.md)
 
@@ -88,9 +88,35 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 
 ## Next executable steps
 
-1. Add explicit capability, scope, assignment, and mandate structures without restoring direct agency access to customer tables.
-2. Add server-enforced BrokerDesk entitlements and an endpoint inventory foundation.
-3. Add targeted end-to-end tests after the first BrokerDesk route surface exists.
+1. Verify the capability migration through a clean CI database replay and the complete pgTAP suite.
+2. Merge the reviewed capability foundation through a squash PR and synchronize `main`.
+3. Begin the organization onboarding/verification command slice from a new compliant feature branch.
+4. Add targeted end-to-end tests after the first BrokerDesk route surface exists.
+
+## Capability foundation implemented
+
+- Added server-generated, immutable `wrk_` workspace and `bcr_` agency-relationship references. These are identifiers only and never capabilities.
+- Added private owner/admin/advisor/coordinator/viewer presets backed by explicit capability and resource-scope records.
+- Preserved the existing public membership enum as a compatibility input: `broker_agent` maps to advisor, `editor` to coordinator, and authorization evaluates capabilities rather than exposing the legacy role directly.
+- Added private, cross-organization-safe member access, customer assignment, and customer mandate structures with current-time and revocation checks.
+- Defined effective relationship authorization as live session × active agency/member × latest entitlement × capability × scope/assignment × current mandate.
+- Made `brokerdesk.enabled` fail closed and latest-record-wins so a newer false or expired entitlement immediately removes access.
+- Replaced broad direct `broker_clients` CRUD with read-only, capability-scoped RLS. Future relationship mutations remain reserved for audited command RPCs.
+- Kept candidate and portfolio ownership owner-only; no new broker projection reads either table.
+- Added a minimal server-only access resolver with the same `{ enabled: false }` contract for malformed, missing, disabled, suspended, and cross-tenant workspace references.
+- Added a strict, machine-readable endpoint inventory for the first planned BrokerDesk and combined customer contracts.
+- Added adversarial pgTAP coverage for two agencies, owners, assigned/unassigned advisors, a suspended employee, entitlement revocation, assignment revocation, mandate expiry/revocation, cross-tenant references, and deleted sessions.
+
+## Current verification
+
+| Check | Result |
+|---|---|
+| Static database fixture contract | Passed |
+| ESLint | Passed with the existing Open Graph `<img>` warning only |
+| TypeScript | Passed |
+| Unit/integration suite | Passed: 70 files, 430 tests |
+| Feature coverage policy | Passed: 31 mapper, service, and contract files at 80% or higher per metric |
+| Local executable database replay | Unavailable because Docker/Podman is not installed on this host; required in PR CI before merge |
 
 ## Progress log
 
@@ -114,3 +140,12 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 - Confirmed all three required checks, including clean migration replay and the full pgTAP suite.
 - Squash-merged PR #40 as `22faf86`, synchronized local `main`, and removed the completed phase branch and isolated worktree after equivalence checks.
 - Created `feat/nak-68-brokerdesk-capability-foundation` from the clean merged `main` for the next executable slice.
+
+### 2026-09-09
+
+- Confirmed local and remote `main` are identical at `22faf86` and the feature branch begins from that exact baseline.
+- Implemented the BrokerDesk capability, scope, assignment, mandate, entitlement, and opaque workspace/relationship reference foundation.
+- Tightened agency relationship reads and removed direct relationship mutations from the authenticated Data API surface.
+- Added the server-only access contract/repository/service and the versioned endpoint inventory.
+- Added two-agency authorization and immediate-revocation database tests; updated the earlier ownership fixture to explicitly enable BrokerDesk.
+- Passed static database checks, TypeScript, all 430 tests, feature coverage, and lint with only the pre-existing Open Graph warning.

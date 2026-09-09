@@ -214,6 +214,9 @@ Customer workspace:
 - The first CI database run identified a schema-invalid inactive membership fixture and a stale lifecycle assertion from the newer approved-contact contract. Corrected the fixtures to use `suspended` membership and an owner-only `private_notes` field.
 - Confirmed all three PR checks, including clean migration replay and the full pgTAP database suite, then squash-merged PR #40 as `22faf86`.
 - Synchronized local `main` exactly with `origin/main`, removed the merged security branch and clean isolated phase worktree after equivalence checks, and created `feat/nak-68-brokerdesk-capability-foundation` for the next slice.
+- On `feat/nak-68-brokerdesk-capability-foundation`, implemented immutable workspace/relationship references, private role-capability scopes, customer assignments and mandates, latest-record-wins BrokerDesk entitlement enforcement, capability-scoped relationship reads, a minimal server-only access resolver, and a strict endpoint inventory.
+- Kept all customer candidate and portfolio ownership rules unchanged and owner-only; no BrokerDesk direct portfolio projection was added.
+- Added adversarial two-agency database coverage for assignment, mandate, entitlement, membership, session, and cross-tenant revocation boundaries. Local application checks pass; clean migration replay and pgTAP remain mandatory in PR CI because this host has no Docker/Podman runtime.
 
 ## Maintenance rule
 
