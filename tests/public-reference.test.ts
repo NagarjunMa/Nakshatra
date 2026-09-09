@@ -5,6 +5,7 @@ import {
   customerIntroductionCaseRefSchema,
   importRefSchema,
   invitationRefSchema,
+  memberRefSchema,
   taskRefSchema,
   workspaceRefSchema,
 } from "@/features/security/public-reference";
@@ -20,6 +21,7 @@ describe("BrokerDesk public references", () => {
     [taskRefSchema, `tsk_${RANDOM_HEX}`],
     [importRefSchema, `imp_${RANDOM_HEX}`],
     [invitationRefSchema, `inv_${RANDOM_HEX}`],
+    [memberRefSchema, `mbr_${RANDOM_HEX}`],
   ])("accepts its own opaque reference type", (schema, value) => {
     expect(schema.parse(value)).toBe(value);
   });

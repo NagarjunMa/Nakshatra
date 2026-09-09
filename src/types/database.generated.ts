@@ -1288,6 +1288,7 @@ export type Database = {
           created_at: string
           id: string
           invited_by: string | null
+          member_ref: string
           organization_id: string
           role: Database["public"]["Enums"]["organization_member_role"]
           status: Database["public"]["Enums"]["member_status"]
@@ -1298,6 +1299,7 @@ export type Database = {
           created_at?: string
           id?: string
           invited_by?: string | null
+          member_ref?: string
           organization_id: string
           role?: Database["public"]["Enums"]["organization_member_role"]
           status?: Database["public"]["Enums"]["member_status"]
@@ -1308,6 +1310,7 @@ export type Database = {
           created_at?: string
           id?: string
           invited_by?: string | null
+          member_ref?: string
           organization_id?: string
           role?: Database["public"]["Enums"]["organization_member_role"]
           status?: Database["public"]["Enums"]["member_status"]
@@ -2480,6 +2483,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      can_read_organization_membership: {
+        Args: { p_member_user_id: string; p_organization_id: string }
+        Returns: boolean
+      }
       can_manage_portfolio: {
         Args: { p_portfolio_id: string }
         Returns: boolean
@@ -2558,6 +2565,10 @@ export type Database = {
       }
       resolve_brokerdesk_bootstrap: { Args: never; Returns: Json }
       resolve_brokerdesk_onboarding: {
+        Args: { p_workspace_ref: string }
+        Returns: Json
+      }
+      resolve_brokerdesk_team: {
         Args: { p_workspace_ref: string }
         Returns: Json
       }

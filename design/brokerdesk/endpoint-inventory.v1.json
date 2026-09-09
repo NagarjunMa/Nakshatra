@@ -92,6 +92,24 @@
       "auditEvent": "brokerdesk_member_access_replaced"
     },
     {
+      "id": "brokerdesk.team.read",
+      "status": "active",
+      "method": "GET",
+      "path": "/api/v1/brokerdesk/workspaces/[workspaceRef]/team",
+      "owner": "organization-access",
+      "audience": "broker_member",
+      "authentication": "live_session",
+      "capability": "team.assign",
+      "resourceScope": "workspace",
+      "inputSchema": "workspaceRefPathSchema",
+      "outputSchema": "brokerdeskTeamResultSchema",
+      "dataClass": "confidential",
+      "rateLimitAction": "brokerdesk_team_read",
+      "idempotency": "not_applicable",
+      "stepUp": "not_required",
+      "auditEvent": null
+    },
+    {
       "id": "brokerdesk.privileged.reauth.start",
       "status": "active",
       "method": "POST",

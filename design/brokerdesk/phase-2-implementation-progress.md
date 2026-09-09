@@ -124,11 +124,21 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 | Static database fixture contract | Passed |
 | ESLint | Passed with the existing Open Graph `<img>` warning only |
 | TypeScript | Passed |
-| Full application suite | Passed: 79 files, 482 tests |
+| Full application suite | Passed: 81 files, 489 tests |
 | Feature coverage policy | Passed |
 | Production build | Passed; new versioned route included |
 | Dependency audit | Passed: 0 known vulnerabilities |
-| New executable pgTAP suite | Authored with 21 assertions; local replay unavailable without Docker/Podman and deferred to the combined checkpoint PR CI |
+| New executable pgTAP suites | Authored with 41 assertions across fresh-auth and team projection; local replay unavailable without Docker/Podman and deferred to the combined checkpoint PR CI |
+
+## Opaque team projection implemented
+
+- Added immutable server-generated `mbr_` references for organization members; internal membership, user, and organization UUIDs are omitted from the BrokerDesk team response.
+- Disabled the legacy generic membership read/insert/update/delete RLS paths for matchmaker agencies while preserving the established family/platform organization behavior.
+- Added an owner/admin-only database projection that works during onboarding, returns the same unavailable shape for malformed, missing, cross-agency, advisor, and unauthorized requests, and omits removed members.
+- Limited the projection to the employee name, verified account email when present, safe role preset, membership status, simple customer-access label/count, joined time, and current-user flag.
+- New employees remain at `none` customer access until explicit assignments exist; suspended employees remain visible to authorized owners/admins with a clear suspended status.
+- Added a no-store, independently rate-limited versioned team-read endpoint and registered it in the machine-readable endpoint inventory.
+- Added application tests plus an adversarial pgTAP suite covering reference generation/immutability, UUID omission, direct-table bypass attempts, cross-agency substitution, advisor enumeration, and suspended-member projection.
 
 ## Capability foundation implemented
 
@@ -203,3 +213,5 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 - Implemented the purpose-bound fresh-auth perimeter across private database state, server-only repository/service/cookies, the versioned start route, callback completion, rate limiting, endpoint inventory, environment contract, and adversarial tests.
 - Passed static database validation, lint, TypeScript, all 482 application tests with feature coverage, production build, and a zero-vulnerability dependency audit.
 - Kept privileged mutations disabled and recorded MFA assurance plus clean executable database replay as release gates rather than presenting fresh login as sufficient authorization.
+- Added opaque employee references and the first minimal BrokerDesk team-read projection; closed the broad legacy membership Data API surface for matchmaker agencies without altering family/platform organization behavior.
+- Passed all 489 application tests and feature coverage, lint, TypeScript, production build, static database validation, and dependency audit after the team projection unit.

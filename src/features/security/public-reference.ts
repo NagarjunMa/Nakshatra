@@ -21,6 +21,7 @@ export const customerIntroductionCaseRefSchema = referenceSchema("inc")
 export const taskRefSchema = referenceSchema("tsk").brand<"TaskRef">();
 export const importRefSchema = referenceSchema("imp").brand<"ImportRef">();
 export const invitationRefSchema = referenceSchema("inv").brand<"InvitationRef">();
+export const memberRefSchema = referenceSchema("mbr").brand<"MemberRef">();
 
 export type WorkspaceRef = z.infer<typeof workspaceRefSchema>;
 export type BrokerCustomerRelationshipRef = z.infer<
@@ -35,3 +36,4 @@ export type CustomerIntroductionCaseRef = z.infer<
 export type TaskRef = z.infer<typeof taskRefSchema>;
 export type ImportRef = z.infer<typeof importRefSchema>;
 export type InvitationRef = z.infer<typeof invitationRefSchema>;
+export type MemberRef = z.infer<typeof memberRefSchema>;

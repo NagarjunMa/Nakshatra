@@ -230,7 +230,9 @@ Customer workspace:
 - Kept deletion reauthentication purpose-bound and selected a separate actor + workspace + action + fresh-session + one-time-proof boundary for BrokerDesk team and verification privilege changes.
 - Implemented that BrokerDesk fresh-authentication perimeter with private hashed proof state, independent key/rate limit, exact purpose mapping, safe callback dispatch, workspace-path HttpOnly proof cookies, private-only proof consumption, and cross-actor/action/session/replay tests.
 - Kept the new perimeter inert: no team or verification privilege mutation is active until it atomically consumes the proof, rechecks authority, writes audit, and enforces the separately required owner/admin MFA assurance gate.
-- Passed 482 application tests and feature coverage, lint, TypeScript, production build, static database checks, and a zero-vulnerability dependency audit. The 21-assertion pgTAP suite awaits executable replay at the combined checkpoint because this host still has no Docker/Podman runtime.
+- Passed 489 application tests and feature coverage, lint, TypeScript, production build, static database checks, and a zero-vulnerability dependency audit. The two new pgTAP suites contain 41 assertions and await executable replay at the combined checkpoint because this host still has no Docker/Podman runtime.
+- Added immutable `mbr_` employee references and an owner/admin-only team projection with uniform cross-agency denial, no internal UUIDs, explicit suspended state, and no customer access for unassigned employees.
+- Closed direct membership table reads and mutations for matchmaker agencies so BrokerDesk employee data is available only through reviewed projections and future audited commands; retained the existing generic behavior for non-BrokerDesk organization types.
 
 ## Maintenance rule
 

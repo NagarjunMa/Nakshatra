@@ -11,4 +11,10 @@ export class OrganizationAccessRepository {
       p_workspace_ref: workspaceRef,
     });
   }
+
+  resolveBrokerDeskTeam(workspaceRef: string) {
+    return this.supabase.rpc("resolve_brokerdesk_team", {
+      p_workspace_ref: workspaceRef,
+    });
+  }
 }
