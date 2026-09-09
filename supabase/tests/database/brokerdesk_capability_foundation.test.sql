@@ -88,8 +88,8 @@ select
   (select relationship_ref from public.broker_clients where id = '96000000-0000-4000-8000-000000000002') as relationship_a2,
   (select relationship_ref from public.broker_clients where id = '96000000-0000-4000-8000-000000000003') as relationship_b1;
 
-select like(workspace_a, 'wrk\_%', 'workspace references use the dedicated opaque prefix') from brokerdesk_refs;
-select like(relationship_a1, 'bcr\_%', 'relationship references use the dedicated opaque prefix') from brokerdesk_refs;
+select ok(workspace_a like 'wrk\_%' escape '\', 'workspace references use the dedicated opaque prefix') from brokerdesk_refs;
+select ok(relationship_a1 like 'bcr\_%' escape '\', 'relationship references use the dedicated opaque prefix') from brokerdesk_refs;
 select isnt(relationship_a1, relationship_b1, 'relationship references are distinct across agencies') from brokerdesk_refs;
 
 set local role authenticated;
