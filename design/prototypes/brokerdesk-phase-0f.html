@@ -1,0 +1,1550 @@
+<!doctype html>
+<html lang="en" data-visualize-standalone>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; style-src 'unsafe-inline' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Brokerdesk Phase 0f</title>
+<style>:root{color-scheme:light dark;background:light-dark(rgb(255 255 255), rgb(24 24 24))}html,body{margin:0}body{box-sizing:border-box;padding:1rem;background:inherit}iframe{display:block;width:100%;height:calc(100vh - 2rem);margin:0 auto;border:0}</style>
+</head>
+<body>
+<iframe sandbox="allow-scripts" referrerpolicy="no-referrer" title="Brokerdesk Phase 0f" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot; data-visualize-standalone&gt;
+&lt;head&gt;
+&lt;meta charset=&quot;utf-8&quot;&gt;
+&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+&lt;meta name=&quot;referrer&quot; content=&quot;no-referrer&quot;&gt;
+&lt;meta http-equiv=&quot;Content-Security-Policy&quot; content=&quot;default-src &#x27;none&#x27;; script-src &#x27;unsafe-inline&#x27; &#x27;unsafe-eval&#x27; &#x27;wasm-unsafe-eval&#x27; blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; style-src &#x27;unsafe-inline&#x27; blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src &#x27;none&#x27;; object-src &#x27;none&#x27;; base-uri &#x27;none&#x27;; form-action &#x27;none&#x27;&quot;&gt;
+&lt;title&gt;Brokerdesk Phase 0f&lt;/title&gt;
+&lt;style&gt;:root {
+  color-scheme: light dark;
+  background-color: var(
+    --background,
+    var(--color-background-primary, light-dark(rgb(255 255 255), rgb(24 24 24)))
+  ) !important;
+
+  /* Agent-facing contract; keep in sync with SKILL.md. */
+  --background: var(
+    --color-background-primary,
+    light-dark(rgb(255 255 255), rgb(24 24 24))
+  );
+  --foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --card: color-mix(in oklab, var(--foreground) 5%, var(--background));
+  --card-foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --popover: var(
+    --color-background-secondary,
+    light-dark(rgb(255 255 255), rgb(45 45 45))
+  );
+  --popover-foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --primary: var(
+    --color-text-info,
+    light-dark(rgb(51 156 255), rgb(131 195 255))
+  );
+  --primary-foreground: var(
+    --color-text-inverse,
+    light-dark(rgb(255 255 255), rgb(13 13 13))
+  );
+  --secondary: var(
+    --color-background-secondary,
+    light-dark(rgb(255 255 255 / 96%), rgb(54 54 54 / 96%))
+  );
+  --secondary-foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --muted: color-mix(in srgb, var(--foreground) 10%, transparent);
+  --muted-foreground: var(
+    --color-text-secondary,
+    light-dark(rgb(26 28 31 / 49.4%), rgb(255 255 255 / 49.8%))
+  );
+  --accent: var(
+    --color-background-info,
+    light-dark(rgb(229 242 255), rgb(13 39 63))
+  );
+  --accent-foreground: var(
+    --color-text-info,
+    light-dark(rgb(51 156 255), rgb(131 195 255))
+  );
+  --destructive: var(
+    --color-text-warning,
+    light-dark(rgb(226 85 7), rgb(255 133 73))
+  );
+  --border: var(
+    --color-border-secondary,
+    light-dark(rgb(26 28 31 / 8%), rgb(255 255 255 / 8.2%))
+  );
+  --input: var(
+    --color-border-primary,
+    light-dark(
+      rgb(26 28 31 / 11.8%),
+      color-mix(in oklab, rgb(0 0 0) 10%, transparent)
+    )
+  );
+  --ring: var(
+    --color-ring-primary,
+    light-dark(rgb(51 156 255), rgb(131 195 255 / 76%))
+  );
+  --font-size-base: var(--font-text-md-size, 14px);
+  --blue: light-dark(rgb(51 156 255), rgb(51 156 255));
+  --orange: light-dark(rgb(226 85 7), rgb(251 106 34));
+  --green: light-dark(rgb(0 162 64), rgb(64 201 119));
+  --red: light-dark(rgb(224 46 42), rgb(255 103 100));
+  --purple: light-dark(rgb(146 79 247), rgb(173 123 249));
+  --yellow: light-dark(rgb(255 195 0), rgb(255 210 64));
+  --viz-series-1: var(--primary);
+  --viz-series-2: light-dark(rgb(243 136 59), rgb(245 154 86));
+  --viz-series-3: light-dark(rgb(93 201 119), rgb(116 213 139));
+  --viz-series-4: light-dark(rgb(235 119 177), rgb(240 143 192));
+  --viz-series-5: light-dark(rgb(155 121 236), rgb(170 145 239));
+  --viz-series-6: light-dark(rgb(58 185 177), rgb(90 203 194));
+
+  /* Internal implementation variables; not part of the agent contract. */
+  --font-sans: -apple-system, system-ui, &quot;Segoe UI&quot;, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, &quot;SF Mono&quot;, Menlo, Consolas, &quot;Liberation Mono&quot;,
+    monospace;
+  --font-size-normal: max(11px, var(--font-size-base));
+  --font-size-tooltip: calc(var(--font-size-base) - 1px);
+  --font-size-small: max(11px, calc(var(--font-size-base) - 2px));
+  --font-size-h1: calc(var(--font-size-normal) * 1.7142857143);
+  --font-size-h2: calc(var(--font-size-normal) * 1.4285714286);
+  --font-size-h3: calc(var(--font-size-normal) * 1.2857142857);
+  --font-weight-normal: 430;
+  --font-weight-medium: 500;
+  --icon-size: 16px;
+  --line-height-normal: calc(var(--font-size-normal) * 1.5);
+  --line-height-tooltip: calc(var(--font-size-tooltip) * 1.4285714286);
+  --line-height-small: calc(var(--font-size-small) + 4px);
+  --corner-shape: round;
+  --radius: var(--border-radius-lg, 10px);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-2xl: calc(var(--radius) * 1.6);
+  --radius-full: 9999px;
+  --shadow-sm: 0 1px 2px -1px rgb(0 0 0 / 8%);
+  --checkmark-image: url(&quot;data:image/svg+xml,%3Csvg xmlns=&#x27;http://www.w3.org/2000/svg&#x27; viewBox=&#x27;0 0 17 17&#x27;%3E%3Cpath d=&#x27;M12.8961 3.64101C13.1297 3.41418 13.4984 3.37523 13.7779 3.56581C14.0571 3.75635 14.1554 4.11331 14.0299 4.41347L13.9615 4.53847L7.71151 13.7045C7.59411 13.8767 7.4063 13.9877 7.19881 14.0072C6.99136 14.0267 6.78564 13.9533 6.63826 13.806L2.88826 10.056L2.79842 9.9457C2.6192 9.67407 2.64927 9.30496 2.88826 9.06581C3.12738 8.82669 3.49647 8.79676 3.76815 8.97597L3.8785 9.06581L7.03084 12.2182L12.8053 3.74941L12.8961 3.64101Z&#x27;/%3E%3C/svg%3E&quot;);
+
+  /* Legacy aliases; not part of the current agent contract. */
+  --viz-bg: transparent;
+  --viz-panel: var(--card);
+  --viz-border: var(--border);
+  --viz-text: var(--foreground);
+  --viz-muted: var(--muted-foreground);
+  --viz-accent: var(--primary);
+  --viz-accent-text: var(--primary-foreground);
+  --viz-accent-bg: var(--accent);
+  --viz-font-size: var(--font-size-base);
+  --viz-warning: var(--destructive);
+}
+
+:root[data-theme=&quot;light&quot;] {
+  color-scheme: light;
+}
+
+:root[data-theme=&quot;dark&quot;] {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html &gt; body {
+  /* Preserve MCP aliases for older inline renderers without creating :root cycles. */
+  --color-background-primary: var(
+    --background,
+    light-dark(rgb(255 255 255), rgb(24 24 24))
+  );
+  --color-text-primary: var(
+    --foreground,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --color-border-secondary: var(
+    --border,
+    light-dark(rgb(26 28 31 / 8%), rgb(255 255 255 / 8.2%))
+  );
+
+  margin: 0;
+  padding: var(--visualize-paint-gutter, 0px);
+  color: var(--foreground);
+  background: transparent !important;
+  font-family: var(--font-sans) !important;
+  font-size: var(--font-size-normal);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-normal);
+}
+
+a {
+  color: color-mix(in srgb, var(--viz-accent) 80%, var(--viz-text) 20%);
+  cursor: pointer;
+  font-weight: var(--font-weight-medium, 500);
+  text-decoration: none;
+  text-underline-offset: 2px;
+}
+
+a:is(:hover, :focus-visible) {
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+  text-decoration-thickness: 0.5px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin-block: 0;
+}
+
+h1 {
+  font-size: var(--font-size-h1);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h2 {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h3,
+h4,
+h5,
+h6 {
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.3;
+}
+
+b,
+strong,
+th {
+  font-weight: var(--font-weight-medium);
+}
+
+code:not(pre code) {
+  display: inline;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  corner-shape: var(--corner-shape);
+  background: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  overflow-wrap: anywhere;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  word-break: break-word;
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--foreground);
+  font: inherit;
+  text-align: start;
+}
+
+.table :is(th, td) {
+  padding-block: 10px;
+  padding-inline: 0 24px;
+  overflow-wrap: anywhere;
+  border-bottom: 1px solid var(--border);
+  text-align: start;
+  vertical-align: top;
+}
+
+.table-responsive &gt; .table :is(th, td) {
+  overflow-wrap: break-word;
+}
+
+.table :is(th, td):last-child {
+  padding-inline-end: 0;
+}
+
+.table :is(caption, thead th) {
+  font-weight: 600;
+}
+
+.table thead th {
+  padding-block: 8px;
+  border-bottom-color: color-mix(in srgb, var(--foreground) 16%, transparent);
+}
+
+.table tbody tr:last-child :is(th, td) {
+  border-bottom: 0;
+}
+
+.table.table-sm :is(th, td) {
+  padding-block: 6px;
+}
+
+.table.table-sm :is(th, td):not(:last-child) {
+  padding-inline-end: 16px;
+}
+
+.table :is(.text-end, [align=&quot;right&quot;]) {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.table :is(.text-center, [align=&quot;center&quot;]) {
+  text-align: center;
+}
+
+.table .text-nowrap {
+  white-space: nowrap;
+}
+
+#widget {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  background: transparent !important;
+}
+
+.card {
+  min-width: 0;
+  padding: 12px;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  border-radius: var(--radius-2xl);
+  corner-shape: var(--corner-shape);
+  color: var(--card-foreground);
+  background: var(--card);
+}
+
+#widget &gt; :not(.card, .progress) {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.tooltip {
+  position: fixed;
+  z-index: 50;
+  top: 0;
+  left: 0;
+  width: max-content;
+  max-width: min(
+    20rem,
+    var(--tooltip-available-width, calc(100vw - 10px)),
+    calc(100vw - 10px)
+  );
+  max-height: min(
+    var(--tooltip-available-height, calc(100vh - 10px)),
+    calc(100vh - 10px)
+  );
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  corner-shape: var(--corner-shape);
+  color: var(--popover-foreground);
+  background: var(--popover);
+  box-shadow: none;
+  font-size: var(--font-size-tooltip);
+  line-height: var(--line-height-tooltip);
+  overflow-wrap: break-word;
+  white-space: normal;
+  pointer-events: none;
+  user-select: none;
+}
+
+.viz-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(max(180px, 24%), 1fr));
+  gap: 10px;
+}
+
+.viz-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.viz-stat-value {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+.viz-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+hr {
+  width: 100%;
+  height: 1px;
+  margin-block: 6px;
+  border: 0;
+  background: var(--border);
+}
+
+.nav {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+}
+
+.progress {
+  display: flex;
+  height: 8px;
+  margin-block: calc((var(--line-height-normal, 1.5em) - 8px) / 2);
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--muted);
+}
+
+.progress-bar:only-child {
+  border-radius: var(--radius-full);
+}
+
+.progress-bar {
+  height: 100%;
+  flex-shrink: 0;
+  border: 0;
+  background: var(--viz-series-1);
+}
+
+.viz-badge {
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  color: var(--accent-foreground);
+  background: var(--accent);
+  font-weight: var(--font-weight-medium);
+}
+
+small,
+.text-small,
+.viz-badge {
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
+}
+
+.text-muted {
+  color: var(--muted-foreground);
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.viz-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.viz-controls &gt; .form-label {
+  display: grid;
+  min-width: min(100%, 260px);
+  flex: 1 1 280px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 2px 12px;
+  margin-bottom: 0;
+}
+
+.viz-controls &gt; .form-label &gt; :is(.form-control, .form-range, .form-select) {
+  grid-column: 1 / -1;
+}
+
+.btn,
+.nav-link,
+.form-check-input,
+.form-control,
+.form-range,
+.form-select {
+  font: inherit;
+}
+
+.btn,
+.nav-link {
+  appearance: button;
+  display: inline-flex;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0 8px;
+  -webkit-app-region: no-drag;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: var(--corner-shape);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: var(--cursor-interaction, pointer);
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.btn:is(.btn-block, .viz-tile) {
+  inline-size: 100%;
+}
+
+.btn.viz-tile {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+a.btn {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn:not(:disabled):hover,
+.nav-link:not(:disabled):not([aria-disabled=&quot;true&quot;]):hover {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.btn-primary {
+  border-color: transparent;
+  color: var(--primary-foreground);
+  background: var(--foreground);
+  background-clip: padding-box;
+}
+
+.btn-primary .text-muted {
+  color: color-mix(in srgb, var(--primary-foreground) 50%, transparent);
+}
+
+.btn-primary:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 80%, transparent);
+  background-clip: padding-box;
+}
+
+.btn-ghost {
+  border-color: transparent;
+  color: var(--muted-foreground);
+  background: transparent;
+}
+
+.btn-ghost:not(:disabled):hover {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.nav-pills .nav-link {
+  min-width: 0;
+  border-color: transparent;
+  color: var(--muted-foreground);
+  background: transparent;
+}
+
+.nav-justified .nav-link {
+  flex: 1 1 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.nav-pills .nav-link.active {
+  color: var(--foreground);
+  background: var(--muted);
+}
+
+.btn:disabled,
+.nav-link:disabled,
+.nav-link[aria-disabled=&quot;true&quot;] {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+[data-lucide] {
+  stroke-width: 1.6;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--foreground);
+}
+
+.form-control {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  padding: 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: var(--corner-shape);
+  color: var(--foreground);
+  background: var(--secondary);
+}
+
+.form-control::placeholder {
+  color: var(--muted-foreground);
+}
+
+.form-control[type=&quot;file&quot;] {
+  padding: 0;
+  overflow: hidden;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control[type=&quot;file&quot;]::file-selector-button {
+  min-height: 26px;
+  margin-right: 8px;
+  padding: 0 8px;
+  border: 0;
+  border-right: 1px solid var(--input);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: inherit;
+  font: inherit;
+}
+
+.form-control[type=&quot;file&quot;]:not(:disabled):hover::file-selector-button {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-control-color[type=&quot;color&quot;] {
+  width: 40px;
+  height: 28px;
+  padding: 3px;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control-color[type=&quot;color&quot;]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.form-control-color[type=&quot;color&quot;]::-webkit-color-swatch {
+  border: 0;
+  border-radius: calc(var(--radius-lg) - 4px);
+  corner-shape: var(--corner-shape);
+}
+
+textarea.form-control {
+  height: auto;
+  min-height: 72px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.form-control:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-control:disabled,
+.form-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.form-select {
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  margin: 0;
+  padding: 0 32px 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: var(--corner-shape);
+  color: var(--foreground);
+  background-color: var(--secondary);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted-foreground) 50%),
+    linear-gradient(135deg, var(--muted-foreground) 50%, transparent 50%);
+  background-position:
+    calc(100% - 14px) 50%,
+    calc(100% - 10px) 50%;
+  background-repeat: no-repeat;
+  background-size: 4px 4px;
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-select:not(:disabled):hover {
+  background-color: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-select:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-check {
+  display: flex;
+  min-height: 20px;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-check-input {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  margin: 0;
+  border: 1px solid var(--input);
+  color: var(--primary-foreground);
+  background-color: transparent;
+  cursor: var(--cursor-interaction, default);
+  transition:
+    background-color 150ms,
+    border-color 150ms,
+    box-shadow 150ms;
+}
+
+.form-check:not(.form-switch) .form-check-input[type=&quot;checkbox&quot;] {
+  border-color: var(--input);
+  border-radius: var(--radius-sm);
+  corner-shape: var(--corner-shape);
+  background-color: var(--secondary);
+  box-shadow: var(--shadow-sm);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input:not(:disabled):not(:checked):hover {
+  background-color: var(--card);
+}
+
+.form-check:not(.form-switch) .form-check-input[type=&quot;checkbox&quot;]:checked {
+  border-color: var(--primary);
+  background-color: var(--primary);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input[type=&quot;checkbox&quot;]:checked::before {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--primary-foreground);
+  content: &quot;&quot;;
+  mask: var(--checkmark-image) center / 12px 12px no-repeat;
+}
+
+.form-check-input[type=&quot;radio&quot;] {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-full);
+}
+
+.form-check-input[type=&quot;radio&quot;]:checked {
+  border: 2px solid var(--primary);
+  background:
+    radial-gradient(circle, var(--primary-foreground) 0 2.5px, transparent 3px),
+    var(--primary);
+}
+
+.form-check:not(.form-switch) .form-check-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+}
+
+.form-switch .form-check-input:disabled,
+.form-switch .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.form-check-label {
+  color: var(--foreground);
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-switch .form-check-input {
+  position: relative;
+  width: 32px;
+  height: 20px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--muted);
+  box-shadow: none;
+  transition: background-color 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input::before {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border: 1px solid light-dark(var(--primary-foreground), var(--foreground));
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+  box-shadow: var(--shadow-sm);
+  content: &quot;&quot;;
+  transform: translate(2px, -50%);
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input:checked {
+  background: var(--primary);
+}
+
+.form-switch .form-check-input:checked::before {
+  transform: translate(14px, -50%);
+}
+
+.form-switch .form-check-input:focus-visible {
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+.form-range {
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 28px;
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  outline: none;
+  border: 0;
+  accent-color: var(--primary);
+  background: linear-gradient(
+      color-mix(in srgb, var(--foreground) 7%, transparent),
+      color-mix(in srgb, var(--foreground) 7%, transparent)
+    )
+    center / 100% 2px no-repeat;
+}
+
+.form-range::-webkit-slider-runnable-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-webkit-slider-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range::-moz-range-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-moz-range-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.btn:not(.btn-primary, .viz-tile):is(
+  [aria-pressed=&quot;true&quot;],
+  [aria-selected=&quot;true&quot;],
+  .is-selected
+) {
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+  background: var(--primary);
+}
+
+.btn.viz-tile:is([aria-pressed=&quot;true&quot;], [aria-selected=&quot;true&quot;], .is-selected) {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.btn:focus-visible,
+.nav-link:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+@media (pointer: coarse) {
+  .btn,
+  .nav-link,
+  .form-control,
+  .form-select {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Keep small-screen WebKit from zooming when a text field receives focus. */
+  .form-control,
+  .form-select {
+    font-size: max(16px, var(--font-size-normal));
+  }
+
+  .form-control[type=&quot;file&quot;]::file-selector-button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .form-control-color[type=&quot;color&quot;] {
+    width: 44px;
+    height: 44px;
+  }
+
+  .form-control:is(
+    [type=&quot;date&quot;],
+    [type=&quot;datetime-local&quot;],
+    [type=&quot;month&quot;],
+    [type=&quot;time&quot;],
+    [type=&quot;week&quot;]
+  ) {
+    min-width: 0;
+    max-width: 100%;
+    padding-block: 8px;
+  }
+
+  .form-check {
+    min-height: 44px;
+    padding-inline: 15px;
+  }
+
+  .form-check-input {
+    position: relative;
+  }
+
+  .form-check-input::after {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    content: &quot;&quot;;
+    transform: translate(-50%, -50%);
+  }
+
+  .form-check-label {
+    display: inline-flex;
+    min-width: 44px;
+    min-height: 44px;
+    align-items: center;
+  }
+
+  .form-range {
+    height: 44px;
+    touch-action: pan-y;
+  }
+
+  .form-range::-webkit-slider-runnable-track {
+    height: 44px;
+  }
+
+  .form-range::-moz-range-track {
+    height: 44px;
+  }
+
+  .form-range::-webkit-slider-thumb {
+    margin-top: 12px;
+  }
+}
+
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+#widget &gt; svg {
+  width: 100%;
+}
+
+/* Model-authored chart rules can otherwise stretch icons after these styles load. */
+svg.lucide {
+  display: block;
+  width: var(--icon-size) !important;
+  height: var(--icon-size) !important;
+  flex: none;
+  margin: 0 !important;
+  stroke-width: 1.6;
+}
+
+.text-warning,
+.text-destructive {
+  color: var(--destructive);
+}
+
+html&gt;body{padding:0}&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;div id=&quot;np-phase0f&quot; data-density=&quot;comfortable&quot; data-accent=&quot;teal&quot;&gt;
+&lt;style&gt;
+#np-phase0f{--canvas:light-dark(#eee7da,#151816);--shell:light-dark(#fbf8f1,#20231f);--panel:light-dark(#fffdf8,#292d28);--soft:light-dark(#f5efe4,#232722);--ink:light-dark(#16302e,#f5f0e7);--muted:light-dark(#64716c,#aeb8b1);--line:light-dark(#ddd3c3,#444b42);--accent:light-dark(#0f625d,#73c6bd);--accent-soft:light-dark(#dcece7,#193c39);--gold:light-dark(#8a682d,#ddb970);--gold-soft:light-dark(#f2e6c7,#3d3320);--danger:light-dark(#9d4037,#f0a096);--danger-soft:light-dark(#f6e4e1,#412523);--nav:light-dark(#15312f,#101b1a);--nav-ink:light-dark(#fbf8f1,#f3eee4);--shadow:light-dark(rgba(40,31,19,.13),rgba(0,0,0,.3));--gap:16px;--radius:14px;width:100%;color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,&quot;Segoe UI&quot;,sans-serif;background:transparent}
+#np-phase0f[data-density=&quot;compact&quot;]{--gap:10px;--radius:11px}#np-phase0f[data-accent=&quot;plum&quot;]{--accent:light-dark(#70435f,#d8a8c6);--accent-soft:light-dark(#eee0e8,#3b2634)}#np-phase0f *{box-sizing:border-box}#np-phase0f button,#np-phase0f input,#np-phase0f select,#np-phase0f textarea{font:inherit}#np-phase0f button{color:inherit}
+#np-phase0f .stage{position:relative;padding:14px;background:var(--canvas);border-radius:20px}#np-phase0f .review{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:end;margin-bottom:12px;padding:12px;background:var(--shell);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 8px 24px var(--shadow)}#np-phase0f .review label{display:grid;gap:5px;color:var(--muted);font-size:12px}#np-phase0f .review select,#np-phase0f .input{width:100%;min-height:42px;border:1px solid var(--line);border-radius:9px;background:var(--shell);color:var(--ink);padding:9px 11px}#np-phase0f .flow-actions,#np-phase0f .actions,#np-phase0f .chips,#np-phase0f .route-actions{display:flex;gap:8px;flex-wrap:wrap}
+#np-phase0f .window{display:grid;grid-template-columns:190px minmax(0,1fr);min-height:650px;overflow:hidden;background:var(--shell);border:1px solid var(--line);border-radius:17px;box-shadow:0 14px 34px var(--shadow)}#np-phase0f .side{padding:19px 13px;background:var(--nav);color:var(--nav-ink);display:flex;flex-direction:column;gap:20px}#np-phase0f .window[data-surface=&quot;customer&quot;] .side{background:var(--shell);color:var(--ink);border-right:1px solid var(--line)}#np-phase0f .brand{display:flex;gap:9px;align-items:center;padding:0 7px}#np-phase0f .mark{width:28px;height:28px;border:1px solid currentColor;border-radius:7px;transform:rotate(45deg);display:grid;place-items:center}#np-phase0f .mark:after{content:&quot;&quot;;width:7px;height:7px;border-radius:50%;background:var(--gold)}#np-phase0f .brand strong{display:block;font-family:Georgia,serif;font-weight:500}#np-phase0f .brand small{display:block;color:color-mix(in srgb,currentColor 65%,transparent)}#np-phase0f .nav{display:grid;gap:5px}#np-phase0f .nav button{border:0;background:transparent;color:color-mix(in srgb,currentColor 72%,transparent);padding:10px 11px;border-radius:9px;min-height:42px;display:flex;gap:9px;align-items:center;text-align:left;cursor:pointer}#np-phase0f .nav button[data-active=&quot;true&quot;]{color:currentColor;background:color-mix(in srgb,currentColor 12%,transparent)}#np-phase0f .window[data-surface=&quot;customer&quot;] .nav button{color:var(--muted)}#np-phase0f .window[data-surface=&quot;customer&quot;] .nav button[data-active=&quot;true&quot;]{color:var(--accent);background:var(--accent-soft)}#np-phase0f .foot{margin-top:auto;padding:13px 7px 0;border-top:1px solid color-mix(in srgb,currentColor 18%,transparent);font-size:12px}#np-phase0f .foot strong{display:block;font-weight:500}
+#np-phase0f .app{min-width:0}#np-phase0f .top{min-height:62px;padding:10px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line)}#np-phase0f .crumb{display:flex;gap:7px;flex-wrap:wrap;color:var(--muted)}#np-phase0f .crumb strong{color:var(--ink);font-weight:500}#np-phase0f .avatar{width:35px;height:35px;border-radius:50%;display:grid;place-items:center;color:var(--accent);background:var(--accent-soft);font-weight:500}#np-phase0f main{padding:22px}#np-phase0f[data-density=&quot;compact&quot;] main{padding:15px}#np-phase0f .heading{display:flex;justify-content:space-between;gap:15px;align-items:flex-start;margin-bottom:17px}#np-phase0f h1{margin:0 0 6px;font-family:Georgia,serif;font-size:clamp(25px,3vw,34px);line-height:1.12;font-weight:500}#np-phase0f h2,#np-phase0f h3{margin:0;font-size:16px;font-weight:500}#np-phase0f p{margin:4px 0 0;color:var(--muted)}
+#np-phase0f .button{min-height:40px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);padding:8px 13px;display:inline-flex;align-items:center;justify-content:center;gap:7px;font-weight:500;cursor:pointer}#np-phase0f .button[data-kind=&quot;primary&quot;]{background:var(--accent);color:var(--shell);border-color:var(--accent)}#np-phase0f .button[data-kind=&quot;quiet&quot;]{border-color:transparent;background:transparent;color:var(--accent)}#np-phase0f .button[data-kind=&quot;danger&quot;]{border-color:transparent;color:var(--danger);background:var(--danger-soft)}#np-phase0f .button:disabled{opacity:.46;cursor:not-allowed}#np-phase0f .grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(245px,.8fr);gap:var(--gap)}#np-phase0f .equal{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--gap)}#np-phase0f .summaries{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;margin-bottom:var(--gap)}#np-phase0f .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px}#np-phase0f .panel+.panel{margin-top:var(--gap)}#np-phase0f .panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:13px}
+#np-phase0f .action-card{min-height:128px;border:1px solid var(--line);background:var(--panel);border-radius:var(--radius);padding:15px;display:grid;align-content:space-between;gap:12px;text-align:left;cursor:pointer}#np-phase0f .action-card:hover{border-color:var(--accent)}#np-phase0f .action-card strong{display:block;font-weight:500}#np-phase0f .card-foot{display:flex;justify-content:space-between;align-items:end;color:var(--accent)}#np-phase0f .count{font-family:Georgia,serif;font-size:28px;color:var(--ink)}#np-phase0f .chip{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:999px;background:var(--soft);color:var(--muted);font-size:12px}#np-phase0f .chip[data-tone=&quot;ready&quot;]{color:var(--accent);background:var(--accent-soft)}#np-phase0f .chip[data-tone=&quot;attention&quot;]{color:var(--gold);background:var(--gold-soft)}#np-phase0f .chip[data-tone=&quot;danger&quot;]{color:var(--danger);background:var(--danger-soft)}
+#np-phase0f .table-wrap{overflow-x:auto}#np-phase0f table{width:100%;border-collapse:collapse}#np-phase0f th{color:var(--muted);font-size:12px;text-align:left;font-weight:500;padding:9px 10px;border-bottom:1px solid var(--line)}#np-phase0f td{padding:11px 10px;border-bottom:1px solid var(--line);vertical-align:middle}#np-phase0f tbody tr:last-child td{border-bottom:0}#np-phase0f tbody tr[data-go]{cursor:pointer}#np-phase0f tbody tr[data-go]:hover{background:var(--soft)}#np-phase0f .person{display:flex;align-items:center;gap:10px;min-width:170px}#np-phase0f .photo{width:48px;height:52px;flex:0 0 auto;border-radius:10px;display:grid;place-items:center;color:var(--accent);background:linear-gradient(145deg,var(--accent-soft),var(--gold-soft))}#np-phase0f .person strong{display:block;font-family:Georgia,serif;font-size:16px;font-weight:500}#np-phase0f .person small{display:block;color:var(--muted);margin-top:2px}
+#np-phase0f .form,#np-phase0f .list,#np-phase0f .timeline{display:grid;gap:12px}#np-phase0f .form-grid,#np-phase0f .facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}#np-phase0f .label{display:grid;gap:6px;color:var(--muted);font-size:13px}#np-phase0f textarea.input{min-height:82px;resize:vertical}#np-phase0f .check{display:flex;align-items:flex-start;gap:9px}#np-phase0f .steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:15px}#np-phase0f .step{position:relative;display:grid;justify-items:center;gap:5px;color:var(--muted);text-align:center;font-size:12px}#np-phase0f .step:before{content:&quot;&quot;;position:absolute;left:0;right:0;top:13px;height:1px;background:var(--line)}#np-phase0f .step:first-child:before{left:50%}#np-phase0f .step:last-child:before{right:50%}#np-phase0f .step span{position:relative;z-index:1;width:27px;height:27px;border-radius:50%;display:grid;place-items:center;background:var(--soft);border:1px solid var(--line)}#np-phase0f .step[data-on=&quot;true&quot;],#np-phase0f .step[data-done=&quot;true&quot;]{color:var(--accent)}#np-phase0f .step[data-on=&quot;true&quot;] span,#np-phase0f .step[data-done=&quot;true&quot;] span{color:var(--shell);background:var(--accent);border-color:var(--accent)}#np-phase0f .footer-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid var(--line);padding-top:14px;margin-top:15px}
+#np-phase0f .notice{display:flex;gap:10px;align-items:flex-start;padding:12px;border-radius:10px;background:var(--gold-soft)}#np-phase0f .notice[data-tone=&quot;safe&quot;]{background:var(--accent-soft)}#np-phase0f .notice[data-tone=&quot;danger&quot;]{background:var(--danger-soft)}#np-phase0f .notice strong{display:block;font-weight:500}#np-phase0f .notice p{font-size:13px}#np-phase0f .progress{height:8px;overflow:hidden;background:var(--soft);border-radius:999px}#np-phase0f .progress span{display:block;height:100%;background:var(--accent)}#np-phase0f .upload{padding:22px;border:1px dashed var(--line);border-radius:var(--radius);text-align:center;background:var(--soft)}#np-phase0f .upload strong{display:block;font-weight:500}#np-phase0f .profile{display:grid;grid-template-columns:92px minmax(0,1fr);gap:15px;align-items:center}#np-phase0f .profile .photo{width:92px;height:106px}#np-phase0f .profile h2{font-family:Georgia,serif;font-size:24px}#np-phase0f .fact span{display:block;color:var(--muted);font-size:12px;margin-bottom:3px}#np-phase0f .fact strong{font-weight:500}#np-phase0f .match{display:grid;grid-template-columns:58px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}#np-phase0f .match .photo{width:58px;height:64px}#np-phase0f .match h3{font-family:Georgia,serif;font-size:18px}#np-phase0f .event{position:relative;padding:0 0 16px 26px}#np-phase0f .event:before{content:&quot;&quot;;position:absolute;left:8px;top:8px;bottom:-2px;width:1px;background:var(--line)}#np-phase0f .event:last-child:before{display:none}#np-phase0f .event:after{content:&quot;&quot;;position:absolute;left:4px;top:5px;width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}#np-phase0f .event strong{display:block;font-weight:500}#np-phase0f .event small{color:var(--muted)}#np-phase0f .route{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--panel)}#np-phase0f .route+.route{margin-top:9px}#np-phase0f .route-head{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:10px;align-items:center}#np-phase0f .route-logo{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;color:var(--gold);background:var(--gold-soft);font-weight:500}#np-phase0f .route-head strong{display:block;font-weight:500}#np-phase0f .route-head small{color:var(--muted)}#np-phase0f .route-actions{margin-top:11px;padding-top:11px;border-top:1px solid var(--line)}
+#np-phase0f .modal-layer{position:absolute;inset:0;z-index:10;display:grid;place-items:center;padding:18px;background:color-mix(in srgb,var(--ink) 58%,transparent);border-radius:20px}#np-phase0f .modal-layer[hidden]{display:none}#np-phase0f .modal{width:min(470px,100%);background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;box-shadow:0 18px 50px var(--shadow)}#np-phase0f .modal h2{font-family:Georgia,serif;font-size:25px;margin-bottom:7px}#np-phase0f .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}#np-phase0f .status{min-height:22px;margin-top:9px;color:var(--accent);font-size:13px}#np-phase0f .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:820px){#np-phase0f .window{grid-template-columns:1fr;min-height:0}#np-phase0f .side{gap:10px;padding:12px}#np-phase0f .nav{display:flex;overflow-x:auto}#np-phase0f .nav button{white-space:nowrap}#np-phase0f .foot{display:none}#np-phase0f .grid{grid-template-columns:1fr}#np-phase0f .summaries{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){#np-phase0f .stage{padding:7px}#np-phase0f .review{grid-template-columns:1fr}#np-phase0f main{padding:14px}#np-phase0f .top{padding:9px 14px}#np-phase0f .heading{display:grid}#np-phase0f .equal,#np-phase0f .summaries,#np-phase0f .form-grid,#np-phase0f .facts{grid-template-columns:1fr}#np-phase0f .match{grid-template-columns:48px minmax(0,1fr)}#np-phase0f .match&gt;.button{grid-column:1/-1}#np-phase0f .profile{grid-template-columns:1fr}#np-phase0f .route-head{grid-template-columns:40px minmax(0,1fr)}#np-phase0f .route-head&gt;.chip{grid-column:1/-1;justify-self:start}}
+&lt;/style&gt;
+&lt;div class=&quot;stage&quot;&gt;
+  &lt;div class=&quot;review&quot;&gt;
+    &lt;label&gt;Choose a workflow
+      &lt;select id=&quot;np0f-flow&quot;&gt;
+        &lt;optgroup label=&quot;Set up BrokerDesk&quot;&gt;&lt;option value=&quot;onboarding&quot;&gt;1. Register the business&lt;/option&gt;&lt;option value=&quot;import&quot;&gt;2. Bring in 100 customers&lt;/option&gt;&lt;option value=&quot;team&quot;&gt;3. Give employees access&lt;/option&gt;&lt;option value=&quot;verification&quot;&gt;4. Verify the business&lt;/option&gt;&lt;/optgroup&gt;
+        &lt;optgroup label=&quot;Daily broker work&quot;&gt;&lt;option value=&quot;dashboard&quot; selected&gt;5. Today&#x27;s dashboard&lt;/option&gt;&lt;option value=&quot;customers&quot;&gt;6. Review customers&lt;/option&gt;&lt;option value=&quot;customer-detail&quot;&gt;7. Customer record&lt;/option&gt;&lt;option value=&quot;matches&quot;&gt;8. Find potential matches&lt;/option&gt;&lt;option value=&quot;send-intro&quot;&gt;9. Send an introduction&lt;/option&gt;&lt;option value=&quot;introductions&quot;&gt;10. Introduction queue&lt;/option&gt;&lt;option value=&quot;intro-detail&quot;&gt;11. Follow up on an introduction&lt;/option&gt;&lt;option value=&quot;tasks&quot;&gt;12. Tasks and renewals&lt;/option&gt;&lt;/optgroup&gt;
+        &lt;optgroup label=&quot;Customer experience&quot;&gt;&lt;option value=&quot;customer-home&quot;&gt;13. Customer home&lt;/option&gt;&lt;option value=&quot;customer-intros&quot;&gt;14. Introductions from all brokers&lt;/option&gt;&lt;option value=&quot;customer-intro-detail&quot;&gt;15. Choose a broker and respond&lt;/option&gt;&lt;option value=&quot;customer-privacy&quot;&gt;16. Approve contact sharing&lt;/option&gt;&lt;/optgroup&gt;
+      &lt;/select&gt;
+    &lt;/label&gt;
+    &lt;div class=&quot;flow-actions&quot;&gt;&lt;button class=&quot;button&quot; id=&quot;np0f-prev&quot; type=&quot;button&quot;&gt;Previous&lt;/button&gt;&lt;button class=&quot;button&quot; data-kind=&quot;primary&quot; id=&quot;np0f-next&quot; type=&quot;button&quot;&gt;Next workflow&lt;/button&gt;&lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div id=&quot;np0f-app&quot; aria-live=&quot;polite&quot;&gt;&lt;/div&gt;
+  &lt;div class=&quot;modal-layer&quot; id=&quot;np0f-modal-layer&quot; hidden&gt;&lt;div class=&quot;modal&quot; id=&quot;np0f-modal&quot; role=&quot;dialog&quot; aria-modal=&quot;true&quot; aria-labelledby=&quot;np0f-modal-title&quot;&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sr&quot; id=&quot;np0f-announcer&quot; aria-live=&quot;polite&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+(function(){
+var root=document.getElementById(&#x27;np-phase0f&#x27;),app=document.getElementById(&#x27;np0f-app&#x27;),flow=document.getElementById(&#x27;np0f-flow&#x27;),modalLayer=document.getElementById(&#x27;np0f-modal-layer&#x27;),modal=document.getElementById(&#x27;np0f-modal&#x27;),announcer=document.getElementById(&#x27;np0f-announcer&#x27;);
+var order=Array.from(flow.options).map(function(o){return o.value});
+var state={screen:&#x27;dashboard&#x27;,onboard:1,importStage:0,introStep:1,routeSent:false,reportSaved:false,taskDone:false,renewed:false,teamSaved:false,verificationSent:false,broker:&#x27;&#x27;,interested:false,contacts:false,density:&#x27;comfortable&#x27;,accent:&#x27;teal&#x27;};
+function icon(n){return &#x27;&lt;i data-lucide=&quot;&#x27;+n+&#x27;&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&#x27;}
+function btn(label,action,kind,extra){return &#x27;&lt;button type=&quot;button&quot; class=&quot;button&quot;&#x27;+(kind?&#x27; data-kind=&quot;&#x27;+kind+&#x27;&quot;&#x27;:&#x27;&#x27;)+&#x27; data-action=&quot;&#x27;+action+&#x27;&quot; &#x27;+(extra||&#x27;&#x27;)+&#x27;&gt;&#x27;+label+&#x27;&lt;/button&gt;&#x27;}
+function chip(label,tone){return &#x27;&lt;span class=&quot;chip&quot;&#x27;+(tone?&#x27; data-tone=&quot;&#x27;+tone+&#x27;&quot;&#x27;:&#x27;&#x27;)+&#x27;&gt;&#x27;+label+&#x27;&lt;/span&gt;&#x27;}
+function person(name,meta,initials){return &#x27;&lt;div class=&quot;person&quot;&gt;&lt;div class=&quot;photo&quot; aria-hidden=&quot;true&quot;&gt;&#x27;+initials+&#x27;&lt;/div&gt;&lt;div&gt;&lt;strong&gt;&#x27;+name+&#x27;&lt;/strong&gt;&lt;small&gt;&#x27;+meta+&#x27;&lt;/small&gt;&lt;/div&gt;&lt;/div&gt;&#x27;}
+function notice(title,text,tone){return &#x27;&lt;div class=&quot;notice&quot;&#x27;+(tone?&#x27; data-tone=&quot;&#x27;+tone+&#x27;&quot;&#x27;:&#x27;&#x27;)+&#x27;&gt;&#x27;+icon(tone===&#x27;safe&#x27;?&#x27;shield-check&#x27;:&#x27;info&#x27;)+&#x27;&lt;div&gt;&lt;strong&gt;&#x27;+title+&#x27;&lt;/strong&gt;&lt;p&gt;&#x27;+text+&#x27;&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;&#x27;}
+function heading(title,text,actions){return &#x27;&lt;div class=&quot;heading&quot;&gt;&lt;div&gt;&lt;h1&gt;&#x27;+title+&#x27;&lt;/h1&gt;&lt;p&gt;&#x27;+text+&#x27;&lt;/p&gt;&lt;/div&gt;&lt;div class=&quot;actions&quot;&gt;&#x27;+(actions||&#x27;&#x27;)+&#x27;&lt;/div&gt;&lt;/div&gt;&#x27;}
+function panel(title,text,body,actions){return &#x27;&lt;section class=&quot;panel&quot;&gt;&lt;div class=&quot;panel-head&quot;&gt;&lt;div&gt;&lt;h2&gt;&#x27;+title+&#x27;&lt;/h2&gt;&#x27;+(text?&#x27;&lt;p&gt;&#x27;+text+&#x27;&lt;/p&gt;&#x27;:&#x27;&#x27;)+&#x27;&lt;/div&gt;&#x27;+(actions||&#x27;&#x27;)+&#x27;&lt;/div&gt;&#x27;+body+&#x27;&lt;/section&gt;&#x27;}
+function navItem(label,target,ico,active){return &#x27;&lt;button type=&quot;button&quot; data-action=&quot;goto&quot; data-target=&quot;&#x27;+target+&#x27;&quot; data-active=&quot;&#x27;+String(active)+&#x27;&quot;&gt;&#x27;+icon(ico)+label+&#x27;&lt;/button&gt;&#x27;}
+function shell(surface,active,crumb,content){
+ var broker=surface!==&#x27;customer&#x27;;
+ var nav=broker?navItem(&#x27;Dashboard&#x27;,&#x27;dashboard&#x27;,&#x27;layout-dashboard&#x27;,active===&#x27;dashboard&#x27;)+navItem(&#x27;Customers&#x27;,&#x27;customers&#x27;,&#x27;users&#x27;,active===&#x27;customers&#x27;)+navItem(&#x27;Introductions&#x27;,&#x27;introductions&#x27;,&#x27;send&#x27;,active===&#x27;introductions&#x27;)+navItem(&#x27;Tasks&#x27;,&#x27;tasks&#x27;,&#x27;check-square&#x27;,active===&#x27;tasks&#x27;)+navItem(&#x27;Settings&#x27;,&#x27;team&#x27;,&#x27;settings&#x27;,active===&#x27;settings&#x27;):navItem(&#x27;Home&#x27;,&#x27;customer-home&#x27;,&#x27;home&#x27;,active===&#x27;home&#x27;)+navItem(&#x27;My portfolio&#x27;,&#x27;customer-home&#x27;,&#x27;user-round&#x27;,active===&#x27;portfolio&#x27;)+navItem(&#x27;Introductions&#x27;,&#x27;customer-intros&#x27;,&#x27;heart-handshake&#x27;,active===&#x27;customer-intros&#x27;)+navItem(&#x27;My brokers&#x27;,&#x27;customer-home&#x27;,&#x27;briefcase-business&#x27;,false)+navItem(&#x27;Access &amp; privacy&#x27;,&#x27;customer-privacy&#x27;,&#x27;shield&#x27;,active===&#x27;privacy&#x27;);
+ return &#x27;&lt;div class=&quot;window&quot; data-surface=&quot;&#x27;+surface+&#x27;&quot;&gt;&lt;aside class=&quot;side&quot; aria-label=&quot;&#x27;+(broker?&#x27;BrokerDesk&#x27;:&#x27;Customer&#x27;)+&#x27; navigation&quot;&gt;&lt;div class=&quot;brand&quot;&gt;&lt;span class=&quot;mark&quot; aria-hidden=&quot;true&quot;&gt;&lt;/span&gt;&lt;div&gt;&lt;strong&gt;Nakshatra&lt;/strong&gt;&lt;small&gt;&#x27;+(broker?&#x27;BrokerDesk&#x27;:&#x27;Private portfolio&#x27;)+&#x27;&lt;/small&gt;&lt;/div&gt;&lt;/div&gt;&lt;nav class=&quot;nav&quot;&gt;&#x27;+nav+&#x27;&lt;/nav&gt;&lt;div class=&quot;foot&quot;&gt;&lt;strong&gt;&#x27;+(broker?&#x27;Shubh Milan&#x27;:&#x27;Arjun Mehta&#x27;)+&#x27;&lt;/strong&gt;&#x27;+(broker?&#x27;Verified business · Owner&#x27;:&#x27;Profile owner&#x27;)+&#x27;&lt;/div&gt;&lt;/aside&gt;&lt;div class=&quot;app&quot;&gt;&lt;header class=&quot;top&quot;&gt;&lt;div class=&quot;crumb&quot;&gt;&lt;strong&gt;&#x27;+crumb+&#x27;&lt;/strong&gt;&lt;span&gt;&#x27;+(broker?&#x27;Shubh Milan&#x27;:&#x27;My Nakshatra&#x27;)+&#x27;&lt;/span&gt;&lt;/div&gt;&lt;span class=&quot;avatar&quot;&gt;&#x27;+(broker?&#x27;AP&#x27;:&#x27;AM&#x27;)+&#x27;&lt;/span&gt;&lt;/header&gt;&lt;main&gt;&#x27;+content+&#x27;&lt;/main&gt;&lt;/div&gt;&lt;/div&gt;&#x27;;
+}
+function steps(current,labels){return &#x27;&lt;div class=&quot;steps&quot;&gt;&#x27;+labels.map(function(label,i){var n=i+1;return &#x27;&lt;div class=&quot;step&quot; data-on=&quot;&#x27;+String(n===current)+&#x27;&quot; data-done=&quot;&#x27;+String(n&lt;current)+&#x27;&quot;&gt;&lt;span&gt;&#x27;+n+&#x27;&lt;/span&gt;&#x27;+label+&#x27;&lt;/div&gt;&#x27;}).join(&#x27;&#x27;)+&#x27;&lt;/div&gt;&#x27;}
+function facts(items){return &#x27;&lt;div class=&quot;facts&quot;&gt;&#x27;+items.map(function(x){return &#x27;&lt;div class=&quot;fact&quot;&gt;&lt;span&gt;&#x27;+x[0]+&#x27;&lt;/span&gt;&lt;strong&gt;&#x27;+x[1]+&#x27;&lt;/strong&gt;&lt;/div&gt;&#x27;}).join(&#x27;&#x27;)+&#x27;&lt;/div&gt;&#x27;}
+function actionCard(count,title,text,target){return &#x27;&lt;button class=&quot;action-card&quot; type=&quot;button&quot; data-action=&quot;goto&quot; data-target=&quot;&#x27;+target+&#x27;&quot;&gt;&lt;div&gt;&lt;strong&gt;&#x27;+title+&#x27;&lt;/strong&gt;&lt;p&gt;&#x27;+text+&#x27;&lt;/p&gt;&lt;/div&gt;&lt;div class=&quot;card-foot&quot;&gt;&lt;span class=&quot;count&quot;&gt;&#x27;+count+&#x27;&lt;/span&gt;&lt;span&gt;Open queue →&lt;/span&gt;&lt;/div&gt;&lt;/button&gt;&#x27;}
+function event(title,time){return &#x27;&lt;div class=&quot;event&quot;&gt;&lt;strong&gt;&#x27;+title+&#x27;&lt;/strong&gt;&lt;small&gt;&#x27;+time+&#x27;&lt;/small&gt;&lt;/div&gt;&#x27;}
+
+function onboarding(){
+ var content=&#x27;&#x27;;
+ if(state.onboard===1)content=&#x27;&lt;div class=&quot;form-grid&quot;&gt;&lt;label class=&quot;label&quot;&gt;Business name&lt;input class=&quot;input&quot; value=&quot;Shubh Milan Matrimony&quot;&gt;&lt;/label&gt;&lt;label class=&quot;label&quot;&gt;Business type&lt;select class=&quot;input&quot;&gt;&lt;option&gt;Registered company&lt;/option&gt;&lt;option&gt;Partnership&lt;/option&gt;&lt;option&gt;Individual professional&lt;/option&gt;&lt;/select&gt;&lt;/label&gt;&lt;label class=&quot;label&quot;&gt;Registration number&lt;input class=&quot;input&quot; placeholder=&quot;Enter registration number&quot;&gt;&lt;/label&gt;&lt;label class=&quot;label&quot;&gt;Primary city&lt;input class=&quot;input&quot; value=&quot;Pune&quot;&gt;&lt;/label&gt;&lt;/div&gt;&#x27;;
+ if(state.onboard===2)content=&#x27;&lt;div class=&quot;form-grid&quot;&gt;&lt;label class=&quot;label&quot;&gt;Your full name&lt;input class=&quot;input&quot; value=&quot;Asha Patel&quot;&gt;&lt;/label&gt;&lt;label class=&quot;label&quot;&gt;Your position&lt;input class=&quot;input&quot; value=&quot;Owner&quot;&gt;&lt;/label&gt;&lt;label class=&quot;label&quot;&gt;Work email&lt;input class=&quot;input&quot; value=&quot;asha@shubhmilan.example&quot;&gt;&lt;/label&gt;&lt;label class=&quot;label&quot;&gt;Work phone&lt;input class=&quot;input&quot; value=&quot;+91 98••• ••432&quot;&gt;&lt;/label&gt;&lt;/div&gt;&#x27;;
+ if(state.onboard===3)content=&#x27;&lt;div class=&quot;form&quot;&gt;&lt;label class=&quot;label&quot;&gt;Office address&lt;textarea class=&quot;input&quot;&gt;Baner Road, Pune, Maharashtra&lt;/textarea&gt;&lt;/label&gt;&lt;div class=&quot;form-grid&quot;&gt;&lt;label class=&quot;label&quot;&gt;Service locations&lt;input class=&quot;input&quot; value=&quot;Pune, Mumbai, Nashik&quot;&gt;&lt;/label&gt;&lt;label class=&quot;label&quot;&gt;Years in business&lt;input class=&quot;input&quot; value=&quot;12&quot;&gt;&lt;/label&gt;&lt;/div&gt;&lt;label class=&quot;check&quot;&gt;&lt;input type=&quot;checkbox&quot; checked&gt; I am authorized to register this business and accept the BrokerDesk terms.&lt;/label&gt;&lt;/div&gt;&#x27;;
+ if(state.onboard===4)content=notice(&#x27;Ready for verification&#x27;,&#x27;Your workspace is private until the required identity and business checks are complete.&#x27;,&#x27;safe&#x27;)+&#x27;&lt;div style=&quot;margin-top:14px&quot;&gt;&#x27;+facts([[&#x27;Business&#x27;,&#x27;Shubh Milan Matrimony&#x27;],[&#x27;Representative&#x27;,&#x27;Asha Patel · Owner&#x27;],[&#x27;Location&#x27;,&#x27;Pune, Maharashtra&#x27;],[&#x27;Next step&#x27;,&#x27;Identity and business verification&#x27;]])+&#x27;&lt;/div&gt;&#x27;;
+ var footer=&#x27;&lt;div class=&quot;footer-actions&quot;&gt;&#x27;+btn(&#x27;Back&#x27;,&#x27;onboard-back&#x27;,&#x27;&#x27;,state.onboard===1?&#x27;disabled&#x27;:&#x27;&#x27;)+btn(state.onboard===4?&#x27;Continue to verification&#x27;:&#x27;Save and continue&#x27;,&#x27;onboard-next&#x27;,&#x27;primary&#x27;)+&#x27;&lt;/div&gt;&#x27;;
+ return shell(&#x27;broker&#x27;,&#x27;settings&#x27;,&#x27;Business setup&#x27;,heading(&#x27;Set up BrokerDesk&#x27;,&#x27;A short, guided setup for your business.&#x27;)+panel(&#x27;Business registration&#x27;,&#x27;Step &#x27;+state.onboard+&#x27; of 4&#x27;,steps(state.onboard,[&#x27;Business&#x27;,&#x27;Representative&#x27;,&#x27;Practice&#x27;,&#x27;Review&#x27;])+content+footer));
+}
+function importCustomers(){
+ var body=&#x27;&#x27;;
+ if(state.importStage===0)body=&#x27;&lt;div class=&quot;upload&quot;&gt;&#x27;+icon(&#x27;sheet&#x27;)+&#x27;&lt;strong&gt;Bring your customer list&lt;/strong&gt;&lt;p&gt;Use our template or choose your existing spreadsheet. Files stay private while we check them.&lt;/p&gt;&#x27;+btn(&#x27;Choose spreadsheet&#x27;,&#x27;process-import&#x27;,&#x27;primary&#x27;)+&#x27;&lt;/div&gt;&#x27;;
+ if(state.importStage===1)body=&#x27;&lt;div class=&quot;progress&quot; role=&quot;progressbar&quot; aria-label=&quot;Import validation&quot; aria-valuenow=&quot;82&quot; aria-valuemin=&quot;0&quot; aria-valuemax=&quot;100&quot;&gt;&lt;span style=&quot;width:82%&quot;&gt;&lt;/span&gt;&lt;/div&gt;&lt;p&gt;Checking 100 rows…&lt;/p&gt;&lt;div class=&quot;status&quot;&gt;Names, contact details and required columns are being checked.&lt;/div&gt;&#x27;+btn(&#x27;Show validation result&#x27;,&#x27;process-import&#x27;,&#x27;primary&#x27;);
+ if(state.importStage===2)body=notice(&#x27;92 customers are ready to invite&#x27;,&#x27;Eight rows need a small correction. No profile has been shared or matched yet.&#x27;,&#x27;safe&#x27;)+&#x27;&lt;div class=&quot;table-wrap&quot;&gt;&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;Result&lt;/th&gt;&lt;th&gt;Customers&lt;/th&gt;&lt;th&gt;Next action&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;&#x27;+chip(&#x27;Ready&#x27;,&#x27;ready&#x27;)+&#x27;&lt;/td&gt;&lt;td&gt;92&lt;/td&gt;&lt;td&gt;Send invitations&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&#x27;+chip(&#x27;Needs correction&#x27;,&#x27;attention&#x27;)+&#x27;&lt;/td&gt;&lt;td&gt;6&lt;/td&gt;&lt;td&gt;Missing phone or email&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&#x27;+chip(&#x27;Possible duplicate in this business&#x27;)+&#x27;&lt;/td&gt;&lt;td&gt;2&lt;/td&gt;&lt;td&gt;Review safely&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/div&gt;&lt;div class=&quot;footer-actions&quot;&gt;&#x27;+btn(&#x27;Fix 8 rows&#x27;,&#x27;&#x27;, &#x27;&#x27;)+btn(&#x27;Invite 92 customers&#x27;,&#x27;goto&#x27;,&#x27;primary&#x27;,&#x27;data-target=&quot;customers&quot;&#x27;)+&#x27;&lt;/div&gt;&#x27;;
+ return shell(&#x27;broker&#x27;,&#x27;settings&#x27;,&#x27;Customer import&#x27;,heading(&#x27;Bring in your customers&#x27;,&#x27;Start with 100 customers without copying or exposing existing Nakshatra profiles.&#x27;,btn(&#x27;Download template&#x27;,&#x27;&#x27;, &#x27;&#x27;))+panel(&#x27;Private import&#x27;,&#x27;Nothing becomes shareable until each customer claims their invitation and agrees to work with you.&#x27;,body));
+}
+function team(){
+ var body=&#x27;&lt;div class=&quot;table-wrap&quot;&gt;&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;Employee&lt;/th&gt;&lt;th&gt;Role&lt;/th&gt;&lt;th&gt;Customer access&lt;/th&gt;&lt;th&gt;Status&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;&#x27;+person(&#x27;Asha Patel&#x27;,&#x27;asha@shubhmilan.example&#x27;,&#x27;AP&#x27;)+&#x27;&lt;/td&gt;&lt;td&gt;Owner&lt;/td&gt;&lt;td&gt;All customers&lt;/td&gt;&lt;td&gt;&#x27;+chip(&#x27;Active&#x27;,&#x27;ready&#x27;)+&#x27;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&#x27;+person(&#x27;Kiran Shah&#x27;,&#x27;kiran@shubhmilan.example&#x27;,&#x27;KS&#x27;)+&#x27;&lt;/td&gt;&lt;td&gt;&lt;select class=&quot;input&quot;&gt;&lt;option&gt;Broker&lt;/option&gt;&lt;option&gt;Admin&lt;/option&gt;&lt;option&gt;View only&lt;/option&gt;&lt;/select&gt;&lt;/td&gt;&lt;td&gt;&lt;select class=&quot;input&quot;&gt;&lt;option&gt;Assigned customers&lt;/option&gt;&lt;option&gt;All customers&lt;/option&gt;&lt;option&gt;View only&lt;/option&gt;&lt;/select&gt;&lt;/td&gt;&lt;td&gt;&#x27;+chip(&#x27;Active&#x27;,&#x27;ready&#x27;)+&#x27;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&#x27;+person(&#x27;Meera Joshi&#x27;,&#x27;Invitation sent&#x27;,&#x27;MJ&#x27;)+&#x27;&lt;/td&gt;&lt;td&gt;Broker&lt;/td&gt;&lt;td&gt;Team West&lt;/td&gt;&lt;td&gt;&#x27;+chip(&#x27;Waiting&#x27;,&#x27;attention&#x27;)+&#x27;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/div&gt;&lt;div class=&quot;footer-actions&quot;&gt;&lt;span class=&quot;status&quot;&gt;&#x27;+(state.teamSaved?&#x27;Access saved. Changes apply immediately.&#x27;:&#x27;Choose the simplest access each employee needs.&#x27;)+&#x27;&lt;/span&gt;&#x27;+btn(&#x27;Save employee access&#x27;,&#x27;save-team&#x27;,&#x27;primary&#x27;)+&#x27;&lt;/div&gt;&#x27;;
+ return shell(&#x27;broker&#x27;,&#x27;settings&#x27;,&#x27;Settings · Team&#x27;,heading(&#x27;Team access&#x27;,&#x27;Give each employee only the customers and actions they need.&#x27;,btn(&#x27;Invite employee&#x27;,&#x27;&#x27;, &#x27;primary&#x27;))+notice(&#x27;Access follows assignment&#x27;,&#x27;Removing a role, assignment or customer permission ends access immediately.&#x27;,&#x27;safe&#x27;)+&#x27;&lt;div style=&quot;margin-top:16px&quot;&gt;&#x27;+panel(&#x27;Employees&#x27;,&#x27;Owner and administrator changes require extra sign-in confirmation.&#x27;,body)+&#x27;&lt;/div&gt;&#x27;);
+}
+function verification(){
+ var body=&#x27;&lt;div class=&quot;list&quot;&gt;&lt;div class=&quot;route&quot;&gt;&lt;div class=&quot;route-head&quot;&gt;&lt;span class=&quot;route-logo&quot;&gt;1&lt;/span&gt;&lt;div&gt;&lt;strong&gt;Representative identity&lt;/strong&gt;&lt;small&gt;Didit identity check for Asha Patel&lt;/small&gt;&lt;/div&gt;&#x27;+chip(&#x27;Verified&#x27;,&#x27;ready&#x27;)+&#x27;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;route&quot;&gt;&lt;div class=&quot;route-head&quot;&gt;&lt;span class=&quot;route-logo&quot;&gt;2&lt;/span&gt;&lt;div&gt;&lt;strong&gt;Business registration&lt;/strong&gt;&lt;small&gt;Registration certificate and official number&lt;/small&gt;&lt;/div&gt;&#x27;+chip(state.verificationSent?&#x27;Under review&#x27;:&#x27;Required&#x27;,state.verificationSent?&#x27;attention&#x27;:&#x27;danger&#x27;)+&#x27;&lt;/div&gt;&lt;div class=&quot;route-actions&quot;&gt;&lt;label class=&quot;label&quot; style=&quot;flex:1&quot;&gt;Choose document&lt;input class=&quot;input&quot; type=&quot;file&quot; aria-label=&quot;Choose business registration document&quot;&gt;&lt;/label&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;route&quot;&gt;&lt;div class=&quot;route-head&quot;&gt;&lt;span class=&quot;route-logo&quot;&gt;3&lt;/span&gt;&lt;div&gt;&lt;strong&gt;Business contact&lt;/strong&gt;&lt;small&gt;Confirm work email and phone&lt;/small&gt;&lt;/div&gt;&#x27;+chip(&#x27;Verified&#x27;,&#x27;ready&#x27;)+&#x27;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;footer-actions&quot;&gt;&lt;span class=&quot;status&quot;&gt;&#x27;+(state.verificationSent?&#x27;Document received. Review usually takes 1–2 business days.&#x27;:&#x27;Your badge will say exactly what Nakshatra verified.&#x27;)+&#x27;&lt;/span&gt;&#x27;+btn(&#x27;Submit document&#x27;,&#x27;submit-verification&#x27;,&#x27;primary&#x27;)+&#x27;&lt;/div&gt;&#x27;;
+ return shell(&#x27;broker&#x27;,&#x27;settings&#x27;,&#x27;Settings · Verification&#x27;,heading(&#x27;Verify your business&#x27;,&#x27;Clear checks help customers know who they are working with.&#x27;)+panel(&#x27;Verification checklist&#x27;,&#x27;Private documents are never shown to customers or other brokers.&#x27;,body));
+}
+function dashboard(){
+ var cards=actionCard(&#x27;12&#x27;,&#x27;New customers&#x27;,&#x27;Review new claims and incomplete profiles.&#x27;,&#x27;customers&#x27;)+actionCard(&#x27;8&#x27;,&#x27;Profiles to review&#x27;,&#x27;Check details before an introduction.&#x27;,&#x27;customers&#x27;)+actionCard(&#x27;6&#x27;,&#x27;Introductions need action&#x27;,&#x27;Follow up or record a response.&#x27;,&#x27;introductions&#x27;)+actionCard(&#x27;4&#x27;,&#x27;Customer responses&#x27;,&#x27;Confirm the next step.&#x27;,&#x27;intro-detail&#x27;)+actionCard(state.taskDone?&#x27;2&#x27;:&#x27;3&#x27;,&#x27;Tasks due today&#x27;,&#x27;Calls and follow-ups for today.&#x27;,&#x27;tasks&#x27;)+actionCard(state.renewed?&#x27;1&#x27;:&#x27;2&#x27;,&#x27;Renewals coming up&#x27;,&#x27;Speak to customers before renewal.&#x27;,&#x27;tasks&#x27;);
+ return shell(&#x27;broker&#x27;,&#x27;dashboard&#x27;,&#x27;Dashboard&#x27;,heading(&#x27;Good morning, Asha&#x27;,&#x27;Start with the actions that need your attention today.&#x27;,btn(&#x27;Invite customer&#x27;,&#x27;goto&#x27;,&#x27;primary&#x27;,&#x27;data-target=&quot;import&quot;&#x27;))+&#x27;&lt;div class=&quot;summaries&quot;&gt;&#x27;+cards+&#x27;&lt;/div&gt;&#x27;+panel(&#x27;Today’s priority&#x27;,&#x27;Based on due dates and customer responses.&#x27;,&#x27;&lt;div class=&quot;route&quot;&gt;&lt;div class=&quot;route-head&quot;&gt;&lt;span class=&quot;route-logo&quot;&gt;AN&lt;/span&gt;&lt;div&gt;&lt;strong&gt;Arjun Mehta and Naina Rao&lt;/strong&gt;&lt;small&gt;Introduction · 9 days waiting&lt;/small&gt;&lt;/div&gt;&#x27;+chip(&#x27;Follow up today&#x27;,&#x27;attention&#x27;)+&#x27;&lt;/div&gt;&lt;div class=&quot;route-actions&quot;&gt;&#x27;+btn(&#x27;Open introduction&#x27;,&#x27;goto&#x27;,&#x27;primary&#x27;,&#x27;data-target=&quot;intro-detail&quot;&#x27;)+btn(&#x27;Add task&#x27;,&#x27;&#x27;, &#x27;&#x27;)+&#x27;&lt;/div&gt;&lt;/div&gt;&#x27;));
+}
+function customers(){
+ var body=&#x27;&lt;div class=&quot;table-wrap&quot;&gt;&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;Customer&lt;/th&gt;&lt;th&gt;Profile&lt;/th&gt;&lt;th&gt;Introductions&lt;/th&gt;&lt;th&gt;Next action&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;&lt;tr data-go=&quot;customer-detail&quot;&gt;&lt;td&gt;&#x27;+person(&#x27;Arjun Mehta&#x27;,&#x27;Bengaluru · Software architect&#x27;,&#x27;AM&#x27;)+&#x27;&lt;/td&gt;&lt;td&gt;&#x27;+chip(&#x27;Ready&#x27;,&#x27;ready&#x27;)+&#x27;&lt;/td&gt;&lt;td&gt;7&lt;/td&gt;&lt;td&gt;Find potential matches&lt;/td&gt;&lt;/tr&gt;&lt;tr data-go=&quot;customer-detail&quot;&gt;&lt;td&gt;&#x27;+person(&#x27;Naina Rao&#x27;,&#x27;Pune · Product manager&#x27;,&#x27;NR&#x27;)+&#x27;&lt;/td&gt;&lt;td&gt;&#x27;+chip(&#x27;Ready&#x27;,&#x27;ready&#x27;)+&#x27;&lt;/td&gt;&lt;td&gt;4&lt;/td&gt;&lt;td&gt;Review response&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&#x27;+person(&#x27;Riya Kapoor&#x27;,&#x27;Mumbai · Chartered accountant&#x27;,&#x27;RK&#x27;)+&#x27;&lt;/td&gt;&lt;td&gt;&#x27;+chip(&#x27;Needs 2 details&#x27;,&#x27;attention&#x27;)+&#x27;&lt;/td&gt;&lt;td&gt;0&lt;/td&gt;&lt;td&gt;Request update&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&#x27;+person(&#x27;Vikram Iyer&#x27;,&#x27;Chennai · Entrepreneur&#x27;,&#x27;VI&#x27;)+&#x27;&lt;/td&gt;&lt;td&gt;&#x27;+chip(&#x27;Invitation sent&#x27;)+&#x27;&lt;/td&gt;&lt;td&gt;0&lt;/td&gt;&lt;td&gt;Remind customer&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/div&gt;&#x27;;
+ return shell(&#x27;broker&#x27;,&#x27;customers&#x27;,&#x27;Customers&#x27;,heading(&#x27;Customers&#x27;,&#x27;Everyone your business is currently helping.&#x27;,btn(&#x27;Invite customer&#x27;,&#x27;goto&#x27;,&#x27;primary&#x27;,&#x27;data-target=&quot;import&quot;&#x27;))+panel(&#x27;Customer list&#x27;,&#x27;Only customers assigned to you are shown.&#x27;,body));
+}
+function customerDetail(){
+ var profile=&#x27;&lt;div class=&quot;profile&quot;&gt;&lt;div class=&quot;photo&quot;&gt;AM&lt;/div&gt;&lt;div&gt;&lt;h2&gt;Arjun Mehta&lt;/h2&gt;&lt;p&gt;Bengaluru · 31 years · 178 cm&lt;/p&gt;&lt;div class=&quot;chips&quot;&gt;&#x27;+chip(&#x27;Profile ready&#x27;,&#x27;ready&#x27;)+chip(&#x27;Identity verified&#x27;,&#x27;ready&#x27;)+chip(&#x27;Renewal in 42 days&#x27;)+&#x27;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&#x27;;
+ var details=facts([[&#x27;Education&#x27;,&#x27;M.Tech · Computer Science&#x27;],[&#x27;Profession&#x27;,&#x27;Software architect&#x27;],[&#x27;Lifestyle&#x27;,&#x27;Non-smoker · Vegetarian&#x27;],[&#x27;Customer since&#x27;,&#x27;12 March 2026&#x27;],[&#x27;Profile owner&#x27;,&#x27;Arjun Mehta&#x27;],[&#x27;Your access&#x27;,&#x27;Review and introductions&#x27;]]);
+ return shell(&#x27;broker&#x27;,&#x27;customers&#x27;,&#x27;Customers · Arjun Mehta&#x27;,heading(&#x27;Customer record&#x27;,&#x27;Review readiness, preferences and your next action.&#x27;,btn(&#x27;Find potential matches&#x27;,&#x27;goto&#x27;,&#x27;primary&#x27;,&#x27;data-target=&quot;matches&quot;&#x27;))+&#x27;&lt;div class=&quot;grid&quot;&gt;&lt;div&gt;&#x27;+panel(&#x27;Customer-owned portfolio&#x27;,&#x27;Published 2 days ago.&#x27;,profile+&#x27;&lt;div style=&quot;margin-top:16px&quot;&gt;&#x27;+details+&#x27;&lt;/div&gt;&#x27;)+panel(&#x27;Mandatory preferences&#x27;,&#x27;Used to narrow suggestions, never to make the decision.&#x27;,facts([[&#x27;Age&#x27;,&#x27;26–31 years&#x27;],[&#x27;Height&#x27;,&#x27;157 cm or above&#x27;],[&#x27;Location&#x27;,&#x27;Bengaluru, Pune or open to relocate&#x27;],[&#x27;Horoscope&#x27;,&#x27;Customer permits broker review&#x27;]]))+&#x27;&lt;/div&gt;&lt;div&gt;&#x27;+panel(&#x27;Profile readiness&#x27;,&#x27;4 of 4 required checks&#x27;,&#x27;&lt;div class=&quot;list&quot;&gt;&lt;span&gt;✓ Personal details complete&lt;/span&gt;&lt;span&gt;✓ Photos approved by customer&lt;/span&gt;&lt;span&gt;✓ Preferences published&lt;/span&gt;&lt;span&gt;✓ Consent to introduce active&lt;/span&gt;&lt;/div&gt;&#x27;)+panel(&#x27;Next action&#x27;,&#x27;Three potential matches meet both customers’ mandatory preferences.&#x27;,btn(&#x27;See 3 potential matches&#x27;,&#x27;goto&#x27;,&#x27;primary&#x27;,&#x27;data-target=&quot;matches&quot;&#x27;))+&#x27;&lt;/div&gt;&lt;/div&gt;&#x27;);
+}
+function matches(){
+ var match=function(name,meta,initials,why){return &#x27;&lt;div class=&quot;match&quot;&gt;&lt;div class=&quot;photo&quot;&gt;&#x27;+initials+&#x27;&lt;/div&gt;&lt;div&gt;&lt;h3&gt;&#x27;+name+&#x27;&lt;/h3&gt;&lt;p&gt;&#x27;+meta+&#x27;&lt;/p&gt;&lt;div class=&quot;chips&quot;&gt;&#x27;+chip(&#x27;Mutual age range&#x27;,&#x27;ready&#x27;)+chip(why,&#x27;ready&#x27;)+chip(&#x27;No introduction from your business&#x27;)+&#x27;&lt;/div&gt;&lt;/div&gt;&#x27;+btn(&#x27;Send introduction&#x27;,&#x27;start-intro&#x27;,&#x27;primary&#x27;,&#x27;data-name=&quot;&#x27;+name+&#x27;&quot;&#x27;)+&#x27;&lt;/div&gt;&#x27;};
+ return shell(&#x27;broker&#x27;,&#x27;customers&#x27;,&#x27;Arjun · Potential matches&#x27;,heading(&#x27;Potential matches for Arjun&#x27;,&#x27;These customers meet both sides’ mandatory preferences. You make the final judgement.&#x27;,btn(&#x27;Back to customer&#x27;,&#x27;goto&#x27;,&#x27;&#x27;, &#x27;data-target=&quot;customer-detail&quot;&#x27;))+notice(&#x27;Why these people appear&#x27;,&#x27;Suggestions use stated, permitted facts. Nakshatra does not score people or predict compatibility.&#x27;,&#x27;safe&#x27;)+&#x27;&lt;div style=&quot;margin-top:16px&quot; class=&quot;list&quot;&gt;&#x27;+match(&#x27;Naina Rao&#x27;,&#x27;29 · Pune · Product manager&#x27;,&#x27;NR&#x27;,&#x27;Location fits&#x27;)+match(&#x27;Kavya Nair&#x27;,&#x27;28 · Bengaluru · Dentist&#x27;,&#x27;KN&#x27;,&#x27;Lifestyle fits&#x27;)+match(&#x27;Divya Shah&#x27;,&#x27;30 · Mumbai · Consultant&#x27;,&#x27;DS&#x27;,&#x27;Open to relocate&#x27;)+&#x27;&lt;/div&gt;&#x27;);
+}
+function sendIntro(){
+ var body=&#x27;&#x27;;
+ if(state.introStep===1)body=&#x27;&lt;div class=&quot;equal&quot;&gt;&lt;div class=&quot;route&quot;&gt;&#x27;+person(&#x27;Arjun Mehta&#x27;,&#x27;Profile ready · Consent active&#x27;,&#x27;AM&#x27;)+&#x27;&lt;/div&gt;&lt;div class=&quot;route&quot;&gt;&#x27;+person(&#x27;Naina Rao&#x27;,&#x27;Profile ready · Consent active&#x27;,&#x27;NR&#x27;)+&#x27;&lt;/div&gt;&lt;/div&gt;&#x27;;
+ if(state.introStep===2)body=facts([[&#x27;Age preferences&#x27;,&#x27;Fits both customers&#x27;],[&#x27;Height preferences&#x27;,&#x27;Fits both customers&#x27;],[&#x27;Locations&#x27;,&#x27;Pune and Bengaluru accepted&#x27;],[&#x27;Lifestyle&#x27;,&#x27;Fits both customers&#x27;],[&#x27;Horoscope&#x27;,&#x27;Broker review permitted&#x27;],[&#x27;Previous introduction&#x27;,&#x27;None from Shubh Milan&#x27;]]);
+ if(state.introStep===3)body=&#x27;&lt;div class=&quot;form&quot;&gt;&lt;label class=&quot;check&quot;&gt;&lt;input type=&quot;checkbox&quot; checked&gt; Share each customer’s standard introduction view&lt;/label&gt;&lt;label class=&quot;check&quot;&gt;&lt;input type=&quot;checkbox&quot; checked&gt; Send email and dashboard notification&lt;/label&gt;&lt;label class=&quot;label&quot;&gt;Private note for your team&lt;textarea class=&quot;input&quot; placeholder=&quot;Optional. Never shown to customers.&quot;&gt;&lt;/textarea&gt;&lt;/label&gt;&lt;/div&gt;&#x27;;
+ if(state.introStep===4)body=notice(&#x27;Private information stays protected&#x27;,&#x27;Phone numbers, private family details and documents are not shared. Each customer has 30 days to respond.&#x27;,&#x27;safe&#x27;)+&#x27;&lt;div style=&quot;margin-top:14px&quot;&gt;&#x27;+facts([[&#x27;Customers&#x27;,&#x27;Arjun Mehta and Naina Rao&#x27;],[&#x27;Response period&#x27;,&#x27;30 days&#x27;],[&#x27;Reminder&#x27;,&#x27;Customer day 7 · Broker task day 15&#x27;],[&#x27;Shared view&#x27;,&#x27;Standard introduction view&#x27;]])+&#x27;&lt;/div&gt;&#x27;;
+ var footer=&#x27;&lt;div class=&quot;footer-actions&quot;&gt;&#x27;+btn(&#x27;Back&#x27;,&#x27;intro-back&#x27;,&#x27;&#x27;,state.introStep===1?&#x27;disabled&#x27;:&#x27;&#x27;)+btn(state.introStep===4?&#x27;Send introduction&#x27;:&#x27;Continue&#x27;,&#x27;intro-next&#x27;,&#x27;primary&#x27;)+&#x27;&lt;/div&gt;&#x27;;
+ return shell(&#x27;broker&#x27;,&#x27;introductions&#x27;,&#x27;New introduction&#x27;,heading(&#x27;Send introduction&#x27;,&#x27;A short review before both customers are notified.&#x27;)+panel(&#x27;Review and send&#x27;,&#x27;Step &#x27;+state.introStep+&#x27; of 4&#x27;,steps(state.introStep,[&#x27;Customers&#x27;,&#x27;Preference fit&#x27;,&#x27;Sharing&#x27;,&#x27;Confirm&#x27;])+body+footer));
+}
+function introductions(){
+ var body=&#x27;&lt;div class=&quot;table-wrap&quot;&gt;&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;Customers&lt;/th&gt;&lt;th&gt;Your status&lt;/th&gt;&lt;th&gt;Time&lt;/th&gt;&lt;th&gt;Next action&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;&lt;tr data-go=&quot;intro-detail&quot;&gt;&lt;td&gt;&#x27;+person(&#x27;Arjun &amp; Naina&#x27;,&#x27;Sent 9 days ago&#x27;,&#x27;AN&#x27;)+&#x27;&lt;/td&gt;&lt;td&gt;&#x27;+chip(state.reportSaved?&#x27;Response recorded&#x27;:&#x27;Waiting&#x27;,&#x27;attention&#x27;)+&#x27;&lt;/td&gt;&lt;td&gt;21 days left&lt;/td&gt;&lt;td&gt;Follow up&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&#x27;+person(&#x27;Kavya &amp; Rohan&#x27;,&#x27;Sent 3 days ago&#x27;,&#x27;KR&#x27;)+&#x27;&lt;/td&gt;&lt;td&gt;&#x27;+chip(&#x27;Waiting&#x27;)+&#x27;&lt;/td&gt;&lt;td&gt;27 days left&lt;/td&gt;&lt;td&gt;No action today&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&#x27;+person(&#x27;Divya &amp; Sameer&#x27;,&#x27;Closed by your team&#x27;,&#x27;DS&#x27;)+&#x27;&lt;/td&gt;&lt;td&gt;&#x27;+chip(&#x27;No response&#x27;)+&#x27;&lt;/td&gt;&lt;td&gt;Closed&lt;/td&gt;&lt;td&gt;Retry available&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/div&gt;&#x27;;
+ return shell(&#x27;broker&#x27;,&#x27;introductions&#x27;,&#x27;Introductions&#x27;,heading(&#x27;Introductions&#x27;,&#x27;Only introductions sent by Shubh Milan are shown.&#x27;,btn(&#x27;Send introduction&#x27;,&#x27;goto&#x27;,&#x27;primary&#x27;,&#x27;data-target=&quot;send-intro&quot;&#x27;))+panel(&#x27;Needs your attention&#x27;,&#x27;Simple statuses and one next action.&#x27;,body));
+}
+function introDetail(){
+ var timeline=event(&#x27;Introduction sent to both customers&#x27;,&#x27;30 Aug · by Asha Patel&#x27;)+event(&#x27;Customer reminder delivered&#x27;,&#x27;6 Sep · automatic&#x27;)+(state.reportSaved?event(&#x27;Interested recorded after phone call&#x27;,&#x27;8 Sep · by Asha Patel · waiting for customer confirmation&#x27;):&#x27;&#x27;)+event(&#x27;Follow-up is due today&#x27;,&#x27;8 Sep · assigned to you&#x27;);
+ var response=state.reportSaved?notice(&#x27;Response recorded&#x27;,&#x27;Arjun will see that you recorded “Interested” after a phone call. He can confirm or correct it.&#x27;,&#x27;safe&#x27;):notice(&#x27;Waiting for customer response&#x27;,&#x27;You may follow up by phone or WhatsApp and record what the customer tells you.&#x27;,&#x27;&#x27;);
+ return shell(&#x27;broker&#x27;,&#x27;introductions&#x27;,&#x27;Introductions · Arjun and Naina&#x27;,heading(&#x27;Arjun and Naina&#x27;,&#x27;Your introduction has 21 days remaining.&#x27;,btn(&#x27;Record response&#x27;,&#x27;open-report&#x27;,&#x27;primary&#x27;)+btn(&#x27;Close&#x27;,&#x27;open-close&#x27;,&#x27;&#x27;))+&#x27;&lt;div class=&quot;grid&quot;&gt;&lt;div&gt;&#x27;+panel(&#x27;Your introduction&#x27;,&#x27;This timeline contains only work from Shubh Milan.&#x27;,response+&#x27;&lt;div style=&quot;margin-top:16px&quot; class=&quot;timeline&quot;&gt;&#x27;+timeline+&#x27;&lt;/div&gt;&#x27;)+&#x27;&lt;/div&gt;&lt;div&gt;&#x27;+panel(&#x27;Next action&#x27;,&#x27;Call Arjun and record the response.&#x27;,btn(&#x27;Record phone response&#x27;,&#x27;open-report&#x27;,&#x27;primary&#x27;))+panel(&#x27;Privacy&#x27;,&#x27;Nakshatra does not tell you whether another broker introduced these customers.&#x27;,&#x27;Your screen and notifications always show only your business activity.&#x27;)+&#x27;&lt;/div&gt;&lt;/div&gt;&#x27;);
+}
+function tasks(){
+ var body=&#x27;&lt;div class=&quot;table-wrap&quot;&gt;&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;Task&lt;/th&gt;&lt;th&gt;Related to&lt;/th&gt;&lt;th&gt;Due&lt;/th&gt;&lt;th&gt;Action&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;&#x27;+(state.taskDone?&#x27;✓ &#x27;:&#x27;&#x27;)+&#x27;Call for introduction response&lt;/td&gt;&lt;td&gt;Arjun and Naina&lt;/td&gt;&lt;td&gt;Today&lt;/td&gt;&lt;td&gt;&#x27;+btn(state.taskDone?&#x27;Completed&#x27;:&#x27;Complete&#x27;,&#x27;complete-task&#x27;,state.taskDone?&#x27;&#x27;:&#x27;primary&#x27;,state.taskDone?&#x27;disabled&#x27;:&#x27;&#x27;)+&#x27;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;Request missing family details&lt;/td&gt;&lt;td&gt;Riya Kapoor&lt;/td&gt;&lt;td&gt;Today&lt;/td&gt;&lt;td&gt;&#x27;+btn(&#x27;Open customer&#x27;,&#x27;goto&#x27;,&#x27;&#x27;, &#x27;data-target=&quot;customer-detail&quot;&#x27;)+&#x27;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;Discuss annual renewal&lt;/td&gt;&lt;td&gt;Vikram Iyer&lt;/td&gt;&lt;td&gt;12 Sep&lt;/td&gt;&lt;td&gt;&#x27;+btn(state.renewed?&#x27;Renewed&#x27;:&#x27;Record renewal&#x27;,&#x27;renew&#x27;,&#x27;&#x27;,state.renewed?&#x27;disabled&#x27;:&#x27;&#x27;)+&#x27;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/div&gt;&#x27;;
+ return shell(&#x27;broker&#x27;,&#x27;tasks&#x27;,&#x27;Tasks&#x27;,heading(&#x27;Tasks and renewals&#x27;,&#x27;Calls and follow-ups that need a clear action today.&#x27;,btn(&#x27;Add task&#x27;,&#x27;&#x27;, &#x27;primary&#x27;))+panel(&#x27;Due and upcoming&#x27;,&#x27;Completing a task never changes an Introduction decision.&#x27;,body));
+}
+function customerHome(){
+ return shell(&#x27;customer&#x27;,&#x27;home&#x27;,&#x27;Home&#x27;,heading(&#x27;Good morning, Arjun&#x27;,&#x27;Your profile, introductions and privacy choices in one place.&#x27;)+&#x27;&lt;div class=&quot;summaries&quot;&gt;&#x27;+actionCard(&#x27;2&#x27;,&#x27;Introductions need you&#x27;,&#x27;Review Naina and one other person.&#x27;,&#x27;customer-intros&#x27;)+actionCard(&#x27;92%&#x27;,&#x27;Portfolio complete&#x27;,&#x27;One optional family detail remains.&#x27;,&#x27;customer-home&#x27;)+actionCard(&#x27;2&#x27;,&#x27;My brokers&#x27;,&#x27;Both relationships are private from each other.&#x27;,&#x27;customer-home&#x27;)+&#x27;&lt;/div&gt;&#x27;+panel(&#x27;Your next action&#x27;,&#x27;Naina Rao was introduced by two brokers. Choose the broker you want to continue with when you respond.&#x27;,btn(&#x27;Review introduction&#x27;,&#x27;goto&#x27;,&#x27;primary&#x27;,&#x27;data-target=&quot;customer-intro-detail&quot;&#x27;)));
+}
+function customerIntros(){
+ var rows=&#x27;&lt;div class=&quot;route&quot;&gt;&lt;div class=&quot;route-head&quot;&gt;&lt;span class=&quot;route-logo&quot;&gt;NR&lt;/span&gt;&lt;div&gt;&lt;strong&gt;Naina Rao&lt;/strong&gt;&lt;small&gt;29 · Pune · Product manager&lt;/small&gt;&lt;/div&gt;&#x27;+chip(&#x27;Action needed&#x27;,&#x27;attention&#x27;)+&#x27;&lt;/div&gt;&lt;p&gt;Introduced through Shubh Milan and Trusted Hearts. Only you can see both routes.&lt;/p&gt;&lt;div class=&quot;route-actions&quot;&gt;&#x27;+btn(&#x27;Review and respond&#x27;,&#x27;goto&#x27;,&#x27;primary&#x27;,&#x27;data-target=&quot;customer-intro-detail&quot;&#x27;)+&#x27;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;route&quot;&gt;&lt;div class=&quot;route-head&quot;&gt;&lt;span class=&quot;route-logo&quot;&gt;KN&lt;/span&gt;&lt;div&gt;&lt;strong&gt;Kavya Nair&lt;/strong&gt;&lt;small&gt;28 · Bengaluru · Dentist&lt;/small&gt;&lt;/div&gt;&#x27;+chip(&#x27;Waiting for you&#x27;)+&#x27;&lt;/div&gt;&lt;p&gt;Introduced through Shubh Milan · 27 days left.&lt;/p&gt;&lt;/div&gt;&#x27;;
+ return shell(&#x27;customer&#x27;,&#x27;customer-intros&#x27;,&#x27;Introductions&#x27;,heading(&#x27;Your introductions&#x27;,&#x27;People introduced through all of your brokers appear here once.&#x27;)+notice(&#x27;Your broker relationships stay private&#x27;,&#x27;Brokers cannot see one another, their sharing activity, or which broker you choose.&#x27;,&#x27;safe&#x27;)+&#x27;&lt;div style=&quot;margin-top:16px&quot; class=&quot;list&quot;&gt;&#x27;+rows+&#x27;&lt;/div&gt;&#x27;);
+}
+function customerIntroDetail(){
+ var routes=&#x27;&lt;div class=&quot;route&quot;&gt;&lt;div class=&quot;route-head&quot;&gt;&lt;span class=&quot;route-logo&quot;&gt;SM&lt;/span&gt;&lt;div&gt;&lt;strong&gt;Shubh Milan&lt;/strong&gt;&lt;small&gt;Shared 30 Aug · 21 days left&lt;/small&gt;&lt;/div&gt;&#x27;+chip(state.broker===&#x27;Shubh Milan&#x27;?&#x27;Selected&#x27;:&#x27;Available&#x27;,state.broker===&#x27;Shubh Milan&#x27;?&#x27;ready&#x27;:&#x27;&#x27;)+&#x27;&lt;/div&gt;&lt;div class=&quot;route-actions&quot;&gt;&#x27;+btn(state.broker===&#x27;Shubh Milan&#x27;?&#x27;Selected&#x27;:&#x27;Continue through Shubh Milan&#x27;,&#x27;choose-broker&#x27;,&#x27;primary&#x27;,&#x27;data-broker=&quot;Shubh Milan&quot;&#x27;)+&#x27;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;route&quot;&gt;&lt;div class=&quot;route-head&quot;&gt;&lt;span class=&quot;route-logo&quot;&gt;TH&lt;/span&gt;&lt;div&gt;&lt;strong&gt;Trusted Hearts&lt;/strong&gt;&lt;small&gt;Shared 2 Sep · 24 days left&lt;/small&gt;&lt;/div&gt;&#x27;+chip(state.broker===&#x27;Trusted Hearts&#x27;?&#x27;Selected&#x27;:&#x27;Available&#x27;,state.broker===&#x27;Trusted Hearts&#x27;?&#x27;ready&#x27;:&#x27;&#x27;)+&#x27;&lt;/div&gt;&lt;div class=&quot;route-actions&quot;&gt;&#x27;+btn(state.broker===&#x27;Trusted Hearts&#x27;?&#x27;Selected&#x27;:&#x27;Continue through Trusted Hearts&#x27;,&#x27;choose-broker&#x27;,&#x27;primary&#x27;,&#x27;data-broker=&quot;Trusted Hearts&quot;&#x27;)+&#x27;&lt;/div&gt;&lt;/div&gt;&#x27;;
+ var outcome=state.interested?notice(&#x27;Interest sent through &#x27;+state.broker,&#x27;Your choice is private. Your contact details have not been shared.&#x27;,&#x27;safe&#x27;):notice(&#x27;Choose one broker when showing interest&#x27;,&#x27;There is no “continue without a broker” option for this broker introduction.&#x27;,&#x27;&#x27;);
+ return shell(&#x27;customer&#x27;,&#x27;customer-intros&#x27;,&#x27;Introductions · Naina Rao&#x27;,heading(&#x27;Naina Rao&#x27;,&#x27;Review the current shared portfolio and choose your response.&#x27;,btn(&#x27;Not interested&#x27;,&#x27;open-reject&#x27;,&#x27;danger&#x27;))+&#x27;&lt;div class=&quot;grid&quot;&gt;&lt;div&gt;&#x27;+panel(&#x27;Shared portfolio&#x27;,&#x27;Updated by Naina 2 days ago.&#x27;,&#x27;&lt;div class=&quot;profile&quot;&gt;&lt;div class=&quot;photo&quot;&gt;NR&lt;/div&gt;&lt;div&gt;&lt;h2&gt;Naina Rao&lt;/h2&gt;&lt;p&gt;29 · Pune · Product manager&lt;/p&gt;&lt;div class=&quot;chips&quot;&gt;&#x27;+chip(&#x27;Identity verified&#x27;,&#x27;ready&#x27;)+chip(&#x27;Standard view&#x27;)+&#x27;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;div style=&quot;margin-top:16px&quot;&gt;&#x27;+facts([[&#x27;Education&#x27;,&#x27;MBA&#x27;],[&#x27;Lifestyle&#x27;,&#x27;Vegetarian · Non-smoker&#x27;],[&#x27;Family&#x27;,&#x27;Shared summary available&#x27;],[&#x27;Horoscope&#x27;,&#x27;Private until permitted&#x27;]])+&#x27;&lt;/div&gt;&#x27;)+&#x27;&lt;/div&gt;&lt;div&gt;&#x27;+panel(&#x27;Your broker routes&#x27;,&#x27;Only you can see these two choices.&#x27;,routes)+panel(&#x27;Your response&#x27;,&#x27;&#x27;,outcome+(state.interested?&#x27;&lt;div class=&quot;route-actions&quot;&gt;&#x27;+btn(&#x27;Review contact privacy&#x27;,&#x27;goto&#x27;,&#x27;primary&#x27;,&#x27;data-target=&quot;customer-privacy&quot;&#x27;)+&#x27;&lt;/div&gt;&#x27;:&#x27;&#x27;))+&#x27;&lt;/div&gt;&lt;/div&gt;&#x27;);
+}
+function customerPrivacy(){
+ var body=notice(&#x27;Both people are interested&#x27;,&#x27;Before anything is shared, each person approves the exact contact information.&#x27;,&#x27;safe&#x27;)+&#x27;&lt;div style=&quot;margin-top:14px&quot; class=&quot;form&quot;&gt;&lt;label class=&quot;check&quot;&gt;&lt;input type=&quot;checkbox&quot; checked&gt; My phone number&lt;/label&gt;&lt;label class=&quot;check&quot;&gt;&lt;input type=&quot;checkbox&quot; checked&gt; My email address&lt;/label&gt;&lt;label class=&quot;check&quot;&gt;&lt;input type=&quot;checkbox&quot;&gt; Parent or guardian contact&lt;/label&gt;&lt;label class=&quot;check&quot;&gt;&lt;input type=&quot;checkbox&quot;&gt; Family address&lt;/label&gt;&lt;/div&gt;&lt;div class=&quot;footer-actions&quot;&gt;&lt;span class=&quot;status&quot;&gt;&#x27;+(state.contacts?&#x27;Your approval is saved. Access can be revoked later.&#x27;:&#x27;Naina must separately approve what she shares.&#x27;)+&#x27;&lt;/span&gt;&#x27;+btn(state.contacts?&#x27;Approved&#x27;:&#x27;Approve selected details&#x27;,&#x27;approve-contacts&#x27;,&#x27;primary&#x27;,state.contacts?&#x27;disabled&#x27;:&#x27;&#x27;)+&#x27;&lt;/div&gt;&#x27;;
+ return shell(&#x27;customer&#x27;,&#x27;privacy&#x27;,&#x27;Access &amp; privacy&#x27;,heading(&#x27;Approve contact sharing&#x27;,&#x27;You decide exactly what Naina may receive.&#x27;)+panel(&#x27;Contact bundle&#x27;,&#x27;Approval applies only to this Introduction with Naina.&#x27;,body)+panel(&#x27;Active access&#x27;,&#x27;You can review and revoke future access at any time.&#x27;,&#x27;No other broker or customer receives these details.&#x27;));
+}
+function render(){
+ var screens={onboarding:onboarding,import:importCustomers,team:team,verification:verification,dashboard:dashboard,customers:customers,&#x27;customer-detail&#x27;:customerDetail,matches:matches,&#x27;send-intro&#x27;:sendIntro,introductions:introductions,&#x27;intro-detail&#x27;:introDetail,tasks:tasks,&#x27;customer-home&#x27;:customerHome,&#x27;customer-intros&#x27;:customerIntros,&#x27;customer-intro-detail&#x27;:customerIntroDetail,&#x27;customer-privacy&#x27;:customerPrivacy};
+ app.innerHTML=screens[state.screen]();flow.value=state.screen;root.dataset.density=state.density;root.dataset.accent=state.accent;if(globalThis.lucide)globalThis.lucide.createIcons({attrs:{width:16,height:16}});
+}
+function go(target){if(!order.includes(target))return;state.screen=target;announcer.textContent=&#x27;Opened &#x27;+flow.options[flow.selectedIndex].text;render()}
+function openModal(type){
+ if(type===&#x27;report&#x27;)modal.innerHTML=&#x27;&lt;h2 id=&quot;np0f-modal-title&quot;&gt;Record customer response&lt;/h2&gt;&lt;p&gt;Record what Arjun told you. He will see who recorded it and can confirm or correct it.&lt;/p&gt;&lt;div class=&quot;form&quot;&gt;&lt;label class=&quot;label&quot;&gt;Response&lt;select class=&quot;input&quot;&gt;&lt;option&gt;Interested&lt;/option&gt;&lt;option&gt;Not interested&lt;/option&gt;&lt;option&gt;No response yet&lt;/option&gt;&lt;/select&gt;&lt;/label&gt;&lt;label class=&quot;label&quot;&gt;How did you receive it?&lt;select class=&quot;input&quot;&gt;&lt;option&gt;Phone call&lt;/option&gt;&lt;option&gt;WhatsApp&lt;/option&gt;&lt;option&gt;In person&lt;/option&gt;&lt;/select&gt;&lt;/label&gt;&lt;label class=&quot;label&quot;&gt;Private note&lt;textarea class=&quot;input&quot; placeholder=&quot;Optional note for your team&quot;&gt;&lt;/textarea&gt;&lt;/label&gt;&lt;/div&gt;&lt;div class=&quot;modal-actions&quot;&gt;&#x27;+btn(&#x27;Cancel&#x27;,&#x27;close-modal&#x27;,&#x27;&#x27;)+btn(&#x27;Save response&#x27;,&#x27;save-report&#x27;,&#x27;primary&#x27;)+&#x27;&lt;/div&gt;&#x27;;
+ if(type===&#x27;reject&#x27;)modal.innerHTML=&#x27;&lt;h2 id=&quot;np0f-modal-title&quot;&gt;Not interested in Naina?&lt;/h2&gt;&lt;p&gt;This closes all active routes for this person and starts a 90-day cooling period. Expiry is not treated this way.&lt;/p&gt;&lt;div class=&quot;modal-actions&quot;&gt;&#x27;+btn(&#x27;Go back&#x27;,&#x27;close-modal&#x27;,&#x27;&#x27;)+btn(&#x27;Confirm not interested&#x27;,&#x27;confirm-reject&#x27;,&#x27;danger&#x27;)+&#x27;&lt;/div&gt;&#x27;;
+ if(type===&#x27;close&#x27;)modal.innerHTML=&#x27;&lt;h2 id=&quot;np0f-modal-title&quot;&gt;Close your introduction?&lt;/h2&gt;&lt;p&gt;This records a neutral closure for Shubh Milan. It does not reject either person and does not delete the history.&lt;/p&gt;&lt;div class=&quot;modal-actions&quot;&gt;&#x27;+btn(&#x27;Keep open&#x27;,&#x27;close-modal&#x27;,&#x27;&#x27;)+btn(&#x27;Close introduction&#x27;,&#x27;close-modal&#x27;,&#x27;primary&#x27;)+&#x27;&lt;/div&gt;&#x27;;
+ modalLayer.hidden=false;var first=modal.querySelector(&#x27;button,select,input&#x27;);if(first)first.focus();if(globalThis.lucide)globalThis.lucide.createIcons({attrs:{width:16,height:16}});
+}
+function closeModal(){modalLayer.hidden=true;render()}
+app.addEventListener(&#x27;click&#x27;,function(e){
+ var row=e.target.closest(&#x27;[data-go]&#x27;);if(row){go(row.getAttribute(&#x27;data-go&#x27;));return}
+ var el=e.target.closest(&#x27;[data-action]&#x27;);if(!el)return;var a=el.dataset.action;
+ if(a===&#x27;goto&#x27;){go(el.dataset.target);return}if(a===&#x27;onboard-back&#x27;){state.onboard=Math.max(1,state.onboard-1)}if(a===&#x27;onboard-next&#x27;){if(state.onboard&lt;4)state.onboard++;else go(&#x27;verification&#x27;)}if(a===&#x27;process-import&#x27;){state.importStage=Math.min(2,state.importStage+1)}if(a===&#x27;save-team&#x27;)state.teamSaved=true;if(a===&#x27;submit-verification&#x27;)state.verificationSent=true;if(a===&#x27;start-intro&#x27;){state.introStep=1;go(&#x27;send-intro&#x27;)}if(a===&#x27;intro-back&#x27;)state.introStep=Math.max(1,state.introStep-1);if(a===&#x27;intro-next&#x27;){if(state.introStep&lt;4)state.introStep++;else{state.routeSent=true;go(&#x27;introductions&#x27;)}}if(a===&#x27;open-report&#x27;)openModal(&#x27;report&#x27;);if(a===&#x27;open-reject&#x27;)openModal(&#x27;reject&#x27;);if(a===&#x27;open-close&#x27;)openModal(&#x27;close&#x27;);if(a===&#x27;complete-task&#x27;)state.taskDone=true;if(a===&#x27;renew&#x27;)state.renewed=true;if(a===&#x27;choose-broker&#x27;){state.broker=el.dataset.broker;state.interested=true}if(a===&#x27;approve-contacts&#x27;)state.contacts=true;if(![&#x27;goto&#x27;,&#x27;start-intro&#x27;,&#x27;open-report&#x27;,&#x27;open-reject&#x27;,&#x27;open-close&#x27;].includes(a))render();
+});
+modal.addEventListener(&#x27;click&#x27;,function(e){var el=e.target.closest(&#x27;[data-action]&#x27;);if(!el)return;if(el.dataset.action===&#x27;close-modal&#x27;||el.dataset.action===&#x27;confirm-reject&#x27;)closeModal();if(el.dataset.action===&#x27;save-report&#x27;){state.reportSaved=true;closeModal()}});
+flow.addEventListener(&#x27;change&#x27;,function(){go(flow.value)});document.getElementById(&#x27;np0f-prev&#x27;).addEventListener(&#x27;click&#x27;,function(){var i=order.indexOf(state.screen);go(order[Math.max(0,i-1)])});document.getElementById(&#x27;np0f-next&#x27;).addEventListener(&#x27;click&#x27;,function(){var i=order.indexOf(state.screen);go(order[Math.min(order.length-1,i+1)])});
+render();
+if(globalThis.Tweak){var design=new Tweak({container:root,onChange:render});design.addSelect(state,&#x27;density&#x27;,{label:&#x27;Information density&#x27;,options:[{label:&#x27;Comfortable&#x27;,value:&#x27;comfortable&#x27;},{label:&#x27;Compact&#x27;,value:&#x27;compact&#x27;}],reference:&#x27;brokerdesk.density&#x27;});design.addSelect(state,&#x27;accent&#x27;,{label:&#x27;Accent direction&#x27;,options:[{label:&#x27;Nakshatra teal&#x27;,value:&#x27;teal&#x27;},{label:&#x27;Warm plum&#x27;,value:&#x27;plum&#x27;}],reference:&#x27;brokerdesk.accent&#x27;})}
+})();
+&lt;/script&gt;
+&lt;/div&gt;
+
+&lt;script src=&quot;https://unpkg.com/@floating-ui/core@1.7.3/dist/floating-ui.core.umd.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;https://unpkg.com/@floating-ui/dom@1.7.4/dist/floating-ui.dom.umd.min.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+(() =&gt; {
+  if (window.FloatingUIDOM == null) {
+    return;
+  }
+  const { autoUpdate, computePosition, flip, offset, shift, size } =
+    window.FloatingUIDOM;
+  const tooltipPlacements = new Set([&quot;top&quot;, &quot;right&quot;, &quot;bottom&quot;, &quot;left&quot;]);
+  const tooltipId = `codex-visualization-tooltip-${
+    window.crypto?.randomUUID?.() ?? Date.now().toString(36)
+  }`;
+  const tooltipGap = 5;
+  const hoverDelay = 700;
+  const skipDelay = 300;
+  let activeTrigger = null;
+  let pendingTrigger = null;
+  let tooltip = null;
+  let openTimeout = null;
+  let autoUpdateCleanup = null;
+  let positionRequest = 0;
+  let skipDelayUntil = 0;
+  let lastPointerWasTouch = false;
+  let pinnedByTouch = false;
+
+  const getTrigger = (target) =&gt;
+    target?.nodeType === Node.ELEMENT_NODE
+      ? target.closest(&quot;[data-tooltip]&quot;)
+      : null;
+  const containsTarget = (trigger, target) =&gt;
+    target?.nodeType != null &amp;&amp; trigger.contains(target);
+  const getContent = (trigger) =&gt;
+    trigger.getAttribute(&quot;data-tooltip&quot;)?.trim() ?? &quot;&quot;;
+  const getPlacement = (trigger) =&gt; {
+    const placement = trigger.getAttribute(&quot;data-tooltip-placement&quot;);
+    return tooltipPlacements.has(placement) ? placement : &quot;top&quot;;
+  };
+  const getTooltip = () =&gt; {
+    if (tooltip == null) {
+      tooltip = document.createElement(&quot;div&quot;);
+      tooltip.id = tooltipId;
+      tooltip.className = &quot;tooltip&quot;;
+      tooltip.setAttribute(&quot;role&quot;, &quot;tooltip&quot;);
+    }
+    return tooltip;
+  };
+  const setDescribedBy = (trigger, described) =&gt; {
+    const ids = new Set(
+      (trigger.getAttribute(&quot;aria-describedby&quot;) ?? &quot;&quot;)
+        .split(/\s+/)
+        .filter(Boolean),
+    );
+    if (described) {
+      ids.add(tooltipId);
+    } else {
+      ids.delete(tooltipId);
+    }
+    if (ids.size === 0) {
+      trigger.removeAttribute(&quot;aria-describedby&quot;);
+    } else {
+      trigger.setAttribute(&quot;aria-describedby&quot;, [...ids].join(&quot; &quot;));
+    }
+  };
+  const clearOpenTimeout = () =&gt; {
+    if (openTimeout != null) {
+      window.clearTimeout(openTimeout);
+      openTimeout = null;
+    }
+    pendingTrigger = null;
+  };
+  const closeTooltip = (activateSkipDelay = true) =&gt; {
+    clearOpenTimeout();
+    pinnedByTouch = false;
+    positionRequest += 1;
+    autoUpdateCleanup?.();
+    autoUpdateCleanup = null;
+    if (activeTrigger == null) {
+      return;
+    }
+    setDescribedBy(activeTrigger, false);
+    activeTrigger = null;
+    tooltip?.remove();
+    if (activateSkipDelay) {
+      skipDelayUntil = Date.now() + skipDelay;
+    }
+  };
+  const updatePosition = (trigger, floating) =&gt; {
+    const request = ++positionRequest;
+    void computePosition(trigger, floating, {
+      middleware: [
+        offset(tooltipGap),
+        flip({ padding: tooltipGap }),
+        shift({ padding: tooltipGap }),
+        size({
+          padding: tooltipGap,
+          apply({ availableHeight, availableWidth, elements }) {
+            elements.floating.style.setProperty(
+              &quot;--tooltip-available-width&quot;,
+              `${Math.max(0, availableWidth)}px`,
+            );
+            elements.floating.style.setProperty(
+              &quot;--tooltip-available-height&quot;,
+              `${Math.max(0, availableHeight)}px`,
+            );
+          },
+        }),
+      ],
+      placement: getPlacement(trigger),
+      strategy: &quot;fixed&quot;,
+    })
+      .then(({ x, y }) =&gt; {
+        if (activeTrigger !== trigger || request !== positionRequest) {
+          return;
+        }
+        const scale = window.devicePixelRatio || 1;
+        floating.style.transform = `translate(${Math.round(x * scale) / scale}px, ${Math.round(y * scale) / scale}px)`;
+        floating.style.visibility = &quot;visible&quot;;
+      })
+      .catch(() =&gt; {
+        if (activeTrigger === trigger &amp;&amp; request === positionRequest) {
+          closeTooltip(false);
+        }
+      });
+  };
+  const openTooltip = (trigger) =&gt; {
+    const content = getContent(trigger);
+    if (!trigger.isConnected || content.length === 0) {
+      return;
+    }
+    clearOpenTimeout();
+    if (activeTrigger === trigger) {
+      return;
+    }
+    closeTooltip();
+    const floating = getTooltip();
+    floating.textContent = content;
+    floating.style.visibility = &quot;hidden&quot;;
+    floating.style.transform = &quot;translate(0, 0)&quot;;
+    document.body.appendChild(floating);
+    activeTrigger = trigger;
+    setDescribedBy(trigger, true);
+    autoUpdateCleanup = autoUpdate(trigger, floating, () =&gt; {
+      updatePosition(trigger, floating);
+    });
+  };
+  const requestOpen = (trigger, immediate = false) =&gt; {
+    if (
+      getContent(trigger).length === 0 ||
+      activeTrigger === trigger ||
+      pendingTrigger === trigger
+    ) {
+      return;
+    }
+    clearOpenTimeout();
+    pendingTrigger = trigger;
+    const delay =
+      immediate || activeTrigger != null || Date.now() &lt; skipDelayUntil
+        ? 0
+        : hoverDelay;
+    if (delay === 0) {
+      openTooltip(trigger);
+      return;
+    }
+    openTimeout = window.setTimeout(() =&gt; {
+      openTimeout = null;
+      pendingTrigger = null;
+      openTooltip(trigger);
+    }, delay);
+  };
+  const handlePointerOpen = (event) =&gt; {
+    if (event.pointerType === &quot;touch&quot;) {
+      return;
+    }
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    requestOpen(trigger);
+  };
+  const handlePointer = (event) =&gt; {
+    lastPointerWasTouch =
+      event.type === &quot;pointerdown&quot; &amp;&amp; event.pointerType === &quot;touch&quot;;
+  };
+  const handleTouchClick = (event) =&gt; {
+    const isTouch = event.pointerType === &quot;touch&quot; || lastPointerWasTouch;
+    lastPointerWasTouch = false;
+    if (!isTouch || event.detail === 0) {
+      return;
+    }
+    const trigger = getTrigger(event.target);
+    if (
+      trigger == null ||
+      !trigger.isConnected ||
+      getContent(trigger).length === 0 ||
+      (pinnedByTouch &amp;&amp; activeTrigger === trigger)
+    ) {
+      if (pinnedByTouch) {
+        closeTooltip();
+      }
+      return;
+    }
+    openTooltip(trigger);
+    pinnedByTouch = activeTrigger === trigger;
+    window.setTimeout(() =&gt; {
+      if (activeTrigger === trigger &amp;&amp; !trigger.isConnected) {
+        closeTooltip(false);
+      }
+    }, 0);
+  };
+  const handleLeave = (event) =&gt; {
+    if (pinnedByTouch) {
+      return;
+    }
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const handleFocusIn = (event) =&gt; {
+    const trigger = getTrigger(event.target);
+    if (trigger?.matches(&quot;:focus-visible&quot;)) {
+      requestOpen(trigger, true);
+    }
+  };
+  const handleKeyDown = (event) =&gt; {
+    if (event.key === &quot;Escape&quot;) {
+      closeTooltip();
+    }
+  };
+  const handleContextMenu = (event) =&gt; {
+    lastPointerWasTouch = false;
+    const trigger = getTrigger(event.target);
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const destroy = () =&gt; {
+    closeTooltip(false);
+    lastPointerWasTouch = false;
+    document.removeEventListener(&quot;pointerover&quot;, handlePointerOpen);
+    document.removeEventListener(&quot;pointerdown&quot;, handlePointer);
+    document.removeEventListener(&quot;pointercancel&quot;, handlePointer);
+    document.removeEventListener(&quot;click&quot;, handleTouchClick);
+    document.removeEventListener(&quot;pointerout&quot;, handleLeave);
+    document.removeEventListener(&quot;focusin&quot;, handleFocusIn);
+    document.removeEventListener(&quot;focusout&quot;, handleLeave);
+    document.removeEventListener(&quot;keydown&quot;, handleKeyDown);
+    document.removeEventListener(&quot;contextmenu&quot;, handleContextMenu);
+    tooltip = null;
+  };
+
+  document.addEventListener(&quot;pointerover&quot;, handlePointerOpen);
+  document.addEventListener(&quot;pointerdown&quot;, handlePointer);
+  document.addEventListener(&quot;pointercancel&quot;, handlePointer);
+  document.addEventListener(&quot;click&quot;, handleTouchClick);
+  document.addEventListener(&quot;pointerout&quot;, handleLeave);
+  document.addEventListener(&quot;focusin&quot;, handleFocusIn);
+  document.addEventListener(&quot;focusout&quot;, handleLeave);
+  document.addEventListener(&quot;keydown&quot;, handleKeyDown);
+  document.addEventListener(&quot;contextmenu&quot;, handleContextMenu);
+  window.addEventListener(&quot;pagehide&quot;, destroy, { once: true });
+})();
+&lt;/script&gt;
+&lt;script id=&quot;codex-visualization-tabs&quot;&gt;
+(() =&gt; {
+  const selector = &#x27;.nav[role=&quot;tablist&quot;] [role=&quot;tab&quot;]&#x27;;
+  const disabled = &#x27;:disabled,[aria-disabled=&quot;true&quot;]&#x27;;
+  const selectTab = (selected) =&gt; {
+    const panelId = selected.getAttribute(&quot;aria-controls&quot;);
+    for (const tab of selected.closest(&#x27;[role=&quot;tablist&quot;]&#x27;).querySelectorAll(&#x27;[role=&quot;tab&quot;]&#x27;)) {
+      const active = tab === selected;
+      tab.classList.toggle(&quot;active&quot;, active);
+      tab.setAttribute(&quot;aria-selected&quot;, String(active));
+      const id = tab.getAttribute(&quot;aria-controls&quot;);
+      const panel = id &amp;&amp; document.getElementById(id);
+      if (panel != null) {
+        panel.hidden = id !== panelId;
+        if (!panel.hidden &amp;&amp; selected.id) {
+          panel.setAttribute(&quot;aria-labelledby&quot;, selected.id);
+        }
+      }
+    }
+  };
+  const interact = (event) =&gt; {
+    const tab = event.target?.closest?.(selector);
+    if (event.defaultPrevented || tab == null || tab.matches(disabled)) {
+      return;
+    }
+    if (event.type === &quot;click&quot;) {
+      selectTab(tab);
+      return;
+    }
+    const tabs = Array.from(
+      tab.closest(&#x27;[role=&quot;tablist&quot;]&#x27;).querySelectorAll(&#x27;[role=&quot;tab&quot;]&#x27;),
+    ).filter((candidate) =&gt; !candidate.matches(disabled));
+    const current = tabs.indexOf(tab);
+    let next;
+    if (event.key === &quot;ArrowRight&quot; || event.key === &quot;ArrowDown&quot;) {
+      next = (current + 1) % tabs.length;
+    } else if (event.key === &quot;ArrowLeft&quot; || event.key === &quot;ArrowUp&quot;) {
+      next = (current + tabs.length - 1) % tabs.length;
+    } else if (event.key === &quot;Home&quot;) {
+      next = 0;
+    } else if (event.key === &quot;End&quot;) {
+      next = tabs.length - 1;
+    } else {
+      return;
+    }
+    event.preventDefault();
+    tabs[next].focus();
+    selectTab(tabs[next]);
+  };
+
+  for (const list of document.querySelectorAll(&#x27;.nav[role=&quot;tablist&quot;]&#x27;)) {
+    const selected =
+      list.querySelector(&#x27;[role=&quot;tab&quot;][aria-selected=&quot;true&quot;]&#x27;) ??
+      list.querySelector(&#x27;[role=&quot;tab&quot;].active&#x27;) ??
+      list.querySelector(&#x27;[role=&quot;tab&quot;]&#x27;);
+    if (selected != null) {
+      selectTab(selected);
+    }
+  }
+  document.addEventListener(&quot;click&quot;, interact);
+  document.addEventListener(&quot;keydown&quot;, interact);
+  window.addEventListener(&quot;pagehide&quot;, () =&gt; {
+    document.removeEventListener(&quot;click&quot;, interact);
+    document.removeEventListener(&quot;keydown&quot;, interact);
+  }, { once: true });
+})();
+&lt;/script&gt;
+&lt;script id=&quot;codex-visualization-lucide&quot; async src=&quot;https://unpkg.com/lucide@1.17.0/dist/umd/lucide.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+(() =&gt; {
+  const initialize = () =&gt; {
+    globalThis.lucide?.createIcons({ attrs: { width: 16, height: 16 } });
+  };
+  if (globalThis.lucide != null) {
+    initialize();
+    return;
+  }
+  document
+    .getElementById(&quot;codex-visualization-lucide&quot;)
+    ?.addEventListener(&quot;load&quot;, initialize, { once: true });
+})();
+&lt;/script&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;
+"></iframe>
+</body>
+</html>
