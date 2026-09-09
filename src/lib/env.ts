@@ -17,7 +17,19 @@ const deletionReauthSecretSchema = z
   .string()
   .min(32, "DELETION_REAUTH_COOKIE_SECRET must contain at least 32 characters");
 
+const brokerdeskReauthSecretSchema = z
+  .string()
+  .min(32, "BROKERDESK_REAUTH_COOKIE_SECRET must contain at least 32 characters");
+
 /** Reads the server-only HMAC key only in deletion-reauthentication code paths. */
 export function getDeletionReauthCookieSecret() {
   return deletionReauthSecretSchema.parse(process.env.DELETION_REAUTH_COOKIE_SECRET);
+}
+
+/** Reads the independent HMAC key used only for BrokerDesk privileged-action proofs. */
+export function getBrokerdeskReauthCookieSecret() {
+  if (!process.env.BROKERDESK_REAUTH_COOKIE_SECRET && process.env.NODE_ENV === "test") {
+    return "test-only-brokerdesk-reauth-cookie-secret-at-least-32-chars";
+  }
+  return brokerdeskReauthSecretSchema.parse(process.env.BROKERDESK_REAUTH_COOKIE_SECRET);
 }

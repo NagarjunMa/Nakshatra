@@ -3,6 +3,7 @@ import { cleanup } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
 
 process.env.DELETION_REAUTH_COOKIE_SECRET = "test-only-deletion-reauth-cookie-secret-at-least-32-chars";
+process.env.BROKERDESK_REAUTH_COOKIE_SECRET = "test-only-brokerdesk-reauth-cookie-secret-at-least-32-chars";
 process.env.NEXT_PUBLIC_SUPABASE_URL ??= "https://project.supabase.test";
 process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??= "test-publishable-key";
 

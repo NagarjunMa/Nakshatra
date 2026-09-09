@@ -1,12 +1,12 @@
 # BrokerDesk Phase 2 — Implementation Progress
 
-Status: Slice 1 merged; Slice 2 broker onboarding foundation implemented locally
+Status: Slice 1 merged; Slice 2 onboarding foundation merged and security completion in progress
 Started: 2026-09-08  
 Approved plan: [Phase 1 Implementation Plan](./phase-1-implementation-plan.md)
 
 ## Tracking approach
 
-The user has opted out of Linear updates for this work. Decisions, changed files, verification results, risks, and deviations are recorded here, in the master plan, and in associated GitHub pull requests. The safety foundation merged through PR #40, the capability foundation merged through PR #41, and Slice 2 continues from clean `main` on `feat/nak-68-brokerdesk-onboarding-rbac`.
+The user has opted out of Linear updates for this work. Decisions, changed files, verification results, risks, and deviations are recorded here, in the master plan, and in associated GitHub pull requests. The safety foundation merged through PR #40, the capability foundation merged through PR #41, and the first Slice 2 onboarding unit merged through PR #42. Related implementation units now remain on one local feature branch with local checkpoint commits; a pull request and merge happen only at a deliberate, reviewable checkpoint instead of after every small phase.
 
 ## Repository preparation
 
@@ -16,7 +16,8 @@ The user has opted out of Linear updates for this work. Decisions, changed files
 - Merge: squash commit `22faf86` on `main` after all required checks passed.
 - Completed branch and isolated phase worktree: removed after clean-state, tree-equivalence, and patch-equivalence verification.
 - Capability pull request: [#41 — BrokerDesk capability foundation](https://github.com/NagarjunMa/Nakshatra/pull/41), squash-merged as `32e5b62`.
-- Current branch: `feat/nak-68-brokerdesk-onboarding-rbac`, created directly from synchronized `main` at `32e5b62`.
+- Onboarding pull request: [#42 — Private BrokerDesk onboarding](https://github.com/NagarjunMa/Nakshatra/pull/42), squash-merged as `44b5641` after all three required checks passed.
+- Current branch: `feat/nak-68-brokerdesk-slice-2-completion`, created directly from synchronized `main` at `ac5026a` after the merged onboarding and identity-verification operations commits.
 
 ## Latest-main baseline
 
@@ -89,10 +90,45 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 
 ## Next executable steps
 
-1. Complete Slice 2 representative identity-verification reuse and audited team-invitation/RBAC commands.
-2. Add browser end-to-end coverage for the authenticated onboarding journey.
-3. Verify the onboarding migration through a clean CI database replay and the complete pgTAP suite before merge.
+1. Add a purpose-bound BrokerDesk fresh-authentication boundary before any team, verification, export, or access-policy mutation is enabled.
+2. Complete audited employee invitation/RBAC commands using opaque member references, one-time invitation exchange, immediate suspension, and atomic fresh-auth proof consumption.
+3. Generalize the existing Didit lifecycle for an organization representative without creating a hidden customer candidate or a duplicate verification workflow.
 4. Keep document upload and organization activation unavailable until retention, KMS, malware scanning, and reviewer authorization are implemented and approved.
+
+## Slice 2 completion decisions
+
+- A broker representative must not be represented by a synthetic `candidate`. Candidate identity remains customer/portfolio identity.
+- Representative verification must reuse the existing Didit provider lifecycle, webhook handling, retry controls, and audit model through an explicit verification-subject abstraction.
+- Account-deletion reauthentication remains deletion-only. BrokerDesk privilege changes require a separate purpose-bound proof tied to the actor, fresh Supabase session, workspace, action, expiry, and one-time consumption.
+- Team invitation, access replacement, suspension, verification management, export, and future billing/recovery actions cannot share an unscoped bearer proof.
+- BrokerDesk team commands must re-evaluate live membership, role capability, workspace state, and target restrictions inside the same database transaction that consumes the proof.
+- Browser onboarding end-to-end coverage is already present and passed 20 desktop/mobile checks in PR #42; it is not an outstanding Slice 2 task.
+
+## Privileged fresh-authentication foundation implemented
+
+- Added an independent private challenge store for BrokerDesk privilege changes; it does not broaden or reuse the account-deletion challenge table.
+- Bound every challenge and proof to the authenticated actor, opaque workspace reference, exact allowlisted action, initiating session, newer verified session, ten-minute expiry, and one-time consumption.
+- Added database authorization mapping for `team_invite`, `team_access_replace`, `team_suspend`, and `verification_manage`; only active owner/admin member-access presets with the corresponding capability may start or complete a challenge.
+- Kept proof consumption private and ungranted. A later audited command must call it with its internally resolved organization and exact action inside the command transaction.
+- Added an independent rate-limit bucket and independent server-only HMAC secret. Raw proofs are never stored; only SHA-256 hashes reach the private database table.
+- Added the versioned reauthentication-start endpoint with same-origin enforcement, bounded/strict JSON, live-session validation, verified-account email derivation, safe OAuth/OTP callback, uniform inaccessible-workspace handling, and no caller-selected identity.
+- Scoped the HttpOnly proof cookie to the exact workspace API path and signed its workspace/action payload. Changing a URL cannot change the signed scope or database authorization.
+- Hardened the shared authentication callback so reserved reauthentication callbacks require their matching signed transaction; a stale deletion cookie can no longer turn an ordinary sign-in callback into deletion reauthentication.
+- Added application and adversarial pgTAP coverage for cross-workspace actors, same-session rejection, action substitution, replay, and immediate membership suspension.
+- This is a fresh-authentication prerequisite, not the complete MFA release gate. No privileged team or verification mutation is exposed yet; owner/admin MFA enrollment and assurance-level enforcement remain required before those commands become active.
+
+## Current local verification for Slice 2 completion branch
+
+| Check | Result |
+|---|---|
+| Static database fixture contract | Passed |
+| ESLint | Passed with the existing Open Graph `<img>` warning only |
+| TypeScript | Passed |
+| Full application suite | Passed: 79 files, 482 tests |
+| Feature coverage policy | Passed |
+| Production build | Passed; new versioned route included |
+| Dependency audit | Passed: 0 known vulnerabilities |
+| New executable pgTAP suite | Authored with 21 assertions; local replay unavailable without Docker/Podman and deferred to the combined checkpoint PR CI |
 
 ## Capability foundation implemented
 
@@ -159,3 +195,11 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 - Added the responsive `/brokerdesk/onboarding` flow for business, representative, practice, review, and verification stages. Document upload is visibly unavailable until secure release controls are complete.
 - Added service, route, client API, auth-continuation, UI interaction, and 43-assertion pgTAP coverage. TypeScript, lint, production build, dependency audit, all 457 application tests with feature coverage, 20 desktop/mobile end-to-end checks, and the static database check pass.
 - Docker/Podman is still unavailable locally. The new migration and pgTAP suite therefore require clean CI database replay before merge.
+- Confirmed PR #42 passed lint/test/build, secret scan, and clean Supabase migration/pgTAP checks, then squash-merged it as `44b5641`.
+- Synchronized local `main` with `origin/main` at `ac5026a` and created `feat/nak-68-brokerdesk-slice-2-completion` from that exact clean baseline.
+- Adopted combined-checkpoint delivery: related Slice 2 completion units and, when review size remains reasonable, the first Slice 3 foundation may accumulate as local commits before one PR.
+- Confirmed the existing Didit persistence is candidate-keyed and therefore cannot safely represent a broker without violating the one-customer-portfolio source of truth.
+- Chose a separate purpose-bound BrokerDesk fresh-authentication proof as the first completion prerequisite; the existing account-deletion proof will not be broadened or reused.
+- Implemented the purpose-bound fresh-auth perimeter across private database state, server-only repository/service/cookies, the versioned start route, callback completion, rate limiting, endpoint inventory, environment contract, and adversarial tests.
+- Passed static database validation, lint, TypeScript, all 482 application tests with feature coverage, production build, and a zero-vulnerability dependency audit.
+- Kept privileged mutations disabled and recorded MFA assurance plus clean executable database replay as release gates rather than presenting fresh login as sufficient authorization.

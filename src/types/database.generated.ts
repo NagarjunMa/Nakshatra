@@ -2489,6 +2489,10 @@ export type Database = {
         Args: { p_challenge_id: string; p_proof_hash: string }
         Returns: string
       }
+      complete_brokerdesk_action_reauth: {
+        Args: { p_challenge_id: string; p_proof_hash: string }
+        Returns: string
+      }
       claim_account_deletion_batch: {
         Args: { p_limit?: number }
         Returns: {
@@ -2615,6 +2619,14 @@ export type Database = {
       request_account_deletion: { Args: never; Returns: Json }
       start_account_deletion_reauth: {
         Args: { p_initiating_session_id: string }
+        Returns: Json
+      }
+      start_brokerdesk_action_reauth: {
+        Args: {
+          p_initiating_session_id: string
+          p_purpose: string
+          p_workspace_ref: string
+        }
         Returns: Json
       }
       resolve_approved_horoscope: {
