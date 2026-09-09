@@ -87,24 +87,26 @@ select is(
   '{"enabled":false}'::jsonb,
   'normal BrokerDesk access stays disabled during onboarding'
 );
+update public.organizations set status = 'active'
+where workspace_ref = (select result->>'workspaceRef' from onboarding_results);
+reset role;
 select is(
-  (with changed as (
-    update public.organizations set status = 'active'
-    where workspace_ref = (select result->>'workspaceRef' from onboarding_results)
-    returning 1
-  ) select count(*)::integer from changed),
-  0,
+  (select status from public.organizations where workspace_ref = (select result->>'workspaceRef' from onboarding_results)),
+  'onboarding',
   'legacy RLS cannot directly activate a BrokerDesk workspace'
 );
+set local role authenticated;
+select pg_temp.set_authenticated_claims('a1000000-0000-4000-8000-000000000001', 'a2000000-0000-4000-8000-000000000001');
+delete from public.organizations
+where workspace_ref = (select result->>'workspaceRef' from onboarding_results);
+reset role;
 select is(
-  (with removed as (
-    delete from public.organizations
-    where workspace_ref = (select result->>'workspaceRef' from onboarding_results)
-    returning 1
-  ) select count(*)::integer from removed),
-  0,
+  (select count(*)::integer from public.organizations where workspace_ref = (select result->>'workspaceRef' from onboarding_results)),
+  1,
   'legacy RLS cannot directly delete an onboarding workspace'
 );
+set local role authenticated;
+select pg_temp.set_authenticated_claims('a1000000-0000-4000-8000-000000000001', 'a2000000-0000-4000-8000-000000000001');
 select is(
   public.create_brokerdesk_workspace(
     '{
