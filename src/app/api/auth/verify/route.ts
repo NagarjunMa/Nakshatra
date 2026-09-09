@@ -10,7 +10,7 @@ import {
   requireSameOrigin,
 } from "@/lib/api/request-security";
 import { getRequestId, logServerError } from "@/lib/security/logging";
-import { sanitizeInternalRedirect } from "@/lib/security/redirect";
+import { isBrokerdeskAuthRedirect, sanitizeInternalRedirect } from "@/lib/security/redirect";
 import { createClient } from "@/lib/supabase/server";
 
 const verificationSchema = z.object({
@@ -58,7 +58,8 @@ export async function POST(request: Request) {
       );
     }
 
-    if (parsed.data.purpose === "owner_signup") {
+    const redirect = sanitizeInternalRedirect(parsed.data.redirect);
+    if (parsed.data.purpose === "owner_signup" && !isBrokerdeskAuthRedirect(redirect)) {
       await ensureOwnerPortfolio(supabase, data.user.id);
     }
 
@@ -66,7 +67,7 @@ export async function POST(request: Request) {
       {
         verified: true,
         email: verifiedEmail,
-        redirect: sanitizeInternalRedirect(parsed.data.redirect),
+        redirect,
       },
       { headers: { "Cache-Control": "private, no-store" } }
     );

@@ -100,6 +100,24 @@ describe("authentication verification routes", () => {
     expect(ensureOwnerPortfolio).toHaveBeenCalledWith(supabase, "owner");
   });
 
+  it("verifies a BrokerDesk signup without creating a customer portfolio", async () => {
+    verifyOtp.mockResolvedValueOnce({
+      data: {
+        user: { id: "broker", email: "broker@example.com" },
+        session: { access_token: "token" },
+      },
+      error: null,
+    });
+    const response = await verifyPost(request("/api/auth/verify", {
+      purpose: "owner_signup",
+      email: "broker@example.com",
+      token: "654321",
+      redirect: "/brokerdesk/onboarding",
+    }));
+    expect(response.status).toBe(200);
+    expect(ensureOwnerPortfolio).not.toHaveBeenCalled();
+  });
+
   it("redacts an owner portfolio bootstrap failure", async () => {
     verifyOtp.mockResolvedValueOnce({
       data: {

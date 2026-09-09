@@ -34,6 +34,16 @@ test("sign-in form preserves a safe post-auth destination", async ({ page }) => 
   expect(viewport.pageHeight).toBeLessThanOrEqual(viewport.height + 1);
 });
 
+test("BrokerDesk reuses account creation with clear private-workspace guidance", async ({ page }) => {
+  await page.goto("/signup?redirect=%2Fbrokerdesk%2Fonboarding");
+  await expect(page.getByRole("heading", { name: "Create your broker account" })).toBeVisible();
+  await expect(page.getByText(/workspace stays private/i)).toBeVisible();
+  await expect(page.getByRole("link", { name: "Sign in" })).toHaveAttribute(
+    "href",
+    "/login?redirect=%2Fbrokerdesk%2Fonboarding"
+  );
+});
+
 test("unauthenticated owners are redirected away from protected screens", async ({ page }) => {
   await page.goto("/dashboard");
   await expect(page).toHaveURL(/\/login\?redirect=%2Fdashboard/);

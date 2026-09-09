@@ -30,6 +30,10 @@ export const rateLimitActionSchema = z.enum([
   "identity_verification_start",
   "identity_verification_status",
   "identity_verification_retry",
+  "brokerdesk_bootstrap",
+  "brokerdesk_workspace_create",
+  "brokerdesk_onboarding_read",
+  "brokerdesk_onboarding_write",
 ]);
 
 export type RateLimitAction = z.infer<typeof rateLimitActionSchema>;

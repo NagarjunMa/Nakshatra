@@ -9,7 +9,7 @@ import {
   requireSameOrigin,
 } from "../src/lib/api/request-security";
 import { getRequestId, logServerError } from "../src/lib/security/logging";
-import { createCanonicalAppUrl, sanitizeInternalRedirect } from "../src/lib/security/redirect";
+import { createCanonicalAppUrl, isBrokerdeskAuthRedirect, sanitizeInternalRedirect } from "../src/lib/security/redirect";
 import {
   consumeRateLimit,
   enforceRateLimit,
@@ -122,6 +122,13 @@ describe("redirects and safe logging", () => {
     expect(createCanonicalAppUrl("/dashboard", "http://localhost:3000/callback")).toBe("http://localhost:3000/dashboard");
     vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://nakshatra.example/path");
     expect(createCanonicalAppUrl("/dashboard", "http://localhost:3000/callback")).toBe("https://nakshatra.example/dashboard");
+  });
+
+  it("derives BrokerDesk continuation only from its safe URL family", () => {
+    expect(isBrokerdeskAuthRedirect("/brokerdesk/onboarding")).toBe(true);
+    expect(isBrokerdeskAuthRedirect("/brokerdesk/w/wrk_example/dashboard")).toBe(true);
+    expect(isBrokerdeskAuthRedirect("/dashboard?next=/brokerdesk")).toBe(false);
+    expect(isBrokerdeskAuthRedirect("https://attacker.test/brokerdesk")).toBe(false);
   });
 
   it("accepts safe request IDs and logs only structured error types", () => {

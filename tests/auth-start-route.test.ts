@@ -129,6 +129,24 @@ describe("authentication start route", () => {
     expect(ensureOwnerPortfolio).toHaveBeenCalledWith(expect.anything(), "new-owner");
   });
 
+  it("derives BrokerDesk signup context from the allowlisted destination without creating a customer portfolio", async () => {
+    signUp.mockResolvedValueOnce({
+      data: { user: { id: "broker" }, session: { access_token: "token" } },
+      error: null,
+    });
+    const response = await POST(request({
+      method: "password_signup",
+      email: "broker@example.com",
+      password: "strong-pass-1",
+      redirect: "/brokerdesk/onboarding",
+    }));
+    expect(response.status).toBe(200);
+    expect(signUp).toHaveBeenCalledWith(expect.objectContaining({
+      options: expect.objectContaining({ data: { entry_context: "brokerdesk_representative" } }),
+    }));
+    expect(ensureOwnerPortfolio).not.toHaveBeenCalled();
+  });
+
   it("signs in an owner or viewer upgrading to owner with email and password", async () => {
     const response = await POST(request({
       method: "password_signin",
@@ -143,6 +161,17 @@ describe("authentication start route", () => {
       password: "strong-pass-1",
     });
     expect(ensureOwnerPortfolio).toHaveBeenCalledWith(expect.anything(), "owner");
+  });
+
+  it("reuses an existing account for BrokerDesk without changing customer ownership", async () => {
+    const response = await POST(request({
+      method: "password_signin",
+      email: "broker@example.com",
+      password: "strong-pass-1",
+      redirect: "/brokerdesk/onboarding",
+    }));
+    expect(response.status).toBe(200);
+    expect(ensureOwnerPortfolio).not.toHaveBeenCalled();
   });
 
   it("uses non-enumerating responses for rejected signup and sign-in", async () => {

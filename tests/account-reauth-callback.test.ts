@@ -52,4 +52,18 @@ describe("account deletion reauthentication callback", () => {
     expect(response.headers.get("location")).toBe("http://local/edit");
     expect(completeAccountDeletionReauth).not.toHaveBeenCalled();
   });
+
+  it("continues BrokerDesk OAuth without provisioning a customer portfolio", async () => {
+    const from = vi.fn();
+    createClient.mockResolvedValueOnce({
+      auth: {
+        exchangeCodeForSession: vi.fn().mockResolvedValue({ error: null }),
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: "broker" } } }),
+      },
+      from,
+    });
+    const response = await GET(new Request("http://local/api/auth/callback?code=ok&next=/brokerdesk/onboarding"));
+    expect(response.headers.get("location")).toBe("http://local/brokerdesk/onboarding");
+    expect(from).not.toHaveBeenCalled();
+  });
 });

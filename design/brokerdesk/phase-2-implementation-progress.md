@@ -1,12 +1,12 @@
 # BrokerDesk Phase 2 — Implementation Progress
 
-Status: Slice 1 capability foundation implemented; PR verification pending
+Status: Slice 1 merged; Slice 2 broker onboarding foundation implemented locally
 Started: 2026-09-08  
 Approved plan: [Phase 1 Implementation Plan](./phase-1-implementation-plan.md)
 
 ## Tracking approach
 
-The user has opted out of Linear updates for this work. Decisions, changed files, verification results, risks, and deviations are recorded here, in the master plan, and in the associated GitHub pull request. Slice 1 was reconciled through PR #40 and squash-merged to `main`; the next slice continues from the clean branch `feat/nak-68-brokerdesk-capability-foundation`.
+The user has opted out of Linear updates for this work. Decisions, changed files, verification results, risks, and deviations are recorded here, in the master plan, and in associated GitHub pull requests. The safety foundation merged through PR #40, the capability foundation merged through PR #41, and Slice 2 continues from clean `main` on `feat/nak-68-brokerdesk-onboarding-rbac`.
 
 ## Repository preparation
 
@@ -15,7 +15,8 @@ The user has opted out of Linear updates for this work. Decisions, changed files
 - Pull request: [#40 — BrokerDesk safety foundation](https://github.com/NagarjunMa/Nakshatra/pull/40).
 - Merge: squash commit `22faf86` on `main` after all required checks passed.
 - Completed branch and isolated phase worktree: removed after clean-state, tree-equivalence, and patch-equivalence verification.
-- Current branch: `feat/nak-68-brokerdesk-capability-foundation`, created directly from synchronized `main`.
+- Capability pull request: [#41 — BrokerDesk capability foundation](https://github.com/NagarjunMa/Nakshatra/pull/41), squash-merged as `32e5b62`.
+- Current branch: `feat/nak-68-brokerdesk-onboarding-rbac`, created directly from synchronized `main` at `32e5b62`.
 
 ## Latest-main baseline
 
@@ -88,10 +89,10 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 
 ## Next executable steps
 
-1. Verify the capability migration through a clean CI database replay and the complete pgTAP suite.
-2. Merge the reviewed capability foundation through a squash PR and synchronize `main`.
-3. Begin the organization onboarding/verification command slice from a new compliant feature branch.
-4. Add targeted end-to-end tests after the first BrokerDesk route surface exists.
+1. Complete Slice 2 representative identity-verification reuse and audited team-invitation/RBAC commands.
+2. Add browser end-to-end coverage for the authenticated onboarding journey.
+3. Verify the onboarding migration through a clean CI database replay and the complete pgTAP suite before merge.
+4. Keep document upload and organization activation unavailable until retention, KMS, malware scanning, and reviewer authorization are implemented and approved.
 
 ## Capability foundation implemented
 
@@ -149,3 +150,12 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 - Added the server-only access contract/repository/service and the versioned endpoint inventory.
 - Added two-agency authorization and immediate-revocation database tests; updated the earlier ownership fixture to explicitly enable BrokerDesk.
 - Passed static database checks, TypeScript, all 430 tests, feature coverage, and lint with only the pre-existing Open Graph warning.
+- Confirmed PR #41 passed application and database checks, squash-merged it as `32e5b62`, and synchronized `main` before creating `feat/nak-68-brokerdesk-onboarding-rbac`.
+- Added private organization onboarding state, business and representative data, exact verification checks, quarantined document metadata, idempotency records, and append-only audit events.
+- Added atomic workspace creation and versioned onboarding-save RPCs. Workspaces start as `onboarding` with `brokerdesk.enabled = false`; form submission cannot activate or verify them.
+- Added same-shape unavailable handling for malformed, missing, and cross-tenant workspace references and closed direct legacy organization/matchmaker mutation grants.
+- Added separate bootstrap/create/read/write rate limits and strict application/database input allowlists that reject organization IDs, roles, entitlements, and verification state from clients.
+- Reused the B2C authentication UI with server-derived BrokerDesk continuation. BrokerDesk signup, password sign-in, OTP verification, and OAuth callback do not implicitly provision customer portfolios.
+- Added the responsive `/brokerdesk/onboarding` flow for business, representative, practice, review, and verification stages. Document upload is visibly unavailable until secure release controls are complete.
+- Added service, route, client API, auth-continuation, UI interaction, and 43-assertion pgTAP coverage. TypeScript, lint, production build, dependency audit, all 457 application tests with feature coverage, 20 desktop/mobile end-to-end checks, and the static database check pass.
+- Docker/Podman is still unavailable locally. The new migration and pgTAP suite therefore require clean CI database replay before merge.

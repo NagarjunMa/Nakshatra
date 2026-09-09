@@ -1,5 +1,105 @@
 @import "tailwindcss";
 
+/* --- BrokerDesk private business onboarding --- */
+.brokerdesk-onboarding-shell { min-height: 100vh; background: #f6f4ee; color: #1d3038; font-family: var(--font-portfolio-body), system-ui, sans-serif; }
+.brokerdesk-onboarding-header { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; min-height: 72px; border-bottom: 1px solid #d8d6ce; padding: 0 max(1rem, calc((100vw - 1180px) / 2)); background: rgb(250 248 243 / 0.94); }
+.brokerdesk-wordmark { color: #1e3742; font-size: 0.84rem; font-weight: 800; letter-spacing: 0.18em; }
+.brokerdesk-onboarding-header > span { color: #647176; font-size: 0.82rem; }
+.brokerdesk-customer-link { justify-self: end; color: #365b61; font-size: 0.82rem; font-weight: 650; }
+.brokerdesk-onboarding-main { display: grid; grid-template-columns: 250px minmax(0, 760px); gap: clamp(2rem, 5vw, 5rem); width: min(1080px, calc(100% - 2rem)); margin: 0 auto; padding: clamp(2.5rem, 7vw, 5rem) 0 6rem; }
+.brokerdesk-step-panel { align-self: start; }
+.brokerdesk-private-note { display: flex; gap: 0.7rem; margin-bottom: 1.8rem; border: 1px solid #c7d9d3; border-radius: 10px; padding: 0.85rem; background: #e8f1ed; color: #315f57; }
+.brokerdesk-private-note svg { flex: none; width: 1.05rem; margin-top: 0.15rem; }
+.brokerdesk-private-note div { display: grid; gap: 0.25rem; }
+.brokerdesk-private-note strong { font-size: 0.8rem; }
+.brokerdesk-private-note span { color: #58706c; font-size: 0.74rem; line-height: 1.45; }
+.brokerdesk-step-panel ol { display: grid; gap: 0; list-style: none; }
+.brokerdesk-step-panel li { position: relative; display: flex; align-items: center; gap: 0.75rem; min-height: 62px; color: #8a9293; }
+.brokerdesk-step-panel li::after { position: absolute; top: 43px; bottom: -19px; left: 16px; width: 1px; background: #d2d5d1; content: ""; }
+.brokerdesk-step-panel li:last-child::after { display: none; }
+.brokerdesk-step-panel li > span { z-index: 1; display: grid; width: 33px; height: 33px; place-items: center; border: 1px solid #c7cbc8; border-radius: 50%; background: #f6f4ee; font-size: 0.75rem; font-weight: 700; }
+.brokerdesk-step-panel li > span svg { width: 0.9rem; }
+.brokerdesk-step-panel li div { display: grid; gap: 0.1rem; }
+.brokerdesk-step-panel li small { font-size: 0.68rem; }
+.brokerdesk-step-panel li strong { font-size: 0.85rem; }
+.brokerdesk-step-panel li.is-current { color: #244854; }
+.brokerdesk-step-panel li.is-current > span { border-color: #244854; background: #244854; color: #fff; box-shadow: 0 0 0 4px rgb(36 72 84 / 0.1); }
+.brokerdesk-step-panel li.is-complete { color: #477b77; }
+.brokerdesk-step-panel li.is-complete > span { border-color: #8db0a8; background: #dcebe5; }
+.brokerdesk-onboarding-card { min-height: 570px; border: 1px solid #d2d1ca; border-radius: 14px; padding: clamp(1.25rem, 4vw, 2.5rem); background: #fffdf8; box-shadow: 0 18px 48px rgb(29 52 58 / 0.08); }
+.brokerdesk-form { display: grid; gap: 2rem; }
+.brokerdesk-form-heading { display: flex; align-items: flex-start; gap: 1rem; padding-bottom: 1.5rem; border-bottom: 1px solid #deded8; }
+.brokerdesk-form-heading > span { display: grid; flex: none; width: 42px; height: 42px; place-items: center; border-radius: 10px; background: #e5eeea; color: #315f57; }
+.brokerdesk-form-heading svg { width: 1.15rem; }
+.brokerdesk-form-heading p { margin-bottom: 0.35rem; color: #477b77; font-size: 0.7rem; font-weight: 750; letter-spacing: 0.12em; text-transform: uppercase; }
+.brokerdesk-form-heading h1 { color: #18272e; font-family: var(--font-portfolio-display), Georgia, serif; font-size: clamp(1.9rem, 4vw, 2.65rem); font-weight: 500; line-height: 1.08; letter-spacing: -0.025em; }
+.brokerdesk-form-heading div > div { max-width: 62ch; margin-top: 0.65rem; color: #677579; font-size: 0.88rem; line-height: 1.6; }
+.brokerdesk-field-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 1.2rem; }
+.brokerdesk-field { display: grid; align-content: start; gap: 0.42rem; color: #30464e; font-size: 0.82rem; font-weight: 650; }
+.brokerdesk-field.is-wide { grid-column: 1 / -1; }
+.brokerdesk-field > span { display: flex; justify-content: space-between; gap: 0.5rem; }
+.brokerdesk-field > span small { color: #879093; font-weight: 500; }
+.brokerdesk-field input,
+.brokerdesk-field select,
+.brokerdesk-field textarea { width: 100%; min-height: 46px; border: 1px solid #adb8ba; border-radius: 8px; padding: 0.68rem 0.75rem; outline: none; background: #fff; color: #1d3038; font: inherit; font-weight: 450; }
+.brokerdesk-field textarea { resize: vertical; line-height: 1.55; }
+.brokerdesk-field input:focus,
+.brokerdesk-field select:focus,
+.brokerdesk-field textarea:focus { border-color: #477b77; box-shadow: 0 0 0 3px rgb(71 123 119 / 0.14); }
+.brokerdesk-field > small { color: #768387; font-size: 0.72rem; font-weight: 450; line-height: 1.45; }
+.brokerdesk-form-actions { display: flex; justify-content: flex-end; gap: 0.75rem; padding-top: 1.25rem; border-top: 1px solid #deded8; }
+.brokerdesk-primary-button,
+.brokerdesk-back-button { display: inline-flex; min-height: 46px; align-items: center; justify-content: center; gap: 0.4rem; border-radius: 8px; padding: 0.7rem 1rem; font: inherit; font-size: 0.84rem; font-weight: 700; cursor: pointer; }
+.brokerdesk-primary-button { border: 1px solid #244854; background: #244854; color: #fff; }
+.brokerdesk-primary-button svg { width: 1rem; }
+.brokerdesk-back-button { border: 1px solid #b8c0bf; background: transparent; color: #3f565d; }
+.brokerdesk-primary-button:disabled,
+.brokerdesk-back-button:disabled { cursor: wait; opacity: 0.6; }
+.brokerdesk-form-error { margin-bottom: 1rem; border: 1px solid #ddbab4; border-radius: 8px; padding: 0.75rem 0.9rem; background: #fff3f0; color: #873a3a; font-size: 0.82rem; }
+.brokerdesk-review-list { display: grid; border-top: 1px solid #deded8; }
+.brokerdesk-review-list div { display: grid; grid-template-columns: 140px 1fr; gap: 1rem; padding: 1rem 0.15rem; border-bottom: 1px solid #e5e5df; }
+.brokerdesk-review-list dt { color: #7b878a; font-size: 0.78rem; }
+.brokerdesk-review-list dd { color: #2e444b; font-size: 0.86rem; font-weight: 650; }
+.brokerdesk-check { display: flex; align-items: flex-start; gap: 0.7rem; color: #4f6065; font-size: 0.82rem; line-height: 1.55; }
+.brokerdesk-check input { flex: none; width: 17px; height: 17px; margin-top: 0.15rem; accent-color: #315f57; }
+.brokerdesk-verification-list { display: grid; border-top: 1px solid #deded8; }
+.brokerdesk-verification-list > div { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.1rem 0.2rem; border-bottom: 1px solid #e2e3de; }
+.brokerdesk-verification-list span { display: grid; gap: 0.25rem; }
+.brokerdesk-verification-list strong { color: #2d4249; font-size: 0.88rem; }
+.brokerdesk-verification-list small { color: #748185; font-size: 0.75rem; }
+.brokerdesk-verification-list b { flex: none; border-radius: 999px; padding: 0.35rem 0.6rem; background: #eee8d8; color: #735f2f; font-size: 0.7rem; }
+.brokerdesk-verification-list b.is-verified { background: #dcebe5; color: #315f57; }
+.brokerdesk-verification-list b.is-needs_attention,
+.brokerdesk-verification-list b.is-expired { background: #f2dedb; color: #8c4141; }
+.brokerdesk-hold-note { display: flex; gap: 0.8rem; border: 1px solid #d5d7d1; border-radius: 10px; padding: 1rem; background: #f5f3ec; color: #4f6065; }
+.brokerdesk-hold-note svg { flex: none; width: 1.1rem; margin-top: 0.1rem; color: #617b7a; }
+.brokerdesk-hold-note p { display: grid; gap: 0.25rem; }
+.brokerdesk-hold-note strong { color: #354c53; font-size: 0.82rem; }
+.brokerdesk-hold-note span { font-size: 0.76rem; line-height: 1.5; }
+
+@media (max-width: 760px) {
+  .brokerdesk-onboarding-header { grid-template-columns: 1fr auto; }
+  .brokerdesk-onboarding-header > span { display: none; }
+  .brokerdesk-onboarding-main { grid-template-columns: 1fr; padding-top: 1.5rem; }
+  .brokerdesk-private-note { margin-bottom: 1rem; }
+  .brokerdesk-step-panel ol { grid-template-columns: repeat(5,1fr); }
+  .brokerdesk-step-panel li { justify-content: center; min-height: auto; }
+  .brokerdesk-step-panel li::after { top: 16px; right: -50%; bottom: auto; left: 50%; width: 100%; }
+  .brokerdesk-step-panel li div { display: none; }
+  .brokerdesk-field-grid { grid-template-columns: 1fr; }
+  .brokerdesk-field.is-wide { grid-column: auto; }
+  .brokerdesk-review-list div { grid-template-columns: 1fr; gap: 0.3rem; }
+}
+
+@media (max-width: 460px) {
+  .brokerdesk-customer-link { font-size: 0.72rem; }
+  .brokerdesk-onboarding-main { width: min(100% - 1rem, 1080px); }
+  .brokerdesk-onboarding-card { border-radius: 10px; }
+  .brokerdesk-form-heading > span { display: none; }
+  .brokerdesk-form-actions { align-items: stretch; flex-direction: column-reverse; }
+  .brokerdesk-verification-list > div { align-items: flex-start; flex-direction: column; }
+}
+
 /* --- Nakshatra product site and workspace --- */
 .site-shell {
   min-height: 100vh;

@@ -2506,6 +2506,10 @@ export type Database = {
         Args: { p_action: string; p_subject_hash?: string }
         Returns: Json
       }
+      create_brokerdesk_workspace: {
+        Args: { p_idempotency_key: string; p_profile: Json }
+        Returns: Json
+      }
       consume_account_deletion_reauth: { Args: { p_proof_hash: string }; Returns: Json }
       create_organization_with_owner: {
         Args: {
@@ -2547,6 +2551,21 @@ export type Database = {
       is_published_portfolio: {
         Args: { p_portfolio_id: string }
         Returns: boolean
+      }
+      resolve_brokerdesk_bootstrap: { Args: never; Returns: Json }
+      resolve_brokerdesk_onboarding: {
+        Args: { p_workspace_ref: string }
+        Returns: Json
+      }
+      save_brokerdesk_onboarding_profile: {
+        Args: {
+          p_expected_version: number
+          p_idempotency_key: string
+          p_profile: Json
+          p_submit_for_verification: boolean
+          p_workspace_ref: string
+        }
+        Returns: Json
       }
       list_portfolio_access: { Args: never; Returns: Json }
       manage_reveal_grant: {

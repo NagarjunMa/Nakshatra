@@ -1,11 +1,11 @@
 # Nakshatra BrokerDesk — Living Product and Engineering Plan
 
-Status: Planning approved; Phase 2 implementation authorized and bootstrap in progress  
+Status: Planning approved; Phase 2 implementation in progress through Slice 2
 Maintainer: Update this document whenever a product decision, architectural decision, phase status, risk, or implementation deviation is approved.
 
 ## Purpose
 
-This is the durable planning index for BrokerDesk until implementation work begins. It prevents product and security decisions from existing only in chat history. Detailed phase documents remain separate and are linked here.
+This is the durable planning and implementation index for BrokerDesk. It prevents product, security, and delivery decisions from existing only in chat history. Detailed phase documents remain separate and are linked here.
 
 BrokerDesk extends Nakshatra's existing B2C platform. It does not fork identity, portfolio, privacy, verification, or disclosure domains.
 
@@ -152,7 +152,7 @@ Customer workspace:
 | 0E — URL, API, and security contract | Approved baseline | Endpoint projections, identifiers, tokens, rate limits, abuse and penetration cases |
 | 0F — Complete operational wireframes | Approved baseline | Onboarding, dashboard, bulk import, queues, tasks, renewals, RBAC, privacy |
 | 1 — Implementation planning | Approved baseline | Ordered engineering plan, migrations, acceptance tests, rollout |
-| 2 — Implementation | Slice 1 merged and database-verified | Dependency security, customer ownership boundary, private defaults, opaque IDs, multi-agency tests |
+| 2 — Implementation | Slice 1 merged; Slice 2 onboarding foundation implemented locally | Capability foundation, private broker onboarding, safe auth continuation, audited commands, operational UI |
 
 ## Detailed planning documents
 
@@ -217,6 +217,13 @@ Customer workspace:
 - On `feat/nak-68-brokerdesk-capability-foundation`, implemented immutable workspace/relationship references, private role-capability scopes, customer assignments and mandates, latest-record-wins BrokerDesk entitlement enforcement, capability-scoped relationship reads, a minimal server-only access resolver, and a strict endpoint inventory.
 - Kept all customer candidate and portfolio ownership rules unchanged and owner-only; no BrokerDesk direct portfolio projection was added.
 - Added adversarial two-agency database coverage for assignment, mandate, entitlement, membership, session, and cross-tenant revocation boundaries. Local application checks pass; clean migration replay and pgTAP remain mandatory in PR CI because this host has no Docker/Podman runtime.
+- Squash-merged the capability foundation through PR #41 as `32e5b62`, synchronized local and remote `main`, and created `feat/nak-68-brokerdesk-onboarding-rbac` from that clean baseline.
+- Implemented the first Slice 2 unit: private business, representative, practice, onboarding-state, verification-check, quarantined-document-metadata, idempotency, and append-only audit structures.
+- Added owner-only onboarding commands and projections using opaque workspace references, uniform unavailable responses, optimistic versions, exact input allowlists, independent rate limits, and an explicitly disabled BrokerDesk entitlement until later verification approval.
+- Closed legacy direct organization and matchmaker-profile mutation paths so clients cannot self-activate or self-verify through older RLS policies.
+- Reused the existing Nakshatra signup/sign-in experience for BrokerDesk continuation while ensuring that BrokerDesk authentication does not implicitly create or modify a customer portfolio.
+- Added `/brokerdesk`, `/brokerdesk/onboarding`, and four versioned onboarding APIs, plus a responsive five-step operational interface using simple business language and fail-closed document-upload messaging.
+- Confirmed TypeScript, lint, production build, dependency audit, all 457 application tests with feature coverage, 20 desktop/mobile end-to-end checks, and static database fixture validation. Local executable migration replay remains unavailable without Docker/Podman and is required before merge.
 
 ## Maintenance rule
 
