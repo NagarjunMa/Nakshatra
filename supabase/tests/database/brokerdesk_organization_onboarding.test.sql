@@ -55,7 +55,10 @@ select public.create_brokerdesk_workspace(
   'signup:broker:0001'
 );
 
-select like(result->>'workspaceRef', 'wrk\_%' escape '\', 'workspace creation returns an opaque reference') from onboarding_results;
+select ok(
+  (result->>'workspaceRef') ~ '^wrk_[0-9a-f]{32}$',
+  'workspace creation returns an opaque reference'
+) from onboarding_results;
 select is(result->>'workspaceStatus', 'onboarding', 'the workspace stays private during onboarding') from onboarding_results;
 select is(result->>'nextStage', 'representative', 'business details advance to representative details') from onboarding_results;
 select is((result->>'version')::integer, 1, 'new onboarding starts at version one') from onboarding_results;
