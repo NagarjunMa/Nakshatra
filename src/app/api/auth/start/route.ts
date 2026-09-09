@@ -15,7 +15,7 @@ import {
   requireSameOrigin,
 } from "@/lib/api/request-security";
 import { getRequestId, logServerError } from "@/lib/security/logging";
-import { createCanonicalAppUrl, sanitizeInternalRedirect } from "@/lib/security/redirect";
+import { createCanonicalAppUrl, isBrokerdeskAuthRedirect, sanitizeInternalRedirect } from "@/lib/security/redirect";
 import { createClient } from "@/lib/supabase/server";
 
 const email = z.string().trim().email().max(180);
@@ -92,6 +92,7 @@ export async function POST(request: Request) {
 
     if (parsed.data.method === "password_signup") {
       const redirect = sanitizeInternalRedirect(parsed.data.redirect);
+      const isBrokerdeskContinuation = isBrokerdeskAuthRedirect(redirect);
       const callbackUrl = createCanonicalAppUrl(
         `/api/auth/callback?next=${encodeURIComponent(redirect)}`,
         request.url
@@ -102,7 +103,7 @@ export async function POST(request: Request) {
         password: parsed.data.password,
         options: {
           emailRedirectTo: callbackUrl,
-          data: { entry_context: "portfolio_owner" },
+          data: { entry_context: isBrokerdeskContinuation ? "brokerdesk_representative" : "portfolio_owner" },
         },
       });
       if (error) {
@@ -115,7 +116,7 @@ export async function POST(request: Request) {
         );
       }
       if (data.session && data.user) {
-        await ensureOwnerPortfolio(supabase, data.user.id);
+        if (!isBrokerdeskContinuation) await ensureOwnerPortfolio(supabase, data.user.id);
         return NextResponse.json(
           { authenticated: true, redirect },
           { headers: { "Cache-Control": "private, no-store" } }
@@ -129,6 +130,7 @@ export async function POST(request: Request) {
 
     if (parsed.data.method === "password_signin") {
       const redirect = sanitizeInternalRedirect(parsed.data.redirect);
+      const isBrokerdeskContinuation = isBrokerdeskAuthRedirect(redirect);
       const { data, error } = await supabase.auth.signInWithPassword({
         email: parsed.data.email.toLowerCase(),
         password: parsed.data.password,
@@ -142,7 +144,7 @@ export async function POST(request: Request) {
           { status: 401 }
         );
       }
-      await ensureOwnerPortfolio(supabase, data.user.id);
+      if (!isBrokerdeskContinuation) await ensureOwnerPortfolio(supabase, data.user.id);
       return NextResponse.json(
         { authenticated: true, redirect },
         { headers: { "Cache-Control": "private, no-store" } }

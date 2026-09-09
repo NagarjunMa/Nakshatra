@@ -107,6 +107,16 @@ describe("AuthForm", () => {
     expect(continueToAuthProvider).toHaveBeenCalledWith("https://accounts.google.test/oauth");
   });
 
+  it("reuses the auth design with clear BrokerDesk continuation copy", () => {
+    searchParams.get.mockImplementation((key: string) => key === "redirect" ? "/brokerdesk/onboarding" : null);
+    render(<AuthForm mode="signup" />);
+    expect(screen.getByRole("heading", { name: "Create your broker account" })).toBeInTheDocument();
+    expect(screen.getByText(/workspace stays private/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute(
+      "href", "/login?redirect=%2Fbrokerdesk%2Fonboarding"
+    );
+  });
+
   it("requests password recovery without revealing whether an account exists", async () => {
     startAuthentication.mockResolvedValueOnce({ ok: true, body: { sent: true } });
     const user = userEvent.setup();

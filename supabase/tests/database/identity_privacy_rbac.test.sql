@@ -21,8 +21,10 @@ set local request.jwt.claims = '{"sub":"41000000-0000-4000-8000-000000000001","r
 select ok(not public.is_current_session_active(), 'a JWT without its backing Auth session is rejected');
 
 set local request.jwt.claims = '{"sub":"41000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"42000000-0000-4000-8000-000000000001"}';
+-- This suite exercises the shared organization RBAC contract. Matchmaker
+-- agencies must be created through the dedicated BrokerDesk onboarding command.
 select is(
-  public.create_organization_with_owner('matchmaker_agency', 'Phase Four Agency', 'phase-four-agency') ->> 'role',
+  public.create_organization_with_owner('family', 'Phase Four Agency', 'phase-four-agency') ->> 'role',
   'owner',
   'organization creation atomically returns the owner role'
 );

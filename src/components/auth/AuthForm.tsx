@@ -15,6 +15,7 @@ import {
   PASSWORD_MAX_LENGTH,
   PASSWORD_MIN_LENGTH,
 } from "@/features/auth/password-policy";
+import { isBrokerdeskAuthRedirect } from "@/lib/security/redirect";
 
 type Mode = "login" | "signup";
 type Screen = "credentials" | "verify" | "recovery" | "recovery_sent";
@@ -53,7 +54,25 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectPath = searchParams.get("redirect") || "/dashboard";
-  const copy = COPY[mode];
+  const brokerdeskContinuation = isBrokerdeskAuthRedirect(redirectPath);
+  const copy = brokerdeskContinuation
+    ? mode === "login"
+      ? {
+          ...COPY.login,
+          eyebrow: "Nakshatra BrokerDesk",
+          title: "Sign in to your broker workspace",
+          body: "Use your Nakshatra account to continue. Your business workspace stays private while verification is completed.",
+        }
+      : {
+          ...COPY.signup,
+          eyebrow: "Nakshatra BrokerDesk",
+          title: "Create your broker account",
+          body: "Start with your account. Your workspace stays private while we collect and verify your business details.",
+        }
+    : COPY[mode];
+  const alternateHref = brokerdeskContinuation
+    ? `${copy.altHref}?redirect=${encodeURIComponent(redirectPath)}`
+    : copy.altHref;
   const authError = searchParams.get("error");
   const authErrorMessage = authError === "session_revoked"
     ? "This session has been signed out. Sign in again to continue."
@@ -232,7 +251,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
               </button>
 
               {(error || authErrorMessage) && <p className="account-error" role="alert">{error || authErrorMessage}</p>}
-              <p className="account-alt">{copy.altPrompt} <Link href={copy.altHref} className="account-link">{copy.altCta}</Link></p>
+              <p className="account-alt">{copy.altPrompt} <Link href={alternateHref} className="account-link">{copy.altCta}</Link></p>
               {mode === "signup" && (
                 <p className="account-legal">
                   By creating an account, you agree to our <Link href="/terms">Terms</Link> and acknowledge our <Link href="/privacy">Privacy Policy</Link>.

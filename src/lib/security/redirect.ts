@@ -19,6 +19,13 @@ export function sanitizeInternalRedirect(
   }
 }
 
+/** Derives BrokerDesk continuation only from an already-safe product path. */
+export function isBrokerdeskAuthRedirect(value: string | null | undefined) {
+  const safePath = sanitizeInternalRedirect(value);
+  const pathname = new URL(safePath, "https://nakshatra.invalid").pathname;
+  return pathname === "/brokerdesk" || pathname.startsWith("/brokerdesk/");
+}
+
 /** Builds an absolute application URL from the configured production origin or the current local origin. */
 export function createCanonicalAppUrl(path: string, requestUrl: string) {
   const requestOrigin = new URL(requestUrl).origin;
