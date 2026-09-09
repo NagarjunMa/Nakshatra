@@ -2,13 +2,10 @@ import { NextResponse } from "next/server";
 import {
   completeAccountDeletionReauth,
 } from "@/features/account/server/account.service";
-import { completeBrokerdeskReauth } from "@/features/organization-access/server/brokerdesk-reauth.service";
 import {
   brokerdeskReauthCookieNames,
   clearBrokerdeskReauthTransactionCookie,
-  createBrokerdeskProof,
-  createBrokerdeskProofCookie,
-  hashBrokerdeskProof,
+  createBrokerdeskMfaPendingCookie,
   readBrokerdeskReauthTransactionCookie,
 } from "@/features/organization-access/server/brokerdesk-reauth-cookie";
 import {
@@ -88,34 +85,16 @@ export async function GET(request: Request) {
         const failedPath = brokerdeskTransaction.purpose === "verification_manage"
           ? "/brokerdesk/onboarding?reauth=failed"
           : `/brokerdesk/w/${brokerdeskTransaction.workspaceRef}/settings/team?reauth=failed`;
-        const completePath = brokerdeskTransaction.purpose === "verification_manage"
-          ? "/brokerdesk/onboarding?reauth=complete"
-          : `/brokerdesk/w/${brokerdeskTransaction.workspaceRef}/settings/team?reauth=complete`;
+        const mfaPath = `/brokerdesk/security/mfa?workspace=${encodeURIComponent(
+          brokerdeskTransaction.workspaceRef
+        )}&purpose=${encodeURIComponent(brokerdeskTransaction.purpose)}`;
         const response = NextResponse.redirect(createCanonicalAppUrl(failedPath, request.url));
         response.headers.set("Cache-Control", "private, no-store");
         response.cookies.set(clearBrokerdeskReauthTransactionCookie());
         if (!user) return response;
-
-        try {
-          const proof = createBrokerdeskProof();
-          const outcome = await completeBrokerdeskReauth(
-            supabase,
-            brokerdeskTransaction.challengeId,
-            hashBrokerdeskProof(proof)
-          );
-          if (outcome !== "verified") return response;
-          response.headers.set("Location", createCanonicalAppUrl(completePath, request.url));
-          response.cookies.set(createBrokerdeskProofCookie({
-            challengeId: brokerdeskTransaction.challengeId,
-            workspaceRef: brokerdeskTransaction.workspaceRef,
-            purpose: brokerdeskTransaction.purpose,
-            proof,
-          }));
-          return response;
-        } catch (error) {
-          logServerError("brokerdesk.reauth.callback_failed", requestId, error);
-          return response;
-        }
+        response.headers.set("Location", createCanonicalAppUrl(mfaPath, request.url));
+        response.cookies.set(createBrokerdeskMfaPendingCookie(brokerdeskTransaction));
+        return response;
       }
 
       if (user && !isBrokerdeskAuthRedirect(next)) {

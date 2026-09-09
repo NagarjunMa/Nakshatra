@@ -45,7 +45,7 @@ describe("BrokerDesk privileged reauthentication service", () => {
       .rejects.toMatchObject({ code: "BROKERDESK_WORKSPACE_UNAVAILABLE", status: 404 });
   });
 
-  it.each(["verified", "expired", "not_fresh", "not_authorized", "invalid"] as const)(
+  it.each(["verified", "mfa_required", "expired", "not_fresh", "not_authorized", "invalid"] as const)(
     "validates the %s completion outcome",
     async (outcome) => {
       const client = rpcClient({ data: outcome, error: null });

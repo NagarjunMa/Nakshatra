@@ -90,10 +90,9 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 
 ## Next executable steps
 
-1. Add a purpose-bound BrokerDesk fresh-authentication boundary before any team, verification, export, or access-policy mutation is enabled.
-2. Complete audited employee invitation/RBAC commands using opaque member references, one-time invitation exchange, immediate suspension, and atomic fresh-auth proof consumption.
-3. Generalize the existing Didit lifecycle for an organization representative without creating a hidden customer candidate or a duplicate verification workflow.
-4. Keep document upload and organization activation unavailable until retention, KMS, malware scanning, and reviewer authorization are implemented and approved.
+1. Complete audited employee invitation/RBAC commands using opaque member references, one-time invitation exchange, immediate suspension, and atomic AAL2 proof consumption.
+2. Generalize the existing Didit lifecycle for an organization representative without creating a hidden customer candidate or a duplicate verification workflow.
+3. Keep document upload and organization activation unavailable until retention, KMS, malware scanning, and reviewer authorization are implemented and approved.
 
 ## Slice 2 completion decisions
 
@@ -124,11 +123,11 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 | Static database fixture contract | Passed |
 | ESLint | Passed with the existing Open Graph `<img>` warning only |
 | TypeScript | Passed |
-| Full application suite | Passed: 81 files, 489 tests |
+| Full application suite | Passed: 83 files, 498 tests |
 | Feature coverage policy | Passed |
 | Production build | Passed; new versioned route included |
 | Dependency audit | Passed: 0 known vulnerabilities |
-| New executable pgTAP suites | Authored with 41 assertions across fresh-auth and team projection; local replay unavailable without Docker/Podman and deferred to the combined checkpoint PR CI |
+| New executable pgTAP suites | Authored with 44 assertions across fresh-auth/MFA and team projection; local replay unavailable without Docker/Podman and deferred to the combined checkpoint PR CI |
 
 ## Opaque team projection implemented
 
@@ -139,6 +138,15 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 - New employees remain at `none` customer access until explicit assignments exist; suspended employees remain visible to authorized owners/admins with a clear suspended status.
 - Added a no-store, independently rate-limited versioned team-read endpoint and registered it in the machine-readable endpoint inventory.
 - Added application tests plus an adversarial pgTAP suite covering reference generation/immutability, UUID omission, direct-table bypass attempts, cross-agency substitution, advisor enumeration, and suspended-member projection.
+
+## BrokerDesk MFA assurance gate implemented
+
+- Changed the privilege flow to two stages: a fresh conventional sign-in creates only signed, HttpOnly MFA-pending state; it can no longer issue a privileged action proof.
+- Added a focused `/brokerdesk/security/mfa` experience using simple language and the existing Nakshatra visual system. Brokers may enroll a TOTP authenticator or verify an existing one; setup secrets remain browser-only.
+- Added a same-origin, strict and bounded `POST /api/v1/brokerdesk/reauth/complete` endpoint with its own database rate-limit bucket. Its workspace, action, challenge, and next destination come only from signed or server-derived state.
+- PostgreSQL now requires the live JWT to be `aal2` both when storing the hashed one-time proof and when a future command consumes it. A later downgrade to `aal1` blocks consumption even if the cookie is present.
+- Missing or tampered pending state, cross-origin requests, action injection, and AAL1 completion fail closed. Privileged mutations remain unavailable until they atomically consume this proof and write their audit event.
+- Enabled local Supabase TOTP enrollment and verification while leaving phone MFA disabled.
 
 ## Capability foundation implemented
 
@@ -215,3 +223,5 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 - Kept privileged mutations disabled and recorded MFA assurance plus clean executable database replay as release gates rather than presenting fresh login as sufficient authorization.
 - Added opaque employee references and the first minimal BrokerDesk team-read projection; closed the broad legacy membership Data API surface for matchmaker agencies without altering family/platform organization behavior.
 - Passed all 489 application tests and feature coverage, lint, TypeScript, production build, static database validation, and dependency audit after the team projection unit.
+- Implemented the TOTP MFA assurance gate: first-factor callbacks now issue only signed pending state, the browser raises the live session to AAL2, and PostgreSQL requires AAL2 again at proof issuance and consumption.
+- Added the strict MFA completion API, independent rate limit, server-derived continuation, no-index setup/verification UI, and adversarial application/database tests. All 498 application tests and feature coverage, lint, TypeScript, production build, static database validation, and dependency audit pass; the expanded 44-assertion pgTAP set awaits combined-checkpoint CI replay.

@@ -4,9 +4,13 @@ create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 \ir auth-fixtures.psql
 
-select plan(21);
+select plan(24);
 
 select has_table('app_private', 'brokerdesk_action_reauth_challenges', 'BrokerDesk privileged challenges are private');
+select has_column(
+  'app_private', 'brokerdesk_action_reauth_challenges', 'verified_aal',
+  'BrokerDesk challenges retain the database-verified assurance level'
+);
 select has_function(
   'public', 'start_brokerdesk_action_reauth', array['text', 'text', 'uuid'],
   'purpose-bound BrokerDesk reauthentication start RPC exists'
@@ -123,14 +127,25 @@ select pg_temp.set_authenticated_claims(
 );
 select is(
   public.complete_brokerdesk_action_reauth((select id from brokerdesk_first_challenge), repeat('a', 64)),
+  'mfa_required',
+  'a fresh AAL1 session cannot receive a privileged proof'
+);
+select pg_temp.set_authenticated_claims(
+  'b1000000-0000-4000-8000-000000000001',
+  'b2000000-0000-4000-8000-000000000003',
+  'aal2'
+);
+select is(
+  public.complete_brokerdesk_action_reauth((select id from brokerdesk_first_challenge), repeat('a', 64)),
   'verified',
-  'a newer same-user live session verifies the exact challenge'
+  'a newer same-user live AAL2 session verifies the exact challenge'
 );
 
 reset role;
 select pg_temp.set_authenticated_claims(
   'b1000000-0000-4000-8000-000000000001',
-  'b2000000-0000-4000-8000-000000000001'
+  'b2000000-0000-4000-8000-000000000001',
+  'aal2'
 );
 select is(
   app_private.consume_brokerdesk_action_reauth(
@@ -146,6 +161,21 @@ select is(
 select pg_temp.set_authenticated_claims(
   'b1000000-0000-4000-8000-000000000001',
   'b2000000-0000-4000-8000-000000000003'
+);
+select is(
+  app_private.consume_brokerdesk_action_reauth(
+    (select organization_record.id from public.organizations organization_record
+     where organization_record.workspace_ref = (select workspace_ref from brokerdesk_reauth_workspace)),
+    'team_invite',
+    repeat('a', 64)
+  ),
+  'mfa_required',
+  'downgrading the verified session to AAL1 blocks proof consumption'
+);
+select pg_temp.set_authenticated_claims(
+  'b1000000-0000-4000-8000-000000000001',
+  'b2000000-0000-4000-8000-000000000003',
+  'aal2'
 );
 select is(
   app_private.consume_brokerdesk_action_reauth(
@@ -196,7 +226,8 @@ select pg_temp.create_auth_session(
 );
 select pg_temp.set_authenticated_claims(
   'b1000000-0000-4000-8000-000000000001',
-  'b2000000-0000-4000-8000-000000000004'
+  'b2000000-0000-4000-8000-000000000004',
+  'aal2'
 );
 
 set local role authenticated;
@@ -216,7 +247,8 @@ where member_record.user_id = 'b1000000-0000-4000-8000-000000000001'
   );
 select pg_temp.set_authenticated_claims(
   'b1000000-0000-4000-8000-000000000001',
-  'b2000000-0000-4000-8000-000000000004'
+  'b2000000-0000-4000-8000-000000000004',
+  'aal2'
 );
 select is(
   app_private.consume_brokerdesk_action_reauth(

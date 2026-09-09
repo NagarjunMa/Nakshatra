@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
   brokerdeskReauthCookieNames,
+  clearBrokerdeskMfaPendingCookie,
   clearBrokerdeskProofCookie,
   clearBrokerdeskReauthTransactionCookie,
   createBrokerdeskProof,
   createBrokerdeskProofCookie,
+  createBrokerdeskMfaPendingCookie,
   createBrokerdeskReauthTransactionCookie,
   hashBrokerdeskProof,
+  readBrokerdeskMfaPendingCookie,
   readBrokerdeskProofCookie,
   readBrokerdeskReauthTransactionCookie,
 } from "@/features/organization-access/server/brokerdesk-reauth-cookie";
@@ -74,9 +77,32 @@ describe("BrokerDesk privileged reauthentication cookies", () => {
     });
   });
 
+  it("scopes signed MFA-pending state only to the completion endpoint", () => {
+    const cookie = createBrokerdeskMfaPendingCookie({
+      challengeId,
+      workspaceRef,
+      purpose: "team_suspend",
+    });
+    expect(cookie).toMatchObject({
+      name: brokerdeskReauthCookieNames.mfaPending,
+      httpOnly: true,
+      path: "/api/v1/brokerdesk/reauth/complete",
+      maxAge: 600,
+    });
+    expect(readBrokerdeskMfaPendingCookie(cookie.value)).toEqual({
+      version: 1,
+      challengeId,
+      workspaceRef,
+      purpose: "team_suspend",
+    });
+    expect(readBrokerdeskMfaPendingCookie(`${cookie.value}x`)).toBeNull();
+    expect(clearBrokerdeskMfaPendingCookie()).toMatchObject({ name: cookie.name, value: "", maxAge: 0 });
+  });
+
   it("rejects malformed and tampered values", () => {
     expect(readBrokerdeskReauthTransactionCookie(undefined)).toBeNull();
     expect(readBrokerdeskReauthTransactionCookie("invalid.value")).toBeNull();
     expect(readBrokerdeskProofCookie(undefined)).toBeNull();
+    expect(readBrokerdeskMfaPendingCookie(undefined)).toBeNull();
   });
 });

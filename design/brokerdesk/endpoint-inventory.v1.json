@@ -128,6 +128,24 @@
       "auditEvent": null
     },
     {
+      "id": "brokerdesk.privileged.reauth.complete",
+      "status": "active",
+      "method": "POST",
+      "path": "/api/v1/brokerdesk/reauth/complete",
+      "owner": "organization-access",
+      "audience": "broker_member",
+      "authentication": "live_session",
+      "capability": "purpose_mapped",
+      "resourceScope": "workspace",
+      "inputSchema": "emptyObjectSchema",
+      "outputSchema": "brokerdeskReauthCompletionRedirectSchema",
+      "dataClass": "restricted",
+      "rateLimitAction": "brokerdesk_mfa_complete",
+      "idempotency": "not_applicable",
+      "stepUp": "required",
+      "auditEvent": null
+    },
+    {
       "id": "brokerdesk.customer.introduction.read",
       "status": "planned",
       "method": "GET",

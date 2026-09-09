@@ -6,6 +6,7 @@ import { workspaceRefSchema } from "@/features/security/public-reference";
 import { getBrokerdeskReauthCookieSecret } from "@/lib/env";
 
 const TRANSACTION_COOKIE = "nakshatra_brokerdesk_reauth";
+const MFA_PENDING_COOKIE = "nakshatra_brokerdesk_mfa_pending";
 const PROOF_COOKIE = "nakshatra_brokerdesk_proof";
 const MAX_AGE_SECONDS = 10 * 60;
 
@@ -84,6 +85,18 @@ export function readBrokerdeskReauthTransactionCookie(value: string | undefined)
   return parseTransaction(decode(value));
 }
 
+export function createBrokerdeskMfaPendingCookie(payload: Omit<TransactionPayload, "version">) {
+  return {
+    name: MFA_PENDING_COOKIE,
+    value: encode({ version: 1, ...payload }),
+    ...cookieOptions("/api/v1/brokerdesk/reauth/complete"),
+  };
+}
+
+export function readBrokerdeskMfaPendingCookie(value: string | undefined) {
+  return parseTransaction(decode(value));
+}
+
 export function createBrokerdeskProof() {
   return randomBytes(32).toString("base64url");
 }
@@ -114,6 +127,15 @@ export function clearBrokerdeskReauthTransactionCookie() {
   return { name: TRANSACTION_COOKIE, value: "", ...cookieOptions("/api/auth/callback"), maxAge: 0 };
 }
 
+export function clearBrokerdeskMfaPendingCookie() {
+  return {
+    name: MFA_PENDING_COOKIE,
+    value: "",
+    ...cookieOptions("/api/v1/brokerdesk/reauth/complete"),
+    maxAge: 0,
+  };
+}
+
 export function clearBrokerdeskProofCookie(workspaceRef: string) {
   return {
     name: PROOF_COOKIE,
@@ -123,4 +145,8 @@ export function clearBrokerdeskProofCookie(workspaceRef: string) {
   };
 }
 
-export const brokerdeskReauthCookieNames = { transaction: TRANSACTION_COOKIE, proof: PROOF_COOKIE } as const;
+export const brokerdeskReauthCookieNames = {
+  transaction: TRANSACTION_COOKIE,
+  mfaPending: MFA_PENDING_COOKIE,
+  proof: PROOF_COOKIE,
+} as const;

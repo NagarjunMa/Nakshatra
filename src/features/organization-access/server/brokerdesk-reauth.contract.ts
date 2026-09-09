@@ -18,6 +18,7 @@ export const brokerdeskReauthStartSchema = z.object({
 
 export const brokerdeskReauthCompletionSchema = z.enum([
   "verified",
+  "mfa_required",
   "expired",
   "not_fresh",
   "not_authorized",

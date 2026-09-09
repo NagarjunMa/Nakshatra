@@ -233,6 +233,8 @@ Customer workspace:
 - Passed 489 application tests and feature coverage, lint, TypeScript, production build, static database checks, and a zero-vulnerability dependency audit. The two new pgTAP suites contain 41 assertions and await executable replay at the combined checkpoint because this host still has no Docker/Podman runtime.
 - Added immutable `mbr_` employee references and an owner/admin-only team projection with uniform cross-agency denial, no internal UUIDs, explicit suspended state, and no customer access for unassigned employees.
 - Closed direct membership table reads and mutations for matchmaker agencies so BrokerDesk employee data is available only through reviewed projections and future audited commands; retained the existing generic behavior for non-BrokerDesk organization types.
+- Completed the BrokerDesk MFA assurance gate: a fresh first-factor callback now creates only signed pending state, TOTP enrollment and verification raise the live session to AAL2, and PostgreSQL independently requires AAL2 when issuing and consuming the exact one-time action proof.
+- Added the no-index `/brokerdesk/security/mfa` flow and strict completion API without activating any privileged team or verification mutation. Workspace and action scope plus continuation URLs remain server-derived; URL editing cannot choose a tenant, action, or destination.
 
 ## Maintenance rule
 

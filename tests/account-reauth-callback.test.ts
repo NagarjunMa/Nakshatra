@@ -2,12 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const createClient = vi.hoisted(() => vi.fn());
 const completeAccountDeletionReauth = vi.hoisted(() => vi.fn());
-const completeBrokerdeskReauth = vi.hoisted(() => vi.fn());
 const logServerError = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/supabase/server", () => ({ createClient }));
 vi.mock("@/features/account/server/account.service", () => ({ completeAccountDeletionReauth }));
-vi.mock("@/features/organization-access/server/brokerdesk-reauth.service", () => ({ completeBrokerdeskReauth }));
 vi.mock("@/lib/security/logging", () => ({ getRequestId: () => "request-id", logServerError }));
 
 import { GET } from "../src/app/api/auth/callback/route";
@@ -24,7 +22,6 @@ describe("account deletion reauthentication callback", () => {
       },
     });
     completeAccountDeletionReauth.mockResolvedValue("verified");
-    completeBrokerdeskReauth.mockResolvedValue("verified");
   });
 
   it("does not treat a stale deletion cookie as an ordinary sign-in callback", async () => {
@@ -43,10 +40,9 @@ describe("account deletion reauthentication callback", () => {
 
     const brokerdesk = await GET(new Request("http://local/api/auth/callback?code=ok&reauth=brokerdesk_action"));
     expect(brokerdesk.headers.get("location")).toBe("http://local/brokerdesk?reauth=failed");
-    expect(completeBrokerdeskReauth).not.toHaveBeenCalled();
   });
 
-  it("issues a workspace-path proof only for the signed BrokerDesk action callback", async () => {
+  it("moves a signed BrokerDesk action callback to MFA without issuing a proof", async () => {
     const workspaceRef = `wrk_${"a".repeat(32)}`;
     const transaction = createBrokerdeskReauthTransactionCookie({
       challengeId: "11111111-1111-4111-8111-111111111111",
@@ -57,15 +53,10 @@ describe("account deletion reauthentication callback", () => {
       headers: { Cookie: `${transaction.name}=${transaction.value}` },
     }));
     expect(response.headers.get("location"))
-      .toBe(`http://local/brokerdesk/w/${workspaceRef}/settings/team?reauth=complete`);
-    expect(response.headers.get("set-cookie")).toContain("nakshatra_brokerdesk_proof=");
-    expect(response.headers.get("set-cookie"))
-      .toContain(`Path=/api/v1/brokerdesk/workspaces/${workspaceRef}`);
-    expect(completeBrokerdeskReauth).toHaveBeenCalledWith(
-      expect.anything(),
-      "11111111-1111-4111-8111-111111111111",
-      expect.stringMatching(/^[a-f0-9]{64}$/)
-    );
+      .toBe(`http://local/brokerdesk/security/mfa?workspace=${workspaceRef}&purpose=team_invite`);
+    expect(response.headers.get("set-cookie")).toContain("nakshatra_brokerdesk_mfa_pending=");
+    expect(response.headers.get("set-cookie")).toContain("Path=/api/v1/brokerdesk/reauth/complete");
+    expect(response.headers.get("set-cookie")).not.toContain("nakshatra_brokerdesk_proof=");
   });
 
   it("issues only an HttpOnly deletion-path proof after verified fresh authentication", async () => {
