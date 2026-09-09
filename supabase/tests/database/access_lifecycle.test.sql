@@ -97,7 +97,7 @@ select throws_ok(
     'a3000000-0000-4000-8000-000000000001',
     '{"personal":{"name":"Approved Rollback Draft"}}'::jsonb,
     '{"personal":{"name":"Still Safe"}}'::jsonb,
-    '{"personal":{"name":"Unsafe Full"},"contact":{"phone":"leak"}}'::jsonb,
+    '{"personal":{"name":"Unsafe Full"},"private_notes":"must remain owner-only"}'::jsonb,
     'unused_secure_token01', now() + interval '90 days', 3, '#17151c', 'kanya'
   )$$,
   '23514', null,

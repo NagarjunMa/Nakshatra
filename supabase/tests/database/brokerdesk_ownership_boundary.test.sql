@@ -10,7 +10,7 @@ select pg_temp.create_auth_actor('81000000-0000-4000-8000-000000000001', '820000
 select pg_temp.create_auth_actor('81000000-0000-4000-8000-000000000002', '82000000-0000-4000-8000-000000000002', 'customer-b@brokerdesk.test');
 select pg_temp.create_auth_actor('81000000-0000-4000-8000-000000000003', '82000000-0000-4000-8000-000000000003', 'broker-a@brokerdesk.test');
 select pg_temp.create_auth_actor('81000000-0000-4000-8000-000000000004', '82000000-0000-4000-8000-000000000004', 'broker-b@brokerdesk.test');
-select pg_temp.create_auth_actor('81000000-0000-4000-8000-000000000005', '82000000-0000-4000-8000-000000000005', 'disabled-a@brokerdesk.test');
+select pg_temp.create_auth_actor('81000000-0000-4000-8000-000000000005', '82000000-0000-4000-8000-000000000005', 'suspended-a@brokerdesk.test');
 
 insert into public.organizations (id, type, name, slug, created_by)
 values
@@ -20,7 +20,7 @@ values
 insert into public.organization_members (organization_id, user_id, role, status)
 values
   ('83000000-0000-4000-8000-000000000001', '81000000-0000-4000-8000-000000000003', 'owner', 'active'),
-  ('83000000-0000-4000-8000-000000000001', '81000000-0000-4000-8000-000000000005', 'viewer', 'disabled'),
+  ('83000000-0000-4000-8000-000000000001', '81000000-0000-4000-8000-000000000005', 'viewer', 'suspended'),
   ('83000000-0000-4000-8000-000000000002', '81000000-0000-4000-8000-000000000004', 'owner', 'active');
 
 -- These legacy attribution fields deliberately point at agencies and creators.
@@ -100,8 +100,8 @@ select is((select count(*)::integer from public.broker_clients), 2, 'Broker B re
 
 set local request.jwt.claims = '{"sub":"81000000-0000-4000-8000-000000000005","role":"authenticated","session_id":"82000000-0000-4000-8000-000000000005"}';
 
-select ok(not public.is_organization_member('83000000-0000-4000-8000-000000000001'), 'a disabled employee is not an active organization member');
-select is((select count(*)::integer from public.broker_clients), 0, 'a disabled employee cannot read agency relationships');
+select ok(not public.is_organization_member('83000000-0000-4000-8000-000000000001'), 'a suspended employee is not an active organization member');
+select is((select count(*)::integer from public.broker_clients), 0, 'a suspended employee cannot read agency relationships');
 
 reset role;
 select is(
