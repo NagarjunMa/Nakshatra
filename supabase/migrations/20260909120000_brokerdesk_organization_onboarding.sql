@@ -631,7 +631,10 @@ begin
   end if;
 
   update app_private.organization_onboarding_states set
-    status = case when coalesce(p_submit_for_verification,false) then 'ready_for_verification' else 'draft' end,
+    status = (case
+      when coalesce(p_submit_for_verification,false) then 'ready_for_verification'
+      else 'draft'
+    end)::app_private.brokerdesk_onboarding_status,
     next_stage = v_next_stage,
     submitted_at = case when coalesce(p_submit_for_verification,false) then now() else submitted_at end,
     row_version = row_version + 1, updated_at = now()
