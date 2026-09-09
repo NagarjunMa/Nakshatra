@@ -513,7 +513,7 @@ begin
 
   select organization_record.workspace_ref,
          member_access.role_preset,
-         pg_catalog.coalesce(
+         coalesce(
            pg_catalog.jsonb_agg(
              pg_catalog.jsonb_build_object(
                'key', role_capability.capability::text,
