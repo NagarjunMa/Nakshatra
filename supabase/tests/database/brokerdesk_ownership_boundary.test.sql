@@ -23,6 +23,11 @@ values
   ('83000000-0000-4000-8000-000000000001', '81000000-0000-4000-8000-000000000005', 'viewer', 'suspended'),
   ('83000000-0000-4000-8000-000000000002', '81000000-0000-4000-8000-000000000004', 'owner', 'active');
 
+insert into public.entitlements (organization_id, feature_key, feature_value, source)
+values
+  ('83000000-0000-4000-8000-000000000001', 'brokerdesk.enabled', 'true'::jsonb, 'test'),
+  ('83000000-0000-4000-8000-000000000002', 'brokerdesk.enabled', 'true'::jsonb, 'test');
+
 -- These legacy attribution fields deliberately point at agencies and creators.
 -- Neither field is allowed to confer ownership after the safety migration.
 insert into public.candidates (
