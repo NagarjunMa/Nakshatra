@@ -1,0 +1,14 @@
+.shell { min-height: 100vh; background: #f7f4ee; color: #1d3041; }
+.shell header { min-height: 72px; padding: 0 clamp(24px,7vw,120px); display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #ddd5c8; color: #667381; font-size: 14px; }
+.wordmark { color: #1d3041; text-decoration: none; font-weight: 700; letter-spacing: .16em; }
+.shell main { width: min(100% - 32px,650px); margin: auto; padding: clamp(52px,9vw,100px) 0; }
+.card { padding: clamp(30px,6vw,56px); border: 1px solid #ddd5c8; border-radius: 16px; background: #fffdfa; box-shadow: 0 22px 55px rgb(29 48 65 / .08); }
+.icon { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 50%; color: #17496a; background: #e3f0ec; }
+.icon svg { width: 23px; }
+.eyebrow { margin: 28px 0 8px !important; color: #557267 !important; text-transform: uppercase; letter-spacing: .12em; font-size: 11px; font-weight: 700; }
+.card h1 { margin: 0; color: #133e5b; font-family: var(--font-serif),Georgia,serif; font-size: clamp(34px,6vw,48px); font-weight: 500; line-height: 1.08; }
+.card p { color: #5c6875; line-height: 1.7; }
+.button { display: flex; min-height: 48px; margin-top: 25px; align-items: center; justify-content: center; border-radius: 8px; background: #173f5b; color: white; text-decoration: none; font-weight: 700; }
+.card small { display: flex; gap: 8px; margin-top: 28px; color: #6c766f; line-height: 1.5; }
+.card small svg { width: 15px; flex: none; }
+@media (max-width:520px) { .shell header { padding: 0 20px; } .shell header span { display:none; } .shell main { width: min(100% - 24px,650px); padding:28px 0; } .card { padding:26px 20px; } }

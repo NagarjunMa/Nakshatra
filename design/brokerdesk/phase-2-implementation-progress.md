@@ -90,7 +90,7 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 
 ## Next executable steps
 
-1. Complete audited employee invitation/RBAC commands using opaque member references, one-time invitation exchange, immediate suspension, and atomic AAL2 proof consumption.
+1. Add audited access-replacement and immediate-suspension commands using opaque member references and atomic AAL2 proof consumption.
 2. Generalize the existing Didit lifecycle for an organization representative without creating a hidden customer candidate or a duplicate verification workflow.
 3. Keep document upload and organization activation unavailable until retention, KMS, malware scanning, and reviewer authorization are implemented and approved.
 
@@ -123,11 +123,11 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 | Static database fixture contract | Passed |
 | ESLint | Passed with the existing Open Graph `<img>` warning only |
 | TypeScript | Passed |
-| Full application suite | Passed: 83 files, 498 tests |
+| Full application suite | Passed: 89 files, 514 tests |
 | Feature coverage policy | Passed |
 | Production build | Passed; new versioned route included |
 | Dependency audit | Passed: 0 known vulnerabilities |
-| New executable pgTAP suites | Authored with 44 assertions across fresh-auth/MFA and team projection; local replay unavailable without Docker/Podman and deferred to the combined checkpoint PR CI |
+| New executable pgTAP suites | Authored with 70 assertions across fresh-auth/MFA, team projection, and employee invitations; local replay unavailable without Docker/Podman and deferred to the combined checkpoint PR CI |
 
 ## Opaque team projection implemented
 
@@ -147,6 +147,16 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 - PostgreSQL now requires the live JWT to be `aal2` both when storing the hashed one-time proof and when a future command consumes it. A later downgrade to `aal1` blocks consumption even if the cookie is present.
 - Missing or tampered pending state, cross-origin requests, action injection, and AAL1 completion fail closed. Privileged mutations remain unavailable until they atomically consume this proof and write their audit event.
 - Enabled local Supabase TOTP enrollment and verification while leaving phone MFA disabled.
+
+## BrokerDesk employee invitation and acceptance implemented
+
+- Added an operational owner/admin team-settings page using the existing minimal team projection and simple role/customer-access language.
+- Creating an invitation requires the exact `team_invite` AAL2 proof. PostgreSQL consumes the proof, rechecks actor and target-role restrictions, enforces idempotency and quotas, creates the private invitation, and writes its audit event in one transaction.
+- Owners may invite Admin, Broker, Coordinator, or View-only employees; admins cannot create another admin; nobody can invite another owner or their own account.
+- Invitation credentials use an independent server-only key so an identical idempotent retry recreates the same link without persisting plaintext. The private database stores only token and normalized-email hashes plus a masked email hint.
+- Links use `/join/team#token=...`. Same-origin code removes the fragment from browser history and exchanges it into a signed, exact-path, 15-minute HttpOnly cookie. GET requests and link scanners cannot accept an invitation.
+- Acceptance requires a live Nakshatra session with the same verified email, creates the employee in the existing membership/RBAC source of truth, and gives zero customer assignments by default.
+- Tokens expire after seven days, work once, return neutral unavailable responses, and cannot reactivate an existing suspended or removed employee. Creation and acceptance are append-only audited.
 
 ## Capability foundation implemented
 
@@ -225,3 +235,5 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 - Passed all 489 application tests and feature coverage, lint, TypeScript, production build, static database validation, and dependency audit after the team projection unit.
 - Implemented the TOTP MFA assurance gate: first-factor callbacks now issue only signed pending state, the browser raises the live session to AAL2, and PostgreSQL requires AAL2 again at proof issuance and consumption.
 - Added the strict MFA completion API, independent rate limit, server-derived continuation, no-index setup/verification UI, and adversarial application/database tests. All 498 application tests and feature coverage, lint, TypeScript, production build, static database validation, and dependency audit pass; the expanded 44-assertion pgTAP set awaits combined-checkpoint CI replay.
+- Added the audited employee-invitation command, fragment-to-HttpOnly exchange, verified-email acceptance, team-settings UI, independent quotas, private hashed persistence, and existing-RBAC membership activation with no customer assignments.
+- Verified invitation idempotency without authorization bypass, action-proof consumption, cross-account denial, single use, URL/history safety, owner exclusion, suspension preservation, cross-origin denial, authentication and rate-limit enforcement, fail-closed behavior, and safe projections. All 514 application tests and the feature-coverage gate pass; 26 new pgTAP assertions await the combined-checkpoint CI replay.

@@ -235,6 +235,9 @@ Customer workspace:
 - Closed direct membership table reads and mutations for matchmaker agencies so BrokerDesk employee data is available only through reviewed projections and future audited commands; retained the existing generic behavior for non-BrokerDesk organization types.
 - Completed the BrokerDesk MFA assurance gate: a fresh first-factor callback now creates only signed pending state, TOTP enrollment and verification raise the live session to AAL2, and PostgreSQL independently requires AAL2 when issuing and consuming the exact one-time action proof.
 - Added the no-index `/brokerdesk/security/mfa` flow and strict completion API without activating any privileged team or verification mutation. Workspace and action scope plus continuation URLs remain server-derived; URL editing cannot choose a tenant, action, or destination.
+- Implemented the first privileged team command end to end: AAL2-protected employee invitation, fragment-to-HttpOnly exchange, verified-email single-use acceptance, existing membership/RBAC activation, zero default customer assignments, and append-only audit. Suspended or removed employees cannot be reactivated by an invitation.
+- Added the operational team-settings and `/join/team` interfaces. Invitation tokens never enter the query string or database in plaintext, and link-scanner GET requests cannot consume them.
+- Kept authorization ahead of the invitation idempotency return so suspension, demotion, or an MFA assurance downgrade takes effect immediately, including during an otherwise identical retry.
 
 ## Maintenance rule
 
