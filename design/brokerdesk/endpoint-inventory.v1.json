@@ -75,21 +75,21 @@
     },
     {
       "id": "brokerdesk.team.access.replace",
-      "status": "planned",
+      "status": "active",
       "method": "PUT",
       "path": "/api/v1/brokerdesk/workspaces/[workspaceRef]/team/[memberRef]/access",
       "owner": "organization-access",
       "audience": "broker_member",
       "authentication": "live_session",
       "capability": "team.assign",
-      "resourceScope": "workspace",
-      "inputSchema": "replaceMemberAccessCommandSchema",
-      "outputSchema": "memberAccessSchema",
+      "resourceScope": "workspace_member",
+      "inputSchema": "replaceTeamMemberAccessCommandSchema",
+      "outputSchema": "replacedTeamMemberAccessSchema",
       "dataClass": "restricted",
-      "rateLimitAction": "brokerdesk.team.access.replace",
+      "rateLimitAction": "brokerdesk_team_access_replace",
       "idempotency": "required",
       "stepUp": "required",
-      "auditEvent": "brokerdesk_member_access_replaced"
+      "auditEvent": "team.member.access_replaced"
     },
     {
       "id": "brokerdesk.team.read",
@@ -216,6 +216,24 @@
       "idempotency": "not_applicable",
       "stepUp": "not_required",
       "auditEvent": "team.invitation.accepted"
+    },
+    {
+      "id": "brokerdesk.team.member.suspend",
+      "status": "active",
+      "method": "POST",
+      "path": "/api/v1/brokerdesk/workspaces/[workspaceRef]/team/[memberRef]/suspend",
+      "owner": "organization-access",
+      "audience": "broker_member",
+      "authentication": "live_session",
+      "capability": "team.assign",
+      "resourceScope": "workspace_member",
+      "inputSchema": "suspendTeamMemberCommandSchema",
+      "outputSchema": "suspendedTeamMemberSchema",
+      "dataClass": "restricted",
+      "rateLimitAction": "brokerdesk_team_suspend",
+      "idempotency": "required",
+      "stepUp": "required",
+      "auditEvent": "team.member.suspended"
     }
   ]
 }

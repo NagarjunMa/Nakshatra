@@ -2537,6 +2537,25 @@ export type Database = {
         Args: { p_token_hash: string }
         Returns: Json
       }
+      replace_brokerdesk_team_member_access: {
+        Args: {
+          p_idempotency_key: string
+          p_member_ref: string
+          p_proof_hash: string
+          p_role_preset: string
+          p_workspace_ref: string
+        }
+        Returns: Json
+      }
+      suspend_brokerdesk_team_member: {
+        Args: {
+          p_idempotency_key: string
+          p_member_ref: string
+          p_proof_hash: string
+          p_workspace_ref: string
+        }
+        Returns: Json
+      }
       consume_account_deletion_reauth: { Args: { p_proof_hash: string }; Returns: Json }
       create_organization_with_owner: {
         Args: {

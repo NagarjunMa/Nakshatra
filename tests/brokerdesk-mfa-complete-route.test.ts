@@ -56,7 +56,7 @@ describe("BrokerDesk MFA completion route", () => {
     const response = await POST(request(pendingCookie()));
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
-      next: `/brokerdesk/w/${workspaceRef}/settings/team?reauth=complete`,
+      next: `/brokerdesk/w/${workspaceRef}/settings/team?reauth=complete&action=team_invite`,
     });
     expect(completeBrokerdeskReauth).toHaveBeenCalledWith(
       actor.supabase,

@@ -13,6 +13,7 @@ export const brokerdeskEndpointInventoryItemSchema = z.object({
   capability: z.string().min(1).nullable(),
   resourceScope: z.enum([
     "workspace",
+    "workspace_member",
     "assigned_customer",
     "introduction_route",
     "customer_case",

@@ -238,6 +238,8 @@ Customer workspace:
 - Implemented the first privileged team command end to end: AAL2-protected employee invitation, fragment-to-HttpOnly exchange, verified-email single-use acceptance, existing membership/RBAC activation, zero default customer assignments, and append-only audit. Suspended or removed employees cannot be reactivated by an invitation.
 - Added the operational team-settings and `/join/team` interfaces. Invitation tokens never enter the query string or database in plaintext, and link-scanner GET requests cannot consume them.
 - Kept authorization ahead of the invitation idempotency return so suspension, demotion, or an MFA assurance downgrade takes effect immediately, including during an otherwise identical retry.
+- Implemented role replacement and suspension as separate, AAL2 purpose-bound commands over opaque workspace/member references. They reuse the existing membership/RBAC source of truth, prohibit generic owner/self mutations, and audit atomically.
+- Defined agency suspension as membership-scoped: it invalidates pending privileged proofs and stops that agency's access immediately, while preserving the person's shared Nakshatra identity, customer portfolio session, and memberships in other agencies.
 
 ## Maintenance rule
 

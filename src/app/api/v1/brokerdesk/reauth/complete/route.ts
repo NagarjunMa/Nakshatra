@@ -31,7 +31,7 @@ const emptyBodySchema = z.object({}).strict();
 function nextPath(workspaceRef: string, purpose: string) {
   return purpose === "verification_manage"
     ? "/brokerdesk/onboarding?reauth=complete"
-    : `/brokerdesk/w/${workspaceRef}/settings/team?reauth=complete`;
+    : `/brokerdesk/w/${workspaceRef}/settings/team?reauth=complete&action=${encodeURIComponent(purpose)}`;
 }
 
 /** Issues a purpose-bound proof only after PostgreSQL verifies a live AAL2 session. */

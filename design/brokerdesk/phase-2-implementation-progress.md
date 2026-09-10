@@ -90,9 +90,8 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 
 ## Next executable steps
 
-1. Add audited access-replacement and immediate-suspension commands using opaque member references and atomic AAL2 proof consumption.
-2. Generalize the existing Didit lifecycle for an organization representative without creating a hidden customer candidate or a duplicate verification workflow.
-3. Keep document upload and organization activation unavailable until retention, KMS, malware scanning, and reviewer authorization are implemented and approved.
+1. Generalize the existing Didit lifecycle for an organization representative without creating a hidden customer candidate or a duplicate verification workflow.
+2. Keep document upload and organization activation unavailable until retention, KMS, malware scanning, and reviewer authorization are implemented and approved.
 
 ## Slice 2 completion decisions
 
@@ -123,11 +122,11 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 | Static database fixture contract | Passed |
 | ESLint | Passed with the existing Open Graph `<img>` warning only |
 | TypeScript | Passed |
-| Full application suite | Passed: 89 files, 514 tests |
-| Feature coverage policy | Passed |
+| Full application suite | Passed: 91 files, 523 tests |
+| Feature coverage policy | Passed: 40 mapper, service, and contract files at 80% or higher per metric |
 | Production build | Passed; new versioned route included |
 | Dependency audit | Passed: 0 known vulnerabilities |
-| New executable pgTAP suites | Authored with 70 assertions across fresh-auth/MFA, team projection, and employee invitations; local replay unavailable without Docker/Podman and deferred to the combined checkpoint PR CI |
+| New executable pgTAP suites | Authored with 93 assertions across fresh-auth/MFA, team projection, invitations, access replacement, and suspension; local replay unavailable without Docker/Podman and deferred to the combined checkpoint PR CI |
 
 ## Opaque team projection implemented
 
@@ -157,6 +156,15 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 - Links use `/join/team#token=...`. Same-origin code removes the fragment from browser history and exchanges it into a signed, exact-path, 15-minute HttpOnly cookie. GET requests and link scanners cannot accept an invitation.
 - Acceptance requires a live Nakshatra session with the same verified email, creates the employee in the existing membership/RBAC source of truth, and gives zero customer assignments by default.
 - Tokens expire after seven days, work once, return neutral unavailable responses, and cannot reactivate an existing suspended or removed employee. Creation and acceptance are append-only audited.
+
+## BrokerDesk role replacement and suspension implemented
+
+- Added explicit versioned commands for role replacement and suspension. Both resolve `wrk_` and `mbr_` references inside PostgreSQL, require their exact action-scoped AAL2 proof, enforce current owner/admin authority, use idempotency keys, and append safe audit events atomically.
+- Generic owner changes, self-demotion, self-suspension, and owner suspension are prohibited. Admins cannot modify or suspend another admin and cannot grant the admin preset.
+- A role replacement updates the existing `organization_members` source of truth and its established access-preset trigger; it does not accept client-defined capabilities. Existing customer assignments remain but are usable only under the new role.
+- Suspension changes only the target membership in the selected agency and invalidates that employee's pending privileged proofs for the agency. Effective BrokerDesk access stops immediately because every command rechecks active membership.
+- The shared Nakshatra identity and Auth sessions are deliberately preserved: suspending an agency employee must not sign them out of their B2C customer profile or a different agency membership.
+- Team settings now presents plain-language Change role and Suspend actions only for targets the current owner/admin may manage, explains the cross-surface identity boundary, and updates the visible row immediately after a successful command.
 
 ## Capability foundation implemented
 
@@ -237,3 +245,10 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 - Added the strict MFA completion API, independent rate limit, server-derived continuation, no-index setup/verification UI, and adversarial application/database tests. All 498 application tests and feature coverage, lint, TypeScript, production build, static database validation, and dependency audit pass; the expanded 44-assertion pgTAP set awaits combined-checkpoint CI replay.
 - Added the audited employee-invitation command, fragment-to-HttpOnly exchange, verified-email acceptance, team-settings UI, independent quotas, private hashed persistence, and existing-RBAC membership activation with no customer assignments.
 - Verified invitation idempotency without authorization bypass, action-proof consumption, cross-account denial, single use, URL/history safety, owner exclusion, suspension preservation, cross-origin denial, authentication and rate-limit enforcement, fail-closed behavior, and safe projections. All 514 application tests and the feature-coverage gate pass; 26 new pgTAP assertions await the combined-checkpoint CI replay.
+
+### 2026-09-10
+
+- Added purpose-bound, audited role-replacement and immediate-suspension commands with opaque member routing, live AAL2 enforcement, current-authority checks, independent rate limits, and idempotent network retry behavior.
+- Preserved shared Auth sessions during agency suspension so B2C and other-agency access are not collateral damage; invalidated only pending privileged proofs in the suspended agency.
+- Added operational team controls and adversarial application/pgTAP coverage for cross-purpose proof use, caller-expanded payloads, owner/self/admin restrictions, role synchronization, audit, proof replay, immediate suspension, and shared-identity preservation.
+- Passed all 523 application tests, global and feature coverage, lint, TypeScript, and static database validation for the combined branch; final build and dependency audit are recorded in the verification table after completion.
