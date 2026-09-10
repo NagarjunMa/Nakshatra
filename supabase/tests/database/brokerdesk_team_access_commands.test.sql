@@ -27,6 +27,7 @@ from public.organizations where workspace_ref=(select workspace_ref from command
 create temporary table command_member as select member_ref from public.organization_members where user_id='d1000000-0000-4000-8000-000000000002';
 create temporary table command_owner as select member_ref from public.organization_members where user_id='d1000000-0000-4000-8000-000000000001';
 create temporary table command_admin as select member_ref from public.organization_members where user_id='d1000000-0000-4000-8000-000000000003';
+grant select on command_member, command_owner, command_admin to authenticated;
 
 set local role authenticated;
 select pg_temp.set_authenticated_claims('d1000000-0000-4000-8000-000000000001','d2000000-0000-4000-8000-000000000001');

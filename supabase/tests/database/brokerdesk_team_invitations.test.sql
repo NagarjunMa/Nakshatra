@@ -38,7 +38,10 @@ create temporary table created_invitation as select public.create_brokerdesk_tea
   pg_catalog.encode(extensions.digest(pg_catalog.convert_to('employee@invite.test','UTF8'),'sha256'),'hex'),
   'em***@invite.test',repeat('b',64),repeat('a',64),'invite:employee:0001'
 ) result;
-select like((select result->>'invitationRef' from created_invitation),'inv\_%','creation returns only an opaque invitation reference');
+select ok(
+  (select result->>'invitationRef' from created_invitation) ~ '^inv_[0-9a-f]{32}$',
+  'creation returns only an opaque invitation reference'
+);
 select is((select result->>'rolePreset' from created_invitation),'advisor','creation returns the safe role preset');
 select is(
   public.create_brokerdesk_team_invitation(
@@ -72,7 +75,10 @@ select pg_temp.set_authenticated_claims('c1000000-0000-4000-8000-000000000002','
 create temporary table accepted_invitation as select public.accept_brokerdesk_team_invitation(repeat('b',64)) result;
 select is((select result->>'available' from accepted_invitation),'true','the intended verified account accepts once');
 select is((select result->>'rolePreset' from accepted_invitation),'advisor','acceptance preserves the restricted preset');
-select like((select result->>'memberRef' from accepted_invitation),'mbr\_%','acceptance exposes no internal membership UUID');
+select ok(
+  (select result->>'memberRef' from accepted_invitation) ~ '^mbr_[0-9a-f]{32}$',
+  'acceptance exposes no internal membership UUID'
+);
 select is(public.accept_brokerdesk_team_invitation(repeat('b',64)),'{"available": false}'::jsonb,'an accepted token cannot be replayed');
 
 reset role;
