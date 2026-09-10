@@ -1288,6 +1288,7 @@ export type Database = {
           created_at: string
           id: string
           invited_by: string | null
+          member_ref: string
           organization_id: string
           role: Database["public"]["Enums"]["organization_member_role"]
           status: Database["public"]["Enums"]["member_status"]
@@ -1298,6 +1299,7 @@ export type Database = {
           created_at?: string
           id?: string
           invited_by?: string | null
+          member_ref?: string
           organization_id: string
           role?: Database["public"]["Enums"]["organization_member_role"]
           status?: Database["public"]["Enums"]["member_status"]
@@ -1308,6 +1310,7 @@ export type Database = {
           created_at?: string
           id?: string
           invited_by?: string | null
+          member_ref?: string
           organization_id?: string
           role?: Database["public"]["Enums"]["organization_member_role"]
           status?: Database["public"]["Enums"]["member_status"]
@@ -2480,12 +2483,20 @@ export type Database = {
         }
         Returns: boolean
       }
+      can_read_organization_membership: {
+        Args: { p_member_user_id: string; p_organization_id: string }
+        Returns: boolean
+      }
       can_manage_portfolio: {
         Args: { p_portfolio_id: string }
         Returns: boolean
       }
       cancel_account_deletion: { Args: never; Returns: string }
       complete_account_deletion_reauth: {
+        Args: { p_challenge_id: string; p_proof_hash: string }
+        Returns: string
+      }
+      complete_brokerdesk_action_reauth: {
         Args: { p_challenge_id: string; p_proof_hash: string }
         Returns: string
       }
@@ -2508,6 +2519,41 @@ export type Database = {
       }
       create_brokerdesk_workspace: {
         Args: { p_idempotency_key: string; p_profile: Json }
+        Returns: Json
+      }
+      create_brokerdesk_team_invitation: {
+        Args: {
+          p_email_hash: string
+          p_email_hint: string
+          p_idempotency_key: string
+          p_proof_hash: string
+          p_role_preset: string
+          p_token_hash: string
+          p_workspace_ref: string
+        }
+        Returns: Json
+      }
+      accept_brokerdesk_team_invitation: {
+        Args: { p_token_hash: string }
+        Returns: Json
+      }
+      replace_brokerdesk_team_member_access: {
+        Args: {
+          p_idempotency_key: string
+          p_member_ref: string
+          p_proof_hash: string
+          p_role_preset: string
+          p_workspace_ref: string
+        }
+        Returns: Json
+      }
+      suspend_brokerdesk_team_member: {
+        Args: {
+          p_idempotency_key: string
+          p_member_ref: string
+          p_proof_hash: string
+          p_workspace_ref: string
+        }
         Returns: Json
       }
       consume_account_deletion_reauth: { Args: { p_proof_hash: string }; Returns: Json }
@@ -2554,6 +2600,10 @@ export type Database = {
       }
       resolve_brokerdesk_bootstrap: { Args: never; Returns: Json }
       resolve_brokerdesk_onboarding: {
+        Args: { p_workspace_ref: string }
+        Returns: Json
+      }
+      resolve_brokerdesk_team: {
         Args: { p_workspace_ref: string }
         Returns: Json
       }
@@ -2615,6 +2665,14 @@ export type Database = {
       request_account_deletion: { Args: never; Returns: Json }
       start_account_deletion_reauth: {
         Args: { p_initiating_session_id: string }
+        Returns: Json
+      }
+      start_brokerdesk_action_reauth: {
+        Args: {
+          p_initiating_session_id: string
+          p_purpose: string
+          p_workspace_ref: string
+        }
         Returns: Json
       }
       resolve_approved_horoscope: {

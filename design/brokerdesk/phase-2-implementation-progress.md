@@ -1,12 +1,12 @@
 # BrokerDesk Phase 2 — Implementation Progress
 
-Status: Slice 1 merged; Slice 2 broker onboarding foundation implemented locally
+Status: Slice 1 merged; Slice 2 onboarding foundation merged and security completion in progress
 Started: 2026-09-08  
 Approved plan: [Phase 1 Implementation Plan](./phase-1-implementation-plan.md)
 
 ## Tracking approach
 
-The user has opted out of Linear updates for this work. Decisions, changed files, verification results, risks, and deviations are recorded here, in the master plan, and in associated GitHub pull requests. The safety foundation merged through PR #40, the capability foundation merged through PR #41, and Slice 2 continues from clean `main` on `feat/nak-68-brokerdesk-onboarding-rbac`.
+The user has opted out of Linear updates for this work. Decisions, changed files, verification results, risks, and deviations are recorded here, in the master plan, and in associated GitHub pull requests. The safety foundation merged through PR #40, the capability foundation merged through PR #41, and the first Slice 2 onboarding unit merged through PR #42. Related implementation units now remain on one local feature branch with local checkpoint commits; a pull request and merge happen only at a deliberate, reviewable checkpoint instead of after every small phase.
 
 ## Repository preparation
 
@@ -16,7 +16,8 @@ The user has opted out of Linear updates for this work. Decisions, changed files
 - Merge: squash commit `22faf86` on `main` after all required checks passed.
 - Completed branch and isolated phase worktree: removed after clean-state, tree-equivalence, and patch-equivalence verification.
 - Capability pull request: [#41 — BrokerDesk capability foundation](https://github.com/NagarjunMa/Nakshatra/pull/41), squash-merged as `32e5b62`.
-- Current branch: `feat/nak-68-brokerdesk-onboarding-rbac`, created directly from synchronized `main` at `32e5b62`.
+- Onboarding pull request: [#42 — Private BrokerDesk onboarding](https://github.com/NagarjunMa/Nakshatra/pull/42), squash-merged as `44b5641` after all three required checks passed.
+- Current branch: `feat/nak-68-brokerdesk-slice-2-completion`, created directly from synchronized `main` at `ac5026a` after the merged onboarding and identity-verification operations commits.
 
 ## Latest-main baseline
 
@@ -89,10 +90,81 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 
 ## Next executable steps
 
-1. Complete Slice 2 representative identity-verification reuse and audited team-invitation/RBAC commands.
-2. Add browser end-to-end coverage for the authenticated onboarding journey.
-3. Verify the onboarding migration through a clean CI database replay and the complete pgTAP suite before merge.
-4. Keep document upload and organization activation unavailable until retention, KMS, malware scanning, and reviewer authorization are implemented and approved.
+1. Generalize the existing Didit lifecycle for an organization representative without creating a hidden customer candidate or a duplicate verification workflow.
+2. Keep document upload and organization activation unavailable until retention, KMS, malware scanning, and reviewer authorization are implemented and approved.
+
+## Slice 2 completion decisions
+
+- A broker representative must not be represented by a synthetic `candidate`. Candidate identity remains customer/portfolio identity.
+- Representative verification must reuse the existing Didit provider lifecycle, webhook handling, retry controls, and audit model through an explicit verification-subject abstraction.
+- Account-deletion reauthentication remains deletion-only. BrokerDesk privilege changes require a separate purpose-bound proof tied to the actor, fresh Supabase session, workspace, action, expiry, and one-time consumption.
+- Team invitation, access replacement, suspension, verification management, export, and future billing/recovery actions cannot share an unscoped bearer proof.
+- BrokerDesk team commands must re-evaluate live membership, role capability, workspace state, and target restrictions inside the same database transaction that consumes the proof.
+- Browser onboarding end-to-end coverage is already present and passed 20 desktop/mobile checks in PR #42; it is not an outstanding Slice 2 task.
+
+## Privileged fresh-authentication foundation implemented
+
+- Added an independent private challenge store for BrokerDesk privilege changes; it does not broaden or reuse the account-deletion challenge table.
+- Bound every challenge and proof to the authenticated actor, opaque workspace reference, exact allowlisted action, initiating session, newer verified session, ten-minute expiry, and one-time consumption.
+- Added database authorization mapping for `team_invite`, `team_access_replace`, `team_suspend`, and `verification_manage`; only active owner/admin member-access presets with the corresponding capability may start or complete a challenge.
+- Kept proof consumption private and ungranted. A later audited command must call it with its internally resolved organization and exact action inside the command transaction.
+- Added an independent rate-limit bucket and independent server-only HMAC secret. Raw proofs are never stored; only SHA-256 hashes reach the private database table.
+- Added the versioned reauthentication-start endpoint with same-origin enforcement, bounded/strict JSON, live-session validation, verified-account email derivation, safe OAuth/OTP callback, uniform inaccessible-workspace handling, and no caller-selected identity.
+- Scoped the HttpOnly proof cookie to the exact workspace API path and signed its workspace/action payload. Changing a URL cannot change the signed scope or database authorization.
+- Hardened the shared authentication callback so reserved reauthentication callbacks require their matching signed transaction; a stale deletion cookie can no longer turn an ordinary sign-in callback into deletion reauthentication.
+- Added application and adversarial pgTAP coverage for cross-workspace actors, same-session rejection, action substitution, replay, and immediate membership suspension.
+- This is a fresh-authentication prerequisite, not the complete MFA release gate. No privileged team or verification mutation is exposed yet; owner/admin MFA enrollment and assurance-level enforcement remain required before those commands become active.
+
+## Current local verification for Slice 2 completion branch
+
+| Check | Result |
+|---|---|
+| Static database fixture contract | Passed |
+| ESLint | Passed with the existing Open Graph `<img>` warning only |
+| TypeScript | Passed |
+| Full application suite | Passed: 91 files, 523 tests |
+| Feature coverage policy | Passed: 40 mapper, service, and contract files at 80% or higher per metric |
+| Production build | Passed; new versioned route included |
+| Dependency audit | Passed: 0 known vulnerabilities |
+| New executable pgTAP suites | Authored with 93 assertions across fresh-auth/MFA, team projection, invitations, access replacement, and suspension; local replay unavailable without Docker/Podman and deferred to the combined checkpoint PR CI |
+
+## Opaque team projection implemented
+
+- Added immutable server-generated `mbr_` references for organization members; internal membership, user, and organization UUIDs are omitted from the BrokerDesk team response.
+- Disabled the legacy generic membership read/insert/update/delete RLS paths for matchmaker agencies while preserving the established family/platform organization behavior.
+- Added an owner/admin-only database projection that works during onboarding, returns the same unavailable shape for malformed, missing, cross-agency, advisor, and unauthorized requests, and omits removed members.
+- Limited the projection to the employee name, verified account email when present, safe role preset, membership status, simple customer-access label/count, joined time, and current-user flag.
+- New employees remain at `none` customer access until explicit assignments exist; suspended employees remain visible to authorized owners/admins with a clear suspended status.
+- Added a no-store, independently rate-limited versioned team-read endpoint and registered it in the machine-readable endpoint inventory.
+- Added application tests plus an adversarial pgTAP suite covering reference generation/immutability, UUID omission, direct-table bypass attempts, cross-agency substitution, advisor enumeration, and suspended-member projection.
+
+## BrokerDesk MFA assurance gate implemented
+
+- Changed the privilege flow to two stages: a fresh conventional sign-in creates only signed, HttpOnly MFA-pending state; it can no longer issue a privileged action proof.
+- Added a focused `/brokerdesk/security/mfa` experience using simple language and the existing Nakshatra visual system. Brokers may enroll a TOTP authenticator or verify an existing one; setup secrets remain browser-only.
+- Added a same-origin, strict and bounded `POST /api/v1/brokerdesk/reauth/complete` endpoint with its own database rate-limit bucket. Its workspace, action, challenge, and next destination come only from signed or server-derived state.
+- PostgreSQL now requires the live JWT to be `aal2` both when storing the hashed one-time proof and when a future command consumes it. A later downgrade to `aal1` blocks consumption even if the cookie is present.
+- Missing or tampered pending state, cross-origin requests, action injection, and AAL1 completion fail closed. Privileged mutations remain unavailable until they atomically consume this proof and write their audit event.
+- Enabled local Supabase TOTP enrollment and verification while leaving phone MFA disabled.
+
+## BrokerDesk employee invitation and acceptance implemented
+
+- Added an operational owner/admin team-settings page using the existing minimal team projection and simple role/customer-access language.
+- Creating an invitation requires the exact `team_invite` AAL2 proof. PostgreSQL consumes the proof, rechecks actor and target-role restrictions, enforces idempotency and quotas, creates the private invitation, and writes its audit event in one transaction.
+- Owners may invite Admin, Broker, Coordinator, or View-only employees; admins cannot create another admin; nobody can invite another owner or their own account.
+- Invitation credentials use an independent server-only key so an identical idempotent retry recreates the same link without persisting plaintext. The private database stores only token and normalized-email hashes plus a masked email hint.
+- Links use `/join/team#token=...`. Same-origin code removes the fragment from browser history and exchanges it into a signed, exact-path, 15-minute HttpOnly cookie. GET requests and link scanners cannot accept an invitation.
+- Acceptance requires a live Nakshatra session with the same verified email, creates the employee in the existing membership/RBAC source of truth, and gives zero customer assignments by default.
+- Tokens expire after seven days, work once, return neutral unavailable responses, and cannot reactivate an existing suspended or removed employee. Creation and acceptance are append-only audited.
+
+## BrokerDesk role replacement and suspension implemented
+
+- Added explicit versioned commands for role replacement and suspension. Both resolve `wrk_` and `mbr_` references inside PostgreSQL, require their exact action-scoped AAL2 proof, enforce current owner/admin authority, use idempotency keys, and append safe audit events atomically.
+- Generic owner changes, self-demotion, self-suspension, and owner suspension are prohibited. Admins cannot modify or suspend another admin and cannot grant the admin preset.
+- A role replacement updates the existing `organization_members` source of truth and its established access-preset trigger; it does not accept client-defined capabilities. Existing customer assignments remain but are usable only under the new role.
+- Suspension changes only the target membership in the selected agency and invalidates that employee's pending privileged proofs for the agency. Effective BrokerDesk access stops immediately because every command rechecks active membership.
+- The shared Nakshatra identity and Auth sessions are deliberately preserved: suspending an agency employee must not sign them out of their B2C customer profile or a different agency membership.
+- Team settings now presents plain-language Change role and Suspend actions only for targets the current owner/admin may manage, explains the cross-surface identity boundary, and updates the visible row immediately after a successful command.
 
 ## Capability foundation implemented
 
@@ -159,3 +231,24 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 - Added the responsive `/brokerdesk/onboarding` flow for business, representative, practice, review, and verification stages. Document upload is visibly unavailable until secure release controls are complete.
 - Added service, route, client API, auth-continuation, UI interaction, and 43-assertion pgTAP coverage. TypeScript, lint, production build, dependency audit, all 457 application tests with feature coverage, 20 desktop/mobile end-to-end checks, and the static database check pass.
 - Docker/Podman is still unavailable locally. The new migration and pgTAP suite therefore require clean CI database replay before merge.
+- Confirmed PR #42 passed lint/test/build, secret scan, and clean Supabase migration/pgTAP checks, then squash-merged it as `44b5641`.
+- Synchronized local `main` with `origin/main` at `ac5026a` and created `feat/nak-68-brokerdesk-slice-2-completion` from that exact clean baseline.
+- Adopted combined-checkpoint delivery: related Slice 2 completion units and, when review size remains reasonable, the first Slice 3 foundation may accumulate as local commits before one PR.
+- Confirmed the existing Didit persistence is candidate-keyed and therefore cannot safely represent a broker without violating the one-customer-portfolio source of truth.
+- Chose a separate purpose-bound BrokerDesk fresh-authentication proof as the first completion prerequisite; the existing account-deletion proof will not be broadened or reused.
+- Implemented the purpose-bound fresh-auth perimeter across private database state, server-only repository/service/cookies, the versioned start route, callback completion, rate limiting, endpoint inventory, environment contract, and adversarial tests.
+- Passed static database validation, lint, TypeScript, all 482 application tests with feature coverage, production build, and a zero-vulnerability dependency audit.
+- Kept privileged mutations disabled and recorded MFA assurance plus clean executable database replay as release gates rather than presenting fresh login as sufficient authorization.
+- Added opaque employee references and the first minimal BrokerDesk team-read projection; closed the broad legacy membership Data API surface for matchmaker agencies without altering family/platform organization behavior.
+- Passed all 489 application tests and feature coverage, lint, TypeScript, production build, static database validation, and dependency audit after the team projection unit.
+- Implemented the TOTP MFA assurance gate: first-factor callbacks now issue only signed pending state, the browser raises the live session to AAL2, and PostgreSQL requires AAL2 again at proof issuance and consumption.
+- Added the strict MFA completion API, independent rate limit, server-derived continuation, no-index setup/verification UI, and adversarial application/database tests. All 498 application tests and feature coverage, lint, TypeScript, production build, static database validation, and dependency audit pass; the expanded 44-assertion pgTAP set awaits combined-checkpoint CI replay.
+- Added the audited employee-invitation command, fragment-to-HttpOnly exchange, verified-email acceptance, team-settings UI, independent quotas, private hashed persistence, and existing-RBAC membership activation with no customer assignments.
+- Verified invitation idempotency without authorization bypass, action-proof consumption, cross-account denial, single use, URL/history safety, owner exclusion, suspension preservation, cross-origin denial, authentication and rate-limit enforcement, fail-closed behavior, and safe projections. All 514 application tests and the feature-coverage gate pass; 26 new pgTAP assertions await the combined-checkpoint CI replay.
+
+### 2026-09-10
+
+- Added purpose-bound, audited role-replacement and immediate-suspension commands with opaque member routing, live AAL2 enforcement, current-authority checks, independent rate limits, and idempotent network retry behavior.
+- Preserved shared Auth sessions during agency suspension so B2C and other-agency access are not collateral damage; invalidated only pending privileged proofs in the suspended agency.
+- Added operational team controls and adversarial application/pgTAP coverage for cross-purpose proof use, caller-expanded payloads, owner/self/admin restrictions, role synchronization, audit, proof replay, immediate suspension, and shared-identity preservation.
+- Passed all 523 application tests, global and feature coverage, lint, TypeScript, and static database validation for the combined branch; final build and dependency audit are recorded in the verification table after completion.

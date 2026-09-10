@@ -54,7 +54,8 @@ $$;
 -- session is missing or belongs to a different fixture user.
 create or replace function pg_temp.set_authenticated_claims(
   p_user_id uuid,
-  p_session_id uuid
+  p_session_id uuid,
+  p_aal text default 'aal1'
 )
 returns void
 language plpgsql
@@ -62,6 +63,9 @@ security definer
 set search_path = pg_catalog, auth
 as $$
 begin
+  if p_aal not in ('aal1', 'aal2') then
+    raise exception 'test JWT assurance level is invalid' using errcode = '22023';
+  end if;
   if not exists (
     select 1
     from auth.sessions session_record
@@ -76,7 +80,8 @@ begin
     jsonb_build_object(
       'sub', p_user_id::text,
       'role', 'authenticated',
-      'session_id', p_session_id::text
+      'session_id', p_session_id::text,
+      'aal', p_aal
     )::text,
     true
   );

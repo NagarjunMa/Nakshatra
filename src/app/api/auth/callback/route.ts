@@ -3,6 +3,12 @@ import {
   completeAccountDeletionReauth,
 } from "@/features/account/server/account.service";
 import {
+  brokerdeskReauthCookieNames,
+  clearBrokerdeskReauthTransactionCookie,
+  createBrokerdeskMfaPendingCookie,
+  readBrokerdeskReauthTransactionCookie,
+} from "@/features/organization-access/server/brokerdesk-reauth-cookie";
+import {
   clearReauthTransactionCookie,
   createDeletionProof,
   createDeletionProofCookie,
@@ -20,10 +26,14 @@ export async function GET(request: Request) {
   const requestId = getRequestId(request);
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
+  const reauth = searchParams.get("reauth");
   const next = sanitizeInternalRedirect(searchParams.get("next"));
-  const transaction = readReauthTransactionCookie(
-    readRequestCookie(request, deletionReauthCookieNames.transaction)
-  );
+  const deletionTransaction = reauth === "account_deletion"
+    ? readReauthTransactionCookie(readRequestCookie(request, deletionReauthCookieNames.transaction))
+    : null;
+  const brokerdeskTransaction = reauth === "brokerdesk_action"
+    ? readBrokerdeskReauthTransactionCookie(readRequestCookie(request, brokerdeskReauthCookieNames.transaction))
+    : null;
 
   if (code) {
     const supabase = await createClient();
@@ -34,7 +44,21 @@ export async function GET(request: Request) {
         data: { user },
       } = await supabase.auth.getUser();
 
-      if (transaction) {
+      if (reauth === "account_deletion" && !deletionTransaction) {
+        const response = NextResponse.redirect(createCanonicalAppUrl("/account?reauth=failed", request.url));
+        response.headers.set("Cache-Control", "private, no-store");
+        response.cookies.set(clearReauthTransactionCookie());
+        return response;
+      }
+
+      if (reauth === "brokerdesk_action" && !brokerdeskTransaction) {
+        const response = NextResponse.redirect(createCanonicalAppUrl("/brokerdesk?reauth=failed", request.url));
+        response.headers.set("Cache-Control", "private, no-store");
+        response.cookies.set(clearBrokerdeskReauthTransactionCookie());
+        return response;
+      }
+
+      if (deletionTransaction) {
         const response = NextResponse.redirect(createCanonicalAppUrl("/account?reauth=failed", request.url));
         response.headers.set("Cache-Control", "private, no-store");
         response.cookies.set(clearReauthTransactionCookie());
@@ -44,17 +68,33 @@ export async function GET(request: Request) {
           const proof = createDeletionProof();
           const outcome = await completeAccountDeletionReauth(
             supabase,
-            transaction.challengeId,
+            deletionTransaction.challengeId,
             hashDeletionProof(proof)
           );
           if (outcome !== "verified") return response;
           response.headers.set("Location", createCanonicalAppUrl("/account?reauth=complete", request.url));
-          response.cookies.set(createDeletionProofCookie(transaction.challengeId, proof));
+          response.cookies.set(createDeletionProofCookie(deletionTransaction.challengeId, proof));
           return response;
         } catch (error) {
           logServerError("account.deletion_reauth.callback_failed", requestId, error);
           return response;
         }
+      }
+
+      if (brokerdeskTransaction) {
+        const failedPath = brokerdeskTransaction.purpose === "verification_manage"
+          ? "/brokerdesk/onboarding?reauth=failed"
+          : `/brokerdesk/w/${brokerdeskTransaction.workspaceRef}/settings/team?reauth=failed`;
+        const mfaPath = `/brokerdesk/security/mfa?workspace=${encodeURIComponent(
+          brokerdeskTransaction.workspaceRef
+        )}&purpose=${encodeURIComponent(brokerdeskTransaction.purpose)}`;
+        const response = NextResponse.redirect(createCanonicalAppUrl(failedPath, request.url));
+        response.headers.set("Cache-Control", "private, no-store");
+        response.cookies.set(clearBrokerdeskReauthTransactionCookie());
+        if (!user) return response;
+        response.headers.set("Location", createCanonicalAppUrl(mfaPath, request.url));
+        response.cookies.set(createBrokerdeskMfaPendingCookie(brokerdeskTransaction));
+        return response;
       }
 
       if (user && !isBrokerdeskAuthRedirect(next)) {

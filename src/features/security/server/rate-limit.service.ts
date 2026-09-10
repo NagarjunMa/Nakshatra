@@ -34,6 +34,14 @@ export const rateLimitActionSchema = z.enum([
   "brokerdesk_workspace_create",
   "brokerdesk_onboarding_read",
   "brokerdesk_onboarding_write",
+  "brokerdesk_privileged_reauth",
+  "brokerdesk_mfa_complete",
+  "brokerdesk_team_read",
+  "brokerdesk_team_invite",
+  "brokerdesk_team_invitation_exchange",
+  "brokerdesk_team_invitation_accept",
+  "brokerdesk_team_access_replace",
+  "brokerdesk_team_suspend",
 ]);
 
 export type RateLimitAction = z.infer<typeof rateLimitActionSchema>;

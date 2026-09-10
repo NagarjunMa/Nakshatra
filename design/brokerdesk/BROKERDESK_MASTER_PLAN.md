@@ -1,6 +1,6 @@
 # Nakshatra BrokerDesk — Living Product and Engineering Plan
 
-Status: Planning approved; Phase 2 implementation in progress through Slice 2
+Status: Planning approved; Phase 2 Slice 2 security completion in progress
 Maintainer: Update this document whenever a product decision, architectural decision, phase status, risk, or implementation deviation is approved.
 
 ## Purpose
@@ -152,7 +152,7 @@ Customer workspace:
 | 0E — URL, API, and security contract | Approved baseline | Endpoint projections, identifiers, tokens, rate limits, abuse and penetration cases |
 | 0F — Complete operational wireframes | Approved baseline | Onboarding, dashboard, bulk import, queues, tasks, renewals, RBAC, privacy |
 | 1 — Implementation planning | Approved baseline | Ordered engineering plan, migrations, acceptance tests, rollout |
-| 2 — Implementation | Slice 1 merged; Slice 2 onboarding foundation implemented locally | Capability foundation, private broker onboarding, safe auth continuation, audited commands, operational UI |
+| 2 — Implementation | Slice 1 and onboarding foundation merged; Slice 2 security completion in progress | Capability foundation, private broker onboarding, safe auth continuation, audited commands, operational UI |
 
 ## Detailed planning documents
 
@@ -224,6 +224,22 @@ Customer workspace:
 - Reused the existing Nakshatra signup/sign-in experience for BrokerDesk continuation while ensuring that BrokerDesk authentication does not implicitly create or modify a customer portfolio.
 - Added `/brokerdesk`, `/brokerdesk/onboarding`, and four versioned onboarding APIs, plus a responsive five-step operational interface using simple business language and fail-closed document-upload messaging.
 - Confirmed TypeScript, lint, production build, dependency audit, all 457 application tests with feature coverage, 20 desktop/mobile end-to-end checks, and static database fixture validation. Local executable migration replay remains unavailable without Docker/Podman and is required before merge.
+- Confirmed PR [#42](https://github.com/NagarjunMa/Nakshatra/pull/42) passed all three required checks, including clean migration replay and pgTAP, and squash-merged it as `44b5641`.
+- Synchronized local and remote `main` at `ac5026a`, then created `feat/nak-68-brokerdesk-slice-2-completion` for a combined implementation checkpoint. Related units may accumulate as local commits; a PR is no longer required for every small phase.
+- Preserved the identity source-of-truth boundary: a broker representative will not receive a synthetic customer candidate. Representative verification must generalize and reuse the Didit lifecycle without duplicating it.
+- Kept deletion reauthentication purpose-bound and selected a separate actor + workspace + action + fresh-session + one-time-proof boundary for BrokerDesk team and verification privilege changes.
+- Implemented that BrokerDesk fresh-authentication perimeter with private hashed proof state, independent key/rate limit, exact purpose mapping, safe callback dispatch, workspace-path HttpOnly proof cookies, private-only proof consumption, and cross-actor/action/session/replay tests.
+- Kept the new perimeter inert: no team or verification privilege mutation is active until it atomically consumes the proof, rechecks authority, writes audit, and enforces the separately required owner/admin MFA assurance gate.
+- Passed 489 application tests and feature coverage, lint, TypeScript, production build, static database checks, and a zero-vulnerability dependency audit. The two new pgTAP suites contain 41 assertions and await executable replay at the combined checkpoint because this host still has no Docker/Podman runtime.
+- Added immutable `mbr_` employee references and an owner/admin-only team projection with uniform cross-agency denial, no internal UUIDs, explicit suspended state, and no customer access for unassigned employees.
+- Closed direct membership table reads and mutations for matchmaker agencies so BrokerDesk employee data is available only through reviewed projections and future audited commands; retained the existing generic behavior for non-BrokerDesk organization types.
+- Completed the BrokerDesk MFA assurance gate: a fresh first-factor callback now creates only signed pending state, TOTP enrollment and verification raise the live session to AAL2, and PostgreSQL independently requires AAL2 when issuing and consuming the exact one-time action proof.
+- Added the no-index `/brokerdesk/security/mfa` flow and strict completion API without activating any privileged team or verification mutation. Workspace and action scope plus continuation URLs remain server-derived; URL editing cannot choose a tenant, action, or destination.
+- Implemented the first privileged team command end to end: AAL2-protected employee invitation, fragment-to-HttpOnly exchange, verified-email single-use acceptance, existing membership/RBAC activation, zero default customer assignments, and append-only audit. Suspended or removed employees cannot be reactivated by an invitation.
+- Added the operational team-settings and `/join/team` interfaces. Invitation tokens never enter the query string or database in plaintext, and link-scanner GET requests cannot consume them.
+- Kept authorization ahead of the invitation idempotency return so suspension, demotion, or an MFA assurance downgrade takes effect immediately, including during an otherwise identical retry.
+- Implemented role replacement and suspension as separate, AAL2 purpose-bound commands over opaque workspace/member references. They reuse the existing membership/RBAC source of truth, prohibit generic owner/self mutations, and audit atomically.
+- Defined agency suspension as membership-scoped: it invalidates pending privileged proofs and stops that agency's access immediately, while preserving the person's shared Nakshatra identity, customer portfolio session, and memberships in other agencies.
 
 ## Maintenance rule
 
