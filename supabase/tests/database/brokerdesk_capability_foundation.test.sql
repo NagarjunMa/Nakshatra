@@ -17,7 +17,7 @@ select has_function(
 select ok(not has_table_privilege('authenticated', 'app_private.organization_member_access', 'SELECT'), 'authenticated users cannot read private member grants');
 select ok(not has_table_privilege('authenticated', 'app_private.broker_client_assignments', 'SELECT'), 'authenticated users cannot read private assignments');
 select ok(not has_table_privilege('authenticated', 'app_private.broker_client_mandates', 'SELECT'), 'authenticated users cannot read private mandates');
-select ok(not has_table_privilege('authenticated', 'public.broker_clients', 'UPDATE'), 'relationship mutation is RPC-only until audited commands are delivered');
+select ok(not has_table_privilege('authenticated', 'public.broker_clients', 'SELECT'), 'relationship reads are projection-only');
 
 select pg_temp.create_auth_actor('91000000-0000-4000-8000-000000000001', '92000000-0000-4000-8000-000000000001', 'owner-a@brokerdesk.test');
 select pg_temp.create_auth_actor('91000000-0000-4000-8000-000000000002', '92000000-0000-4000-8000-000000000002', 'advisor-a@brokerdesk.test');
@@ -105,26 +105,26 @@ select ok(public.has_brokerdesk_capability((select workspace_a from brokerdesk_r
 select ok(not public.has_brokerdesk_capability((select workspace_a from brokerdesk_refs), 'unknown.capability', (select relationship_a1 from brokerdesk_refs)), 'unknown capabilities fail closed');
 select ok(public.can_access_brokerdesk_relationship((select workspace_a from brokerdesk_refs), (select relationship_a1 from brokerdesk_refs), 'introductions.send'), 'a capability plus a current mandate authorizes the sensitive relationship action');
 select ok(not public.can_access_brokerdesk_relationship((select workspace_a from brokerdesk_refs), (select relationship_a2 from brokerdesk_refs), 'introductions.send'), 'an expired mandate fails closed');
-select is((select count(*)::integer from public.broker_clients), 2, 'the owner sees only its agency relationships');
+select throws_ok($$select count(*) from public.broker_clients$$, '42501', 'permission denied for table broker_clients', 'owners cannot bypass the relationship projection');
 select is((select count(*)::integer from public.candidates), 0, 'BrokerDesk access does not expose customer candidate rows');
 
 select pg_temp.set_authenticated_claims('91000000-0000-4000-8000-000000000002', '92000000-0000-4000-8000-000000000002');
 select is(public.resolve_brokerdesk_access((select workspace_a from brokerdesk_refs)) ->> 'rolePreset', 'advisor', 'the legacy broker-agent role maps to the advisor preset');
-select is((select count(*)::integer from public.broker_clients), 1, 'an advisor sees only assigned customers');
+select throws_ok($$select count(*) from public.broker_clients$$, '42501', 'permission denied for table broker_clients', 'advisors cannot query internal relationship rows');
 select ok(public.has_brokerdesk_capability((select workspace_a from brokerdesk_refs), 'customers.read', (select relationship_a1 from brokerdesk_refs)), 'the advisor has capability within an active assignment');
 select ok(not public.has_brokerdesk_capability((select workspace_a from brokerdesk_refs), 'customers.read', (select relationship_a2 from brokerdesk_refs)), 'the advisor cannot use the same capability outside assignment scope');
 select ok(public.can_access_brokerdesk_relationship((select workspace_a from brokerdesk_refs), (select relationship_a1 from brokerdesk_refs), 'introductions.send'), 'the assigned advisor can use a customer-mandated action');
 
 select pg_temp.set_authenticated_claims('91000000-0000-4000-8000-000000000003', '92000000-0000-4000-8000-000000000003');
-select is((select count(*)::integer from public.broker_clients), 0, 'an unassigned advisor sees no relationships');
+select throws_ok($$select count(*) from public.broker_clients$$, '42501', 'permission denied for table broker_clients', 'unassigned advisors cannot query internal relationship rows');
 
 select pg_temp.set_authenticated_claims('91000000-0000-4000-8000-000000000005', '92000000-0000-4000-8000-000000000005');
 select is(public.resolve_brokerdesk_access((select workspace_a from brokerdesk_refs)), '{"enabled": false}'::jsonb, 'a suspended member receives the same disabled response');
-select is((select count(*)::integer from public.broker_clients), 0, 'a suspended member sees no relationships');
+select throws_ok($$select count(*) from public.broker_clients$$, '42501', 'permission denied for table broker_clients', 'suspended members cannot query internal relationship rows');
 
 select pg_temp.set_authenticated_claims('91000000-0000-4000-8000-000000000004', '92000000-0000-4000-8000-000000000004');
 select is(public.resolve_brokerdesk_access((select workspace_a from brokerdesk_refs)), '{"enabled": false}'::jsonb, 'Broker B cannot resolve Broker A access');
-select is((select count(*)::integer from public.broker_clients), 1, 'Broker B sees only its own relationship');
+select throws_ok($$select count(*) from public.broker_clients$$, '42501', 'permission denied for table broker_clients', 'Broker B cannot query internal relationship rows');
 
 reset role;
 insert into public.entitlements (id, organization_id, feature_key, feature_value, source, created_at)
@@ -133,7 +133,7 @@ values ('97000000-0000-4000-8000-000000000003', '93000000-0000-4000-8000-0000000
 set local role authenticated;
 select pg_temp.set_authenticated_claims('91000000-0000-4000-8000-000000000004', '92000000-0000-4000-8000-000000000004');
 select is(public.resolve_brokerdesk_access((select workspace_b from brokerdesk_refs)), '{"enabled": false}'::jsonb, 'the latest false entitlement immediately disables BrokerDesk');
-select is((select count(*)::integer from public.broker_clients), 0, 'a disabled entitlement removes relationship reads');
+select throws_ok($$select count(*) from public.broker_clients$$, '42501', 'permission denied for table broker_clients', 'a disabled workspace has no direct relationship-table access');
 
 reset role;
 update app_private.broker_client_mandates
@@ -151,7 +151,7 @@ where id = '98000000-0000-4000-8000-000000000001';
 
 set local role authenticated;
 select pg_temp.set_authenticated_claims('91000000-0000-4000-8000-000000000002', '92000000-0000-4000-8000-000000000002');
-select is((select count(*)::integer from public.broker_clients), 0, 'assignment revocation immediately removes relationship access');
+select throws_ok($$select count(*) from public.broker_clients$$, '42501', 'permission denied for table broker_clients', 'assignment changes never expose internal relationship rows');
 
 reset role;
 delete from auth.sessions where id = '92000000-0000-4000-8000-000000000001';

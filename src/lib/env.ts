@@ -42,7 +42,7 @@ export function getBrokerdeskReauthCookieSecret() {
   return brokerdeskReauthSecretSchema.parse(process.env.BROKERDESK_REAUTH_COOKIE_SECRET);
 }
 
-/** Reads the independent key used only for team-invitation tokens and exchange cookies. */
+/** Reads the independent key used only for BrokerDesk invitation tokens and exchange cookies. */
 export function getBrokerdeskInvitationTokenSecret() {
   if (!process.env.BROKERDESK_INVITATION_TOKEN_SECRET && process.env.NODE_ENV === "test") {
     return "test-only-brokerdesk-invitation-token-secret-at-least-32-chars";

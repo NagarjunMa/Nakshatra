@@ -92,7 +92,7 @@ select ok(not public.owns_candidate('84000000-0000-4000-8000-000000000002'), 'Br
 select ok(not public.can_manage_portfolio('85000000-0000-4000-8000-000000000001'), 'Broker A cannot manage a portfolio attributed to their organization');
 select is((select count(*)::integer from public.candidates), 0, 'Broker A has no direct candidate-table projection');
 select is((select count(*)::integer from public.portfolios), 0, 'Broker A has no direct portfolio-table projection');
-select is((select count(*)::integer from public.broker_clients), 2, 'Broker A reads only its two agency relationships');
+select throws_ok($$select count(*) from public.broker_clients$$, '42501', 'permission denied for table broker_clients', 'Broker A cannot query internal relationship rows');
 select lives_ok(
   $$update public.candidates set display_name = 'Broker A mutation' where id = '84000000-0000-4000-8000-000000000001'$$,
   'Broker A update is filtered without revealing the candidate row'
@@ -101,12 +101,12 @@ select lives_ok(
 set local request.jwt.claims = '{"sub":"81000000-0000-4000-8000-000000000004","role":"authenticated","session_id":"82000000-0000-4000-8000-000000000004"}';
 
 select is((select count(*)::integer from public.candidates), 0, 'Broker B has no direct candidate-table projection');
-select is((select count(*)::integer from public.broker_clients), 2, 'Broker B reads only its two agency relationships');
+select throws_ok($$select count(*) from public.broker_clients$$, '42501', 'permission denied for table broker_clients', 'Broker B cannot query internal relationship rows');
 
 set local request.jwt.claims = '{"sub":"81000000-0000-4000-8000-000000000005","role":"authenticated","session_id":"82000000-0000-4000-8000-000000000005"}';
 
 select ok(not public.is_organization_member('83000000-0000-4000-8000-000000000001'), 'a suspended employee is not an active organization member');
-select is((select count(*)::integer from public.broker_clients), 0, 'a suspended employee cannot read agency relationships');
+select throws_ok($$select count(*) from public.broker_clients$$, '42501', 'permission denied for table broker_clients', 'a suspended employee cannot query internal relationship rows');
 
 reset role;
 select is(

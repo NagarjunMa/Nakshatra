@@ -1,6 +1,6 @@
 # BrokerDesk Phase 2 — Implementation Progress
 
-Status: Slice 1 and Slice 2 team-access foundation merged; representative verification implemented on the current feature branch
+Status: Slice 1 and Slice 2 team-access foundation merged; representative verification locally committed; Slice 3 manual customer intake implemented on the current stacked feature branch
 Started: 2026-09-08  
 Approved plan: [Phase 1 Implementation Plan](./phase-1-implementation-plan.md)
 
@@ -18,7 +18,8 @@ The user has opted out of Linear updates for this work. Decisions, changed files
 - Capability pull request: [#41 — BrokerDesk capability foundation](https://github.com/NagarjunMa/Nakshatra/pull/41), squash-merged as `32e5b62`.
 - Onboarding pull request: [#42 — Private BrokerDesk onboarding](https://github.com/NagarjunMa/Nakshatra/pull/42), squash-merged as `44b5641` after all three required checks passed.
 - Team-access pull request: [#43 — Secure BrokerDesk team access foundation](https://github.com/NagarjunMa/Nakshatra/pull/43), squash-merged as `c75f6f1` after all required application, secret-scan, clean-migration, and pgTAP checks passed.
-- Current branch: `feat/nak-68-broker-representative-verification`, created directly from synchronized `main` at `c75f6f1`.
+- Representative-verification checkpoint: local commit `e85bd19` on `feat/nak-68-broker-representative-verification`; intentionally not pushed or merged yet.
+- Current branch: `feat/nak-68-brokerdesk-customer-intake`, stacked from `e85bd19` so the related units can be reviewed together at the next deliberate PR checkpoint.
 
 ## Latest-main baseline
 
@@ -91,9 +92,11 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 
 ## Next executable steps
 
-1. Generalize the existing Didit lifecycle for an organization representative without creating a hidden customer candidate or a duplicate verification workflow. **Implemented and locally verified on `feat/nak-68-broker-representative-verification`; clean database replay remains a future PR CI gate.**
-2. Design and implement business-contact verification without allowing a verified representative alone to activate BrokerDesk.
-3. Keep business-document upload and organization activation unavailable until retention, KMS, malware scanning, and reviewer authorization are implemented and approved.
+1. Run the representative-verification and customer-intake migrations plus their pgTAP suites through clean PR CI; Docker/Podman remains unavailable locally.
+2. Continue Slice 3 with relationship detail, assignment commands, renewal controls, and cursor pagination over the safe customer projection.
+3. Keep staged CSV contents unavailable until legal retention and production KMS ownership are approved; manual hashed-email invitations are the safe current intake path.
+4. Design business-contact verification without allowing a verified representative alone to activate BrokerDesk.
+5. Keep business-document upload and organization activation unavailable until retention, KMS, malware scanning, and reviewer authorization are implemented and approved.
 
 ## Slice 2 completion decisions
 
@@ -176,7 +179,7 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 - Added private, cross-organization-safe member access, customer assignment, and customer mandate structures with current-time and revocation checks.
 - Defined effective relationship authorization as live session × active agency/member × latest entitlement × capability × scope/assignment × current mandate.
 - Made `brokerdesk.enabled` fail closed and latest-record-wins so a newer false or expired entitlement immediately removes access.
-- Replaced broad direct `broker_clients` CRUD with read-only, capability-scoped RLS. Future relationship mutations remain reserved for audited command RPCs.
+- Initially replaced broad `broker_clients` CRUD with capability-scoped reads; Slice 3 then closed direct reads entirely in favor of separate broker/customer projections. Relationship mutations remain reserved for audited command RPCs.
 - Kept candidate and portfolio ownership owner-only; no new broker projection reads either table.
 - Added a minimal server-only access resolver with the same `{ enabled: false }` contract for malformed, missing, disabled, suspended, and cross-tenant workspace references.
 - Added a strict, machine-readable endpoint inventory for the first planned BrokerDesk and combined customer contracts.
@@ -207,6 +210,33 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 - A verified representative advances only the representative verification check. The organization remains `onboarding`, `brokerdesk.enabled` remains false, and business registration/contact checks remain independent.
 - Representative retries require another fresh security check and a newly entered birth date. The generic bearer management link cannot restart this business flow.
 - The onboarding UI uses simple language, exposes no business-document upload, preserves the private consent-management link when Didit is temporarily unavailable, and never describes the representative as a matrimonial candidate.
+
+## Slice 3 manual customer invitation and claim implemented
+
+- Added a private `broker_client_intakes` boundary for manual invitations. It stores a normalized email hash, masked hint, hashed one-time capability, consent version, expiry, and lineage; it does not create a candidate, portfolio, or shareable customer record.
+- Added routine owner/admin customer invitation creation with live-session, active-workspace, entitlement, capability, strict input, idempotency, 24-hour workspace quota, independent API rate limit, neutral cross-tenant errors, and append-only audit checks.
+- Customer links use `/join/customer#token=...`. Same-origin code removes the fragment and exchanges it for a signed, exact-path, 30-minute HttpOnly cookie. The link works only for the matching verified account and only after explicit customer consent.
+- A claimed invitation activates immediately when the account already owns a canonical B2C candidate. Otherwise it remains private and automatically activates only when the same account completes its one canonical portfolio; the broker sees only a safe “customer joined · portfolio not complete” action state.
+- Activation creates or safely renews one `(organization, candidate)` relationship and a version-bound one-year matchmaking mandate. The customer portfolio remains the sole identity/content source; `portfolio.edit_as_delegate` is deliberately excluded from the default mandate.
+- Added a composite organization/relationship foreign key and owner verification inside the activation transaction. A delayed activation rechecks current organization status and the latest BrokerDesk entitlement and fails closed after the consent term expires.
+- Revoked authenticated `SELECT` on `broker_clients`. Internal candidate, organization, and relationship UUIDs can no longer be read through PostgREST; brokers and customers receive separate bounded security-definer projections over opaque references.
+- Added `/brokerdesk/w/[workspaceRef]/customers`, `/join/customer`, and `/brokers` using the existing Nakshatra visual language. Brokers see only their agency's active relationships and pending actions; customers alone see all of their broker relationships together.
+- Multiple agencies may independently invite and represent the same canonical customer. Broker A's projection contains no Broker B identity, count, status, or invitation lineage, while the customer projection correctly contains both relationships.
+- Bulk CSV row storage remains closed. The unresolved retention and KMS decisions block production staged row data, but they do not block the minimal hashed-email manual invitation path.
+
+## Current customer-intake verification
+
+| Check | Result |
+|---|---|
+| Static database fixture contract | Passed |
+| ESLint | Passed with the existing Open Graph `<img>` warning only |
+| TypeScript | Passed |
+| Full application suite | Passed: 100 files, 556 tests |
+| Global coverage | Passed: 85.03% statements, 77.80% branches, 83.96% functions, 88.48% lines |
+| Feature coverage policy | Passed: 42 mapper, service, and contract files at 80% or higher per metric |
+| Production build | Passed; all new customer and BrokerDesk routes included |
+| Dependency audit | Passed: 0 known vulnerabilities |
+| Executable migration/pgTAP | Not run locally: Docker and Podman are unavailable; mandatory in the eventual PR CI |
 
 ## Progress log
 
@@ -275,3 +305,8 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 - Added the exact AAL2 verification command, no-store API, independent rate limit, onboarding actions, generic management-link recovery, representative-name invalidation, and shared Didit worker processing without enabling business documents or workspace activation.
 - Added 39 representative-verification pgTAP assertions plus application coverage for origin/session/rate-limit/proof/input isolation, provider recovery, worker matching, privacy, and UI behavior. Static database validation passes; clean pgTAP replay remains deferred to PR CI because Docker/Podman is unavailable locally.
 - Passed lint, TypeScript, the production build, the zero-vulnerability dependency audit, all 535 application tests, and the per-feature coverage policy. The full test runner required controlled concurrency on this Windows host; the timed-out parallel suites passed independently and the controlled full run passed completely.
+- Committed representative verification locally as `e85bd19` and created stacked branch `feat/nak-68-brokerdesk-customer-intake` without pushing or opening a PR, preserving the user's combined-checkpoint workflow.
+- Implemented the safe manual customer intake vertical slice: private hashed invitations, fragment-to-HttpOnly exchange, verified-email claim, explicit versioned consent, delayed canonical-portfolio activation, one-year mandate, broker-only projection, and customer-only multi-broker projection.
+- Tightened the capability foundation from capability-scoped direct relationship reads to projection-only access by revoking authenticated `SELECT` on `broker_clients`; updated the earlier pgTAP contracts accordingly.
+- Added the operational customers, customer invitation, and My Brokers interfaces plus five active versioned API contracts and independent rate-limit buckets. Spreadsheet content storage remains deliberately unavailable.
+- Passed all 556 application tests, global and per-feature coverage gates, TypeScript, production build, static database validation, and a zero-vulnerability dependency audit. Local clean migration/pgTAP replay remains unavailable without Docker/Podman and is mandatory before merge.

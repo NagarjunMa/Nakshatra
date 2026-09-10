@@ -5,7 +5,7 @@ import { brokerdeskEndpointInventorySchema } from "@/features/security/brokerdes
 describe("BrokerDesk endpoint inventory", () => {
   it("keeps every planned contract machine-readable and unique", () => {
     const parsed = brokerdeskEndpointInventorySchema.parse(inventory);
-    expect(parsed.endpoints).toHaveLength(14);
+    expect(parsed.endpoints).toHaveLength(18);
   });
 
   it("rejects duplicate route contracts", () => {
