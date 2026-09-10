@@ -1,12 +1,12 @@
 # BrokerDesk Phase 2 — Implementation Progress
 
-Status: Slice 1 merged; Slice 2 onboarding foundation merged and security completion in progress
+Status: Slice 1 and Slice 2 team-access foundation merged; representative verification implemented on the current feature branch
 Started: 2026-09-08  
 Approved plan: [Phase 1 Implementation Plan](./phase-1-implementation-plan.md)
 
 ## Tracking approach
 
-The user has opted out of Linear updates for this work. Decisions, changed files, verification results, risks, and deviations are recorded here, in the master plan, and in associated GitHub pull requests. The safety foundation merged through PR #40, the capability foundation merged through PR #41, and the first Slice 2 onboarding unit merged through PR #42. Related implementation units now remain on one local feature branch with local checkpoint commits; a pull request and merge happen only at a deliberate, reviewable checkpoint instead of after every small phase.
+The user has opted out of Linear updates for this work. Decisions, changed files, verification results, risks, and deviations are recorded here, in the master plan, and in associated GitHub pull requests. The safety foundation merged through PR #40, the capability foundation through PR #41, private onboarding through PR #42, and the secure team-access foundation through PR #43. Related implementation units remain on one feature branch with local checkpoint commits; a pull request and merge happen only at a deliberate, reviewable checkpoint instead of after every small phase.
 
 ## Repository preparation
 
@@ -17,7 +17,8 @@ The user has opted out of Linear updates for this work. Decisions, changed files
 - Completed branch and isolated phase worktree: removed after clean-state, tree-equivalence, and patch-equivalence verification.
 - Capability pull request: [#41 — BrokerDesk capability foundation](https://github.com/NagarjunMa/Nakshatra/pull/41), squash-merged as `32e5b62`.
 - Onboarding pull request: [#42 — Private BrokerDesk onboarding](https://github.com/NagarjunMa/Nakshatra/pull/42), squash-merged as `44b5641` after all three required checks passed.
-- Current branch: `feat/nak-68-brokerdesk-slice-2-completion`, created directly from synchronized `main` at `ac5026a` after the merged onboarding and identity-verification operations commits.
+- Team-access pull request: [#43 — Secure BrokerDesk team access foundation](https://github.com/NagarjunMa/Nakshatra/pull/43), squash-merged as `c75f6f1` after all required application, secret-scan, clean-migration, and pgTAP checks passed.
+- Current branch: `feat/nak-68-broker-representative-verification`, created directly from synchronized `main` at `c75f6f1`.
 
 ## Latest-main baseline
 
@@ -90,8 +91,9 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 
 ## Next executable steps
 
-1. Generalize the existing Didit lifecycle for an organization representative without creating a hidden customer candidate or a duplicate verification workflow.
-2. Keep document upload and organization activation unavailable until retention, KMS, malware scanning, and reviewer authorization are implemented and approved.
+1. Generalize the existing Didit lifecycle for an organization representative without creating a hidden customer candidate or a duplicate verification workflow. **Implemented and locally verified on `feat/nak-68-broker-representative-verification`; clean database replay remains a future PR CI gate.**
+2. Design and implement business-contact verification without allowing a verified representative alone to activate BrokerDesk.
+3. Keep business-document upload and organization activation unavailable until retention, KMS, malware scanning, and reviewer authorization are implemented and approved.
 
 ## Slice 2 completion decisions
 
@@ -115,7 +117,7 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 - Added application and adversarial pgTAP coverage for cross-workspace actors, same-session rejection, action substitution, replay, and immediate membership suspension.
 - This is a fresh-authentication prerequisite, not the complete MFA release gate. No privileged team or verification mutation is exposed yet; owner/admin MFA enrollment and assurance-level enforcement remain required before those commands become active.
 
-## Current local verification for Slice 2 completion branch
+## Merged verification for the Slice 2 team-access checkpoint
 
 | Check | Result |
 |---|---|
@@ -126,7 +128,7 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 | Feature coverage policy | Passed: 40 mapper, service, and contract files at 80% or higher per metric |
 | Production build | Passed; new versioned route included |
 | Dependency audit | Passed: 0 known vulnerabilities |
-| New executable pgTAP suites | Authored with 93 assertions across fresh-auth/MFA, team projection, invitations, access replacement, and suspension; local replay unavailable without Docker/Podman and deferred to the combined checkpoint PR CI |
+| New executable pgTAP suites | Passed in PR #43 CI after clean migration replay, including fresh-auth/MFA, team projection, invitations, access replacement, and suspension |
 
 ## Opaque team projection implemented
 
@@ -185,11 +187,26 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 | Check | Result |
 |---|---|
 | Static database fixture contract | Passed |
-| ESLint | Passed with the existing Open Graph `<img>` warning only |
+| ESLint | Passed |
 | TypeScript | Passed |
-| Unit/integration suite | Passed: 70 files, 430 tests |
-| Feature coverage policy | Passed: 31 mapper, service, and contract files at 80% or higher per metric |
+| Unit/integration suite | Passed: 93 files, 535 tests, using two workers to avoid local Windows resource contention |
+| Feature coverage policy | Passed: 40 mapper, service, and contract files at 80% or higher per metric |
+| Production build | Passed; representative-verification route included |
+| Dependency audit | Passed: 0 known vulnerabilities |
 | Local executable database replay | Unavailable because Docker/Podman is not installed on this host; required in PR CI before merge |
+
+## Broker representative identity verification implemented
+
+- Generalized the private identity-verification subject from a candidate-only key to an explicit `candidate` or `organization_representative` domain while preserving candidate uniqueness and existing candidate-facing function signatures.
+- Kept the representative bound to one organization and one authenticated user. No hidden customer, candidate, portfolio, or duplicate Didit workflow is created.
+- Reused the existing consent, provider-session, webhook, lease, reconciliation, redaction, management-link, and audit lifecycle.
+- Required the exact `verification_manage` proof from a live AAL2 session and consumed it atomically inside the owner-scoped start command. URL or workspace substitution cannot change that signed and database-resolved authority.
+- Kept the raw representative birth date out of PostgreSQL, worker claims, audit events, and routine logs. The app sends it transiently to Didit; the database receives only a purpose-bound HMAC, and the digest is erased after a terminal decision.
+- Added database binding triggers so legacy `candidate_id` compatibility columns cannot disagree with the neutral subject, attempt, management-token, or worker-lease relationship.
+- A representative name change automatically revokes the prior subject result and management credential, returns the representative check to `required`, and appends a disabled BrokerDesk entitlement so a future active workspace fails closed.
+- A verified representative advances only the representative verification check. The organization remains `onboarding`, `brokerdesk.enabled` remains false, and business registration/contact checks remain independent.
+- Representative retries require another fresh security check and a newly entered birth date. The generic bearer management link cannot restart this business flow.
+- The onboarding UI uses simple language, exposes no business-document upload, preserves the private consent-management link when Didit is temporarily unavailable, and never describes the representative as a matrimonial candidate.
 
 ## Progress log
 
@@ -252,3 +269,9 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 - Preserved shared Auth sessions during agency suspension so B2C and other-agency access are not collateral damage; invalidated only pending privileged proofs in the suspended agency.
 - Added operational team controls and adversarial application/pgTAP coverage for cross-purpose proof use, caller-expanded payloads, owner/self/admin restrictions, role synchronization, audit, proof replay, immediate suspension, and shared-identity preservation.
 - Passed all 523 application tests, global and feature coverage, lint, TypeScript, and static database validation for the combined branch; final build and dependency audit are recorded in the verification table after completion.
+- Confirmed PR #43 passed clean migration replay and the full pgTAP suite, squash-merged it as `c75f6f1`, synchronized `main`, and created `feat/nak-68-broker-representative-verification` from that exact checkpoint.
+- Generalized the existing private identity subject, attempt, management-token, and worker-lease model for an organization representative while retaining candidate compatibility and enforcing cross-table subject binding.
+- Kept the raw representative birth date out of the database RPC and retained only a purpose-bound HMAC during processing; terminal decisions and consent withdrawal erase it, and a missing worker key defers rather than misclassifies a decision.
+- Added the exact AAL2 verification command, no-store API, independent rate limit, onboarding actions, generic management-link recovery, representative-name invalidation, and shared Didit worker processing without enabling business documents or workspace activation.
+- Added 39 representative-verification pgTAP assertions plus application coverage for origin/session/rate-limit/proof/input isolation, provider recovery, worker matching, privacy, and UI behavior. Static database validation passes; clean pgTAP replay remains deferred to PR CI because Docker/Podman is unavailable locally.
+- Passed lint, TypeScript, the production build, the zero-vulnerability dependency audit, all 535 application tests, and the per-feature coverage policy. The full test runner required controlled concurrency on this Windows host; the timed-out parallel suites passed independently and the controlled full run passed completely.

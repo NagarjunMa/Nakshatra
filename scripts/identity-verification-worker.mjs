@@ -1,3 +1,5 @@
+import { matchesIdentityBirthDate } from "../src/features/identity-verification/server/identity-match.mjs";
+
 const DIDIT_BASE_URL = "https://verification.didit.me/v3/session";
 const PROVIDER_REQUEST_TIMEOUT_MS = 10_000;
 
@@ -28,9 +30,20 @@ function exactlyOneApproved(decision, field) {
 }
 
 /** Reduces an unretained Didit decision to the policy booleans required by the database. */
-export function evaluateDiditDecision(decision, claim) {
+export function evaluateDiditDecision(
+  decision,
+  claim,
+  identityMatchKey = process.env.IDENTITY_VERIFICATION_MATCH_HMAC_KEY
+) {
   if (!decision || typeof decision !== "object" || decision.session_id !== claim.provider_session_ref) {
     throw workerError("DIDIT_DECISION_MISMATCH");
+  }
+  if (!["candidate", "organization_representative"].includes(claim.subject_type)) {
+    throw workerError("IDENTITY_VERIFICATION_SUBJECT_TYPE_INVALID");
+  }
+  if (claim.subject_type === "organization_representative"
+    && (typeof identityMatchKey !== "string" || identityMatchKey.length < 32)) {
+    throw workerError("IDENTITY_MATCH_KEY_UNAVAILABLE");
   }
 
   // Nakshatra's approved Didit workflow has exactly one identity document.
@@ -48,7 +61,13 @@ export function evaluateDiditDecision(decision, claim) {
   const decisionName = [firstIdentityCheck?.first_name, firstIdentityCheck?.last_name].filter(Boolean).join(" ");
   const nameMatches = normalizedName(decisionName) === normalizedName(claim.legal_name);
   const birthDateMatches = typeof firstIdentityCheck?.date_of_birth === "string"
-    && firstIdentityCheck.date_of_birth === claim.birth_date;
+    && (claim.subject_type === "organization_representative"
+      ? matchesIdentityBirthDate(
+          firstIdentityCheck.date_of_birth,
+          claim.birth_date_hash,
+          identityMatchKey
+        )
+      : firstIdentityCheck.date_of_birth === claim.birth_date);
   const status = normalizeStatus(decision.status);
   const checksPass = idVerified && passiveLivenessVerified && faceMatchVerified && nameMatches && birthDateMatches;
 
@@ -71,6 +90,7 @@ export function evaluateDiditDecision(decision, claim) {
 export function createIdentityVerificationWorker(supabase, {
   apiKey = process.env.DIDIT_API_KEY,
   fetchImpl = fetch,
+  identityMatchKey = process.env.IDENTITY_VERIFICATION_MATCH_HMAC_KEY,
   now = () => new Date(),
   requestTimeoutMs = PROVIDER_REQUEST_TIMEOUT_MS,
 } = {}) {
@@ -149,7 +169,7 @@ export function createIdentityVerificationWorker(supabase, {
       if (claim.task_type !== "reconcile") throw workerError("IDENTITY_VERIFICATION_WORK_TYPE_INVALID");
 
       const decision = await fetchDecision(claim.provider_session_ref);
-      const result = evaluateDiditDecision(decision, claim);
+      const result = evaluateDiditDecision(decision, claim, identityMatchKey);
       await rpcBoolean("complete_identity_verification_reconciliation", {
         p_attempt_id: claim.attempt_id,
         p_claim_token: claim.claim_token,

@@ -21,10 +21,10 @@ values (
 );
 
 insert into app_private.identity_verification_attempts(
-  id, candidate_id, provider_subject_ref, provider_session_ref, status
+  id, subject_id, candidate_id, provider_subject_ref, provider_session_ref, status
 )
 select
-  '97300000-0000-4000-8000-000000000001', subject.candidate_id,
+  '97300000-0000-4000-8000-000000000001', subject.id, subject.candidate_id,
   subject.provider_subject_ref, '97400000-0000-4000-8000-000000000001', 'in_progress'
 from app_private.identity_verification_subjects subject
 where subject.candidate_id = '97200000-0000-4000-8000-000000000001';

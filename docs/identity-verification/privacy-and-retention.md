@@ -6,6 +6,14 @@ Nakshatra must use data minimization. A provider verification session may
 contain identity-document, facial, biometric, device, IP, and decision data.
 The application must not copy those categories into its database by default.
 
+For a BrokerDesk representative, the raw date of birth is used transiently to
+prepare the hosted session and is not sent through the database RPC. While the decision is pending, Nakshatra stores
+only a purpose-bound HMAC for the later provider-decision comparison and erases
+that digest as soon as a terminal decision is recorded. The raw date is not stored in the
+representative verification subject, worker queue, audit record, or routine
+logs. A retry requires the representative to re-enter it after another
+purpose-bound security check.
+
 Provider retention is a fallback, not the deletion strategy:
 
 1. Configure the shortest retention period the provider offers for both Sandbox

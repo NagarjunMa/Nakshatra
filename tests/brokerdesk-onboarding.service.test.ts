@@ -5,7 +5,10 @@ import {
   getBrokerdeskOnboarding,
   saveBrokerdeskOnboarding,
 } from "@/features/organizations/server/brokerdesk-onboarding.service";
-import { brokerdeskProfileUpdateSchema } from "@/features/organizations/server/brokerdesk-onboarding.contract";
+import {
+  brokerdeskProfileUpdateSchema,
+  startBrokerdeskRepresentativeVerificationSchema,
+} from "@/features/organizations/server/brokerdesk-onboarding.contract";
 
 const WORKSPACE_REF = `wrk_${"a".repeat(32)}`;
 const profile = {
@@ -162,5 +165,24 @@ describe("BrokerDesk onboarding service", () => {
     }).success).toBe(false);
     expect(brokerdeskProfileUpdateSchema.safeParse({ website: "http://insecure.example" }).success).toBe(false);
     expect(brokerdeskProfileUpdateSchema.safeParse({ website: "https://trusted.example" }).success).toBe(true);
+  });
+
+  it("accepts only explicit consent and a reasonable adult representative birth date", () => {
+    expect(startBrokerdeskRepresentativeVerificationSchema.safeParse({
+      birthDate: "1985-05-12",
+      consent: true,
+    }).success).toBe(true);
+    expect(startBrokerdeskRepresentativeVerificationSchema.safeParse({
+      birthDate: new Date().toISOString().slice(0, 10),
+      consent: true,
+    }).success).toBe(false);
+    expect(startBrokerdeskRepresentativeVerificationSchema.safeParse({
+      birthDate: "1800-01-01",
+      consent: true,
+    }).success).toBe(false);
+    expect(startBrokerdeskRepresentativeVerificationSchema.safeParse({
+      birthDate: "1985-05-12",
+      consent: false,
+    }).success).toBe(false);
   });
 });

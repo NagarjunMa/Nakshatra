@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createWorkspace, saveOnboarding } from "@/features/organizations/client/brokerdesk-onboarding.api";
+import { createWorkspace, saveOnboarding, startRepresentativeVerification } from "@/features/organizations/client/brokerdesk-onboarding.api";
 
 describe("BrokerDesk onboarding client API", () => {
   afterEach(() => vi.unstubAllGlobals());
@@ -17,6 +17,7 @@ describe("BrokerDesk onboarding client API", () => {
       primaryCountry: "IN",
     }, "create:brokerdesk:1");
     await saveOnboarding(`wrk_${"a".repeat(32)}`, { representativeFullName: "Anita Rao" }, 1, false, "save:brokerdesk:001");
+    await startRepresentativeVerification(`wrk_${"a".repeat(32)}`, "1985-05-12");
     expect(fetchMock).toHaveBeenNthCalledWith(1, "/api/v1/brokerdesk/workspaces", expect.objectContaining({
       method: "POST", credentials: "same-origin",
     }));
@@ -24,6 +25,14 @@ describe("BrokerDesk onboarding client API", () => {
       2,
       `/api/v1/brokerdesk/workspaces/wrk_${"a".repeat(32)}/business-profile`,
       expect.objectContaining({ method: "PUT", credentials: "same-origin" })
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      3,
+      `/api/v1/brokerdesk/workspaces/wrk_${"a".repeat(32)}/representative-verification`,
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ birthDate: "1985-05-12", consent: true }),
+      })
     );
   });
 

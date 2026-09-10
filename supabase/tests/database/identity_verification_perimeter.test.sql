@@ -23,8 +23,8 @@ select ok(not has_table_privilege('authenticated', 'app_private.identity_verific
 select ok(not has_table_privilege('authenticated', 'app_private.identity_verification_attempts', 'insert,update,delete'), 'authenticated cannot mutate private verification attempts');
 
 select throws_ok(
-  $$insert into app_private.identity_verification_attempts(candidate_id, provider_subject_ref, evidence_payload)
-    select '92000000-0000-4000-8000-000000000001', provider_subject_ref, '{"document_number":"must-not-persist"}'::jsonb
+  $$insert into app_private.identity_verification_attempts(subject_id, candidate_id, provider_subject_ref, evidence_payload)
+    select id, '92000000-0000-4000-8000-000000000001', provider_subject_ref, '{"document_number":"must-not-persist"}'::jsonb
     from app_private.identity_verification_subjects where candidate_id = '92000000-0000-4000-8000-000000000001'$$,
   '23514', null, 'raw identity evidence is rejected'
 );
@@ -34,8 +34,8 @@ values ('92000000-0000-4000-8000-000000000001', repeat('a', 64), now() + interva
 select is(app_private.consume_identity_verification_invitation(repeat('a', 64)), '92000000-0000-4000-8000-000000000001'::uuid, 'an invitation is consumed atomically');
 select throws_ok($$select app_private.consume_identity_verification_invitation(repeat('a', 64))$$, '22023', null, 'a consumed invitation cannot be replayed');
 
-insert into app_private.identity_verification_attempts(id, candidate_id, provider_subject_ref)
-select '93000000-0000-4000-8000-000000000001', candidate_id, provider_subject_ref
+insert into app_private.identity_verification_attempts(id, subject_id, candidate_id, provider_subject_ref)
+select '93000000-0000-4000-8000-000000000001', id, candidate_id, provider_subject_ref
 from app_private.identity_verification_subjects
 where candidate_id = '92000000-0000-4000-8000-000000000002';
 
@@ -75,8 +75,11 @@ select ok(
   'public snapshots receive only the safe verification badge and validity windows'
 );
 
-insert into app_private.identity_verification_worker_state(candidate_id, attempt_id, task_type)
-values ('92000000-0000-4000-8000-000000000002', '93000000-0000-4000-8000-000000000001', 'reconcile');
+insert into app_private.identity_verification_worker_state(subject_id, candidate_id, attempt_id, task_type)
+select subject_record.id, subject_record.candidate_id,
+  '93000000-0000-4000-8000-000000000001', 'reconcile'
+from app_private.identity_verification_subjects subject_record
+where subject_record.candidate_id = '92000000-0000-4000-8000-000000000002';
 set local role service_role;
 do $$ begin
   perform pg_temp.set_service_role_claims();

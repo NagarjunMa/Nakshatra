@@ -152,7 +152,7 @@ Customer workspace:
 | 0E — URL, API, and security contract | Approved baseline | Endpoint projections, identifiers, tokens, rate limits, abuse and penetration cases |
 | 0F — Complete operational wireframes | Approved baseline | Onboarding, dashboard, bulk import, queues, tasks, renewals, RBAC, privacy |
 | 1 — Implementation planning | Approved baseline | Ordered engineering plan, migrations, acceptance tests, rollout |
-| 2 — Implementation | Slice 1 and onboarding foundation merged; Slice 2 security completion in progress | Capability foundation, private broker onboarding, safe auth continuation, audited commands, operational UI |
+| 2 — Implementation | Slice 1 and secure team-access foundation merged; representative verification in progress | Capability foundation, private broker onboarding, purpose-bound MFA, audited team commands, representative verification, operational UI |
 
 ## Detailed planning documents
 
@@ -240,6 +240,12 @@ Customer workspace:
 - Kept authorization ahead of the invitation idempotency return so suspension, demotion, or an MFA assurance downgrade takes effect immediately, including during an otherwise identical retry.
 - Implemented role replacement and suspension as separate, AAL2 purpose-bound commands over opaque workspace/member references. They reuse the existing membership/RBAC source of truth, prohibit generic owner/self mutations, and audit atomically.
 - Defined agency suspension as membership-scoped: it invalidates pending privileged proofs and stops that agency's access immediately, while preserving the person's shared Nakshatra identity, customer portfolio session, and memberships in other agencies.
+- Confirmed all PR #43 checks, including clean migration replay and the complete pgTAP suite, then squash-merged the secure BrokerDesk team-access foundation as `c75f6f1`.
+- Synchronized local `main` with `origin/main`, removed the merged feature branch, and created `feat/nak-68-broker-representative-verification` from the clean merged checkpoint.
+- Began the representative-verification unit with the locked boundary that the authenticated business representative is an explicit verification subject; no synthetic customer candidate, duplicated Didit workflow, business-document release, or automatic workspace activation is permitted.
+- Implemented that boundary on `feat/nak-68-broker-representative-verification`: the existing Didit lifecycle now supports an organization- and user-bound representative subject, requires an exact one-time AAL2 `verification_manage` proof, and cannot activate the organization or BrokerDesk entitlement.
+- Kept the representative birth date outside PostgreSQL and audits. Only a purpose-bound HMAC reaches private persistence while the decision is pending, and it is erased at terminal reconciliation; representative name changes invalidate the previous result and fail BrokerDesk access closed.
+- Added database subject-binding invariants, a no-store/rate-limited versioned API, safe consent-management recovery, worker matching, adversarial two-broker pgTAP coverage, and plain-language onboarding UI. All 535 application tests, coverage policy, lint, TypeScript, build, static database checks, and dependency audit pass; clean executable database replay remains required in later PR CI because Docker/Podman is unavailable locally.
 
 ## Maintenance rule
 

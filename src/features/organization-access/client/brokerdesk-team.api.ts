@@ -1,6 +1,7 @@
 import type { InvitedRolePreset } from "@/features/organization-access/server/brokerdesk-team-invitation.contract";
 import type { BrokerdeskReauthPurpose } from "@/features/organization-access/server/brokerdesk-reauth.contract";
 import type { MutableTeamRolePreset } from "@/features/organization-access/server/brokerdesk-team-command.contract";
+import { startBrokerdeskActionSecurity } from "./brokerdesk-reauth.api";
 
 async function command<T>(url: string, body: object, method = "POST"): Promise<T> {
   const response = await fetch(url, {
@@ -12,10 +13,7 @@ async function command<T>(url: string, body: object, method = "POST"): Promise<T
 }
 
 export function startTeamActionSecurity(workspaceRef: string, method: "google" | "email", purpose: BrokerdeskReauthPurpose) {
-  return command<{ url?: string; sent?: boolean }>(
-    `/api/v1/brokerdesk/workspaces/${encodeURIComponent(workspaceRef)}/reauth/start`,
-    { method, purpose }
-  );
+  return startBrokerdeskActionSecurity(workspaceRef, method, purpose);
 }
 
 export function startTeamInvitationSecurity(workspaceRef: string, method: "google" | "email") {

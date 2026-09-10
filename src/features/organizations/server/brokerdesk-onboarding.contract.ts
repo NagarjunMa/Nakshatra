@@ -121,6 +121,23 @@ export const saveBrokerdeskOnboardingCommandSchema = z.object({
   idempotencyKey: z.string().min(16).max(128).regex(/^[A-Za-z0-9_.:-]+$/),
 }).strict();
 
+export const startBrokerdeskRepresentativeVerificationSchema = z.object({
+  birthDate: z.iso.date(),
+  consent: z.literal(true),
+}).strict().superRefine((value, context) => {
+  const birthDate = new Date(`${value.birthDate}T00:00:00.000Z`);
+  const today = new Date();
+  const minimumAdultDate = new Date(Date.UTC(
+    today.getUTCFullYear() - 18,
+    today.getUTCMonth(),
+    today.getUTCDate()
+  ));
+  const oldestReasonableDate = new Date(Date.UTC(today.getUTCFullYear() - 120, 0, 1));
+  if (birthDate > minimumAdultDate || birthDate < oldestReasonableDate) {
+    context.addIssue({ code: "custom", path: ["birthDate"], message: "Enter a valid adult date of birth" });
+  }
+});
+
 export type BrokerdeskBootstrap = z.infer<typeof brokerdeskBootstrapSchema>;
 export type BrokerdeskOnboarding = z.infer<typeof brokerdeskOnboardingSchema>;
 export type BrokerdeskOnboardingResult = z.infer<typeof brokerdeskOnboardingResultSchema>;

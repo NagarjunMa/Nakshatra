@@ -3,14 +3,18 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod/v4";
 import { createDiditVerificationSession, DiditProviderError } from "./didit.provider";
+import { hashIdentityBirthDate } from "./identity-match.mjs";
 import { IdentityVerificationSessionRepository } from "./session.repository";
+import { getIdentityVerificationMatchKey } from "@/lib/env";
 
 const preparedSessionSchema = z.object({
   attempt_id: z.uuid(),
   provider_subject_ref: z.uuid(),
   legal_name: z.string().min(1),
   birth_date: z.iso.date(),
-});
+}).strict();
+
+const preparedRepresentativeSessionSchema = preparedSessionSchema.omit({ birth_date: true });
 
 const linkStatusSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("invitation"), status: z.literal("ready") }).strict(),
@@ -92,6 +96,55 @@ export async function startIdentityVerification(input: {
   return attachProviderSession({
     repository,
     prepared: preparedSession(data),
+    managementTokenHash: input.managementTokenHash,
+    callbackUrl: input.callbackUrl,
+    managementToken: input.managementToken,
+  });
+}
+
+function preparedRepresentativeSession(data: unknown, birthDate: string) {
+  const parsed = preparedRepresentativeSessionSchema.safeParse(Array.isArray(data) ? data[0] : data);
+  if (!parsed.success) {
+    throw new IdentityVerificationSessionError("We could not prepare identity verification. Please try again.", "IDENTITY_VERIFICATION_START_FAILED", 503);
+  }
+  return { ...parsed.data, birth_date: birthDate };
+}
+
+/** Starts the same Didit lifecycle for the authenticated business representative. */
+export async function startBrokerdeskRepresentativeVerification(input: {
+  supabase: SupabaseClient;
+  workspaceRef: string;
+  birthDate: string;
+  proofHash: string;
+  managementToken: string;
+  managementTokenHash: string;
+  callbackUrl: string;
+}) {
+  let birthDateHash: string;
+  try {
+    birthDateHash = hashIdentityBirthDate(
+      input.birthDate,
+      getIdentityVerificationMatchKey()
+    );
+  } catch {
+    throw new IdentityVerificationSessionError(
+      "Identity verification is temporarily unavailable. Please try again.",
+      "IDENTITY_VERIFICATION_MATCHING_UNAVAILABLE",
+      503
+    );
+  }
+
+  const repository = new IdentityVerificationSessionRepository(input.supabase);
+  const { data, error } = await repository.beginBrokerdeskRepresentative(
+    input.workspaceRef,
+    birthDateHash,
+    input.managementTokenHash,
+    input.proofHash
+  );
+  if (error) unavailableFromDatabase(error, "BROKERDESK_REPRESENTATIVE_VERIFICATION_START_FAILED");
+  return attachProviderSession({
+    repository,
+    prepared: preparedRepresentativeSession(data, input.birthDate),
     managementTokenHash: input.managementTokenHash,
     callbackUrl: input.callbackUrl,
     managementToken: input.managementToken,

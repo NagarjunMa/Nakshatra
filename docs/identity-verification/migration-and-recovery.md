@@ -12,6 +12,14 @@ does not backfill verification as successful: existing candidates remain
 `pending` and cannot be published for the first time until a later authorized
 verification flow projects a current verified status.
 
+`20260910120000_brokerdesk_representative_verification.sql` later adds a
+domain-neutral subject key while preserving candidate uniqueness and every
+candidate-facing function signature. BrokerDesk representatives use an
+organization- and user-bound subject, never a synthetic candidate. Their raw
+birth date does not cross the database boundary, and the purpose-bound
+comparison digest is erased
+after a terminal verification decision.
+
 ## Safe recovery procedure
 
 1. Stop the worker and session-creation deployment before changing the schema.

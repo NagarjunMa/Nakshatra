@@ -234,6 +234,24 @@
       "idempotency": "required",
       "stepUp": "required",
       "auditEvent": "team.member.suspended"
+    },
+    {
+      "id": "brokerdesk.representative.verification.start",
+      "status": "active",
+      "method": "POST",
+      "path": "/api/v1/brokerdesk/workspaces/[workspaceRef]/representative-verification",
+      "owner": "identity-verification",
+      "audience": "broker_member",
+      "authentication": "live_session",
+      "capability": "verification.manage",
+      "resourceScope": "workspace",
+      "inputSchema": "startBrokerdeskRepresentativeVerificationSchema",
+      "outputSchema": "hostedIdentityVerificationSchema",
+      "dataClass": "restricted",
+      "rateLimitAction": "brokerdesk_representative_verification_start",
+      "idempotency": "not_applicable",
+      "stepUp": "required",
+      "auditEvent": "representative.identity_verification_started"
     }
   ]
 }
