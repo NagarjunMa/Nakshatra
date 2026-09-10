@@ -18,7 +18,9 @@ declare
   current_aal text := coalesce(auth.jwt() ->> 'aal', '');
   workspace_id uuid;
   actor_preset text;
-  target public.organization_members%rowtype;
+  target_id uuid;
+  target_user_id uuid;
+  target_status public.member_status;
   target_preset text;
   legacy_role public.organization_member_role;
   request_hash text;
@@ -49,13 +51,14 @@ begin
   join app_private.organization_member_access access on access.member_id = member.id
   where member.organization_id = workspace_id and member.user_id = actor_id
     and member.status = 'active' and access.revoked_at is null;
-  select target_record, access.role_preset::text into target, target_preset
+  select target_record.id, target_record.user_id, target_record.status, access.role_preset::text
+  into target_id, target_user_id, target_status, target_preset
   from public.organization_members target_record
   join app_private.organization_member_access access on access.member_id = target_record.id
   where target_record.organization_id = workspace_id and target_record.member_ref = p_member_ref
     and access.organization_id = workspace_id and access.starts_at <= pg_catalog.now()
     and (access.ends_at is null or access.ends_at > pg_catalog.now()) and access.revoked_at is null;
-  if not found or target.user_id = actor_id or target_preset = 'owner'
+  if not found or target_user_id = actor_id or target_preset = 'owner'
     or (actor_preset = 'admin' and (target_preset = 'admin' or p_role_preset = 'admin')) then
     raise exception 'team access change unavailable' using errcode = '42501';
   end if;
@@ -77,7 +80,7 @@ begin
     end if;
     return existing.safe_result;
   end if;
-  if target.status <> 'active' then
+  if target_status <> 'active' then
     raise exception 'team access change unavailable' using errcode = '42501';
   end if;
   if app_private.consume_brokerdesk_action_reauth(workspace_id, 'team_access_replace', p_proof_hash) <> 'consumed' then
@@ -91,13 +94,13 @@ begin
     else 'viewer'::public.organization_member_role end;
   update public.organization_members
   set role = legacy_role, updated_at = pg_catalog.now()
-  where id = target.id;
+  where id = target_id;
   update app_private.organization_member_access
   set granted_by = actor_id, updated_at = pg_catalog.now()
-  where member_id = target.id;
+  where member_id = target_id;
   select count(*)::integer into assignment_count
   from app_private.broker_client_assignments assignment
-  where assignment.organization_id = workspace_id and assignment.member_id = target.id
+  where assignment.organization_id = workspace_id and assignment.member_id = target_id
     and assignment.starts_at <= pg_catalog.now()
     and (assignment.ends_at is null or assignment.ends_at > pg_catalog.now())
     and assignment.revoked_at is null;
@@ -135,7 +138,9 @@ declare
   current_aal text := coalesce(auth.jwt() ->> 'aal', '');
   workspace_id uuid;
   actor_preset text;
-  target public.organization_members%rowtype;
+  target_id uuid;
+  target_user_id uuid;
+  target_status public.member_status;
   target_preset text;
   request_hash text;
   existing app_private.brokerdesk_command_idempotency%rowtype;
@@ -161,13 +166,14 @@ begin
   join app_private.organization_member_access access on access.member_id = member.id
   where member.organization_id = workspace_id and member.user_id = actor_id
     and member.status = 'active' and access.revoked_at is null;
-  select target_record, access.role_preset::text into target, target_preset
+  select target_record.id, target_record.user_id, target_record.status, access.role_preset::text
+  into target_id, target_user_id, target_status, target_preset
   from public.organization_members target_record
   join app_private.organization_member_access access on access.member_id = target_record.id
   where target_record.organization_id = workspace_id and target_record.member_ref = p_member_ref
     and access.organization_id = workspace_id and access.starts_at <= pg_catalog.now()
     and (access.ends_at is null or access.ends_at > pg_catalog.now()) and access.revoked_at is null;
-  if not found or target.user_id = actor_id or target_preset = 'owner'
+  if not found or target_user_id = actor_id or target_preset = 'owner'
     or (actor_preset = 'admin' and target_preset = 'admin') then
     raise exception 'team suspension unavailable' using errcode = '42501';
   end if;
@@ -187,7 +193,7 @@ begin
     end if;
     return existing.safe_result;
   end if;
-  if target.status <> 'active' then
+  if target_status <> 'active' then
     raise exception 'team suspension unavailable' using errcode = '42501';
   end if;
   if app_private.consume_brokerdesk_action_reauth(workspace_id, 'team_suspend', p_proof_hash) <> 'consumed' then
@@ -196,10 +202,10 @@ begin
 
   update public.organization_members
   set status = 'suspended', updated_at = pg_catalog.now()
-  where id = target.id;
+  where id = target_id;
   update app_private.brokerdesk_action_reauth_challenges
   set invalidated_at = pg_catalog.now()
-  where organization_id = workspace_id and user_id = target.user_id
+  where organization_id = workspace_id and user_id = target_user_id
     and consumed_at is null and invalidated_at is null;
   result := pg_catalog.jsonb_build_object(
     'status','suspended','workspaceRef',p_workspace_ref,'memberRef',p_member_ref
