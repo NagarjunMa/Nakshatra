@@ -200,7 +200,10 @@ create trigger invalidate_representative_identity_after_name_change
 -- Existing candidate helpers keep their public signatures. New work is keyed
 -- by the normalized subject so both domains share one durable queue.
 create or replace function app_private.enqueue_identity_verification_work(
-  p_subject_id uuid,
+  -- Keep the legacy argument name because PostgreSQL does not permit an input
+  -- parameter rename through CREATE OR REPLACE FUNCTION. The value now points
+  -- to the normalized verification subject for either supported domain.
+  p_candidate_id uuid,
   p_attempt_id uuid,
   p_task_type text,
   p_run_after timestamptz default pg_catalog.now()
@@ -218,7 +221,7 @@ begin
   end if;
   select attempt.candidate_id into v_candidate_id
   from app_private.identity_verification_attempts attempt
-  where attempt.id = p_attempt_id and attempt.subject_id = p_subject_id;
+  where attempt.id = p_attempt_id and attempt.subject_id = p_candidate_id;
   if not found then
     raise exception 'identity verification attempt is unavailable' using errcode = '22023';
   end if;
@@ -227,7 +230,7 @@ begin
     subject_id, candidate_id, attempt_id, task_type, run_after, claim_token,
     claimed_at, lease_expires_at, attempts, last_error_code, completed_at, updated_at
   ) values (
-    p_subject_id, v_candidate_id, p_attempt_id, p_task_type, p_run_after, null,
+    p_candidate_id, v_candidate_id, p_attempt_id, p_task_type, p_run_after, null,
     null, null, 0, null, null, pg_catalog.now()
   )
   on conflict (subject_id, task_type) do update
