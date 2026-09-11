@@ -257,6 +257,7 @@ Customer workspace:
 - Locked the published-version privacy boundary for BrokerDesk customer lists and details: brokers see only the last published portfolio identity fields, never mutable candidate or draft edits; customers without a first publication appear as a neutral `Customer` placeholder.
 - Expanded the combined checkpoint to 559 passing application tests and a 44-assertion customer-intake/detail pgTAP contract. Lint, TypeScript, coverage, production build, static database validation, and dependency audit pass; executable clean migration replay remains the PR CI merge gate.
 - PR #44's first clean replay found a PostgreSQL function-parameter rename incompatibility before pgTAP execution. Retained the prior parameter name without changing the new subject-based behavior so the historical migration chain remains replayable.
+- The following PR #44 run completed migration replay and found stale pgTAP relationship fixtures missing required term start timestamps. Updated the successful fixtures to match the enforced `broker_clients.starts_at` invariant.
 
 ## Maintenance rule
 
