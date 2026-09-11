@@ -438,8 +438,14 @@ begin
       select pg_catalog.jsonb_agg(item order by sort_at desc) from (
         select pg_catalog.jsonb_build_object(
           'kind', 'relationship', 'relationshipRef', relationship.relationship_ref,
-          'displayName', candidate.display_name,
-          'gender', candidate.gender,
+          'displayName', case
+            when portfolio.is_published and portfolio.published_data is not null then
+              coalesce(nullif(pg_catalog.btrim(portfolio.published_data #>> '{personal,name}'), ''), 'Customer')
+            else 'Customer' end,
+          'gender', case
+            when portfolio.is_published and portfolio.published_data is not null
+              then portfolio.published_data #>> '{personal,gender}'
+            else null end,
           'relationshipStatus', case
             when relationship.ends_at is not null and relationship.ends_at <= pg_catalog.now()
               then 'expired'
@@ -448,8 +454,7 @@ begin
           'startsAt', relationship.starts_at, 'endsAt', relationship.ends_at
         ) as item, relationship.updated_at as sort_at
         from public.broker_clients relationship
-        join public.candidates candidate on candidate.id = relationship.candidate_id
-        left join public.portfolios portfolio on portfolio.candidate_id = candidate.id
+        left join public.portfolios portfolio on portfolio.candidate_id = relationship.candidate_id
         where relationship.organization_id = organization_id
           and relationship.consented_at is not null
           and app_private.member_has_brokerdesk_capability(

@@ -5,6 +5,7 @@ const enforceRateLimit = vi.hoisted(() => vi.fn());
 const createInvitation = vi.hoisted(() => vi.fn());
 const claimInvitation = vi.hoisted(() => vi.fn());
 const resolveCustomers = vi.hoisted(() => vi.fn());
+const resolveCustomer = vi.hoisted(() => vi.fn());
 const resolveBrokers = vi.hoisted(() => vi.fn());
 const createClient = vi.hoisted(() => vi.fn());
 
@@ -20,6 +21,7 @@ vi.mock("@/features/broker-relationships/server/customer-invitation.service", ()
     createCustomerInvitation: createInvitation,
     claimCustomerInvitation: claimInvitation,
     resolveBrokerdeskCustomers: resolveCustomers,
+    resolveBrokerdeskCustomer: resolveCustomer,
     resolveCustomerBrokerRelationships: resolveBrokers,
   };
 });
@@ -27,10 +29,12 @@ vi.mock("@/lib/security/logging", () => ({ getRequestId: () => "request-id", log
 
 import { POST as create } from "../src/app/api/v1/brokerdesk/workspaces/[workspaceRef]/customer-invitations/route";
 import { GET as list } from "../src/app/api/v1/brokerdesk/workspaces/[workspaceRef]/customers/route";
+import { GET as detail } from "../src/app/api/v1/brokerdesk/workspaces/[workspaceRef]/customers/[relationshipRef]/route";
 import { POST as exchange } from "../src/app/api/v1/customer/broker-invitations/exchange/route";
 import { POST as claim } from "../src/app/api/v1/customer/broker-invitations/claim/route";
 import { GET as brokers } from "../src/app/api/v1/customer/brokers/route";
 import { createCustomerInvitationExchangeCookie } from "@/features/broker-relationships/server/customer-invitation.cookie";
+import { CustomerInvitationError } from "@/features/broker-relationships/server/customer-invitation.service";
 
 const workspaceRef = `wrk_${"a".repeat(32)}`;
 const actor = { status: "authenticated" as const, user: { id: "11111111-1111-4111-8111-111111111111", sessionId: "session" }, supabase: {} };
@@ -64,6 +68,13 @@ describe("BrokerDesk customer invitation routes", () => {
       relationshipEndsAt: "2027-09-10T00:00:00Z",
     });
     resolveCustomers.mockResolvedValue({ available: true, workspaceRef, customers: [] });
+    resolveCustomer.mockResolvedValue({
+      available: true, workspaceRef, relationshipRef: `bcr_${"c".repeat(32)}`,
+      displayName: "Customer One", gender: "female", location: null,
+      relationshipStatus: "active", startsAt: "2026-09-10T00:00:00Z", endsAt: null,
+      version: 1, portfolio: { status: "completing", publishedAt: null },
+      assignedTeam: [], actions: { canReviewPortfolio: true, canCreateIntroduction: true },
+    });
     resolveBrokers.mockResolvedValue({ available: true, relationships: [] });
   });
 
@@ -120,6 +131,13 @@ describe("BrokerDesk customer invitation routes", () => {
     const listed = await list(new Request(`${origin}/api/v1/brokerdesk/workspaces/${workspaceRef}/customers`), { params: Promise.resolve({ workspaceRef }) });
     expect(listed.status).toBe(200);
     expect(resolveCustomers).toHaveBeenCalledWith(actor.supabase, workspaceRef);
+    const relationshipRef = `bcr_${"c".repeat(32)}`;
+    const detailed = await detail(
+      new Request(`${origin}/api/v1/brokerdesk/workspaces/${workspaceRef}/customers/${relationshipRef}`),
+      { params: Promise.resolve({ workspaceRef, relationshipRef }) }
+    );
+    expect(detailed.status).toBe(200);
+    expect(resolveCustomer).toHaveBeenCalledWith(actor.supabase, workspaceRef, relationshipRef);
     const customerBrokers = await brokers(new Request(`${origin}/api/v1/customer/brokers`));
     expect(customerBrokers.status).toBe(200);
     expect(resolveBrokers).toHaveBeenCalledWith(actor.supabase);
@@ -136,9 +154,27 @@ describe("BrokerDesk customer invitation routes", () => {
     expect((await list(new Request(`${origin}/customers`), { params: Promise.resolve({ workspaceRef }) })).status).toBe(429);
     resolveCustomers.mockResolvedValueOnce({ available: false });
     expect((await list(new Request(`${origin}/customers`), { params: Promise.resolve({ workspaceRef }) })).status).toBe(404);
+    resolveCustomer.mockResolvedValueOnce({ available: false });
+    expect((await detail(new Request(`${origin}/customer`), { params: Promise.resolve({ workspaceRef, relationshipRef: `bcr_${"c".repeat(32)}` }) })).status).toBe(404);
     createInvitation.mockRejectedValueOnce(new Error("database unavailable"));
     expect((await create(createRequest(), { params: Promise.resolve({ workspaceRef }) })).status).toBe(503);
     resolveBrokers.mockRejectedValueOnce(new Error("database unavailable"));
     expect((await brokers(new Request(`${origin}/brokers`))).status).toBe(503);
+  });
+
+  it("keeps detail authentication and dependency failures neutral", async () => {
+    const relationshipRef = `bcr_${"c".repeat(32)}`;
+    const request = () => new Request(`${origin}/customer`);
+    const context = { params: Promise.resolve({ workspaceRef, relationshipRef }) };
+    getApiUser.mockResolvedValueOnce({ status: "missing_session" });
+    expect((await detail(request(), context)).status).toBe(401);
+    enforceRateLimit.mockResolvedValueOnce(new Response(null, { status: 429 }));
+    expect((await detail(request(), context)).status).toBe(429);
+    resolveCustomer.mockRejectedValueOnce(new CustomerInvitationError("hidden", "BROKERDESK_CUSTOMER_UNAVAILABLE", 503));
+    expect((await detail(request(), context)).status).toBe(503);
+    resolveCustomer.mockRejectedValueOnce(new Error("database unavailable"));
+    const unavailable = await detail(request(), context);
+    expect(unavailable.status).toBe(503);
+    await expect(unavailable.json()).resolves.toEqual({ available: false });
   });
 });

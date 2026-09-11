@@ -2,7 +2,9 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { workspaceRefSchema } from "@/features/security/public-reference";
+import { brokerCustomerRelationshipRefSchema } from "@/features/security/public-reference";
 import {
+  brokerdeskCustomerDetailSchema,
   brokerdeskCustomersSchema,
   claimedCustomerInvitationSchema,
   createdCustomerInvitationSchema,
@@ -53,6 +55,24 @@ export async function resolveBrokerdeskCustomers(supabase: SupabaseClient, works
   const parsed = brokerdeskCustomersSchema.safeParse(data);
   if (error || !parsed.success) {
     throw new CustomerInvitationError("Customers are temporarily unavailable.", "BROKERDESK_CUSTOMERS_UNAVAILABLE", 503);
+  }
+  return parsed.data;
+}
+
+export async function resolveBrokerdeskCustomer(
+  supabase: SupabaseClient,
+  workspaceRef: string,
+  relationshipRef: string
+) {
+  if (!workspaceRefSchema.safeParse(workspaceRef).success
+    || !brokerCustomerRelationshipRefSchema.safeParse(relationshipRef).success) {
+    return { available: false } as const;
+  }
+  const { data, error } = await new CustomerInvitationRepository(supabase)
+    .brokerdeskCustomer(workspaceRef, relationshipRef);
+  const parsed = brokerdeskCustomerDetailSchema.safeParse(data);
+  if (error || !parsed.success) {
+    throw new CustomerInvitationError("Customer details are temporarily unavailable.", "BROKERDESK_CUSTOMER_UNAVAILABLE", 503);
   }
   return parsed.data;
 }

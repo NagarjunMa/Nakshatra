@@ -27,6 +27,9 @@ describe("BrokerDesk customers client", () => {
     expect(screen.getByText("Arjun")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Women" })).toBeInTheDocument();
     expect(screen.getByText("Ananya")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Ananya/ })).toHaveAttribute(
+      "href", `/brokerdesk/w/${workspaceRef}/customers/bcr_${"b".repeat(32)}`
+    );
     expect(screen.getByText("Customer joined · portfolio not complete")).toBeInTheDocument();
     expect(screen.getByText("This list never reveals whether a customer works with another broker.")).toBeInTheDocument();
   });

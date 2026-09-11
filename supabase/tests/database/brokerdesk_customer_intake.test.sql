@@ -2,13 +2,14 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 \ir auth-fixtures.psql
-select plan(31);
+select plan(44);
 
 select has_table('app_private','broker_client_intakes','customer invitation intake stays private');
 select has_function('public','create_brokerdesk_customer_invitation',array['text','text','text','text','text'],'customer invitation command exists');
 select has_function('public','claim_brokerdesk_customer_invitation',array['text'],'customer claim command exists');
 select has_function('public','resolve_brokerdesk_customers',array['text'],'broker customer projection exists');
 select has_function('public','resolve_customer_broker_relationships',array[]::text[],'customer broker projection exists');
+select has_function('public','resolve_brokerdesk_customer',array['text','text'],'broker relationship detail projection exists');
 select ok(not has_table_privilege('authenticated','app_private.broker_client_intakes','select'),'intake hashes are unavailable through the Data API');
 select ok(not has_table_privilege('authenticated','public.broker_clients','select'),'internal relationship identifiers are unavailable through the Data API');
 
@@ -16,6 +17,7 @@ select pg_temp.create_auth_actor('d1000000-0000-4000-8000-000000000001','d200000
 select pg_temp.create_auth_actor('d1000000-0000-4000-8000-000000000002','d2000000-0000-4000-8000-000000000002','customer@customer-intake.test');
 select pg_temp.create_auth_actor('d1000000-0000-4000-8000-000000000003','d2000000-0000-4000-8000-000000000003','wrong@customer-intake.test');
 select pg_temp.create_auth_actor('d1000000-0000-4000-8000-000000000004','d2000000-0000-4000-8000-000000000004','owner-b@customer-intake.test');
+select pg_temp.create_auth_actor('d1000000-0000-4000-8000-000000000005','d2000000-0000-4000-8000-000000000005','advisor-a@customer-intake.test');
 
 insert into public.organizations (id,type,name,slug,status,created_by)
 values
@@ -24,7 +26,8 @@ values
 insert into public.organization_members (organization_id,user_id,role,status)
 values
   ('d3000000-0000-4000-8000-000000000001','d1000000-0000-4000-8000-000000000001','owner','active'),
-  ('d3000000-0000-4000-8000-000000000002','d1000000-0000-4000-8000-000000000004','owner','active');
+  ('d3000000-0000-4000-8000-000000000002','d1000000-0000-4000-8000-000000000004','owner','active'),
+  ('d3000000-0000-4000-8000-000000000001','d1000000-0000-4000-8000-000000000005','broker_agent','active');
 insert into public.entitlements (organization_id,feature_key,feature_value,source)
 values
   ('d3000000-0000-4000-8000-000000000001','brokerdesk.enabled','true'::jsonb,'test'),
@@ -96,9 +99,60 @@ select is((select relationship_source from public.broker_clients),'customer_invi
 select is((select count(*)::integer from app_private.broker_client_mandates where revoked_at is null),1,'activation creates one current customer mandate');
 select ok((select evidence_reference ~ '^inv_[0-9a-f]{32}:broker-representation-v1$' from app_private.broker_client_mandates where revoked_at is null),'mandate evidence binds the opaque invitation to the displayed consent version');
 
+create temporary table relationship_refs as
+select relationship_ref relationship_a
+from public.broker_clients where organization_id='d3000000-0000-4000-8000-000000000001';
+grant select on relationship_refs to authenticated;
+
 set local role authenticated;
 select pg_temp.set_authenticated_claims('d1000000-0000-4000-8000-000000000001','d2000000-0000-4000-8000-000000000001');
-select is(public.resolve_brokerdesk_customers((select workspace_a from intake_refs))->'customers'->0->>'displayName','Customer One','the broker receives the minimal consented customer projection');
+select is(public.resolve_brokerdesk_customer((select workspace_a from intake_refs),(select relationship_a from relationship_refs))->>'displayName','Customer','an unpublished draft never exposes the mutable candidate name');
+
+reset role;
+update public.portfolios set
+  published_data='{"personal":{"name":"Published Customer","gender":"female","current_location":"Boston, United States"}}'::jsonb,
+  is_published=true,
+  published_at=pg_catalog.now()
+where id='d4000000-0000-4000-8000-000000000001';
+update public.candidates set display_name='Unpublished Changed Name',current_city='Secret Draft City'
+where id='d5000000-0000-4000-8000-000000000001';
+
+set local role authenticated;
+select pg_temp.set_authenticated_claims('d1000000-0000-4000-8000-000000000001','d2000000-0000-4000-8000-000000000001');
+select is(public.resolve_brokerdesk_customer((select workspace_a from intake_refs),(select relationship_a from relationship_refs))->>'available','true','the agency owner resolves its current relationship');
+select is(public.resolve_brokerdesk_customer((select workspace_a from intake_refs),(select relationship_a from relationship_refs))->>'displayName','Published Customer','detail returns only the last published customer name');
+select is(public.resolve_brokerdesk_customer((select workspace_a from intake_refs),(select relationship_a from relationship_refs))->>'location','Boston, United States','detail returns only the last published location');
+select ok(not (public.resolve_brokerdesk_customer((select workspace_a from intake_refs),(select relationship_a from relationship_refs)) ? 'candidateId'),'detail never exposes a candidate UUID');
+select is(public.resolve_brokerdesk_customer((select workspace_a from intake_refs),(select relationship_a from relationship_refs))->'actions'->>'canCreateIntroduction','true','detail calculates current Introduction authority');
+select is(pg_catalog.jsonb_array_length(public.resolve_brokerdesk_customer((select workspace_a from intake_refs),(select relationship_a from relationship_refs))->'assignedTeam'),0,'an unassigned relationship exposes no team members');
+select is(public.resolve_brokerdesk_customer((select workspace_b from intake_refs),(select relationship_a from relationship_refs)),'{"available": false}'::jsonb,'changing the workspace reference fails closed');
+select is(public.resolve_brokerdesk_customer((select workspace_a from intake_refs),'bcr_00000000000000000000000000000000'),'{"available": false}'::jsonb,'a missing relationship has the same unavailable response');
+
+reset role;
+insert into app_private.broker_client_assignments (
+  organization_id,broker_client_id,member_id,assigned_by
+) select 'd3000000-0000-4000-8000-000000000001',relationship.id,member.id,
+  'd1000000-0000-4000-8000-000000000001'
+from public.broker_clients relationship
+join public.organization_members member
+  on member.organization_id=relationship.organization_id
+ and member.user_id='d1000000-0000-4000-8000-000000000005'
+where relationship.relationship_ref=(select relationship_a from relationship_refs);
+
+set local role authenticated;
+select pg_temp.set_authenticated_claims('d1000000-0000-4000-8000-000000000001','d2000000-0000-4000-8000-000000000001');
+select is(pg_catalog.jsonb_array_length(public.resolve_brokerdesk_customer((select workspace_a from intake_refs),(select relationship_a from relationship_refs))->'assignedTeam'),1,'the owner sees the current assigned broker');
+select pg_temp.set_authenticated_claims('d1000000-0000-4000-8000-000000000005','d2000000-0000-4000-8000-000000000005');
+select is(public.resolve_brokerdesk_customer((select workspace_a from intake_refs),(select relationship_a from relationship_refs))->>'available','true','the assigned advisor can resolve the relationship');
+reset role;
+update app_private.broker_client_assignments set revoked_at=pg_catalog.now();
+set local role authenticated;
+select pg_temp.set_authenticated_claims('d1000000-0000-4000-8000-000000000005','d2000000-0000-4000-8000-000000000005');
+select is(public.resolve_brokerdesk_customer((select workspace_a from intake_refs),(select relationship_a from relationship_refs)),'{"available": false}'::jsonb,'assignment revocation immediately removes advisor detail access');
+
+set local role authenticated;
+select pg_temp.set_authenticated_claims('d1000000-0000-4000-8000-000000000001','d2000000-0000-4000-8000-000000000001');
+select is(public.resolve_brokerdesk_customers((select workspace_a from intake_refs))->'customers'->0->>'displayName','Published Customer','the broker receives the minimal published customer projection');
 select ok(not (public.resolve_brokerdesk_customers((select workspace_a from intake_refs))->'customers'->0 ? 'candidateId'),'the broker projection never exposes the candidate UUID');
 
 select pg_temp.set_authenticated_claims('d1000000-0000-4000-8000-000000000004','d2000000-0000-4000-8000-000000000004');

@@ -70,5 +70,35 @@ export const customerBrokerRelationshipsSchema = z.object({
   }).strict()).max(100),
 }).strict();
 
+export const brokerdeskCustomerDetailSchema = z.discriminatedUnion("available", [
+  z.object({ available: z.literal(false) }).strict(),
+  z.object({
+    available: z.literal(true),
+    workspaceRef: workspaceRefSchema,
+    relationshipRef: brokerCustomerRelationshipRefSchema,
+    displayName: z.string().min(1).max(180),
+    gender: z.string().max(80).nullable(),
+    location: z.string().max(365).nullable(),
+    relationshipStatus: z.enum(["active", "paused", "expired", "terminated"]),
+    startsAt: z.string(),
+    endsAt: z.string().nullable(),
+    version: z.number().int().positive(),
+    portfolio: z.object({
+      status: z.enum(["published", "completing"]),
+      publishedAt: z.string().nullable(),
+    }).strict(),
+    assignedTeam: z.array(z.object({
+      memberRef: z.string().regex(/^mbr_[0-9a-f]{32}$/),
+      displayName: z.string().min(1).max(180),
+      rolePreset: z.enum(["owner", "admin", "advisor", "coordinator", "viewer"]),
+    }).strict()).max(50),
+    actions: z.object({
+      canReviewPortfolio: z.boolean(),
+      canCreateIntroduction: z.boolean(),
+    }).strict(),
+  }).strict(),
+]);
+
 export type BrokerdeskCustomers = z.infer<typeof brokerdeskCustomersSchema>;
 export type CustomerBrokerRelationships = z.infer<typeof customerBrokerRelationshipsSchema>;
+export type BrokerdeskCustomerDetail = z.infer<typeof brokerdeskCustomerDetailSchema>;

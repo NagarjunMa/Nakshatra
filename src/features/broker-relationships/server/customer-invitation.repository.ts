@@ -29,8 +29,14 @@ export class CustomerInvitationRepository {
     return this.supabase.rpc("resolve_brokerdesk_customers", { p_workspace_ref: workspaceRef });
   }
 
+  brokerdeskCustomer(workspaceRef: string, relationshipRef: string) {
+    return this.supabase.rpc("resolve_brokerdesk_customer", {
+      p_workspace_ref: workspaceRef,
+      p_relationship_ref: relationshipRef,
+    });
+  }
+
   customerRelationships() {
     return this.supabase.rpc("resolve_customer_broker_relationships");
   }
 }
-

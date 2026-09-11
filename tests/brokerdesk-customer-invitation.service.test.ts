@@ -3,6 +3,7 @@ import {
   claimCustomerInvitation,
   createCustomerInvitation,
   CustomerInvitationError,
+  resolveBrokerdeskCustomer,
   resolveBrokerdeskCustomers,
   resolveCustomerBrokerRelationships,
 } from "@/features/broker-relationships/server/customer-invitation.service";
@@ -30,6 +31,15 @@ describe("BrokerDesk customer invitation service", () => {
     await expect(claimCustomerInvitation(client({ available: false }) as never, "d".repeat(64))).resolves.toEqual({ available: false });
     const customers = { available: true, workspaceRef, customers: [] };
     await expect(resolveBrokerdeskCustomers(client(customers) as never, workspaceRef)).resolves.toEqual(customers);
+    const detail = {
+      available: true, workspaceRef, relationshipRef: `bcr_${"c".repeat(32)}`,
+      displayName: "Customer One", gender: "female", location: "Pune, IN",
+      relationshipStatus: "active", startsAt: "2026-09-10T00:00:00Z",
+      endsAt: "2027-09-10T00:00:00Z", version: 1,
+      portfolio: { status: "published", publishedAt: "2026-09-10T00:00:00Z" },
+      assignedTeam: [], actions: { canReviewPortfolio: true, canCreateIntroduction: true },
+    };
+    await expect(resolveBrokerdeskCustomer(client(detail) as never, workspaceRef, detail.relationshipRef)).resolves.toEqual(detail);
     const brokers = { available: true, relationships: [] };
     await expect(resolveCustomerBrokerRelationships(client(brokers) as never)).resolves.toEqual(brokers);
   });
@@ -48,6 +58,10 @@ describe("BrokerDesk customer invitation service", () => {
     await expect(resolveBrokerdeskCustomers(client(null, { code: "x" }) as never, workspaceRef))
       .rejects.toMatchObject({ code: "BROKERDESK_CUSTOMERS_UNAVAILABLE" });
     await expect(resolveBrokerdeskCustomers(client(null) as never, "bad")).resolves.toEqual({ available: false });
+    await expect(resolveBrokerdeskCustomer(client(null) as never, workspaceRef, "bad"))
+      .resolves.toEqual({ available: false });
+    await expect(resolveBrokerdeskCustomer(client(null, { code: "x" }) as never, workspaceRef, `bcr_${"c".repeat(32)}`))
+      .rejects.toMatchObject({ code: "BROKERDESK_CUSTOMER_UNAVAILABLE" });
     await expect(resolveCustomerBrokerRelationships(client({ internal: true }) as never))
       .rejects.toMatchObject({ code: "CUSTOMER_BROKERS_UNAVAILABLE" });
   });

@@ -1,6 +1,6 @@
 # BrokerDesk Phase 2 — Implementation Progress
 
-Status: Slice 1 and Slice 2 team-access foundation merged; representative verification locally committed; Slice 3 manual customer intake implemented on the current stacked feature branch
+Status: Slice 1 and Slice 2 team-access foundation merged; representative verification, Slice 3 manual customer intake, and secure customer detail implemented on the current stacked feature branch
 Started: 2026-09-08  
 Approved plan: [Phase 1 Implementation Plan](./phase-1-implementation-plan.md)
 
@@ -93,7 +93,7 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 ## Next executable steps
 
 1. Run the representative-verification and customer-intake migrations plus their pgTAP suites through clean PR CI; Docker/Podman remains unavailable locally.
-2. Continue Slice 3 with relationship detail, assignment commands, renewal controls, and cursor pagination over the safe customer projection.
+2. Continue Slice 3 with assignment commands, renewal controls, and cursor pagination over the safe customer projection.
 3. Keep staged CSV contents unavailable until legal retention and production KMS ownership are approved; manual hashed-email invitations are the safe current intake path.
 4. Design business-contact verification without allowing a verified representative alone to activate BrokerDesk.
 5. Keep business-document upload and organization activation unavailable until retention, KMS, malware scanning, and reviewer authorization are implemented and approved.
@@ -224,6 +224,13 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 - Multiple agencies may independently invite and represent the same canonical customer. Broker A's projection contains no Broker B identity, count, status, or invitation lineage, while the customer projection correctly contains both relationships.
 - Bulk CSV row storage remains closed. The unresolved retention and KMS decisions block production staged row data, but they do not block the minimal hashed-email manual invitation path.
 
+## Slice 3 secure customer detail implemented
+
+- Added the opaque `/brokerdesk/w/[workspaceRef]/customers/[relationshipRef]` page and matching versioned read API. Both workspace and relationship references are resolved together inside PostgreSQL; malformed, missing, cross-agency, unassigned, suspended, and expired-mandate access returns the same unavailable result.
+- Added a bounded relationship-detail projection with no candidate, organization, membership, or relationship UUIDs. It returns only the agency relationship term, portfolio readiness, current assigned team, and server-calculated actions permitted by the caller's live role, assignment, mandate, entitlement, and session.
+- Preserved publication privacy: broker list and detail identity fields come only from the last published portfolio snapshot. Before first publication, the broker sees a neutral `Customer` label; later draft edits cannot leak until the customer publishes them.
+- Added immediate assignment-revocation and cross-workspace substitution coverage, plus page, route, contract, repository, service, and endpoint-inventory tests.
+
 ## Current customer-intake verification
 
 | Check | Result |
@@ -231,8 +238,8 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 | Static database fixture contract | Passed |
 | ESLint | Passed with the existing Open Graph `<img>` warning only |
 | TypeScript | Passed |
-| Full application suite | Passed: 100 files, 556 tests |
-| Global coverage | Passed: 85.03% statements, 77.80% branches, 83.96% functions, 88.48% lines |
+| Full application suite | Passed: 101 files, 559 tests |
+| Global coverage | Passed: 85.16% statements, 77.78% branches, 84.13% functions, 88.57% lines |
 | Feature coverage policy | Passed: 42 mapper, service, and contract files at 80% or higher per metric |
 | Production build | Passed; all new customer and BrokerDesk routes included |
 | Dependency audit | Passed: 0 known vulnerabilities |
@@ -310,3 +317,6 @@ All current callers of `owns_candidate` and `can_manage_portfolio` were reviewed
 - Tightened the capability foundation from capability-scoped direct relationship reads to projection-only access by revoking authenticated `SELECT` on `broker_clients`; updated the earlier pgTAP contracts accordingly.
 - Added the operational customers, customer invitation, and My Brokers interfaces plus five active versioned API contracts and independent rate-limit buckets. Spreadsheet content storage remains deliberately unavailable.
 - Passed all 556 application tests, global and per-feature coverage gates, TypeScript, production build, static database validation, and a zero-vulnerability dependency audit. Local clean migration/pgTAP replay remains unavailable without Docker/Podman and is mandatory before merge.
+- Added the opaque customer relationship detail API and page with database-resolved workspace/relationship authorization, current team assignment, mandate-aware actions, and uniform unavailable responses.
+- Corrected the broker customer list and detail privacy boundary so mutable candidate/draft fields are never projected; only the last customer-published snapshot is visible, with a neutral pre-publication placeholder.
+- Passed lint, TypeScript, all 559 application tests, global and per-feature coverage, production build, static database validation, and a zero-vulnerability dependency audit. The combined clean migration and 44-assertion customer-intake/detail pgTAP suite remains mandatory in PR CI.

@@ -56,6 +56,24 @@
       "auditEvent": "customer.invitation.created"
     },
     {
+      "id": "brokerdesk.customer.detail",
+      "status": "active",
+      "method": "GET",
+      "path": "/api/v1/brokerdesk/workspaces/[workspaceRef]/customers/[relationshipRef]",
+      "owner": "broker-relationships",
+      "audience": "broker_member",
+      "authentication": "live_session",
+      "capability": "customers.read",
+      "resourceScope": "assigned_customer",
+      "inputSchema": "brokerCustomerRelationshipPathSchema",
+      "outputSchema": "brokerdeskCustomerDetailSchema",
+      "dataClass": "confidential",
+      "rateLimitAction": "brokerdesk_customer_read",
+      "idempotency": "not_applicable",
+      "stepUp": "not_required",
+      "auditEvent": null
+    },
+    {
       "id": "brokerdesk.customer.invitation.exchange",
       "status": "active",
       "method": "POST",

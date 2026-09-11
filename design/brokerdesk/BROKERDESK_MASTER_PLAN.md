@@ -1,6 +1,6 @@
 # Nakshatra BrokerDesk — Living Product and Engineering Plan
 
-Status: Planning approved; Phase 2 representative verification and Slice 3 manual customer intake implemented locally
+Status: Planning approved; Phase 2 representative verification, Slice 3 manual customer intake, and secure customer detail implemented on the combined feature branch
 Maintainer: Update this document whenever a product decision, architectural decision, phase status, risk, or implementation deviation is approved.
 
 ## Purpose
@@ -253,6 +253,9 @@ Customer workspace:
 - Added the BrokerDesk customers, customer join, and customer My Brokers interfaces with simple language, seven-day invitations, a thirty-minute exact-path exchange cookie, a versioned one-year default representation mandate, independent rate limits, audit lineage, and organization-matching foreign keys.
 - Kept bulk CSV content storage closed because retention and production KMS ownership remain unresolved. Manual invitation stores no spreadsheet row and never creates an unclaimed shareable profile.
 - Passed all 556 application tests, global and per-feature coverage, TypeScript, production build, static database validation, and dependency audit. Clean migration and pgTAP execution remains a mandatory PR CI gate because Docker/Podman is unavailable locally.
+- Added an opaque broker customer-detail route and API that resolve workspace and relationship references together, recheck live role/assignment/mandate/entitlement authorization, expose no internal UUIDs, and return uniform unavailable responses across missing and unauthorized cases.
+- Locked the published-version privacy boundary for BrokerDesk customer lists and details: brokers see only the last published portfolio identity fields, never mutable candidate or draft edits; customers without a first publication appear as a neutral `Customer` placeholder.
+- Expanded the combined checkpoint to 559 passing application tests and a 44-assertion customer-intake/detail pgTAP contract. Lint, TypeScript, coverage, production build, static database validation, and dependency audit pass; executable clean migration replay remains the PR CI merge gate.
 
 ## Maintenance rule
 

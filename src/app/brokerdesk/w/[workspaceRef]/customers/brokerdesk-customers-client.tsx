@@ -53,20 +53,21 @@ export function BrokerdeskCustomersClient({ customers }: { customers: Brokerdesk
       {error && <p className={styles.error} role="alert">{error}</p>}{notice && <p className={styles.notice}>{notice}</p>}
       {showInvite && <section className={styles.invitePanel}><Mail /><div><h2>Invite one customer</h2><p>Use the customer&apos;s own email. No profile is created until that person signs in and consents.</p></div><form onSubmit={invite}><label>Email address<input name="email" type="email" autoComplete="email" required maxLength={254} /></label><button type="submit" disabled={pending}>{pending ? "Creating…" : "Create private invitation"}</button></form>{invitationUrl && <div className={styles.invitation}><Check /><strong>Invitation ready</strong><p>Send this private link to the customer by your usual trusted channel.</p><code>{invitationUrl}</code><button onClick={() => navigator.clipboard.writeText(invitationUrl)}><Copy /> Copy link</button></div>}</section>}
       <section className={styles.summary}><article><Users /><span>Active customers</span><strong>{activeCount}</strong></article><article><Mail /><span>Invitations needing action</span><strong>{grouped.invitations.length}</strong></article></section>
-      <CustomerGroup title="Men" items={grouped.men} />
-      <CustomerGroup title="Women" items={grouped.women} />
-      {grouped.other.length > 0 && <CustomerGroup title="Other profiles" items={grouped.other} />}
+      <CustomerGroup title="Men" items={grouped.men} workspaceRef={available.workspaceRef} />
+      <CustomerGroup title="Women" items={grouped.women} workspaceRef={available.workspaceRef} />
+      {grouped.other.length > 0 && <CustomerGroup title="Other profiles" items={grouped.other} workspaceRef={available.workspaceRef} />}
       <section className={styles.group}><div className={styles.groupTitle}><h2>Invitations</h2><span>{grouped.invitations.length}</span></div>{grouped.invitations.length === 0 ? <p className={styles.empty}>No invitations are waiting.</p> : grouped.invitations.map((item) => <article className={styles.row} key={item.invitationRef}><div className={styles.avatar}><Mail /></div><div><strong>{item.emailHint}</strong><span>{invitationLabel(item.invitationStatus)}</span></div><span className={styles.state}>{item.invitationStatus.replace("_", " ")}</span></article>)}</section>
       <p className={styles.privacy}><LockKeyhole /> This list never reveals whether a customer works with another broker.</p>
     </main>
   </div>;
 }
 
-function CustomerGroup({ title, items }: {
+function CustomerGroup({ title, items, workspaceRef }: {
   title: string;
   items: Extract<Available["customers"][number], { kind: "relationship" }>[];
+  workspaceRef: string;
 }) {
-  return <section className={styles.group}><div className={styles.groupTitle}><h2>{title}</h2><span>{items.length}</span></div>{items.length === 0 ? <p className={styles.empty}>No customers in this section yet.</p> : items.map((item) => <article className={styles.row} key={item.relationshipRef}><div className={styles.avatar}>{item.displayName.slice(0, 1).toUpperCase()}</div><div><strong>{item.displayName}</strong><span>{item.portfolioStatus === "published" ? "Portfolio ready" : "Completing portfolio"}</span></div><span className={styles.state}>{item.relationshipStatus}</span></article>)}</section>;
+  return <section className={styles.group}><div className={styles.groupTitle}><h2>{title}</h2><span>{items.length}</span></div>{items.length === 0 ? <p className={styles.empty}>No customers in this section yet.</p> : items.map((item) => <Link className={styles.row} key={item.relationshipRef} href={`/brokerdesk/w/${workspaceRef}/customers/${item.relationshipRef}`}><div className={styles.avatar}>{item.displayName.slice(0, 1).toUpperCase()}</div><div><strong>{item.displayName}</strong><span>{item.portfolioStatus === "published" ? "Portfolio ready" : "Completing portfolio"}</span></div><span className={styles.state}>{item.relationshipStatus}</span></Link>)}</section>;
 }
 
 function invitationLabel(status: string) {
