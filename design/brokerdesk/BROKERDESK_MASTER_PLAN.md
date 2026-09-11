@@ -259,6 +259,7 @@ Customer workspace:
 - PR #44's first clean replay found a PostgreSQL function-parameter rename incompatibility before pgTAP execution. Retained the prior parameter name without changing the new subject-based behavior so the historical migration chain remains replayable.
 - The following PR #44 run completed migration replay and found stale pgTAP relationship fixtures missing required term start timestamps. Updated the successful fixtures to match the enforced `broker_clients.starts_at` invariant.
 - The next pgTAP execution found an ambiguous `organization_id` reference in the new customer projection. Renamed the local variable with the repository's `v_` convention so every tenant comparison resolves explicitly.
+- The published-snapshot regression fixture subsequently reached the existing identity-verification publication gate. Added a current verified candidate subject to that test setup rather than weakening or bypassing the production gate.
 
 ## Maintenance rule
 

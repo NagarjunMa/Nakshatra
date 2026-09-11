@@ -109,6 +109,10 @@ select pg_temp.set_authenticated_claims('d1000000-0000-4000-8000-000000000001','
 select is(public.resolve_brokerdesk_customer((select workspace_a from intake_refs),(select relationship_a from relationship_refs))->>'displayName','Customer','an unpublished draft never exposes the mutable candidate name');
 
 reset role;
+update app_private.identity_verification_subjects
+set status='verified',verified_at=pg_catalog.now()-interval '1 day',
+    expires_at=pg_catalog.now()+interval '365 days'
+where candidate_id='d5000000-0000-4000-8000-000000000001';
 update public.portfolios set
   published_data='{"personal":{"name":"Published Customer","gender":"female","current_location":"Boston, United States"}}'::jsonb,
   is_published=true,
