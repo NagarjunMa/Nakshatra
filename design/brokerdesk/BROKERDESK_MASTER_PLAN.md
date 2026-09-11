@@ -262,6 +262,7 @@ Customer workspace:
 - The published-snapshot regression fixture subsequently reached the existing identity-verification publication gate. Added a current verified candidate subject to that test setup rather than weakening or bypassing the production gate.
 - The fixture next reached the existing protected-primary-photo publication gate. Added a shareable protected hero fixture with a blurred derivative; the production media-readiness requirement remains unchanged.
 - After all 43 customer-intake/detail assertions passed, corrected the stale `plan(44)` declaration and added a repository-wide static pgTAP plan-count check. The guard also found and corrected a stale 39-test plan in the representative-verification suite, which contains 41 assertions.
+- Qualified representative-verification fixture status reads after CI exposed ambiguity between joined verification and organization status columns; production policy logic remains unchanged.
 
 ## Maintenance rule
 

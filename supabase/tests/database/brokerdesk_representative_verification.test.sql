@@ -185,7 +185,7 @@ select lives_ok(
 
 reset role;
 select is(
-  (select status::text from app_private.organization_verification_checks verification
+  (select verification.status::text from app_private.organization_verification_checks verification
     join public.organizations organization_record on organization_record.id=verification.organization_id
     where organization_record.workspace_ref=(select workspace_ref from representative_workspace)
       and verification.verification_type='representative_identity'),
@@ -230,7 +230,7 @@ select is(
   'the keyed birth-date comparison is erased after the verification decision'
 );
 select is(
-  (select status::text from app_private.organization_verification_checks verification
+  (select verification.status::text from app_private.organization_verification_checks verification
     join public.organizations organization_record on organization_record.id=verification.organization_id
     where organization_record.workspace_ref=(select workspace_ref from representative_workspace)
       and verification.verification_type='representative_identity'),
@@ -279,7 +279,7 @@ select ok(
   'changing the representative name invalidates the previous identity result'
 );
 select is(
-  (select status::text from app_private.organization_verification_checks verification
+  (select verification.status::text from app_private.organization_verification_checks verification
     join public.organizations organization_record on organization_record.id=verification.organization_id
     where organization_record.workspace_ref=(select workspace_ref from representative_workspace)
       and verification.verification_type='representative_identity'),
