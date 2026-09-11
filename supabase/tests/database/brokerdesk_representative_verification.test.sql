@@ -4,7 +4,7 @@ create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 \ir auth-fixtures.psql
 
-select plan(39);
+select plan(41);
 
 select has_column('app_private','identity_verification_subjects','id','verification subjects have a domain-neutral primary key');
 select has_column('app_private','identity_verification_subjects','subject_type','verification subjects identify their source domain');

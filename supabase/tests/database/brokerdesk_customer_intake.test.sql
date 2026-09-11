@@ -2,7 +2,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 \ir auth-fixtures.psql
-select plan(44);
+select plan(43);
 
 select has_table('app_private','broker_client_intakes','customer invitation intake stays private');
 select has_function('public','create_brokerdesk_customer_invitation',array['text','text','text','text','text'],'customer invitation command exists');

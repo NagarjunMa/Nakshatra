@@ -11,6 +11,8 @@ const runtimeRolePattern = /\bset\s+(?:local\s+)?role\s+(authenticated|anon|serv
 const authFixturePattern = /pg_temp\.create_auth_(?:actor|session)\(\s*'([^']+)'\s*,\s*'([^']+)'/gi;
 const directJwtClaimsPattern = /set\s+local\s+request\.jwt\.claims\s*=\s*'(\{.*\})'\s*;/i;
 const invalidAuthClaimsMarker = "-- db:smoke: allow-invalid-auth-claims";
+const pgTapPlanPattern = /^\s*select\s+plan\(\s*(\d+)\s*\)\s*;/im;
+const pgTapAssertionPattern = /^\s*select\s+(?:has_column|has_function|has_index|has_schema|has_table|has_trigger|is|is_empty|isnt|lives_ok|ok|throws_ok)\s*\(/gim;
 
 function fail(message) {
   process.stderr.write(`db:smoke: ${message}\n`);
@@ -54,12 +56,19 @@ async function checkTestFiles() {
     const source = await readFile(path.join(testsDirectory, file), "utf8");
     const roleSensitive = runtimeRolePattern.test(source);
     const fixturePairs = authFixturePairs(source);
+    const planMatch = source.match(pgTapPlanPattern);
+    const assertionCount = [...source.matchAll(pgTapAssertionPattern)].length;
 
     if (firstContentLine(source)?.toLowerCase() !== "begin;") {
       fail(`${file} must start with begin;`);
     }
     if (!/select\s+\*\s+from\s+finish\(\)\s*;\s*rollback\s*;\s*$/is.test(source)) {
       fail(`${file} must end with finish() followed by rollback;`);
+    }
+    if (!planMatch) {
+      fail(`${file} must declare a numeric pgTAP plan`);
+    } else if (Number.parseInt(planMatch[1], 10) !== assertionCount) {
+      fail(`${file} plans ${planMatch[1]} assertions but contains ${assertionCount}`);
     }
     if (roleSensitive && !source.includes(fixtureInclude)) {
       fail(`${file} must load ${fixtureInclude} before exercising runtime roles`);
