@@ -414,19 +414,19 @@ stable
 security definer
 set search_path = ''
 as $$
-declare actor_id uuid := auth.uid(); organization_id uuid;
+declare actor_id uuid := auth.uid(); v_organization_id uuid;
 begin
   perform app_private.require_current_session();
-  select organization.id into organization_id from public.organizations organization
+  select organization.id into v_organization_id from public.organizations organization
   where organization.workspace_ref = p_workspace_ref
     and organization.type = 'matchmaker_agency'
     and organization.status = 'active'
     and app_private.brokerdesk_entitlement_enabled(organization.id);
-  if organization_id is null then return '{"available":false}'::jsonb; end if;
+  if v_organization_id is null then return '{"available":false}'::jsonb; end if;
   if not app_private.member_has_brokerdesk_capability(actor_id, p_workspace_ref, 'customers.read', null)
     and not exists (
       select 1 from public.broker_clients relationship
-      where relationship.organization_id = organization_id
+      where relationship.organization_id = v_organization_id
         and app_private.member_has_brokerdesk_capability(
           actor_id, p_workspace_ref, 'customers.read', relationship.relationship_ref
         )
@@ -455,7 +455,7 @@ begin
         ) as item, relationship.updated_at as sort_at
         from public.broker_clients relationship
         left join public.portfolios portfolio on portfolio.candidate_id = relationship.candidate_id
-        where relationship.organization_id = organization_id
+        where relationship.organization_id = v_organization_id
           and relationship.consented_at is not null
           and app_private.member_has_brokerdesk_capability(
             actor_id, p_workspace_ref, 'customers.read', relationship.relationship_ref
@@ -476,7 +476,7 @@ begin
           'expiresAt', intake.expires_at
         ) as item, intake.updated_at as sort_at
         from app_private.broker_client_intakes intake
-        where intake.organization_id = organization_id
+        where intake.organization_id = v_organization_id
           and app_private.member_has_brokerdesk_capability(
             actor_id, p_workspace_ref, 'customers.read', null
           )
