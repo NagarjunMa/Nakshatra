@@ -22,7 +22,7 @@ export type LandingVariant = "clarity" | "control" | "story";
 const concepts = {
   clarity: {
     className: styles.clarity,
-    eyebrow: "A digital marriage portfolio",
+    eyebrow: "The living alternative to a biodata file",
     headline: "Share your introduction without losing control of it.",
     lead: "Your story, photographs, family details, and horoscope in one portfolio. Every family opens the same current link. Contact details stay private until you approve a viewer.",
     primary: "Create my portfolio",
@@ -151,6 +151,7 @@ export function LandingExperience({ variant }: { variant: LandingVariant }) {
         <section id="why" className={styles.problemSection}>
           <div className={styles.sectionHeading}><p className={styles.eyebrow}>A familiar problem</p><h2>The biodata file was never built for this.</h2></div>
           <div className={styles.problemGrid}>{problems.map(({ icon: Icon, title, body }) => <article key={title}><Icon aria-hidden="true" /><div><h3>{title}</h3><p>{body}</p></div></article>)}</div>
+          <a href="#control" className={styles.sectionCta}>See how a living portfolio fixes this <ArrowRight aria-hidden="true" /></a>
         </section>
 
         <section id="control" className={styles.controlSection}>
@@ -160,22 +161,26 @@ export function LandingExperience({ variant }: { variant: LandingVariant }) {
           </div>
           <div className={styles.controlGrid}>{viewModes.map(({ icon: Icon, label, title, body }) => <article key={title}><Icon aria-hidden="true" /><span>{label}</span><h3>{title}</h3><p>{body}</p></article>)}</div>
           <div className={styles.trustFacts}>{trustFacts.map(({ icon: Icon, text }) => <span key={text}><Icon aria-hidden="true" />{text}</span>)}</div>
+          <a href="#how" className={styles.sectionCta}>See exactly how sharing works, step by step <ArrowRight aria-hidden="true" /></a>
         </section>
 
         <section id="how" className={styles.stepsSection}>
           <div className={styles.sectionHeading}><p className={styles.eyebrow}>How it works</p><h2>Four steps from a blank page to a shared link.</h2></div>
           <div className={styles.stepsGrid}>{steps.map((step) => <article key={step.number}><span>{step.number}</span><h3>{step.title}</h3><p>{step.body}</p></article>)}</div>
+          <Link href="/signup" className={styles.sectionCta}>Start your own — it takes about 15 minutes <ArrowRight aria-hidden="true" /></Link>
         </section>
 
         <section className={styles.familySection}>
           <div className={styles.sectionHeading}><p className={styles.eyebrow}>Built for every family</p><h2>Easy to read on any phone, for any generation.</h2></div>
           <div className={styles.familyGrid}>{familyBenefits.map(({ icon: Icon, title, body }) => <article key={title}><Icon aria-hidden="true" /><h3>{title}</h3><p>{body}</p></article>)}</div>
+          <a href="#samples" className={styles.sectionCta}>See the layout every family reads <ArrowRight aria-hidden="true" /></a>
         </section>
 
         <section id="samples" className={styles.samplesSection}>
-          <div className={styles.samplesHeading}><div className={styles.sectionHeading}><p className={styles.eyebrow}>See the format</p><h2>Every portfolio follows the same clear layout.</h2></div><p>There are no themes to choose between and no templates to compare. Every portfolio is presented in the same way, so families can read each one on its own terms.</p></div>
+          <div className={styles.samplesHeading}><div className={styles.sectionHeading}><p className={styles.eyebrow}>See the format</p><h2>Every portfolio follows the same clear layout.</h2></div><p>On purpose. No themes to pick, no layouts to compare — so a family judges the person, not the design.</p></div>
           <div className={styles.samplesGrid}>{samplePortfolios.map((sample) => <article key={sample.name} data-accent={sample.accent}><div className={styles.samplePortrait}>{sample.initials}</div><div><span>Sample portfolio</span><h3>{sample.name}</h3><p>{sample.detail}</p><small>Story · Journey · Family · Gallery</small></div></article>)}</div>
           <p className={styles.sampleNote}>Sample layouts. These are not real Nakshatra users.</p>
+          <Link href="/signup" className={styles.sectionCta}>Like the format? Create your own <ArrowRight aria-hidden="true" /></Link>
         </section>
 
         <section id="pricing" className={styles.pricingSection}>
@@ -194,6 +199,7 @@ export function LandingExperience({ variant }: { variant: LandingVariant }) {
         <section id="questions" className={styles.faqSection}>
           <div className={styles.sectionHeading}><p className={styles.eyebrow}>Questions</p><h2>Know what happens before you begin.</h2></div>
           <div className={styles.faqList}>{faqs.map((faq) => <details key={faq.question}><summary>{faq.question}<ChevronDown aria-hidden="true" /></summary><p>{faq.answer}</p></details>)}</div>
+          <Link href="/signup" className={styles.sectionCta}>Still deciding? Building is free — see for yourself <ArrowRight aria-hidden="true" /></Link>
         </section>
 
         <section className={styles.finalCta}>

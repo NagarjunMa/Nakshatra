@@ -319,6 +319,23 @@
 .pricingGrid p { margin-top: 0.15rem; color: var(--muted); font-size: 0.78rem; }
 .pricingGrid a { display: inline-flex; margin-top: 1.6rem; border-bottom: 1px solid currentColor; padding-bottom: 0.2rem; color: var(--teal); font-size: 0.82rem; font-weight: 750; }
 .recommendedPlan { border: 2px solid #42888a !important; }
+
+.sectionCta {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 2.4rem;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 0.2rem;
+  color: var(--teal);
+  font-size: 0.86rem;
+  font-weight: 750;
+}
+.sectionCta svg { width: 0.95rem; height: 0.95rem; }
+.sectionCta:hover { color: var(--gold); }
+.controlSection > .sectionCta,
+.faqSection > .sectionCta { grid-column: 1 / -1; }
 .pricingDetails { margin-top: 1rem; border-block: 1px solid var(--line); }
 .internationalPricing { border-bottom: 1px solid var(--line); }
 .pricingDetails summary, .internationalPricing summary, .faqList summary { display: flex; min-height: 54px; align-items: center; justify-content: space-between; gap: 1rem; cursor: pointer; list-style: none; font-size: 0.84rem; font-weight: 720; }
