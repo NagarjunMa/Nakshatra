@@ -1,312 +1,394 @@
-# Nakshatra — Wedding Biodata Web App
+# Nakshatra — Current Repository and Product Reference
 
-## Problem Statement
-Indian families create wedding biodatas in Word/Canva, save as PDF, share via WhatsApp. Updating any detail means new file, re-sharing everywhere. Old versions circulate. Formatting breaks. Mobile editing painful.
+**Updated:** 2026-09-11
 
-**Solution:** User fills form once, gets single shareable link. Updates reflect instantly on same URL. Editorial-quality design with cultural personalization no PDF can match.
+**Repository:** `nakshatra`
 
-## What This Is
-- Form → Link web app for arranged-marriage biodatas
-- One biodata per user account
-- Public shareable link (no account needed to view)
-- Culturally rooted design (rashi colors, constellation backgrounds)
+**Product:** Nakshatra
 
-## What This Is NOT
-- Not a matchmaking/matrimony platform
-- Not an astrology calculator
-- Not an AI content generator
-- Not a PDF tool (web link output)
-- Not a multi-profile manager
+**Detailed B2C pilot assessment:** [`docs/b2c-pilot-product-assessment.md`](docs/b2c-pilot-product-assessment.md)
 
-## Tech Stack
-| Layer | Tech |
+This file describes the checked-in repository as it exists now. It must distinguish code that exists from capabilities approved for a specific launch. Do not infer production configuration from repository code alone.
+
+## Product stance
+
+Nakshatra is not a matrimony marketplace, dating product, search directory, matching algorithm, astrology calculator, or PDF generator.
+
+It is a consent-based introduction platform with two product contexts:
+
+- **B2C:** An adult candidate creates one current marriage portfolio, shares a First View through their existing network, receives verified interest requests, and decides who receives time-limited Full View access.
+- **BrokerDesk / B2B:** Organization onboarding, role-based staff access, invitations, reauthentication, and MFA foundations. This is implemented in the repository but is not part of the current B2C pilot.
+
+The core product loop is:
+
+```text
+Private draft
+  → owner previews public and Full views
+  → owner publishes one link
+  → anyone with the active link reads First View
+  → viewer verifies email and expresses interest
+  → owner reviews the request
+  → owner approves or rejects
+  → approved viewer receives identity-bound Full View for 7 days
+  → owner may revoke access, rotate the link, unpublish, or update the portfolio
+```
+
+## B2C pilot contract
+
+The intended pilot is narrower than the implemented product surface:
+
+- Free, private beta.
+- Portfolio creation is invite-only.
+- Only an email-bound invited participant may become a portfolio owner.
+- Network viewers may open a shared First View, verify their email, submit interest, and receive approved Full View access.
+- A viewer/Auth account does not imply creator entitlement.
+- Adult candidates only. Family assistance must not replace candidate knowledge and consent.
+- Payments are disabled and must not be claimed.
+- Didit identity verification is disabled and must not be claimed or required for publication.
+- BrokerDesk is disabled server-side for this launch.
+- Public portfolio links are bearer links and may be forwarded. Full View is the identity-bound disclosure layer.
+
+As of this update, that contract is **not fully enforced**. See “Pilot blockers” below.
+
+## Positioning reference
+
+### Category
+
+- Customer-facing: **Private marriage portfolio**
+- Strategic: **Consent-based introduction platform**
+- Behavior to own: **The controlled marriage introduction**
+
+### Recommended positioning
+
+For adults and families sharing marriage introductions through trusted personal networks, Nakshatra is a private marriage portfolio that keeps one introduction current and personal details behind approval. Unlike static files, chat attachments, generic documents, or searchable matrimony platforms, it supports a deliberate path from First View to verified interest to time-limited Full View without becoming a marketplace.
+
+### Messaging hierarchy
+
+1. Static biodata files become stale, fragmented, and disclose too much too early.
+2. A marriage introduction should be a controlled process, not a circulating file.
+3. Nakshatra provides one current portfolio and staged disclosure.
+4. It represents the candidate as a person, not only as fields.
+5. Families can share it through WhatsApp; recipients need no app for First View.
+6. First View → verified request → approved Full View.
+7. Nakshatra is not matchmaking, discovery, or a background check.
+8. During the pilot, creation is invite-only while shared-network participation remains open.
+
+Recommended primary tagline: **One introduction. On your terms.**
+
+“Your Story. Your Data. Your Control.” is a supporting product principle, not a sufficiently specific primary category statement.
+
+## Technology
+
+| Layer | Current implementation |
 |---|---|
-| Framework | Next.js 16 (App Router, TypeScript, Turbopack) |
-| Database | Supabase (Postgres + Auth + Storage) |
-| Styling | Tailwind CSS v4 |
-| Validation | Zod v4 schemas |
-| Image Processing | `sharp` (server-side) |
-| Icons | `lucide-react` (+ custom inline SVGs for unavailable icons) |
-| Landing fonts | Harmond + MangoGrotesque (local `@font-face`) |
-| Landing bg | `shaders` (WebGL: Swirl + ChromaFlow + FlutedGlass + FilmGrain) |
-| Email | Resend (expiry reminders) |
-| Hosting | Vercel / Docker |
-| Auth | Google OAuth + Supabase Magic Link |
+| Framework | Next.js 16 App Router, React 19, TypeScript |
+| Database | Supabase Postgres |
+| Authentication | Supabase Auth: Google OAuth, password, email OTP/recovery |
+| Storage | Supabase private Storage with signed URLs |
+| Validation | Zod contracts |
+| Styling | Tailwind CSS v4, global CSS, CSS modules |
+| Image processing | `sharp`; accepted images are decoded and re-encoded |
+| Icons | `lucide-react` |
+| Fonts | Playfair Display, Manrope, Tenor Sans, Geist, Geist Mono loaded through `next/font` |
+| Hosting workflow | Vercel-oriented manual production CD plus Docker support |
+| Tests | Vitest, Testing Library, Playwright, Supabase pgTAP |
 
-## Architecture Decisions
+At the 2026-09-11 assessment snapshot there were 28 page routes, 44 API route files, 48 migrations, and 102 unit/E2E test files.
 
-### Landing Page (`/`)
-- Single-page composition in `src/app/page.tsx`, all sections in `src/components/landing/`
-- Brand fonts loaded via `@font-face` in `globals.css` — Harmond ExtraBoldExpanded (display), MangoGrotesque Light/Regular/Medium/SemiBold (body)
-- Font files copied from source dirs to `public/fonts/` for clean serving
-- Palette: Noguchi Purple — `--landing-bg: #0a0b14`, `--landing-accent: #8676c4` (deep `#60519b`), `--landing-text: #e4e5ee`
-- Animated WebGL bg via `shaders/react`: `Swirl` (base) + `ChromaFlow` (purple gradient) + `FlutedGlass` (refraction) + `FilmGrain` (texture)
-- `.landing-root` creates new stacking context (`isolation: isolate`) so `ShaderBackground` at z-index -10 renders behind content without bleed
-- Content auto-saved to `.claude/plans/witty-jumping-quasar.md` — 5-cycle iteration on copy per landing-page-guide skill
-- All landing components are server components except `NewsletterForm` and `ShaderBackground` (which need client-side interactivity)
-- Hero is 7/5 split grid (md+): text left, constellation glass card with corner accents right
-- FAQ uses native `<details>/<summary>` — no JS dependency, smooth open via CSS `group-open:rotate-45` on chevron
-- Section flow: Header → Hero → SampleShowcase → HowItWorks → Benefits → Differentiation → Testimonials → FAQ → FinalCTA → Footer
-- Body has `suppressHydrationWarning` to handle Grammarly extension attribute injection
-- All buttons use `.landing-btn-primary` (filled pill) or `.landing-btn-ghost` (text with animated underline)
+## Current sitemap
 
-### Templates = React Components, Not DB Data
-- Templates live in `/components/templates/` as React components
-- DB stores user data (`published_data` JSONB) + theme preferences
-- Template receives `data` + `themeColor` + `sunSign` props, renders everything
-- Template registry in `components/templates/index.ts` — `getTemplate(templateId)` returns component
-- Adding new templates = new component file + entry in registry + `templates.json`
+```text
+Marketing
+├── /                         Canonical landing page
+├── /landing/story           Alternate hero concept
+├── /landing/control         Alternate hero concept
+├── /landing/family          Alternate hero concept
+├── /about
+├── /privacy
+└── /terms
 
-### CelestialUnion Template (v1)
-- Dark midnight background (`#0a0a1a`), forced dark mode (ignores system theme)
-- Glassmorphism cards: `bg-white/[0.04] backdrop-blur-md border-white/10`
-- Editorial typography with Geist Sans, narrow measure (`max-w-xl`)
-- Constellation SVG backgrounds at 5% opacity
-- Theme color drives: photo ring glow, section icons, rashi subtitle, dividers
-- Print CSS overrides dark → white, removes blur + constellations
+Authentication
+├── /login
+├── /signup
+├── /reset-password
+├── /api/auth/start
+├── /api/auth/verify
+├── /api/auth/password
+└── /api/auth/callback
 
-### Draft/Published Dual-State
-- `draft_data` JSONB — auto-saved on every form change (debounced 1s)
-- `published_data` JSONB — copied from draft on explicit "Create"/"Update" click
-- Public link always reads `published_data`
-- Enables safe editing without affecting live link
+B2C owner
+├── /dashboard
+├── /edit                    Redirect to dashboard editor
+├── /preview                 Owner preview of current public mode
+├── /approved-preview        Owner Full View preview
+└── /account                 Export, sessions, deletion
 
-### Share Token Architecture
-- 8-char nanoid, generated once on first publish
-- Never changes on updates — same link forever
-- Separate from `id` to allow future link rotation
+Shared portfolio
+├── /p/[token]
+├── /p/[token]/horoscope
+└── /verify/[token]
 
-### Auth Architecture
-- Proxy refreshes Supabase session on every request
-- Server pages use `getAuthenticatedUser()` from `@/lib/auth` — returns `{ supabase, user }` or redirects
-- API routes use `getApiUser()` — returns `{ supabase, user }` or nulls (no redirect)
-- Client components use `isAuthError()` from `@/lib/auth-utils` — detects JWT expiry → redirect
-- RLS enforces row-level access at DB layer (defense in depth)
-- Env validation via `@/lib/env` — Zod schema, fails fast if vars missing
-- Env var: `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (not anon key)
+Identity verification
+├── /verification/result
+├── /api/identity-verification/*
+└── /api/webhooks/didit
 
-### Image Pipeline
-- User uploads up to 10MB (any format including HEIC)
-- Server processes with `sharp`: 800px main + 200px thumbnail → WebP 85%
-- Both stored in Supabase Storage: `{user_id}/photo.webp`, `{user_id}/thumb.webp`
-- Storage RLS: authenticated upload/update/delete own folder, public read
-
-### Form UX
-- Multi-step wizard with progress bar (9 steps)
-- Mobile-first responsive design
-- Mobile step label: "Step 3 of 9: Astrology" (visible on small screens)
-- Auto-save per step (debounced 1s) with error feedback
-- Zod validation before publish with inline errors per field
-- Publish double-click guard (ref-based)
-- Step navigation via clickable progress indicators
-- Error badges on steps with validation issues
-
-### Public Link Features
-- Dynamic OG meta tags (name, photo thumbnail, rashi) for WhatsApp previews
-- `noindex` robots meta — biodatas should not be Google-indexed
-- 90-day expiry with renewal option (confirmation dialog)
-- View count tracking (rate-limited: 1 per hour via DB function)
-- Expired link shows friendly message
-
-## Database Schema
-
-```sql
-portfolios (
-  id uuid PK, user_id uuid UNIQUE FK→auth.users,
-  share_token text UNIQUE,
-  draft_data jsonb, published_data jsonb,
-  template_id int DEFAULT 1, theme_color text, sun_sign text,
-  is_published boolean DEFAULT false,
-  published_at timestamptz, expires_at timestamptz, last_renewed_at timestamptz,
-  created_at timestamptz, updated_at timestamptz (auto-trigger)
-)
-
-portfolio_views (
-  id uuid PK, portfolio_id uuid FK→portfolios, viewed_at timestamptz
-)
-
--- Functions
-record_view(p_portfolio_id) — rate-limited insert (1/hour, security definer)
-update_updated_at() — trigger on portfolios
+BrokerDesk
+├── /brokerdesk
+├── /brokerdesk/onboarding
+├── /brokerdesk/security/mfa
+├── /brokerdesk/w/[workspaceRef]/customers
+├── /brokerdesk/w/[workspaceRef]/customers/[relationshipRef]
+├── /brokerdesk/w/[workspaceRef]/settings/team
+├── /brokers                 Candidate view of broker relationships
+├── /join/customer           Customer invitation acceptance
+├── /join/team
+├── /api/v1/brokerdesk/*
+└── /api/v1/customer/*
 ```
 
-**RLS Policies:**
-- Owner: full CRUD on own row
-- Anon: SELECT published_data only when is_published=true AND not expired
-- Anon: INSERT into portfolio_views (tracking)
-- Owner: SELECT own portfolio_views
-- Storage: authenticated upload/update/delete own photos, public read
+## Code architecture
 
-**Indexes:** `share_token` (partial, WHERE NOT NULL), `portfolio_id` on views
+### App routes
 
-**Migrations:** 3 applied via Supabase MCP
-1. `001_initial_schema` — tables, RLS, indexes, trigger
-2. `002_storage_policies` — photos bucket RLS
-3. `003_rate_limit_views` — `record_view()` function
+`src/app` contains server pages and route handlers. Authentication checks occur in server pages and APIs, while browser interaction is delegated to client components.
 
-## Project Structure
+### Feature modules
+
+`src/features` is divided by domain:
+
+- `access` — Full View grant lifecycle.
+- `account` — export, session display, reauthentication, deletion.
+- `auth` — password rules and portfolio bootstrap.
+- `broker-relationships` — customer invitations and candidate/agency relationship access.
+- `horoscope` — private attachment access.
+- `identity-verification` — Didit provider/session/invitation/webhook processing.
+- `interest` — viewer request creation and owner decision.
+- `media` — image validation, processing, storage, signed URLs.
+- `organizations` — BrokerDesk onboarding.
+- `organization-access` — BrokerDesk reauth, staff roles, invitations, commands.
+- `portfolio` — draft mapping, publication, snapshots, previews, sharing, renewal.
+- `security` — rate limits, public references, endpoint inventory.
+
+Server domains generally use contract → service → repository separation. Preserve this pattern.
+
+### Data model
+
+The database is migration-driven. Important domains include:
+
+- Supabase Auth users and live-session enforcement.
+- Portfolio ownership and candidate identity.
+- Legacy `portfolios.draft_data` / `published_data` JSON compatibility.
+- Normalized candidate details and visibility rules.
+- Private media and horoscope attachments.
+- Sanitized public portfolio snapshots.
+- Approved Full View snapshots.
+- Interest requests, requester verification, grants, and access events.
+- Account deletion requests, leases, receipts, and retention operations.
+- Identity verification sessions/invitations/webhook events.
+- Organizations, memberships, role capability sets, onboarding, MFA, team invitations, customer invitations, and candidate/broker relationships.
+
+The current model is intentionally hybrid while normalized data replaces legacy JSON. Never remove compatibility paths without an explicit migration and recovery plan.
+
+### Portfolio data projections
+
+Security relies on separate projections, not CSS hiding:
+
+- Draft data is owner-only.
+- Public snapshots are sanitized and resolved only by exact active share token.
+- Approved snapshots contain the permitted Full View and are resolved for an authenticated, approved viewer.
+- Anonymous users must not enumerate snapshots or media tables.
+- Original protected media remains private; short-lived signed URLs are created only after access resolution.
+
+### Media
+
+- Accepted images are decoded, validated, resized, and re-encoded server-side.
+- Current horoscope upload service rejects PDF/DOC/DOCX even though some legacy types remain in TypeScript shapes.
+- Media visibility supports public and protected presentation.
+- Protected images use separately generated blurred previews.
+- Storage buckets must remain private in production.
+
+### Account privacy
+
+- Users can export account data.
+- Deletion requires fresh authentication.
+- Deletion first unpublishes and revokes access, then a background worker removes Storage, database content, and Auth identity.
+- Deletion processing should run every 15 minutes; retention processing should run daily.
+- The scripts exist, but production scheduling was not present in repository workflows at assessment time.
+
+## Current B2C journeys
+
+### Owner
+
+```text
+/signup
+  → password or Google
+  → OTP/callback
+  → automatic portfolio bootstrap
+  → /dashboard
+  → full-screen nine-section editor
+  → save draft
+  → preview
+  → publish
+  → share/copy/WhatsApp
+  → manage interests and Full View grants
 ```
-src/
-├── app/
-│   ├── api/
-│   │   ├── auth/callback/route.ts   # OAuth + magic link callback
-│   │   └── upload/route.ts          # Photo upload (sharp processing)
-│   ├── dashboard/                    # Status, link, views, expiry
-│   ├── edit/                         # Redirect to the canonical dashboard editor
-│   ├── login/                        # Google OAuth + magic link
-│   ├── signup/                       # Same auth, different copy
-│   ├── p/[token]/                    # Public biodata view
-│   ├── preview/                      # Owner preview of draft
-│   ├── error.tsx                     # Error boundary
-│   ├── not-found.tsx                 # 404 page
-│   ├── globals.css                   # CSS variables + Tailwind + print
-│   ├── layout.tsx                    # Root layout
-│   └── page.tsx                      # Landing page
-├── components/
-│   ├── landing/                      # Landing page sections (all server except 2 client)
-│   │   ├── Header.tsx
-│   │   ├── Hero.tsx                  # 7/5 split, constellation card
-│   │   ├── SampleShowcase.tsx        # Phone-frame mockup
-│   │   ├── HowItWorks.tsx            # 4-step workflow
-│   │   ├── Benefits.tsx              # 6 glass cards
-│   │   ├── Differentiation.tsx
-│   │   ├── Testimonials.tsx          # 6 quotes
-│   │   ├── FAQ.tsx                   # native details accordion
-│   │   ├── FinalCTA.tsx
-│   │   ├── Footer.tsx
-│   │   ├── NewsletterForm.tsx        # "use client" — extracted form
-│   │   └── ShaderBackground.tsx      # "use client" — WebGL shader
-│   └── templates/
-│       ├── CelestialUnion.tsx        # v1 template (dark, glassmorphism)
-│       └── index.ts                  # Template registry + getTemplate()
-├── config/
-│   ├── rashi_colors.json             # 12 rashi × 2 palettes
-│   └── templates.json                # Template metadata
-├── lib/
-│   ├── auth.ts                       # getAuthenticatedUser(), getApiUser()
-│   ├── auth-utils.ts                 # isAuthError() (client-safe)
-│   ├── env.ts                        # Environment validation (Zod)
-│   └── supabase/
-│       ├── client.ts                 # Browser client
-│       ├── server.ts                 # Server client (cookies)
-│       └── proxy.ts                  # Session refresh + route guards
-├── proxy.ts                           # Next.js request proxy entry
-└── types/
-    └── portfolio.ts                  # Zod schemas, types, form config
 
-public/
-├── constellations/                   # 12 rashi SVGs (currentColor)
-├── fonts/                            # Harmond + MangoGrotesque files
-├── pictures/                         # constellations.jpg (hero), background.jpg
-└── landing/                          # bg-cosmic.jpg (legacy CSS bg, unused)
+The editor sections are Foundation, About you, Education & work, Family, Astrology, Lifestyle, Partner preferences, Future plans, and Privacy & contact.
 
-supabase/
-└── migrations/                       # 3 SQL migration files
+### Viewer
+
+```text
+/p/[token]
+  → read First View
+  → Show interest near final protected section
+  → name, representation, phone, email
+  → email OTP
+  → request submitted
+  → owner decision
+  → revisit same link while authenticated
+  → identity-bound Full View when approved
 ```
 
-## Routes
-| Route | Auth | Purpose |
-|---|---|---|
-| `/` | No | Landing page |
-| `/login` | No | Google OAuth + Magic link sign-in |
-| `/signup` | No | New account |
-| `/dashboard` | Yes | Biodata status, link, views, expiry |
-| `/edit` | Yes | Compatibility redirect to the canonical dashboard editor |
-| `/preview` | Yes | Owner preview before publish |
-| `/p/[token]` | No | Public biodata view (CelestialUnion template) |
-| `/api/auth/callback` | No | OAuth/magic link callback |
-| `/api/upload` | Yes | Photo upload (sharp → Supabase Storage) |
+No owner/requester operational notification service was present at assessment time, so both sides otherwise depend on revisiting the product.
 
-## Landing Page Do's
-- Use `var(--font-harmond)` for display type, `var(--font-mango)` for body
-- Use `var(--landing-accent)` for emphasized text + CTAs
-- Use `.landing-glass` utility for glassmorphism surfaces
-- Section pattern: `landing-section-title` (eyebrow) → display heading → body → content
-- Keep components server unless interactivity needed (form state, WebGL canvas)
-- For new sections: heading anchor IDs match `Header` nav links (`#sample`, `#faq`, etc.)
-- All section copy must tie to a real app feature (form, link, rashi, expiry, etc.)
+## Portfolio renderer
 
-## Landing Page Don'ts
-- Don't use Inter/Roboto/Arial — fonts are Harmond + MangoGrotesque
-- Don't paint over the shader bg with opaque overlays (defeats the effect)
-- Don't add bg images to `.landing-root` — shader is the canvas
-- Don't write Stitch placeholder copy ("Elevate Your Story Using Stellar Design") — locked content in `.claude/plans/witty-jumping-quasar.md`
-- Don't put event handlers (onSubmit, onChange) in server components — extract to client
+There is one canonical portfolio renderer: `src/components/templates/CelestialUnion.tsx`. All persisted and legacy template IDs route to it. Do not describe the product as offering multiple selectable templates.
 
-## Do's
-- Mobile-first design for all pages (primary users are on phones)
-- Validate all data with Zod before writing to DB or publishing
-- Use `getAuthenticatedUser()` in server pages, `getApiUser()` in API routes
-- Use `isAuthError()` from `@/lib/auth-utils` in client components
-- Handle auth errors on client-side DB calls (JWT expiry → redirect)
-- Use CSS variables for theme colors (driven by rashi selection)
-- Use `currentColor` for constellation SVGs (inherits theme)
-- Generate OG meta tags dynamically on `/p/[token]`
-- Test in WhatsApp in-app browser
-- Use Supabase RLS for all data access
-- Auto-save form progress with debounce
-- Show clear loading/error states (Indian mobile networks are flaky)
-- Use semantic HTML for accessibility
-- Keep bundle size small (affects mobile load time)
-- Use `data-` attributes for print CSS targeting
+Current presentation:
 
-## Don'ts
-- Don't compute astrology — user enters rashi/nakshatra manually
-- Don't add AI features before basic form works
-- Don't build multiple templates before first one is excellent
-- Don't add payments before users want to pay
-- Don't build PDF export in v1
-- Don't add privacy gating in v1
-- Don't index public pages (add noindex)
-- Don't store raw uploaded images — always process through sharp
-- Don't use client-side image processing — server-side only for consistency
-- Don't hardcode colors in templates — always use CSS variables
-- Don't skip Zod validation even for "trusted" internal data
-- Don't call Supabase DB from client without error handling
-- Don't import `@/lib/auth` in client components (use `@/lib/auth-utils` instead)
+- Light editorial appearance by default; optional dark appearance.
+- Human cover with name, photograph, short introduction, and quick facts.
+- Numbered story/journey/family/lifestyle/astrology/future chapters.
+- Adaptive gallery with protected previews.
+- Protected-information summary and interest action.
+- Public, approved, and owner-preview modes.
 
-## Form Steps (Multi-step Wizard)
-1. **Personal** — name, photo upload, DOB, place of birth, gender
-2. **Vitals** — height, complexion, gotra
-3. **Astrology** — rashi, nakshatra, time of birth
-4. **Education** — degree, institution, year
-5. **Career** — title, company
-6. **Family** — father, mother, siblings (name + occupation each, max 10)
-7. **Lifestyle** — hobbies, languages, diet, smoking, and drinking preferences
-8. **Contact** — contact person, phone, email
-9. **Style** — theme color (suggested by rashi), constellation preview
+Effective fonts are Playfair Display and Manrope. The old documentation describing a forced-dark glassmorphism template, active Harmond/Mango fonts, and rashi-driven template colors was stale.
 
-## Color Personalization
-- Colors tied to rashi (Vedic moon sign), not Western zodiac
-- Config in `/config/rashi_colors.json`
-- Each rashi has 2+ curated palettes
-- User sees "Suggested for [Rashi]" palettes + "More colors" option
-- Sources: Brihat Parashara Hora Shastra, Phaladeepika (verify before launch)
+`themeColor` and rashi-palette infrastructure currently exist but are not meaningfully wired into `CelestialUnion`. Do not add palette choice for the pilot unless it is reduced to a small contrast-tested set.
 
-## Common Commands
+## Design system
+
+### Current direction
+
+- Warm neutral canvas and paper surfaces.
+- Navy for primary actions.
+- Teal for trust and protected/approved context.
+- Gold as a restrained cultural/editorial accent.
+- Editorial display type paired with highly legible functional body type.
+- Generally 44–48px interactive targets.
+- Responsive layouts and reduced-motion handling on major surfaces.
+
+### Current implementation debt
+
+- `src/app/globals.css` is approximately 4,800 lines and contains multiple product eras and override layers.
+- CSS tokens, Tailwind utilities, CSS modules, inline styles, and raw hex values overlap.
+- No shared `components/ui` primitive library exists.
+- Button, field, notice, badge, dialog, and state treatments are duplicated.
+- Spacing, type, radius, elevation, motion, layer, and control-height scales are incomplete.
+- Five loaded font families and unused local font declarations are excessive.
+- Indian-script font behavior is not deliberately designed; configured web-font subsets are Latin.
+
+Pilot work should favor consistent semantics and accessible decisions over a visual rebrand.
+
+## Quality and security baseline
+
+Observed during the 2026-09 readiness assessment:
+
+- Dependency audit: passed at configured threshold; zero known vulnerabilities reported.
+- Typecheck: passed.
+- Lint: passed with one `<img>` optimization warning in the Open Graph image route.
+- Unit coverage: 523 tests across 91 files passed.
+- Browser tests: 20 desktop/mobile Chromium tests passed.
+- Production build: passed with placeholder public Supabase values.
+- Database fixture/smoke validation: passed.
+- Full local pgTAP: not run because Docker/Podman was unavailable on the assessment host.
+
+Security strengths include sanitized public snapshots, separate approved snapshots, private media, RLS tests, exact-token public resolution, live-session binding, same-origin/body-size protections, safe redirect handling, fresh reauthentication for deletion, link rotation/unpublishing, and time-limited Full View grants.
+
+Do not treat these local results as proof of deployed configuration. This checkout had no `.vercel/project.json`, Supabase project reference, or production environment binding.
+
+## Pilot blockers from the assessment
+
+1. Add a single-use, email-bound creator invitation/entitlement and enforce it in signup, OAuth callback, verification, portfolio bootstrap, dashboard, and owner APIs.
+2. Ensure viewer/Auth identity can never self-elevate into creator entitlement.
+3. Replace unrestricted creator CTAs with “Create with my invitation”; show a beta boundary and optional waitlist to uninvited users.
+4. Disable payments, Didit, and BrokerDesk server-side and remove all related pilot claims.
+5. Remove the database requirement for identity verification before first publication while the capability is disabled.
+6. Add a real publication disclosure review; the current “Review and publish” action publishes directly.
+7. Add a Full View confirmation showing recipient, disclosed categories, seven-day expiry, and revocation.
+8. Add owner new-interest and viewer decision notifications.
+9. Enforce adult candidate status from DOB and record candidate consent/representation context.
+10. Preserve dashboard history when a portfolio is unpublished or expired.
+11. Schedule and monitor deletion and retention workers.
+12. Verify the exact production Supabase/Vercel projects, migrations, RLS, private buckets, Auth redirects, SMTP, CAPTCHA, secrets, and backups.
+13. Establish an owned domain and accurate support/privacy/security contacts; the previously documented `nakshatra.app` identity was not verified as owned by this project.
+14. Align privacy, terms, metadata, landing copy, README, and product UI with the pilot contract.
+
+## UX priorities
+
+- Keep one canonical portfolio template.
+- Replace nine equal-priority editor sections with four outcome milestones while preserving culturally relevant sub-sections.
+- Add autosave and direct navigation to missing required fields.
+- Make the editor an accessible dialog or dedicated route.
+- Provide a real public-versus-Full preview before publication.
+- Add an early, restrained “Request an introduction” action on long portfolios and preserve the explanatory final CTA.
+- Restore mobile section navigation.
+- Combine interest and grant state into one relationship lifecycle.
+- Separate Copy/WhatsApp from destructive Link settings.
+- Fix the global skip-link target, lightbox focus trap/restoration, small destructive photo target, and photo description/caption model.
+
+## Key files
+
+| Concern | Location |
+|---|---|
+| Landing | `src/components/landing/LandingExperience.tsx` and module CSS |
+| Auth UI | `src/components/auth/AuthForm.tsx` |
+| Auth APIs | `src/app/api/auth/*` |
+| Owner portfolio bootstrap | `src/features/auth/server/portfolio-bootstrap.ts` |
+| Dashboard | `src/app/dashboard/dashboard-client.tsx` |
+| Portfolio editor | `src/components/portfolio/BlueprintForm.tsx` |
+| Public route | `src/app/p/[token]/page.tsx` |
+| Portfolio renderer | `src/components/templates/CelestialUnion.tsx` |
+| Interest dialog | `src/components/portfolio/InterestRequestModal.tsx` |
+| Public/approved snapshots | `src/features/portfolio/server/*snapshot*` |
+| Database architecture | `docs/db-architecture.md` |
+| Data classification | `docs/portfolio-data-classification.md` |
+| Security/privacy operations | `docs/security-phase-3.md`, `docs/security-phase-4.md` |
+| Product design direction | `DESIGN.md` |
+| Pilot product assessment | `docs/b2c-pilot-product-assessment.md` |
+
+## Development commands
+
 ```bash
-# Dev
-make dev                       # Start dev server (port 3000)
-make build                     # Production build
-make check                     # Lint + typecheck
-make clean                     # Remove build artifacts
-
-# Docker
-make docker-build              # Build Docker image
-make docker-run                # Run container on :3000
-make docker-stop               # Stop container
-
-# Direct
-npm run dev                    # Start dev server
-npm run build                  # Production build
-npm run lint                   # Lint check
-npx tsc --noEmit               # TypeScript check only
-
-# Database (via Supabase MCP)
-# mcp__supabase__apply_migration
-# mcp__supabase__list_tables
-# mcp__supabase__execute_sql
-
-# Deploy
-vercel --prod                  # Production deploy
+npm ci
+npm run dev
+npm run lint
+npm run typecheck
+npm run security:audit
+npm run test:unit:coverage
+npm run db:smoke
+npm run db:verify
+npm run build
+npm run test:e2e
 ```
+
+`db:verify` requires Docker or Podman because it starts local Supabase, resets migrations, and runs pgTAP.
+
+## Repository rules
+
+- Read `AGENTS.md` before work.
+- For this repository, Linear operations must use `linear_phoenix`, workspace Phoenix works, project Nakshatra. Do not write Linear unless the user requests or approves it.
+- Before changing Next.js application code, read the relevant current guides under `node_modules/next/dist/docs/` because this Next version contains breaking changes.
+- Preserve user work and unrelated changes.
+- Database migrations are additive and security-sensitive; include RLS/pgTAP coverage.
+- Use purpose-based branch names from `AGENTS.md`; do not use agent/vendor prefixes.
+- Do not expose service-role, Didit, database, or webhook secrets to browser code.
+- Do not rely on hidden UI for authorization; enforce capability and ownership at server and database boundaries.
+- Do not market a capability merely because its code exists. Launch messaging must reflect what is enabled, tested, and operationally supported.
+
+## Documentation hygiene
+
+When routes, database domains, launch capabilities, privacy behavior, expiry terms, fonts, or design architecture change, update this file and the relevant durable document in the same change. Historical plans must not be presented as current behavior.
