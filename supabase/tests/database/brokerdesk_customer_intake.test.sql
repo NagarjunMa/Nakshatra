@@ -113,6 +113,16 @@ update app_private.identity_verification_subjects
 set status='verified',verified_at=pg_catalog.now()-interval '1 day',
     expires_at=pg_catalog.now()+interval '365 days'
 where candidate_id='d5000000-0000-4000-8000-000000000001';
+insert into public.portfolio_media (
+  portfolio_id,candidate_id,media_type,storage_path,visibility,sort_order,metadata
+) values (
+  'd4000000-0000-4000-8000-000000000001',
+  'd5000000-0000-4000-8000-000000000001',
+  'hero',
+  'd1000000-0000-4000-8000-000000000002/d4000000-0000-4000-8000-000000000001/hero.webp',
+  'interest_required',0,
+  '{"blurPath":"d1000000-0000-4000-8000-000000000002/d4000000-0000-4000-8000-000000000001/hero-blur.webp"}'::jsonb
+);
 update public.portfolios set
   published_data='{"personal":{"name":"Published Customer","gender":"female","current_location":"Boston, United States"}}'::jsonb,
   is_published=true,
