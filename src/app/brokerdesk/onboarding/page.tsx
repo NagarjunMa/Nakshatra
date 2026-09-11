@@ -11,13 +11,22 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function BrokerdeskOnboardingPage() {
+export default async function BrokerdeskOnboardingPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ reauth?: string }>;
+}) {
   const { supabase } = await getAuthenticatedUser();
+  const query = await searchParams;
   const bootstrap = await getBrokerdeskBootstrap(supabase);
   const pending = bootstrap.workspaces.find((workspace) => workspace.workspaceStatus === "onboarding");
   const resolved = pending
     ? await getBrokerdeskOnboarding(supabase, pending.workspaceRef)
     : { available: false as const };
 
-  return <BrokerdeskOnboardingClient initialOnboarding={resolved.available ? resolved : null} />;
+  return <BrokerdeskOnboardingClient
+    initialOnboarding={resolved.available ? resolved : null}
+    showRepresentativeVerificationForm={query?.reauth === "complete"}
+    representativeSecurityFailed={query?.reauth === "failed"}
+  />;
 }

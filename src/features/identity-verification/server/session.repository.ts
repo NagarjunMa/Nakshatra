@@ -14,6 +14,20 @@ export class IdentityVerificationSessionRepository {
     });
   }
 
+  beginBrokerdeskRepresentative(
+    workspaceRef: string,
+    birthDateHash: string,
+    managementTokenHash: string,
+    proofHash: string
+  ) {
+    return this.supabase.rpc("begin_brokerdesk_representative_verification", {
+      p_birth_date_hash: birthDateHash,
+      p_management_token_hash: managementTokenHash,
+      p_proof_hash: proofHash,
+      p_workspace_ref: workspaceRef,
+    });
+  }
+
   attachProviderSession(attemptId: string, providerSessionRef: string, managementTokenHash: string) {
     return this.supabase.rpc("attach_identity_verification_provider_session", {
       p_attempt_id: attemptId,

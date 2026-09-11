@@ -6,9 +6,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const createWorkspace = vi.hoisted(() => vi.fn());
 const saveOnboarding = vi.hoisted(() => vi.fn());
+const startRepresentativeVerification = vi.hoisted(() => vi.fn());
+const startBrokerdeskActionSecurity = vi.hoisted(() => vi.fn());
 vi.mock("../src/features/organizations/client/brokerdesk-onboarding.api", () => ({
   createWorkspace,
   saveOnboarding,
+  startRepresentativeVerification,
+}));
+vi.mock("../src/features/organization-access/client/brokerdesk-reauth.api", () => ({
+  startBrokerdeskActionSecurity,
 }));
 
 import { BrokerdeskOnboardingClient } from "../src/app/brokerdesk/onboarding/brokerdesk-onboarding-client";
@@ -95,5 +101,85 @@ describe("BrokerDesk onboarding interface", () => {
     expect(screen.getByText("Needs attention")).toBeInTheDocument();
     expect(screen.getByText("Document upload is not open yet")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /upload/i })).not.toBeInTheDocument();
+  });
+
+  it("requires purpose-bound security before collecting representative verification consent", async () => {
+    startBrokerdeskActionSecurity.mockResolvedValue({ sent: true });
+    const user = userEvent.setup();
+    render(<BrokerdeskOnboardingClient initialOnboarding={{
+      ...baseOnboarding,
+      onboardingStatus: "ready_for_verification",
+      nextStage: "verification",
+      version: 2,
+    }} />);
+    await user.click(screen.getByRole("button", { name: "Verify my identity" }));
+    expect(screen.queryByLabelText("Your date of birth")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Email me a sign-in link" }));
+    expect(startBrokerdeskActionSecurity).toHaveBeenCalledWith(
+      WORKSPACE_REF,
+      "email",
+      "verification_manage"
+    );
+    expect(await screen.findByText(/Check your email/)).toBeInTheDocument();
+  });
+
+  it("starts the hosted flow after security without exposing a document upload", async () => {
+    startRepresentativeVerification.mockResolvedValue({
+      ok: true,
+      data: {
+        url: "https://verify.didit.test/session/opaque",
+        managementUrl: "https://nakshatra.test/verify/private",
+      },
+    });
+    const user = userEvent.setup();
+    render(<BrokerdeskOnboardingClient
+      initialOnboarding={{
+        ...baseOnboarding,
+        onboardingStatus: "ready_for_verification",
+        nextStage: "verification",
+        version: 2,
+      }}
+      showRepresentativeVerificationForm
+    />);
+    await user.type(screen.getByLabelText(/Your date of birth/), "1985-05-12");
+    await user.click(screen.getByRole("checkbox", { name: /I consent/ }));
+    await user.click(screen.getByRole("button", { name: "Prepare secure verification" }));
+    expect(startRepresentativeVerification).toHaveBeenCalledWith(WORKSPACE_REF, "1985-05-12");
+    expect(await screen.findByRole("link", { name: "Continue to Didit" })).toHaveAttribute(
+      "href",
+      "https://verify.didit.test/session/opaque"
+    );
+    expect(screen.getByRole("link", { name: "Open private management link" })).toHaveAttribute(
+      "href",
+      "https://nakshatra.test/verify/private"
+    );
+  });
+
+  it("preserves the private consent-management link when Didit is temporarily unavailable", async () => {
+    startRepresentativeVerification.mockResolvedValue({
+      ok: false,
+      code: "IDENTITY_VERIFICATION_PROVIDER_UNAVAILABLE",
+      message: "Identity verification is temporarily unavailable. Please try again.",
+      status: 503,
+      managementUrl: "https://nakshatra.test/verify/private-recovery",
+    });
+    const user = userEvent.setup();
+    render(<BrokerdeskOnboardingClient
+      initialOnboarding={{
+        ...baseOnboarding,
+        onboardingStatus: "ready_for_verification",
+        nextStage: "verification",
+        version: 2,
+      }}
+      showRepresentativeVerificationForm
+    />);
+    await user.type(screen.getByLabelText(/Your date of birth/), "1985-05-12");
+    await user.click(screen.getByRole("checkbox", { name: /I consent/ }));
+    await user.click(screen.getByRole("button", { name: "Prepare secure verification" }));
+    expect(await screen.findByRole("link", { name: "Open private management link" })).toHaveAttribute(
+      "href",
+      "https://nakshatra.test/verify/private-recovery"
+    );
+    expect(screen.queryByRole("link", { name: "Continue to Didit" })).not.toBeInTheDocument();
   });
 });

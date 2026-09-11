@@ -3,6 +3,10 @@ import type {
   BrokerdeskOnboarding,
   BrokerdeskProfileUpdate,
 } from "@/features/organizations/server/brokerdesk-onboarding.contract";
+import {
+  identityVerificationRequest,
+  type HostedIdentityVerification,
+} from "@/features/identity-verification/client/identity-verification.api";
 
 type ApiError = { code?: string; error?: string };
 
@@ -34,5 +38,20 @@ export function saveOnboarding(
     `/api/v1/brokerdesk/workspaces/${encodeURIComponent(workspaceRef)}/business-profile`,
     "PUT",
     { profile, expectedVersion, submitForVerification, idempotencyKey }
+  );
+}
+
+export function startRepresentativeVerification(
+  workspaceRef: string,
+  birthDate: string
+) {
+  return identityVerificationRequest<HostedIdentityVerification>(
+    `/api/v1/brokerdesk/workspaces/${encodeURIComponent(workspaceRef)}/representative-verification`,
+    {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ birthDate, consent: true }),
+    }
   );
 }

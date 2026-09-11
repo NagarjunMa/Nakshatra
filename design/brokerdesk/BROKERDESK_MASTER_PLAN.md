@@ -1,6 +1,6 @@
 # Nakshatra BrokerDesk — Living Product and Engineering Plan
 
-Status: Planning approved; Phase 2 Slice 2 security completion in progress
+Status: Planning approved; Phase 2 representative verification, Slice 3 manual customer intake, and secure customer detail implemented on the combined feature branch
 Maintainer: Update this document whenever a product decision, architectural decision, phase status, risk, or implementation deviation is approved.
 
 ## Purpose
@@ -152,7 +152,7 @@ Customer workspace:
 | 0E — URL, API, and security contract | Approved baseline | Endpoint projections, identifiers, tokens, rate limits, abuse and penetration cases |
 | 0F — Complete operational wireframes | Approved baseline | Onboarding, dashboard, bulk import, queues, tasks, renewals, RBAC, privacy |
 | 1 — Implementation planning | Approved baseline | Ordered engineering plan, migrations, acceptance tests, rollout |
-| 2 — Implementation | Slice 1 and onboarding foundation merged; Slice 2 security completion in progress | Capability foundation, private broker onboarding, safe auth continuation, audited commands, operational UI |
+| 2 — Implementation | Slice 1 and secure team-access foundation merged; representative verification in progress | Capability foundation, private broker onboarding, purpose-bound MFA, audited team commands, representative verification, operational UI |
 
 ## Detailed planning documents
 
@@ -214,7 +214,7 @@ Customer workspace:
 - The first CI database run identified a schema-invalid inactive membership fixture and a stale lifecycle assertion from the newer approved-contact contract. Corrected the fixtures to use `suspended` membership and an owner-only `private_notes` field.
 - Confirmed all three PR checks, including clean migration replay and the full pgTAP database suite, then squash-merged PR #40 as `22faf86`.
 - Synchronized local `main` exactly with `origin/main`, removed the merged security branch and clean isolated phase worktree after equivalence checks, and created `feat/nak-68-brokerdesk-capability-foundation` for the next slice.
-- On `feat/nak-68-brokerdesk-capability-foundation`, implemented immutable workspace/relationship references, private role-capability scopes, customer assignments and mandates, latest-record-wins BrokerDesk entitlement enforcement, capability-scoped relationship reads, a minimal server-only access resolver, and a strict endpoint inventory.
+- On `feat/nak-68-brokerdesk-capability-foundation`, implemented immutable workspace/relationship references, private role-capability scopes, customer assignments and mandates, latest-record-wins BrokerDesk entitlement enforcement, capability-scoped relationship authorization, a minimal server-only access resolver, and a strict endpoint inventory.
 - Kept all customer candidate and portfolio ownership rules unchanged and owner-only; no BrokerDesk direct portfolio projection was added.
 - Added adversarial two-agency database coverage for assignment, mandate, entitlement, membership, session, and cross-tenant revocation boundaries. Local application checks pass; clean migration replay and pgTAP remain mandatory in PR CI because this host has no Docker/Podman runtime.
 - Squash-merged the capability foundation through PR #41 as `32e5b62`, synchronized local and remote `main`, and created `feat/nak-68-brokerdesk-onboarding-rbac` from that clean baseline.
@@ -240,6 +240,29 @@ Customer workspace:
 - Kept authorization ahead of the invitation idempotency return so suspension, demotion, or an MFA assurance downgrade takes effect immediately, including during an otherwise identical retry.
 - Implemented role replacement and suspension as separate, AAL2 purpose-bound commands over opaque workspace/member references. They reuse the existing membership/RBAC source of truth, prohibit generic owner/self mutations, and audit atomically.
 - Defined agency suspension as membership-scoped: it invalidates pending privileged proofs and stops that agency's access immediately, while preserving the person's shared Nakshatra identity, customer portfolio session, and memberships in other agencies.
+- Confirmed all PR #43 checks, including clean migration replay and the complete pgTAP suite, then squash-merged the secure BrokerDesk team-access foundation as `c75f6f1`.
+- Synchronized local `main` with `origin/main`, removed the merged feature branch, and created `feat/nak-68-broker-representative-verification` from the clean merged checkpoint.
+- Began the representative-verification unit with the locked boundary that the authenticated business representative is an explicit verification subject; no synthetic customer candidate, duplicated Didit workflow, business-document release, or automatic workspace activation is permitted.
+- Implemented that boundary on `feat/nak-68-broker-representative-verification`: the existing Didit lifecycle now supports an organization- and user-bound representative subject, requires an exact one-time AAL2 `verification_manage` proof, and cannot activate the organization or BrokerDesk entitlement.
+- Kept the representative birth date outside PostgreSQL and audits. Only a purpose-bound HMAC reaches private persistence while the decision is pending, and it is erased at terminal reconciliation; representative name changes invalidate the previous result and fail BrokerDesk access closed.
+- Added database subject-binding invariants, a no-store/rate-limited versioned API, safe consent-management recovery, worker matching, adversarial two-broker pgTAP coverage, and plain-language onboarding UI. All 535 application tests, coverage policy, lint, TypeScript, build, static database checks, and dependency audit pass; clean executable database replay remains required in later PR CI because Docker/Podman is unavailable locally.
+- Committed representative verification locally as `e85bd19`, then stacked `feat/nak-68-brokerdesk-customer-intake` so related work can reach one deliberate review checkpoint rather than consuming a PR per small unit.
+- Implemented the first Slice 3 vertical slice without duplicating B2C identity or portfolio data: private hashed customer invitations, fragment-to-HttpOnly exchange, exact verified-email claim, explicit consent, and automatic activation only against the claimant's canonical B2C candidate.
+- Locked multi-agency intake behavior in code: the same customer portfolio may have one relationship per agency; each broker projection contains only its own agency records, while `/brokers` gives the customer alone the combined relationship view.
+- Closed direct authenticated reads of `broker_clients`; browser access is now through bounded, purpose-built broker and customer projections that omit internal candidate, organization, and relationship UUIDs.
+- Added the BrokerDesk customers, customer join, and customer My Brokers interfaces with simple language, seven-day invitations, a thirty-minute exact-path exchange cookie, a versioned one-year default representation mandate, independent rate limits, audit lineage, and organization-matching foreign keys.
+- Kept bulk CSV content storage closed because retention and production KMS ownership remain unresolved. Manual invitation stores no spreadsheet row and never creates an unclaimed shareable profile.
+- Passed all 556 application tests, global and per-feature coverage, TypeScript, production build, static database validation, and dependency audit. Clean migration and pgTAP execution remains a mandatory PR CI gate because Docker/Podman is unavailable locally.
+- Added an opaque broker customer-detail route and API that resolve workspace and relationship references together, recheck live role/assignment/mandate/entitlement authorization, expose no internal UUIDs, and return uniform unavailable responses across missing and unauthorized cases.
+- Locked the published-version privacy boundary for BrokerDesk customer lists and details: brokers see only the last published portfolio identity fields, never mutable candidate or draft edits; customers without a first publication appear as a neutral `Customer` placeholder.
+- Expanded the combined checkpoint to 559 passing application tests and a 44-assertion customer-intake/detail pgTAP contract. Lint, TypeScript, coverage, production build, static database validation, and dependency audit pass; executable clean migration replay remains the PR CI merge gate.
+- PR #44's first clean replay found a PostgreSQL function-parameter rename incompatibility before pgTAP execution. Retained the prior parameter name without changing the new subject-based behavior so the historical migration chain remains replayable.
+- The following PR #44 run completed migration replay and found stale pgTAP relationship fixtures missing required term start timestamps. Updated the successful fixtures to match the enforced `broker_clients.starts_at` invariant.
+- The next pgTAP execution found an ambiguous `organization_id` reference in the new customer projection. Renamed the local variable with the repository's `v_` convention so every tenant comparison resolves explicitly.
+- The published-snapshot regression fixture subsequently reached the existing identity-verification publication gate. Added a current verified candidate subject to that test setup rather than weakening or bypassing the production gate.
+- The fixture next reached the existing protected-primary-photo publication gate. Added a shareable protected hero fixture with a blurred derivative; the production media-readiness requirement remains unchanged.
+- After all 43 customer-intake/detail assertions passed, corrected the stale `plan(44)` declaration and added a repository-wide static pgTAP plan-count check. The guard also found and corrected a stale 39-test plan in the representative-verification suite, which contains 41 assertions.
+- Qualified representative-verification fixture status reads after CI exposed ambiguity between joined verification and organization status columns; production policy logic remains unchanged.
 
 ## Maintenance rule
 

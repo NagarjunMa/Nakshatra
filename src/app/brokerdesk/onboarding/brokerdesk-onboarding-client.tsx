@@ -4,7 +4,8 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Building2, Check, ChevronRight, LockKeyhole, ShieldCheck } from "lucide-react";
 import type { BrokerdeskOnboarding, BrokerdeskProfileUpdate } from "@/features/organizations/server/brokerdesk-onboarding.contract";
-import { createWorkspace, saveOnboarding } from "@/features/organizations/client/brokerdesk-onboarding.api";
+import { createWorkspace, saveOnboarding, startRepresentativeVerification } from "@/features/organizations/client/brokerdesk-onboarding.api";
+import { startBrokerdeskActionSecurity } from "@/features/organization-access/client/brokerdesk-reauth.api";
 
 type Step = "business" | "representative" | "practice" | "review" | "verification";
 const STEPS: { key: Step; label: string }[] = [
@@ -21,8 +22,12 @@ function commandKey(prefix: string) {
 
 export function BrokerdeskOnboardingClient({
   initialOnboarding,
+  showRepresentativeVerificationForm = false,
+  representativeSecurityFailed = false,
 }: {
   initialOnboarding: BrokerdeskOnboarding | null;
+  showRepresentativeVerificationForm?: boolean;
+  representativeSecurityFailed?: boolean;
 }) {
   const [onboarding, setOnboarding] = useState(initialOnboarding);
   const [step, setStep] = useState<Step>(
@@ -104,7 +109,13 @@ export function BrokerdeskOnboardingClient({
           {step === "review" && onboarding && (
             <ReviewStep onboarding={onboarding} pending={pending} onBack={() => setStep("practice")} onSubmit={(data) => save(data, "verification", true)} />
           )}
-          {step === "verification" && onboarding && <VerificationStep onboarding={onboarding} />}
+          {step === "verification" && onboarding && (
+            <VerificationStep
+              onboarding={onboarding}
+              showFormAfterReturn={showRepresentativeVerificationForm}
+              securityFailed={representativeSecurityFailed}
+            />
+          )}
         </section>
       </main>
     </div>
@@ -217,12 +228,77 @@ function ReviewStep({ onboarding, pending, onBack, onSubmit }: { onboarding: Bro
   </form>;
 }
 
-function VerificationStep({ onboarding }: { onboarding: BrokerdeskOnboarding }) {
+function VerificationStep({
+  onboarding,
+  showFormAfterReturn,
+  securityFailed,
+}: {
+  onboarding: BrokerdeskOnboarding;
+  showFormAfterReturn: boolean;
+  securityFailed: boolean;
+}) {
+  const [showSecurity, setShowSecurity] = useState(showFormAfterReturn);
+  const [pending, setPending] = useState(false);
+  const [notice, setNotice] = useState("");
+  const [error, setError] = useState(
+    securityFailed ? "The security check did not finish. Please start it again." : ""
+  );
+  const [hosted, setHosted] = useState<{ url?: string; managementUrl: string } | null>(null);
   const labels = { representative_identity: "Representative identity", business_registration: "Business registration", business_contact: "Business contact" };
   const statuses = { required: "Required", under_review: "Under review", verified: "Verified", needs_attention: "Needs attention", expired: "Expired" };
+  const representativeCheck = onboarding.verificationChecks.find((check) => check.type === "representative_identity");
+  const canStart = representativeCheck?.status === "required"
+    || representativeCheck?.status === "needs_attention"
+    || representativeCheck?.status === "expired";
+
+  async function beginSecurity(method: "google" | "email") {
+    setPending(true); setError(""); setNotice("");
+    try {
+      const result = await startBrokerdeskActionSecurity(
+        onboarding.workspaceRef,
+        method,
+        "verification_manage"
+      );
+      if (result.url) window.location.assign(result.url);
+      else setNotice("Check your email and use the secure sign-in link to continue.");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "The security check is unavailable.");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function startVerification(event: FormEvent) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    setPending(true); setError(""); setNotice("");
+    try {
+      const result = await startRepresentativeVerification(
+        onboarding.workspaceRef,
+        value(form, "birthDate")
+      );
+      if (!result.ok) {
+        setError(result.message);
+        if (result.managementUrl) setHosted({ managementUrl: result.managementUrl });
+        return;
+      }
+      setHosted(result.data);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Identity verification is unavailable.");
+    } finally {
+      setPending(false);
+    }
+  }
+
   return <div className="brokerdesk-form">
     <StepHeading icon={<ShieldCheck />} eyebrow="Verification" title="Your details are ready for review" body="Your workspace remains private until the required checks are complete. We will never mark it verified from form submission alone." />
+    {error && <p className="brokerdesk-form-error" role="alert">{error}</p>}
+    {notice && <p className="account-notice is-success">{notice}</p>}
     <div className="brokerdesk-verification-list">{onboarding.verificationChecks.map((check) => <div key={check.type}><span><strong>{labels[check.type]}</strong><small>{check.attentionReason || "We will guide you if more information is needed."}</small></span><b className={`is-${check.status}`}>{statuses[check.status]}</b></div>)}</div>
+    {canStart && !showSecurity && <div className="brokerdesk-hold-note"><ShieldCheck aria-hidden="true" /><p><strong>Verify the person responsible for this business</strong><span>This checks your identity only. It does not create a matrimonial profile or approve the business.</span></p><button type="button" className="brokerdesk-primary-button" onClick={() => setShowSecurity(true)}>Verify my identity</button></div>}
+    {canStart && showSecurity && !showFormAfterReturn && <div className="brokerdesk-hold-note"><ShieldCheck aria-hidden="true" /><p><strong>Confirm it is you</strong><span>Complete a fresh sign-in and authenticator check before identity verification.</span></p><div className="brokerdesk-form-actions"><button type="button" disabled={pending} className="brokerdesk-primary-button" onClick={() => beginSecurity("google")}>Continue with Google</button><button type="button" disabled={pending} className="brokerdesk-back-button" onClick={() => beginSecurity("email")}>Email me a sign-in link</button></div></div>}
+    {canStart && showFormAfterReturn && !hosted && <form onSubmit={startVerification} className="brokerdesk-field-grid"><Field label="Your date of birth" name="birthDate" type="date" required wide hint="Used only for the Didit identity check. It does not cross the database boundary; the keyed comparison value is erased after a final decision." /><label className="brokerdesk-check"><input type="checkbox" name="consent" required /><span>I consent to Nakshatra sending my name and date of birth to Didit for this identity check. Identity evidence is not copied into my Nakshatra workspace.</span></label><FormActions pending={pending} primary="Prepare secure verification" /></form>}
+    {hosted && <div className="brokerdesk-hold-note"><Check aria-hidden="true" /><p><strong>{hosted.url ? "Your secure verification is ready" : "Your private management link is ready"}</strong><span>{hosted.url ? "Save the private management link before opening Didit. It lets you review status or withdraw consent." : "Didit is temporarily unavailable. Save this link to review status or withdraw consent."}</span><a href={hosted.managementUrl}>Open private management link</a></p>{hosted.url && <a className="brokerdesk-primary-button" href={hosted.url}>Continue to Didit</a>}</div>}
     <div className="brokerdesk-hold-note"><LockKeyhole aria-hidden="true" /><p><strong>Document upload is not open yet</strong><span>We are finalizing secure storage, malware scanning, and retention safeguards before accepting business documents.</span></p></div>
   </div>;
 }

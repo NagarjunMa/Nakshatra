@@ -27,6 +27,7 @@ Create an isolated GitHub environment named
 `identity-verification-worker-production` with these environment secrets:
 
 - `DIDIT_API_KEY`
+- `IDENTITY_VERIFICATION_MATCH_HMAC_KEY` (independent app/worker key for representative birth-date comparison)
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
 
@@ -94,3 +95,9 @@ system.
    output and the alert recovery path.
 7. Enable the live Didit workflow only after the scheduler and external
    missing-run monitor are healthy.
+
+The application and worker must receive the same
+`IDENTITY_VERIFICATION_MATCH_HMAC_KEY`. Rotate it only with an explicit plan
+for in-progress representative attempts; Nakshatra stores only the keyed
+comparison value while a decision is pending, erases it after a terminal
+decision, and cannot recover the raw representative birth date.

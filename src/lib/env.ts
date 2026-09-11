@@ -25,6 +25,10 @@ const brokerdeskInvitationSecretSchema = z
   .string()
   .min(32, "BROKERDESK_INVITATION_TOKEN_SECRET must contain at least 32 characters");
 
+const identityMatchSecretSchema = z
+  .string()
+  .min(32, "IDENTITY_VERIFICATION_MATCH_HMAC_KEY must contain at least 32 characters");
+
 /** Reads the server-only HMAC key only in deletion-reauthentication code paths. */
 export function getDeletionReauthCookieSecret() {
   return deletionReauthSecretSchema.parse(process.env.DELETION_REAUTH_COOKIE_SECRET);
@@ -38,10 +42,18 @@ export function getBrokerdeskReauthCookieSecret() {
   return brokerdeskReauthSecretSchema.parse(process.env.BROKERDESK_REAUTH_COOKIE_SECRET);
 }
 
-/** Reads the independent key used only for team-invitation tokens and exchange cookies. */
+/** Reads the independent key used only for BrokerDesk invitation tokens and exchange cookies. */
 export function getBrokerdeskInvitationTokenSecret() {
   if (!process.env.BROKERDESK_INVITATION_TOKEN_SECRET && process.env.NODE_ENV === "test") {
     return "test-only-brokerdesk-invitation-token-secret-at-least-32-chars";
   }
   return brokerdeskInvitationSecretSchema.parse(process.env.BROKERDESK_INVITATION_TOKEN_SECRET);
+}
+
+/** Reads the key used only to compare representative birth dates after Didit processing. */
+export function getIdentityVerificationMatchKey() {
+  if (!process.env.IDENTITY_VERIFICATION_MATCH_HMAC_KEY && process.env.NODE_ENV === "test") {
+    return "test-only-identity-match-key-with-at-least-32-characters";
+  }
+  return identityMatchSecretSchema.parse(process.env.IDENTITY_VERIFICATION_MATCH_HMAC_KEY);
 }

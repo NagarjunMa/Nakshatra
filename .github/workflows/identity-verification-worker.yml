@@ -38,10 +38,12 @@ jobs:
       - name: Validate isolated worker secrets
         env:
           DIDIT_API_KEY: ${{ secrets.DIDIT_API_KEY }}
+          IDENTITY_VERIFICATION_MATCH_HMAC_KEY: ${{ secrets.IDENTITY_VERIFICATION_MATCH_HMAC_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           test -n "$DIDIT_API_KEY" || { echo "DIDIT_API_KEY is not configured"; exit 1; }
+          test "${#IDENTITY_VERIFICATION_MATCH_HMAC_KEY}" -ge 32 || { echo "IDENTITY_VERIFICATION_MATCH_HMAC_KEY is not configured"; exit 1; }
           test -n "$SUPABASE_URL" || { echo "SUPABASE_URL is not configured"; exit 1; }
           test -n "$SUPABASE_SERVICE_ROLE_KEY" || { echo "SUPABASE_SERVICE_ROLE_KEY is not configured"; exit 1; }
           node --input-type=module -e '
@@ -63,6 +65,7 @@ jobs:
       - name: Process bounded verification batch
         env:
           DIDIT_API_KEY: ${{ secrets.DIDIT_API_KEY }}
+          IDENTITY_VERIFICATION_MATCH_HMAC_KEY: ${{ secrets.IDENTITY_VERIFICATION_MATCH_HMAC_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: npm run identity-verification:process

@@ -15,6 +15,7 @@ import {
   getIdentityVerificationLinkStatus,
   IdentityVerificationSessionError,
   retryIdentityVerification,
+  startBrokerdeskRepresentativeVerification,
   startIdentityVerification,
   withdrawIdentityVerificationConsent,
 } from "@/features/identity-verification/server/session.service";
@@ -24,6 +25,11 @@ const prepared = {
   provider_subject_ref: "22222222-2222-4222-8222-222222222222",
   legal_name: "Private Candidate",
   birth_date: "1994-02-20",
+};
+const preparedRepresentative = {
+  attempt_id: prepared.attempt_id,
+  provider_subject_ref: prepared.provider_subject_ref,
+  legal_name: "Private Representative",
 };
 
 function supabaseWith(results: Array<{ data?: unknown; error?: unknown }>) {
@@ -65,6 +71,26 @@ describe("identity-verification services", () => {
       p_provider_session_ref: "provider-session",
       p_management_token_hash: "b".repeat(64),
     }));
+  });
+
+  it("prepares a representative subject with a keyed date digest and reuses the Didit attachment", async () => {
+    const supabase = supabaseWith([{ data: [preparedRepresentative], error: null }, { data: null, error: null }]);
+    await expect(startBrokerdeskRepresentativeVerification({
+      supabase,
+      workspaceRef: `wrk_${"a".repeat(32)}`,
+      birthDate: "1994-02-20",
+      proofHash: "c".repeat(64),
+      managementToken: "management-token",
+      managementTokenHash: "b".repeat(64),
+      callbackUrl: "https://nakshatra.test/verification/result",
+    })).resolves.toEqual({ url: "https://verify.didit.test/session" });
+    const rpc = (supabase as { rpc: ReturnType<typeof vi.fn> }).rpc;
+    expect(rpc).toHaveBeenNthCalledWith(1, "begin_brokerdesk_representative_verification", expect.objectContaining({
+      p_birth_date_hash: expect.stringMatching(/^[a-f0-9]{64}$/),
+      p_proof_hash: "c".repeat(64),
+    }));
+    expect(rpc.mock.calls[0]?.[1]).not.toHaveProperty("p_birth_date");
+    expect(createDiditVerificationSession).toHaveBeenCalledWith(expect.objectContaining({ birthDate: "1994-02-20" }));
   });
 
   it("returns the management credential only after consent preparation when Didit is unavailable", async () => {

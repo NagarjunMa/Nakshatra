@@ -2,7 +2,7 @@ export type IdentityVerificationApiFailure = { ok: false; code: string; message:
 export type IdentityVerificationApiResult<T> = { ok: true; data: T } | IdentityVerificationApiFailure;
 export type HostedIdentityVerification = { url: string; managementUrl: string };
 
-async function identityVerificationRequest<T>(url: string, init: RequestInit): Promise<IdentityVerificationApiResult<T>> {
+export async function identityVerificationRequest<T>(url: string, init: RequestInit): Promise<IdentityVerificationApiResult<T>> {
   try {
     const response = await fetch(url, init);
     const body = (await response.json().catch(() => null)) as (T & { code?: string; error?: string; managementUrl?: string }) | null;

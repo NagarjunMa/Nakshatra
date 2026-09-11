@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { createIdentityVerificationWorker, evaluateDiditDecision } from "../scripts/identity-verification-worker.mjs";
+import { hashIdentityBirthDate } from "../src/features/identity-verification/server/identity-match.mjs";
 
 const claim = {
   attempt_id: "11111111-1111-4111-8111-111111111111",
@@ -8,6 +9,7 @@ const claim = {
   claim_token: "33333333-3333-4333-8333-333333333333",
   legal_name: "Test Person",
   provider_session_ref: "44444444-4444-4444-8444-444444444444",
+  subject_type: "candidate",
   task_type: "reconcile",
 };
 
@@ -40,6 +42,26 @@ describe("identity-verification worker", () => {
     expect(evaluateDiditDecision({ ...approvedDecision, id_verifications: [...approvedDecision.id_verifications, approvedDecision.id_verifications[0]] }, claim).outcome).toBe("declined");
     expect(evaluateDiditDecision({ ...approvedDecision, status: "In Review" }, claim).outcome).toBe("pending");
     expect(evaluateDiditDecision({ ...approvedDecision, status: "Abandoned" }, claim).outcome).toBe("expired");
+  });
+
+  it("matches a representative birth date through its keyed digest without a retained raw date", () => {
+    const key = "representative-test-match-key-with-at-least-32-characters";
+    const representativeClaim = {
+      ...claim,
+      birth_date: null,
+      birth_date_hash: hashIdentityBirthDate("1990-01-01", key),
+      candidate_id: null,
+      subject_type: "organization_representative",
+    };
+    expect(evaluateDiditDecision(approvedDecision, representativeClaim, key).birthDateMatches).toBe(true);
+    expect(evaluateDiditDecision(
+      { ...approvedDecision, id_verifications: [{ ...approvedDecision.id_verifications[0], date_of_birth: "1990-01-02" }] },
+      representativeClaim,
+      key
+    ).birthDateMatches).toBe(false);
+    expect(JSON.stringify(representativeClaim)).not.toContain("1990-01-01");
+    expect(() => evaluateDiditDecision(approvedDecision, representativeClaim, "too-short"))
+      .toThrow("IDENTITY_MATCH_KEY_UNAVAILABLE");
   });
 
   it("reconciles decisions through the lease-bound RPC without retaining provider payloads", async () => {
