@@ -178,7 +178,17 @@ describe("dashboard client", () => {
       new Response(JSON.stringify({ ok: true, status: "approved" }), { status: 200 })
     );
     vi.stubGlobal("fetch", decisionFetch);
+    const disclosureData: PortfolioData = {
+      ...data,
+      education: { degree: "MS", institution: "Northeastern" },
+      career: { title: "Engineer", company: "Nakshatra" },
+      family: { father: { name: "Rao", occupation: "Engineer" } },
+      lifestyle: { languages: "English, Telugu" },
+      preferences: { narrative: "A kind partnership." },
+      contact: { contacts: [{ name: "Rao", email: "family@example.com" }] },
+    };
     renderDashboard({
+      portfolio: { ...portfolio, draft_data: disclosureData, published_data: disclosureData },
       interests: [{
         id: "interest-1",
         viewer_name: "Rohan Mehta",
@@ -201,6 +211,11 @@ describe("dashboard client", () => {
     expect(within(approval).getByText(/Access expires seven days after approval/i)).toBeInTheDocument();
     expect(within(approval).getByText(/Personal profile, location, and story details/i)).toBeInTheDocument();
     expect(within(approval).getByText("Exact date of birth")).toBeInTheDocument();
+    expect(within(approval).getByText(/Education, employer, career/i)).toBeInTheDocument();
+    expect(within(approval).getByText(/Family members, origins/i)).toBeInTheDocument();
+    expect(within(approval).getByText(/Lifestyle, languages/i)).toBeInTheDocument();
+    expect(within(approval).getByText(/Partner preferences/i)).toBeInTheDocument();
+    expect(within(approval).getByText("Protected contact details")).toBeInTheDocument();
     expect(decisionFetch).not.toHaveBeenCalled();
     fireEvent.click(within(approval).getByRole("button", { name: "Confirm Full View for 7 days" }));
 
@@ -293,7 +308,7 @@ describe("dashboard client", () => {
     expect(await screen.findByRole("dialog", { name: /check both views before publishing/i })).toBeInTheDocument();
     expect(mocks.save).toHaveBeenCalledTimes(1);
     expect(mocks.publish).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole("button", { name: "Cancel review" }));
+    fireEvent.keyDown(document, { key: "Escape" });
     expect(screen.queryByRole("dialog", { name: /check both views before publishing/i })).not.toBeInTheDocument();
     expect(mocks.publish).not.toHaveBeenCalled();
   });
@@ -354,6 +369,9 @@ describe("dashboard client", () => {
     fireEvent.click(screen.getByRole("button", { name: /edit portfolio/i }));
     goToFoundation();
     fireEvent.change(screen.getByLabelText("First name"), { target: { value: "Changed" } });
+    const beforeUnload = new Event("beforeunload", { cancelable: true });
+    fireEvent(window, beforeUnload);
+    expect(beforeUnload.defaultPrevented).toBe(true);
     vi.mocked(confirm).mockReturnValueOnce(false);
     fireEvent.click(screen.getByRole("button", { name: /close portfolio details/i }));
     expect(screen.getByRole("heading", { name: "Portfolio details" })).toBeInTheDocument();

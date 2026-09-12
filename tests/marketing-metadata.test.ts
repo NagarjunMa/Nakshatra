@@ -1,6 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("next/og", () => ({
+  ImageResponse: class {
+    constructor(public element: unknown, public options: unknown) {}
+  },
+}));
+
 import { metadata } from "../src/app/page";
-import { alt, contentType, size } from "../src/app/opengraph-image";
+import OpenGraphImage, { alt, contentType, size } from "../src/app/opengraph-image";
 
 describe("marketing metadata", () => {
   it("uses the biodata recognition anchor and controlled-introduction promise", () => {
@@ -21,5 +28,6 @@ describe("marketing metadata", () => {
     expect(size).toEqual({ width: 1200, height: 630 });
     expect(contentType).toBe("image/png");
     expect(alt).toMatch(/Nakshatra/i);
+    expect(OpenGraphImage()).toMatchObject({ options: size });
   });
 });

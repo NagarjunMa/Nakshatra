@@ -400,7 +400,7 @@ $$;
 -- Normalize existing pilot windows and make seven days the invariant for every
 -- Full View grant, including direct inserts outside the owner decision RPC.
 update public.portfolios
-set expires_at = pg_catalog.least(
+set expires_at = least(
   coalesce(expires_at, pg_catalog.now() + interval '30 days'),
   pg_catalog.now() + interval '30 days'
 )
@@ -415,7 +415,7 @@ alter table public.reveal_grants
   alter column expires_at set default (pg_catalog.now() + interval '7 days');
 
 update public.reveal_grants
-set expires_at = pg_catalog.least(expires_at, pg_catalog.now() + interval '7 days')
+set expires_at = least(expires_at, pg_catalog.now() + interval '7 days')
 where revoked_at is null and expires_at > pg_catalog.now() + interval '7 days';
 
 -- Own the grant-creation and grant-renewal clocks in this migration as well as
