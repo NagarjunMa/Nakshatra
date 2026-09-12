@@ -2,16 +2,16 @@ import { expect, test } from "@playwright/test";
 
 test("landing page presents the product and reaches account creation", async ({ page }) => {
   await page.goto("/");
-  await expect(page).toHaveTitle("Nakshatra - Digital Marriage Portfolio");
-  await expect(page.getByRole("heading", { name: /share your introduction without losing control of it/i })).toBeVisible();
-  const primaryCta = page.getByRole("main").getByRole("link", { name: /create my portfolio/i }).first();
+  await expect(page).toHaveTitle("Nakshatra | Private Wedding Biodata Portfolio");
+  await expect(page.getByRole("heading", { name: /one marriage introduction\. shared on your terms/i })).toBeVisible();
+  const primaryCta = page.getByRole("main").getByRole("link", { name: /pilot invitation/i }).first();
   await expect(primaryCta).toHaveAttribute("href", "/signup");
   await page.goto("/signup");
   await expect(page).toHaveURL(/\/signup$/);
-  await expect(page.getByRole("heading", { name: /start your marriage portfolio/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /create your pilot account/i })).toBeVisible();
   await expect(page.getByLabel("Email address")).toBeVisible();
   await expect(page.getByLabel("Password", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Create account" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Create pilot account" })).toBeEnabled();
   await expect(page.getByRole("button", { name: /continue with google/i })).toBeEnabled();
   await expect(page.getByRole("button", { name: /sign-in link/i })).toHaveCount(0);
 });
@@ -58,7 +58,7 @@ test("landing page remains usable with reduced motion", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
   const main = page.getByRole("main");
-  await expect(main.getByRole("link", { name: /create my portfolio/i }).first()).toBeVisible();
+  await expect(main.getByRole("link", { name: /pilot invitation/i }).first()).toBeVisible();
   await expect(main.getByRole("link", { name: /view a sample portfolio/i })).toBeVisible();
 });
 
@@ -71,7 +71,7 @@ test("landing concepts keep the same clear path to account creation", async ({ p
   for (const [path, heading] of concepts) {
     await page.goto(path);
     await expect(page.getByRole("heading", { name: heading })).toBeVisible();
-    await expect(page.getByRole("main").getByRole("link", { name: /create|start/i }).first()).toHaveAttribute("href", "/signup");
+    await expect(page.getByRole("main").getByRole("link", { name: /pilot invitation/i }).first()).toHaveAttribute("href", "/signup");
   }
 });
 

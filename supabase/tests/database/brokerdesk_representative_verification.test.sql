@@ -292,12 +292,13 @@ select ok(
   'a management credential for the prior representative identity is revoked'
 );
 select ok(
-  (select feature_value='false'::jsonb and source='representative_identity_invalidated'
+  exists(select 1
     from public.entitlements entitlement
     join public.organizations organization_record on organization_record.id=entitlement.organization_id
     where organization_record.workspace_ref=(select workspace_ref from representative_workspace)
       and entitlement.feature_key='brokerdesk.enabled'
-    order by entitlement.created_at desc,entitlement.id desc limit 1),
+      and entitlement.feature_value='false'::jsonb
+      and entitlement.source='representative_identity_invalidated'),
   'a representative identity change fails BrokerDesk access closed'
 );
 

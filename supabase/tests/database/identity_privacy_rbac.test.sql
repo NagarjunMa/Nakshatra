@@ -13,6 +13,13 @@ select pg_temp.create_auth_actor('41000000-0000-4000-8000-000000000003', '420000
 select pg_temp.create_auth_actor('41000000-0000-4000-8000-000000000004', '42000000-0000-4000-8000-000000000004', 'viewer@phase4.test');
 select pg_temp.create_auth_actor('41000000-0000-4000-8000-000000000005', '42000000-0000-4000-8000-000000000005', 'broker@phase4.test');
 select pg_temp.create_auth_actor('41000000-0000-4000-8000-000000000006', '42000000-0000-4000-8000-000000000006', 'delete@phase4.test');
+
+-- This actor is entitled so the direct-publication assertion reaches the
+-- independent primary-photo integrity trigger instead of stopping at the
+-- private-pilot creator boundary first.
+insert into app_private.b2c_creator_entitlements (email_hash)
+values (app_private.normalized_email_hash('delete@phase4.test'));
+
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"41000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"42000000-0000-4000-8000-000000000001"}';
 select ok(public.is_current_session_active(), 'a JWT bound to a live Auth session is active');

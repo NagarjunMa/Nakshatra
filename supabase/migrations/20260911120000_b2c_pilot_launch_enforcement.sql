@@ -80,12 +80,15 @@ $$;
 
 create function public.current_user_can_create_portfolio()
 returns boolean
-language sql
+language plpgsql
 stable
 security definer
 set search_path = ''
 as $$
-  select app_private.actor_can_create_portfolio(auth.uid())
+begin
+  perform app_private.require_current_session();
+  return app_private.actor_can_create_portfolio(auth.uid());
+end;
 $$;
 
 create function public.manage_b2c_creator_entitlement(p_email text, p_action text default 'grant')

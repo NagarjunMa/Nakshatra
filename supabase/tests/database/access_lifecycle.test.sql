@@ -271,7 +271,7 @@ insert into public.reveal_grants (
   'full',
   array['full']::text[],
   'a1000000-0000-4000-8000-000000000001',
-  now() - interval '40 days',
+  now() - interval '7 days',
   now() - interval '1 day'
 );
 
