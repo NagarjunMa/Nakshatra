@@ -8,6 +8,7 @@ import { InterestRequestModal } from "@/components/portfolio/InterestRequestModa
 import {
   isPortfolioOwner,
   recordPublicPortfolioView,
+  resolvePublicPortfolioAvailability,
   resolvePortfolioView,
   resolvePublicPortfolio,
 } from "@/features/portfolio/server/public-portfolio.service";
@@ -61,7 +62,11 @@ export default async function PublicBiodataPage({ params }: Props) {
     ? authData.user.email?.trim().toLowerCase() || null
     : null;
   const portfolio = await resolvePortfolioView(supabase, token, Boolean(verifiedEmail));
-  if (!portfolio) return notFound();
+  if (!portfolio) {
+    const availability = await resolvePublicPortfolioAvailability(supabase, token);
+    if (availability === "expired") return <ExpiredPortfolioLink />;
+    notFound();
+  }
   const viewingOwnPortfolio = await isPortfolioOwner(supabase, token, authData.user?.id);
 
   void recordPublicPortfolioView(supabase, token);
@@ -85,5 +90,19 @@ export default async function PublicBiodataPage({ params }: Props) {
       horoscopeAttachment={horoscopeAttachment}
       interestAction={portfolio.accessMode === "public" ? <InterestRequestModal portfolioToken={token} profileName={portfolio.data.personal.name || "the profile owner"} authenticated={Boolean(verifiedEmail)} verifiedEmail={verifiedEmail} isOwner={viewingOwnPortfolio} /> : undefined}
     />
+  );
+}
+
+function ExpiredPortfolioLink() {
+  return (
+    <main id="main-content" className="grid min-h-screen place-items-center bg-[color:var(--workspace-canvas)] px-5 py-16 text-[color:var(--workspace-ink)]">
+      <section className="w-full max-w-xl rounded-2xl border border-[color:var(--workspace-border)] bg-[color:var(--workspace-surface)] p-7 text-center shadow-sm sm:p-10" aria-labelledby="expired-portfolio-title">
+        <p className="text-sm font-semibold text-[color:var(--workspace-teal)]">Nakshatra private beta</p>
+        <h1 id="expired-portfolio-title" className="mt-3 text-3xl font-semibold">This portfolio link has expired</h1>
+        <p className="mx-auto mt-4 max-w-md text-base leading-7 text-[color:var(--workspace-ink-muted)]">
+          Ask the person who shared it to renew their portfolio link. No portfolio information is available from an expired link.
+        </p>
+      </section>
+    </main>
   );
 }

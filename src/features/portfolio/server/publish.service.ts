@@ -21,9 +21,17 @@ import {
 import { getCelestialBackground } from "@/features/portfolio/celestial-theme";
 import { createShareUrl } from "./share-url.service";
 import { ensurePortfolioPhotoPreviews } from "@/features/media/server/media.service";
+import { resolvePublicationExpiry } from "./lifecycle-policy";
 
 const publishTransactionResultSchema = z.object({
-  status: z.enum(["ok", "unauthorized", "not_found", "not_ready"]),
+  status: z.enum([
+    "ok",
+    "unauthorized",
+    "not_found",
+    "not_ready",
+    "creator_entitlement_required",
+    "verification_required",
+  ]),
   action: z.enum(["created", "updated"]).optional(),
   shareToken: z.string().optional(),
   expiresAt: z.string().optional(),
@@ -92,11 +100,10 @@ export async function publishPortfolio({
   }
 
   const shareToken = portfolio.share_token || nanoid(21);
-  const expiresAt = portfolio.expires_at ?? (() => {
-    const expiry = new Date();
-    expiry.setDate(expiry.getDate() + 90);
-    return expiry.toISOString();
-  })();
+  const expiresAt = resolvePublicationExpiry(
+    portfolio.expires_at,
+    portfolio.is_published
+  );
 
   const themeColor = getCelestialBackground(data.style);
   const { data: transactionData, error: transactionError } =
@@ -120,6 +127,20 @@ export async function publishPortfolio({
       "Choose one primary photo and set it to Visible to all or Blurred until approval before publishing.",
       "PORTFOLIO_NOT_READY",
       400
+    );
+  }
+  if (transaction.data.status === "creator_entitlement_required") {
+    throw new PortfolioPublishError(
+      "Portfolio creation is currently available only to invited beta participants.",
+      "PILOT_INVITATION_REQUIRED",
+      403
+    );
+  }
+  if (transaction.data.status === "verification_required") {
+    throw new PortfolioPublishError(
+      "Complete identity verification before publishing your portfolio.",
+      "IDENTITY_VERIFICATION_REQUIRED",
+      409
     );
   }
   if (transaction.data.status !== "ok" || !transaction.data.action || !transaction.data.shareToken || !transaction.data.expiresAt) {

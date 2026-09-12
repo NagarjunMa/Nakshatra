@@ -41,7 +41,7 @@
 .controlSection,
 .familySection,
 .samplesSection,
-.pricingSection,
+.betaSection,
 .faqSection,
 .finalCta,
 .footer {
@@ -232,7 +232,7 @@
 .floatingNote { right: 0; bottom: 0.2rem; padding: 0.72rem 0.9rem; font-weight: 700; }
 
 .problemSection,
-.pricingSection,
+.betaSection,
 .faqSection { padding-block: clamp(4.5rem, 7vw, 6rem); }
 
 .sectionHeading { max-width: 760px; }
@@ -310,31 +310,22 @@
 .samplesGrid small { margin-top: 1.2rem; color: var(--muted); font-size: 0.64rem; line-height: 1.5; }
 .sampleNote { margin-top: 1rem !important; color: var(--muted); font-size: 0.75rem; }
 
-.pricingSection { border-top: 1px solid var(--line); }
-.pricingGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem; margin-top: 2.5rem; }
-.pricingGrid article { position: relative; min-height: 230px; border: 1px solid var(--line); border-radius: 0.9rem; padding: 1.5rem; background: var(--surface); }
-.pricingGrid article > span { position: absolute; top: 1rem; right: 1rem; border-radius: 99px; padding: 0.35rem 0.55rem; background: var(--teal-soft); color: #18666c; font-size: 0.66rem; font-weight: 750; text-transform: uppercase; }
-.pricingGrid h3 { font-size: 0.9rem; }
-.pricingGrid strong { display: block; margin-top: 2.2rem; font-family: var(--font-portfolio-display), Georgia, serif; font-size: 2.35rem; font-weight: 500; }
-.pricingGrid p { margin-top: 0.15rem; color: var(--muted); font-size: 0.78rem; }
-.pricingGrid a { display: inline-flex; margin-top: 1.6rem; border-bottom: 1px solid currentColor; padding-bottom: 0.2rem; color: var(--teal); font-size: 0.82rem; font-weight: 750; }
-.recommendedPlan { border: 2px solid #42888a !important; }
-.pricingDetails { margin-top: 1rem; border-block: 1px solid var(--line); }
-.internationalPricing { border-bottom: 1px solid var(--line); }
-.pricingDetails summary, .internationalPricing summary, .faqList summary { display: flex; min-height: 54px; align-items: center; justify-content: space-between; gap: 1rem; cursor: pointer; list-style: none; font-size: 0.84rem; font-weight: 720; }
-.pricingDetails summary::-webkit-details-marker, .internationalPricing summary::-webkit-details-marker, .faqList summary::-webkit-details-marker { display: none; }
-.pricingDetails summary svg, .internationalPricing summary svg, .faqList summary svg { width: 1rem; height: 1rem; transition: transform 160ms ease; }
-.pricingDetails[open] summary svg, .internationalPricing[open] summary svg, .faqList details[open] summary svg { transform: rotate(180deg); }
-.pricingDetails > div { display: flex; flex-wrap: wrap; gap: 1.5rem; padding: 0 0 1.1rem; color: var(--muted); font-size: 0.78rem; }
-.pricingDetails > div span { display: inline-flex; align-items: center; gap: 0.4rem; }
-.pricingDetails > div svg { width: 0.95rem; height: 0.95rem; color: #277973; }
-.internationalPricing > div { display: grid; grid-template-columns: repeat(3, 1fr); padding-bottom: 1rem; }
-.internationalPricing > div > span { display: grid; gap: 0.2rem; border-right: 1px solid var(--line); padding: 0.25rem 1rem; }
-.internationalPricing > div > span:first-child { padding-left: 0; }
-.internationalPricing > div > span:last-child { border: 0; }
-.internationalPricing b { color: var(--teal); font-size: 1rem; }
-.internationalPricing small { color: var(--muted); }
-.planEndNote { max-width: 76ch; margin-top: 1.2rem !important; color: var(--muted); font-size: 0.8rem; line-height: 1.6; }
+.betaSection { border-top: 1px solid var(--line); }
+.betaCopy { max-width: 790px; }
+.betaCopy h2 { margin-top: 0.85rem; font-family: var(--font-portfolio-display), Georgia, serif; font-size: clamp(2.5rem, 4.4vw, 4.25rem); font-weight: 500; line-height: 1.05; letter-spacing: -0.035em; }
+.betaCopy > p:last-child { max-width: 68ch; margin-top: 1rem; color: var(--muted); line-height: 1.65; }
+.betaDetails { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 2.5rem; border-block: 1px solid var(--line); }
+.betaDetails span { display: grid; min-height: 190px; align-content: start; gap: 0.7rem; border-right: 1px solid var(--line); padding: 1.5rem; color: var(--muted); font-size: 0.84rem; line-height: 1.6; }
+.betaDetails span:first-child { padding-left: 0; }
+.betaDetails span:last-child { border: 0; }
+.betaDetails svg { width: 1.25rem; height: 1.25rem; color: #21717a; }
+.betaDetails strong { color: var(--ink); font-size: 0.95rem; }
+.betaActions { display: flex; flex-wrap: wrap; gap: 0.7rem; margin-top: 1.5rem; }
+
+.faqList summary { display: flex; min-height: 54px; align-items: center; justify-content: space-between; gap: 1rem; cursor: pointer; list-style: none; font-size: 0.84rem; font-weight: 720; }
+.faqList summary::-webkit-details-marker { display: none; }
+.faqList summary svg { width: 1rem; height: 1rem; transition: transform 160ms ease; }
+.faqList details[open] summary svg { transform: rotate(180deg); }
 
 .faqSection { display: grid; grid-template-columns: minmax(280px, 0.72fr) minmax(0, 1fr); gap: clamp(3rem, 8vw, 7rem); }
 .faqList { border-top: 1px solid var(--line); }
@@ -370,7 +361,7 @@
 }
 
 @media (max-width: 860px) {
-  .header, .hero, .problemSection, .stepsSection > *, .controlSection, .familySection, .samplesSection, .pricingSection, .faqSection, .finalCta, .footer { width: min(100% - 2rem, 680px); }
+  .header, .hero, .problemSection, .stepsSection > *, .controlSection, .familySection, .samplesSection, .betaSection, .faqSection, .finalCta, .footer { width: min(100% - 2rem, 680px); }
   .hero { min-height: auto; grid-template-columns: 1fr; padding-block: 3.5rem; }
   .heroCopy { max-width: 640px; }
   .hero h1 { max-width: 13ch; }
@@ -398,8 +389,8 @@
 
 @media (max-width: 620px) {
   .header { min-height: 68px; }
-  .header .primaryButton { min-height: 44px; padding-inline: 0.8rem; font-size: 0.78rem; }
-  .signIn { display: none; }
+  .header .primaryButton { display: none; }
+  .signIn { display: inline-flex; }
   .brand { font-size: 0.74rem; }
   .navigation { gap: 0; }
   .hero { gap: 2.25rem; padding-block: 2.8rem 3.5rem; }
@@ -419,10 +410,10 @@
   .introduction > p:nth-of-type(1) { margin-top: 1rem; }
   .introduction h2 { font-size: 2.4rem; }
   .portfolioCard > footer span { padding: 0.75rem 0.3rem; text-align: center; font-size: 0.58rem; }
-  .problemSection, .pricingSection, .faqSection, .stepsSection, .controlSection, .familySection, .samplesSection { padding-block: 3.1rem; }
+  .problemSection, .betaSection, .faqSection, .stepsSection, .controlSection, .familySection, .samplesSection { padding-block: 3.1rem; }
   .sectionHeading h2, .controlIntro h2, .finalCta h2 { font-size: clamp(2.35rem, 11vw, 3.3rem); }
-  .problemGrid, .stepsGrid, .pricingGrid, .familyGrid { margin-top: 2.2rem; }
-  .problemGrid, .stepsGrid, .pricingGrid, .familyGrid { grid-template-columns: 1fr; }
+  .problemGrid, .stepsGrid, .familyGrid { margin-top: 2.2rem; }
+  .problemGrid, .stepsGrid, .familyGrid, .betaDetails { grid-template-columns: 1fr; }
   .problemGrid article, .problemGrid article:first-child { min-height: auto; border-right: 0; border-bottom: 1px solid var(--line); padding: 1.35rem 0; }
   .problemGrid article:last-child { border-bottom: 0; }
   .problemGrid h3 { margin-top: 1rem; }
@@ -440,8 +431,8 @@
   .samplesGrid article { min-width: 86%; scroll-snap-align: start; }
   .samplePortrait { min-height: 200px; }
   .accessFlow svg { transform: rotate(90deg); }
-  .pricingGrid article { min-height: 185px; padding: 1.25rem; }
-  .pricingGrid strong { margin-top: 1.65rem; }
+  .betaDetails span, .betaDetails span:first-child { min-height: auto; border-right: 0; border-bottom: 1px solid var(--line); padding: 1.35rem 0; }
+  .betaDetails span:last-child { border-bottom: 0; }
   .faqList summary { min-height: 62px; }
   .finalCta { border-radius: 0.9rem; }
   .lightButton { width: 100%; }
@@ -451,5 +442,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .primaryButton, .secondaryButton, .lightButton, .pricingDetails summary svg, .internationalPricing summary svg, .faqList summary svg { transition: none; }
+  .primaryButton, .secondaryButton, .lightButton, .faqList summary svg { transition: none; }
 }

@@ -44,11 +44,17 @@ describe("interest decision endpoint", () => {
     expect(rpc).not.toHaveBeenCalled();
   });
 
-  it("maps unavailable, sign-in, and authorization outcomes safely", async () => {
+  it("maps unavailable, verification, and authorization outcomes safely", async () => {
     authenticatedClient("not_found");
     expect((await patch("approved")).status).toBe(404);
     authenticatedClient("signin_required");
-    expect((await patch("approved")).status).toBe(409);
+    const signinRequired = await patch("approved");
+    expect(signinRequired.status).toBe(409);
+    await expect(signinRequired.json()).resolves.toMatchObject({ code: "INTEREST_SIGNIN_REQUIRED" });
+    authenticatedClient("verification_required");
+    const verificationRequired = await patch("approved");
+    expect(verificationRequired.status).toBe(409);
+    await expect(verificationRequired.json()).resolves.toMatchObject({ code: "INTEREST_VERIFICATION_REQUIRED" });
     authenticatedClient("unauthorized");
     expect((await patch("approved")).status).toBe(403);
   });

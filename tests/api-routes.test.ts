@@ -346,6 +346,7 @@ describe("authentication callback", () => {
         getUser: vi.fn().mockResolvedValue({ data: { user: { id: "owner", user_metadata: {} } } }),
       },
       from,
+      rpc: vi.fn().mockResolvedValue({ data: true, error: null }),
     });
     const response = await authCallback(new Request("http://local/api/auth/callback?code=ok&next=/edit"));
     const origin = process.env.NEXT_PUBLIC_APP_URL ? new URL(process.env.NEXT_PUBLIC_APP_URL).origin : "http://local";

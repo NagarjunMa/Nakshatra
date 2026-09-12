@@ -46,6 +46,7 @@ export default async function DashboardPage({
     <DashboardClient
       key={dashboardRevision}
       portfolio={portfolio}
+      canCreatePortfolio={dashboard.canCreatePortfolio}
       viewCount={dashboard.viewCount}
       userEmail={user.email ?? ""}
       shareUrl={shareUrl}

@@ -90,6 +90,7 @@ describe("portfolio lifecycle services", () => {
   });
 
   it("publishes a saved draft with a share token, expiry, and safe snapshot", async () => {
+    const before = Date.now();
     const result = await publishPortfolio({ supabase: {} as never, userId: "user-id", data: draft });
     expect(repository.publishPortfolioTransaction).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -109,6 +110,9 @@ describe("portfolio lifecycle services", () => {
         }),
       })
     );
+    const requestedExpiry = Date.parse(repository.publishPortfolioTransaction.mock.calls[0][0].expiresAt);
+    expect(requestedExpiry).toBeGreaterThan(before + 29 * 86_400_000);
+    expect(requestedExpiry).toBeLessThan(before + 31 * 86_400_000);
     expect(result).toMatchObject({ action: "created", shareUrl: expect.stringContaining("/p/") });
   });
 
@@ -170,7 +174,7 @@ describe("portfolio lifecycle services", () => {
     ).rejects.toBeInstanceOf(PortfolioPublishError);
   });
 
-  it("maps transactional readiness and authorization failures to safe errors", async () => {
+  it("maps transactional readiness, pilot entitlement, verification, and authorization failures to safe errors", async () => {
     repository.publishPortfolioTransaction.mockResolvedValue({
       data: { status: "not_ready" },
       error: null,
@@ -178,6 +182,22 @@ describe("portfolio lifecycle services", () => {
     await expect(
       publishPortfolio({ supabase: {} as never, userId: "user-id", data: draft })
     ).rejects.toMatchObject({ code: "PORTFOLIO_NOT_READY", status: 400 });
+
+    repository.publishPortfolioTransaction.mockResolvedValue({
+      data: { status: "creator_entitlement_required" },
+      error: null,
+    });
+    await expect(
+      publishPortfolio({ supabase: {} as never, userId: "user-id", data: draft })
+    ).rejects.toMatchObject({ code: "PILOT_INVITATION_REQUIRED", status: 403 });
+
+    repository.publishPortfolioTransaction.mockResolvedValue({
+      data: { status: "verification_required" },
+      error: null,
+    });
+    await expect(
+      publishPortfolio({ supabase: {} as never, userId: "user-id", data: draft })
+    ).rejects.toMatchObject({ code: "IDENTITY_VERIFICATION_REQUIRED", status: 409 });
 
     repository.publishPortfolioTransaction.mockResolvedValue({
       data: { status: "unauthorized" },
@@ -188,11 +208,12 @@ describe("portfolio lifecycle services", () => {
     ).rejects.toMatchObject({ code: "PORTFOLIO_NOT_FOUND", status: 404 });
   });
 
-  it("renews for 90 days and returns a safe error on failure", async () => {
+  it("renews for 30 days and returns a safe error on failure", async () => {
     const before = Date.now();
     await renewPortfolioLink({ supabase: {} as never });
     const expiresAt = new Date(repository.renewPortfolioTransaction.mock.calls[0][0]).getTime();
-    expect(expiresAt).toBeGreaterThan(before + 89 * 86_400_000);
+    expect(expiresAt).toBeGreaterThan(before + 29 * 86_400_000);
+    expect(expiresAt).toBeLessThan(before + 31 * 86_400_000);
 
     repository.renewPortfolioTransaction.mockResolvedValue({ data: null, error: new Error("db") });
     await expect(

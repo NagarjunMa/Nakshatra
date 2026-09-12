@@ -41,9 +41,14 @@ describe("AuthForm", () => {
     const user = userEvent.setup();
     render(<AuthForm mode="signup" />);
 
+    expect(screen.getByRole("heading", { name: "Create your pilot account" })).toBeInTheDocument();
+    expect(screen.getByText(/limited to invited beta participants/i)).toBeInTheDocument();
+    expect(screen.getByText(/Didit identity verification is required before publication/i)).toBeInTheDocument();
+    expect(screen.getByText(/use that shared link to view it and express interest/i)).toBeInTheDocument();
+
     await user.type(screen.getByLabelText("Email address"), "New@Example.com");
     await user.type(screen.getByLabelText("Password"), "Wedding2026");
-    await user.click(screen.getByRole("button", { name: "Create account" }));
+    await user.click(screen.getByRole("button", { name: "Create pilot account" }));
 
     expect(startAuthentication).toHaveBeenCalledWith({
       method: "password_signup",
@@ -71,7 +76,7 @@ describe("AuthForm", () => {
     render(<AuthForm mode="signup" />);
     await user.type(screen.getByLabelText("Email address"), "new@example.com");
     await user.type(screen.getByLabelText("Password"), "onlyletters");
-    await user.click(screen.getByRole("button", { name: "Create account" }));
+    await user.click(screen.getByRole("button", { name: "Create pilot account" }));
     expect(screen.getByRole("alert")).toHaveTextContent(/letter and a number/i);
     expect(startAuthentication).not.toHaveBeenCalled();
   });

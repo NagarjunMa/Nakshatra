@@ -62,8 +62,13 @@ const accessGrantId = "11111111-1111-4111-8111-111111111111";
 
 function renderDashboard(overrides: Partial<React.ComponentProps<typeof DashboardClient>> = {}) {
   return render(<DashboardClient portfolio={portfolio} viewCount={12} userEmail="aditi@example.com"
+    canCreatePortfolio
     shareUrl="https://nakshatra.test/p/token" isExpired daysLeft={0} media={[media]}
     mediaUrls={{ "media-1": "https://signed.test/one-thumb.webp" }} {...overrides} />);
+}
+
+function goToFoundation() {
+  fireEvent.click(screen.getByRole("button", { name: "Next: Foundation" }));
 }
 
 beforeEach(() => {
@@ -101,6 +106,9 @@ describe("dashboard client", () => {
   it("opens the canonical editor when requested by an editing route", () => {
     renderDashboard({ initialEditorOpen: true });
     expect(screen.getByRole("heading", { name: "Portfolio details" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Privacy and sharing" })).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: "Portfolio completion steps" })).toHaveAttribute("aria-valuenow", "1");
+    goToFoundation();
     expect(screen.getByRole("heading", { name: "Portfolio essentials" })).toBeInTheDocument();
     expect(screen.queryByText("Rashi palette")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Music")).not.toBeInTheDocument();
@@ -110,6 +118,7 @@ describe("dashboard client", () => {
     renderDashboard({ portfolio: null, shareUrl: null, media: [] });
     expect(screen.getByText(/one clear introduction/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /start with the basics/i }));
+    goToFoundation();
     fireEvent.change(screen.getByLabelText("First name"), { target: { value: "New" } });
     fireEvent.change(screen.getByLabelText("Last name"), { target: { value: "Name" } });
     fireEvent.change(
@@ -137,6 +146,11 @@ describe("dashboard client", () => {
     fireEvent.click(screen.getByRole("button", { name: /save draft/i }));
     await waitFor(() => expect(mocks.save).toHaveBeenCalled());
     fireEvent.click(screen.getByRole("button", { name: /review and publish/i }));
+    expect(await screen.findByRole("dialog", { name: /check both views before publishing/i })).toBeInTheDocument();
+    expect(screen.getByTitle("First View portfolio preview")).toHaveAttribute("src", "/preview");
+    expect(screen.getByTitle("Full View portfolio preview")).toHaveAttribute("src", "/approved-preview");
+    expect(mocks.publish).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Publish portfolio" }));
     await waitFor(() => expect(mocks.publish).toHaveBeenCalled());
     expect(mocks.refresh).toHaveBeenCalledTimes(2);
   }, 10_000);
@@ -181,7 +195,14 @@ describe("dashboard client", () => {
 
     fireEvent.click(screen.getByText("Rohan Mehta"));
     expect(screen.getByText(/Toronto, Ontario, Canada/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Approve access" }));
+    fireEvent.click(screen.getByRole("button", { name: "Review Full View access" }));
+
+    const approval = screen.getByRole("dialog", { name: /Grant Full View to Rohan Mehta/i });
+    expect(within(approval).getByText(/Access expires seven days after approval/i)).toBeInTheDocument();
+    expect(within(approval).getByText(/Personal profile, location, and story details/i)).toBeInTheDocument();
+    expect(within(approval).getByText("Exact date of birth")).toBeInTheDocument();
+    expect(decisionFetch).not.toHaveBeenCalled();
+    fireEvent.click(within(approval).getByRole("button", { name: "Confirm Full View for 7 days" }));
 
     await waitFor(() => expect(decisionFetch).toHaveBeenCalledWith(
       "/api/interest/interest-1",
@@ -229,6 +250,7 @@ describe("dashboard client", () => {
   it("updates, deletes, and uploads owner photos", async () => {
     const { container } = renderDashboard();
     fireEvent.click(screen.getByRole("button", { name: /edit portfolio/i }));
+    goToFoundation();
     expect(screen.getByText("1/8")).toBeInTheDocument();
     expect(screen.getByRole("article", { name: "Profile photo" })).toHaveClass("w-36", "sm:w-40");
     const portrait = await screen.findByAltText("Portrait");
@@ -256,10 +278,71 @@ describe("dashboard client", () => {
     mocks.publish.mockResolvedValueOnce({ ok: false, error: { code: "PUBLISH_FAILED", message: "Complete required fields" } });
     renderDashboard();
     fireEvent.click(screen.getByRole("button", { name: /edit portfolio/i }));
+    goToFoundation();
     fireEvent.click(screen.getByRole("button", { name: /save draft/i }));
     await waitFor(() => expect(mocks.push).toHaveBeenCalledWith("/login?error=session_expired"));
-    fireEvent.click(screen.getByRole("button", { name: /update published/i }));
+    fireEvent.click(screen.getByRole("button", { name: /review changes/i }));
+    expect(await screen.findByRole("dialog", { name: /check both views before publishing/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /publish reviewed changes/i }));
     expect(await screen.findByText(/complete required fields/i)).toBeInTheDocument();
+  });
+
+  it("cancels publication review without changing the public portfolio", async () => {
+    renderDashboard({ initialEditorOpen: true });
+    fireEvent.click(screen.getByRole("button", { name: "Review changes" }));
+    expect(await screen.findByRole("dialog", { name: /check both views before publishing/i })).toBeInTheDocument();
+    expect(mocks.save).toHaveBeenCalledTimes(1);
+    expect(mocks.publish).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel review" }));
+    expect(screen.queryByRole("dialog", { name: /check both views before publishing/i })).not.toBeInTheDocument();
+    expect(mocks.publish).not.toHaveBeenCalled();
+  });
+
+  it("keeps interests, access history, and stats visible while unpublished", () => {
+    renderDashboard({
+      portfolio: { ...portfolio, is_published: false, share_token: null },
+      shareUrl: null,
+      viewCount: 8,
+      interests: [{
+        id: "interest-unpublished",
+        viewer_name: "Maya Shah",
+        viewer_phone: null,
+        viewer_email: "maya@example.com",
+        viewer_family_context: null,
+        message: null,
+        status: "new",
+        requester_user_id: "viewer-2",
+        metadata: null,
+        created_at: "2026-08-10T12:00:00.000Z",
+      }],
+      accessSummary: {
+        grants: [],
+        events: [{
+          id: 7,
+          eventType: "portfolio_unpublished",
+          viewerName: null,
+          createdAt: "2026-08-11T12:00:00.000Z",
+          metadata: {},
+        }],
+      },
+    });
+
+    expect(screen.getByRole("heading", { name: "Interests to review" })).toBeInTheDocument();
+    expect(screen.getByText("Maya Shah")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Access history"));
+    expect(screen.getByText("Portfolio unpublished")).toBeInTheDocument();
+    expect(screen.getByText("8")).toBeInTheDocument();
+    expect(screen.getByText("Public sharing is off")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Share on WhatsApp/i })).not.toBeInTheDocument();
+  });
+
+  it("updates field disclosure labels when Short introduction is selected", () => {
+    renderDashboard({ initialEditorOpen: true });
+    fireEvent.click(screen.getByRole("button", { name: /Short introduction/i }));
+    goToFoundation();
+    expect(screen.getAllByText("Shown in: Short and Full").length).toBeGreaterThan(0);
+    expect(screen.getByText("Shown in: Age in Short · Exact date in Full")).toBeInTheDocument();
+    expect(screen.getAllByText("Shown in: Full only").length).toBeGreaterThan(0);
   });
 
   it("preserves unsaved answers, offers retry, and warns before closing", async () => {
@@ -269,6 +352,7 @@ describe("dashboard client", () => {
     });
     renderDashboard();
     fireEvent.click(screen.getByRole("button", { name: /edit portfolio/i }));
+    goToFoundation();
     fireEvent.change(screen.getByLabelText("First name"), { target: { value: "Changed" } });
     vi.mocked(confirm).mockReturnValueOnce(false);
     fireEvent.click(screen.getByRole("button", { name: /close portfolio details/i }));
@@ -283,6 +367,7 @@ describe("dashboard client", () => {
   it("requires an explicit choice for legacy photo privacy without expanding access", () => {
     renderDashboard({ media: [{ ...media, visibility: "hidden" }] });
     fireEvent.click(screen.getByRole("button", { name: /edit portfolio/i }));
+    goToFoundation();
     expect(screen.getByLabelText("Photo visibility")).toHaveValue("");
     expect(screen.getByText(/existing privacy remains unchanged/i)).toBeInTheDocument();
     expect(mocks.update).not.toHaveBeenCalled();
@@ -295,8 +380,26 @@ describe("dashboard client", () => {
     });
     renderDashboard();
     fireEvent.click(screen.getByRole("button", { name: /edit portfolio/i }));
+    goToFoundation();
     fireEvent.click(screen.getByRole("button", { name: /save draft/i }));
     await waitFor(() => expect(mocks.push).toHaveBeenCalledWith("/login?error=session_revoked"));
+  });
+
+  it("shows the private-beta boundary without creator controls for non-invited accounts", () => {
+    renderDashboard({
+      portfolio: null,
+      canCreatePortfolio: false,
+      shareUrl: null,
+      media: [],
+      viewCount: 0,
+    });
+
+    expect(screen.getByText("Private beta testing")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Portfolio creation is currently invite-only." })).toBeInTheDocument();
+    expect(screen.getByText(/open portfolio links shared with you/i)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /start with the basics/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /portfolio details/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /interests to review/i })).not.toBeInTheDocument();
   });
 
 });

@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   recordPublicPortfolioView,
   resolveApprovedHoroscope,
+  resolvePublicPortfolioAvailability,
   resolvePortfolioView,
   resolvePublicPortfolio,
 } from "../src/features/portfolio/server/public-portfolio.service";
@@ -54,6 +55,25 @@ describe("public portfolio service", () => {
 
     const malformed = client({ resolve_public_portfolio: { data: { portfolioId: "private-id" } } });
     await expect(resolvePublicPortfolio(malformed.supabase, "valid-token")).resolves.toBeNull();
+  });
+
+  it("distinguishes only exact expired tokens from all other unavailable links", async () => {
+    const expired = client({
+      resolve_public_portfolio: { data: null },
+      resolve_public_portfolio_status: { data: "expired" },
+    });
+    await expect(resolvePublicPortfolioAvailability(expired.supabase, "expired-token"))
+      .resolves.toBe("expired");
+    expect(expired.rpc).toHaveBeenCalledWith("resolve_public_portfolio_status", {
+      p_share_token: "expired-token",
+    });
+
+    const unavailable = client({
+      resolve_public_portfolio: { data: null },
+      resolve_public_portfolio_status: { data: "unexpected", error: null },
+    });
+    await expect(resolvePublicPortfolioAvailability(unavailable.supabase, "unknown-token"))
+      .resolves.toBe("unavailable");
   });
 
   it("signs only descriptors returned by the public resolver", async () => {

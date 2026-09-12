@@ -142,7 +142,7 @@ export class DashboardRepository {
     return this.supabase.rpc("rotate_portfolio_transaction", { p_share_token: shareToken });
   }
 
-  /** Atomically disables public access and revokes every active reveal grant. */
+  /** Atomically disables public resolution while preserving requests, grants, metrics, and audit history. */
   async unpublishPortfolioTransaction() {
     return this.supabase.rpc("unpublish_portfolio_transaction");
   }

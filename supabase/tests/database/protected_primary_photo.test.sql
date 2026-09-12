@@ -17,6 +17,11 @@ select pg_temp.create_auth_actor(
   'owner-only-primary@portfolio.test'
 );
 
+insert into app_private.b2c_creator_entitlements (email_hash)
+values
+  (app_private.normalized_email_hash('protected-primary@portfolio.test')),
+  (app_private.normalized_email_hash('owner-only-primary@portfolio.test'));
+
 insert into public.candidates (id, primary_owner_user_id, display_name, created_by)
 values
   (

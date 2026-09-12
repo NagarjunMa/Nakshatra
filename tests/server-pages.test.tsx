@@ -217,6 +217,10 @@ describe("public portfolio pages", () => {
   it("rejects inactive tokens and renders sanitized public snapshots", async () => {
     mocks.outcomes.resolve_public_portfolio = { data: null };
     await expect(PublicBiodataPage({ params: Promise.resolve({ token: "missing" }) })).rejects.toThrow("NOT_FOUND");
+    mocks.outcomes.resolve_public_portfolio_status = { data: "expired" };
+    render(await PublicBiodataPage({ params: Promise.resolve({ token: "expired-token" }) }));
+    expect(screen.getByRole("heading", { name: /portfolio link has expired/i })).toBeInTheDocument();
+    expect(screen.getByText(/No portfolio information is available/i)).toBeInTheDocument();
     mocks.outcomes.resolve_public_portfolio = { data: publicPayload };
     mocks.outcomes.record_public_portfolio_view = { data: true };
     render(await PublicBiodataPage({ params: Promise.resolve({ token: "token" }) }));

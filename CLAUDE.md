@@ -44,9 +44,11 @@ The intended pilot is narrower than the implemented product surface:
 - A viewer/Auth account does not imply creator entitlement.
 - Adult candidates only. Family assistance must not replace candidate knowledge and consent.
 - Payments are disabled and must not be claimed.
-- Didit identity verification is disabled and must not be claimed or required for publication.
+- Didit identity verification is required for every pilot creator before first publication.
 - BrokerDesk is disabled server-side for this launch.
 - Public portfolio links are bearer links and may be forwarded. Full View is the identity-bound disclosure layer.
+- Public portfolio links are active for 30 days by default. Approved Full View access lasts 7 days.
+- Future paid-plan durations under consideration are 3, 4, 6, and 12 months. They are not implemented or available during the pilot.
 
 As of this update, that contract is **not fully enforced**. See “Pilot blockers” below.
 
@@ -314,9 +316,9 @@ Do not treat these local results as proof of deployed configuration. This checko
 
 1. Add a single-use, email-bound creator invitation/entitlement and enforce it in signup, OAuth callback, verification, portfolio bootstrap, dashboard, and owner APIs.
 2. Ensure viewer/Auth identity can never self-elevate into creator entitlement.
-3. Replace unrestricted creator CTAs with “Create with my invitation”; show a beta boundary and optional waitlist to uninvited users.
-4. Disable payments, Didit, and BrokerDesk server-side and remove all related pilot claims.
-5. Remove the database requirement for identity verification before first publication while the capability is disabled.
+3. Enforce creator invitations at the authorization boundary. Pilot-facing CTAs now use invitation-aware beta messaging; do not invent a waitlist until a real capture workflow exists.
+4. Disable payments and BrokerDesk server-side and remove payment claims from the pilot.
+5. Keep the Didit publication requirement, verify its production configuration, and provide clear consent, failure, retry, and support states for every pilot creator.
 6. Add a real publication disclosure review; the current “Review and publish” action publishes directly.
 7. Add a Full View confirmation showing recipient, disclosed categories, seven-day expiry, and revocation.
 8. Add owner new-interest and viewer decision notifications.

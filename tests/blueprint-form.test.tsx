@@ -69,13 +69,14 @@ describe("blueprint form", () => {
     const onUpdate = vi.fn();
     render(<BlueprintForm data={completeBlueprint} onUpdate={onUpdate} />);
 
+    fireEvent.click(screen.getByRole("button", { name: "Next: Foundation" }));
     fireEvent.change(screen.getByLabelText("First name"), { target: { value: "Updated" } });
     fireEvent.change(screen.getByLabelText("Short introduction"), { target: { value: "A concise new bio" } });
     fireEvent.click(screen.getByRole("button", { name: /Astrology/ }));
     fireEvent.change(screen.getByLabelText("Moon sign (Rashi)"), { target: { value: "kumbha" } });
     fireEvent.click(screen.getByRole("button", { name: /Family/ }));
     fireEvent.change(screen.getByLabelText("Number of siblings"), { target: { value: "2" } });
-    fireEvent.click(screen.getByRole("button", { name: /Privacy & contact/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Privacy & sharing/ }));
     fireEvent.change(screen.getAllByLabelText("Name of contact")[0], { target: { value: "Updated Contact" } });
     fireEvent.click(screen.getByRole("button", { name: "Dark" }));
     fireEvent.click(screen.getByRole("button", { name: /Standard introduction/ }));
@@ -104,12 +105,13 @@ describe("blueprint form", () => {
     render(<BlueprintForm data={minimal} onUpdate={onUpdate} />);
 
     expect(screen.getByText(/0 of 14 required details complete/)).toBeInTheDocument();
-    expect(screen.getByText("Step 1 of 9 · Foundation")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Next: About you/ })).toHaveClass("dashboard-primary-action");
+    expect(screen.getByText("Step 1 of 9 · Privacy & sharing")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Next: Foundation/ })).toHaveClass("dashboard-primary-action");
+    fireEvent.click(screen.getByRole("button", { name: /Next: Foundation/ }));
     fireEvent.blur(screen.getByLabelText("First name"));
     expect(screen.getByText("This field is required.")).toBeInTheDocument();
     expect(screen.getByLabelText("First name")).toHaveAttribute("aria-invalid", "true");
-    fireEvent.click(screen.getByRole("button", { name: /Privacy & contact/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Privacy & sharing/ }));
     expect(screen.getByRole("button", { name: /Short introduction/ })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "Light" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.queryByLabelText("Name of contact")).not.toBeInTheDocument();
@@ -123,7 +125,7 @@ describe("blueprint form", () => {
       sibling_count: 1,
       siblings: [{}],
     }));
-    fireEvent.click(screen.getByRole("button", { name: /Privacy & contact/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Privacy & sharing/ }));
     fireEvent.click(screen.getByRole("button", { name: "Add a protected contact" }));
     expect(onUpdate).toHaveBeenCalledWith("contact", expect.objectContaining({
       contacts: [expect.objectContaining({ relationship: "self" })],
@@ -136,7 +138,7 @@ describe("blueprint form", () => {
 
     const sectionNavigation = screen.getByRole("navigation", { name: "Portfolio form sections" });
     const sectionLabels = within(sectionNavigation).getAllByRole("button").map((button) => button.textContent);
-    expect(sectionLabels.slice(3, 6)).toEqual(["04Family", "05Astrology", "06Lifestyle"]);
+    expect(sectionLabels.slice(3, 6)).toEqual(["04Education & work", "05Family", "06Astrology"]);
     expect(screen.getAllByText("Optional").length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole("button", { name: /Education & work/ }));
@@ -205,7 +207,7 @@ describe("blueprint form", () => {
 
   it("marks publishing requirements and uses clear astrology terminology", () => {
     render(<BlueprintForm data={completeBlueprint} onUpdate={vi.fn()} />);
-    fireEvent.click(screen.getByRole("button", { name: /05Astrology/ }));
+    fireEvent.click(screen.getByRole("button", { name: /06Astrology/ }));
 
     for (const label of [
       "Time of birth",
@@ -220,7 +222,7 @@ describe("blueprint form", () => {
     }
     expect(screen.getByLabelText("Lagnam")).not.toBeRequired();
     expect(screen.getByLabelText("Maternal gotra")).not.toBeRequired();
-    expect(screen.getAllByText("Shown in: Every portfolio view").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Shown in: Standard and Full").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Shown in: Full only").length).toBeGreaterThan(0);
   });
 });

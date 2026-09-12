@@ -16,6 +16,8 @@ export interface PortfolioView extends ResolvedPortfolio {
   photos: PortfolioPhoto[];
 }
 
+export type PublicPortfolioAvailability = "active" | "expired" | "unavailable";
+
 /** Caps a private signed capability at five minutes without allowing it to outlive its reveal grant. */
 export function privateCapabilityTtl(expiresAt: string, now = Date.now()) {
   const remainingSeconds = Math.floor((Date.parse(expiresAt) - now) / 1000);
@@ -32,6 +34,18 @@ export async function resolvePublicPortfolio(
   if (error || !data) return null;
   const parsed = resolvedPortfolioSchema.safeParse(data);
   return parsed.success ? parsed.data : null;
+}
+
+/** Distinguishes an expired canonical link from malformed, unknown, rotated, or unpublished links. */
+export async function resolvePublicPortfolioAvailability(
+  supabase: SupabaseClient,
+  token: string
+): Promise<PublicPortfolioAvailability> {
+  if (await resolvePublicPortfolio(supabase, token)) return "active";
+  const { data, error } = await new PublicPortfolioRepository(supabase)
+    .resolvePublicStatus(token);
+  if (error || data !== "expired") return "unavailable";
+  return "expired";
 }
 
 /** Resolves an approved projection only when the authenticated viewer has an active full grant. */

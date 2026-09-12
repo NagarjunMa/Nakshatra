@@ -10,6 +10,10 @@ export class PublicPortfolioRepository {
     return this.supabase.rpc("resolve_public_portfolio", { p_share_token: token });
   }
 
+  resolvePublicStatus(token: string) {
+    return this.supabase.rpc("resolve_public_portfolio_status", { p_share_token: token });
+  }
+
   resolveApproved(token: string) {
     return this.supabase.rpc("resolve_approved_portfolio", { p_share_token: token });
   }

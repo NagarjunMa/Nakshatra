@@ -74,15 +74,13 @@ describe("landing and shared frontend components", () => {
   it("renders the concise product promise, access model, and primary actions", () => {
     render(<Home />);
     expect(screen.getAllByText(/Nakshatra/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByRole("link", { name: /create/i }).length).toBeGreaterThan(0);
-    expect(screen.getByRole("heading", { name: /share your introduction without losing control of it/i })).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: /pilot invitation/i }).length).toBeGreaterThan(0);
+    expect(screen.getByRole("heading", { name: /one marriage introduction\. shared on your terms/i })).toBeInTheDocument();
     expect(screen.getAllByText(/first view/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/full portfolio/i).length).toBeGreaterThan(0);
-    expect(screen.getByRole("heading", { name: /build for free\. pay when you are ready to publish/i })).toBeInTheDocument();
-    expect(screen.getByText("₹2,450")).toBeInTheDocument();
-    expect(screen.getByText(/outside india\? view pricing in usd/i)).toBeInTheDocument();
-    expect(screen.getByText(/plans do not renew automatically/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/identity verified/i).length).toBeGreaterThan(0);
+    expect(screen.getByRole("heading", { name: /creation is invited\. introductions can still travel/i })).toBeInTheDocument();
+    expect(screen.getByText(/no payment or plan purchase is required/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /identity verification required/i })).toBeInTheDocument();
     expect(screen.getByText(/these are not real Nakshatra users/i)).toBeInTheDocument();
   });
 

@@ -11,6 +11,7 @@ const repositories = vi.hoisted(() => ({
   access: vi.fn(),
   mediaUrls: vi.fn(),
 }));
+const canCreatePortfolio = vi.hoisted(() => vi.fn());
 
 vi.mock("@/features/portfolio/server/dashboard.repository", () => ({
   DashboardRepository: class { constructor() { return repositories.dashboard; } },
@@ -30,6 +31,7 @@ vi.mock("@/features/access/server/access.service", () => ({
 vi.mock("@/features/media/server/photo-url.service", () => ({
   createOwnerPortfolioMediaPreviewUrls: repositories.mediaUrls,
 }));
+vi.mock("@/features/auth/server/portfolio-bootstrap", () => ({ canCreatePortfolio }));
 
 import {
   loadDashboardView,
@@ -59,6 +61,7 @@ const row = {
 describe("dashboard view service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    canCreatePortfolio.mockResolvedValue(true);
     repositories.dashboard.findDashboardPortfolioForUser.mockResolvedValue({ data: row, error: null });
     repositories.dashboard.countPortfolioViews.mockResolvedValue({ count: 7, error: null });
     repositories.media.findPortfolioPhotos.mockResolvedValue({ data: [{ id: "media-1" }], error: null });
@@ -72,9 +75,11 @@ describe("dashboard view service", () => {
 
   it("returns an empty projection without issuing child reads for a new owner", async () => {
     repositories.dashboard.findDashboardPortfolioForUser.mockResolvedValue({ data: null, error: null });
+    canCreatePortfolio.mockResolvedValue(false);
 
     await expect(loadDashboardView({ supabase: {} as never, userId: "owner-1" })).resolves.toEqual({
       portfolio: null,
+      canCreatePortfolio: false,
       viewCount: 0,
       media: [],
       mediaUrls: {},
@@ -90,6 +95,7 @@ describe("dashboard view service", () => {
 
     expect(result).toMatchObject({
       portfolio: { id: "portfolio-1", privacy_mode: "balanced" },
+      canCreatePortfolio: true,
       viewCount: 7,
       mediaUrls: { "media-1": "https://signed.test/media-1" },
       horoscope: { id: "horoscope-1" },

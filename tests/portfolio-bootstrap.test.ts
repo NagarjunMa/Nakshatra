@@ -1,6 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 import { ensureOwnerPortfolio } from "../src/features/auth/server/portfolio-bootstrap";
 
+function client(from: ReturnType<typeof vi.fn>, entitled = true) {
+  return {
+    from,
+    rpc: vi.fn().mockResolvedValue({ data: entitled, error: null }),
+  };
+}
+
 function lookup(result: unknown) {
   const maybeSingle = vi.fn().mockResolvedValue(result);
   const eq = vi.fn(() => ({ maybeSingle }));
@@ -26,7 +33,7 @@ describe("owner portfolio bootstrap", () => {
   it("returns an existing owner portfolio without writing", async () => {
     const existing = lookup({ data: { id: "portfolio-existing" }, error: null });
     const from = vi.fn().mockReturnValueOnce(existing.query);
-    await expect(ensureOwnerPortfolio({ from } as never, "owner")).resolves.toBe("portfolio-existing");
+    await expect(ensureOwnerPortfolio(client(from) as never, "owner")).resolves.toBe("portfolio-existing");
     expect(from).toHaveBeenCalledTimes(1);
   });
 
@@ -37,7 +44,7 @@ describe("owner portfolio bootstrap", () => {
       .mockReturnValueOnce(missing.query)
       .mockReturnValueOnce(inserted.query);
 
-    await expect(ensureOwnerPortfolio({ from } as never, "owner")).resolves.toBe("portfolio-created");
+    await expect(ensureOwnerPortfolio(client(from) as never, "owner")).resolves.toBe("portfolio-created");
     expect(inserted.upsert).toHaveBeenCalledWith(
       {
         user_id: "owner",
@@ -56,7 +63,7 @@ describe("owner portfolio bootstrap", () => {
       .mockReturnValueOnce(conflictedInsert.query)
       .mockReturnValueOnce(winner.query);
 
-    await expect(ensureOwnerPortfolio({ from } as never, "owner")).resolves.toBe("portfolio-winner");
+    await expect(ensureOwnerPortfolio(client(from) as never, "owner")).resolves.toBe("portfolio-winner");
     expect(winner.eq).toHaveBeenCalledWith("user_id", "owner");
   });
 
@@ -64,6 +71,13 @@ describe("owner portfolio bootstrap", () => {
     const failure = new Error("database unavailable");
     const existing = lookup({ data: null, error: failure });
     const from = vi.fn().mockReturnValueOnce(existing.query);
-    await expect(ensureOwnerPortfolio({ from } as never, "owner")).rejects.toBe(failure);
+    await expect(ensureOwnerPortfolio(client(from) as never, "owner")).rejects.toBe(failure);
+  });
+
+  it("keeps an uninvited viewer authenticated without creating or loading a portfolio", async () => {
+    const from = vi.fn();
+    await expect(ensureOwnerPortfolio(client(from, false) as never, "viewer"))
+      .resolves.toBeNull();
+    expect(from).not.toHaveBeenCalled();
   });
 });

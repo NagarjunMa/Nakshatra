@@ -32,10 +32,10 @@ const COPY = {
     altHref: "/signup",
   },
   signup: {
-    eyebrow: "Create account",
-    title: "Start your marriage portfolio",
-    body: "Create your account now. You can build privately and publish only when you are ready.",
-    primaryAction: "Create account",
+    eyebrow: "Invite-only private beta",
+    title: "Create your pilot account",
+    body: "Use the email address invited to the pilot. You can build privately, preview both views, and publish only after completing the required identity check.",
+    primaryAction: "Create pilot account",
     altPrompt: "Already have an account?",
     altCta: "Sign in",
     altHref: "/login",
@@ -68,6 +68,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
           eyebrow: "Nakshatra BrokerDesk",
           title: "Create your broker account",
           body: "Start with your account. Your workspace stays private while we collect and verify your business details.",
+          primaryAction: "Create broker account",
         }
     : COPY[mode];
   const alternateHref = brokerdeskContinuation
@@ -207,6 +208,16 @@ export function AuthForm({ mode }: { mode: Mode }) {
               <p className="account-eyebrow">{copy.eyebrow}</p>
               <h1 id="account-title" className="account-title">{copy.title}</h1>
               <p className="account-copy">{copy.body}</p>
+              {mode === "signup" && !brokerdeskContinuation && (
+                <div className="account-pilot-note">
+                  <ShieldCheck aria-hidden="true" />
+                  <div>
+                    <strong>Portfolio creation is limited to invited beta participants.</strong>
+                    <p>Your draft stays private until you publish. Didit identity verification is required before publication. If someone shared a portfolio with you, use that shared link to view it and express interest—you do not need creator access.</p>
+                    <Link href="/#samples">See the portfolio format</Link>
+                  </div>
+                </div>
+              )}
 
               <form onSubmit={handleCredentials} className="account-form">
                 <AuthField id={`${mode}-email`} label="Email address" type="email" autoComplete="email" value={email} onChange={setEmail} placeholder="you@example.com" />

@@ -16,6 +16,7 @@ import { InterestRepository } from "@/features/interest/server/interest.reposito
 import { PortfolioMediaRepository } from "@/features/media/server/media.repository";
 import { createOwnerPortfolioMediaPreviewUrls } from "@/features/media/server/photo-url.service";
 import { DashboardRepository } from "./dashboard.repository";
+import { canCreatePortfolio } from "@/features/auth/server/portfolio-bootstrap";
 
 type PortfolioRow = Database["public"]["Tables"]["portfolios"]["Row"];
 
@@ -46,12 +47,16 @@ export async function loadDashboardView({
   userId: string;
 }) {
   const dashboardRepository = new DashboardRepository(supabase);
-  const { data: portfolioRow } = await dashboardRepository.findDashboardPortfolioForUser(userId);
+  const [{ data: portfolioRow }, creatorEntitled] = await Promise.all([
+    dashboardRepository.findDashboardPortfolioForUser(userId),
+    canCreatePortfolio(supabase),
+  ]);
   const portfolio = mapDashboardPortfolio(portfolioRow as PortfolioRow | null);
 
   if (!portfolio) {
     return {
       portfolio: null,
+      canCreatePortfolio: creatorEntitled,
       viewCount: 0,
       media: [] as PortfolioMedia[],
       mediaUrls: {} as Record<string, string>,
@@ -80,6 +85,7 @@ export async function loadDashboardView({
 
   return {
     portfolio,
+    canCreatePortfolio: creatorEntitled,
     viewCount: views.count ?? 0,
     media,
     mediaUrls,

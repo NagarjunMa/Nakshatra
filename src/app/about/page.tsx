@@ -7,8 +7,8 @@ export default function AboutPage() {
   return (
     <PolicyLayout
       eyebrow="About Nakshatra"
-      title="A calmer, more respectful way to present wedding biodata."
-      summary="Nakshatra helps people and families create a clear, mobile-friendly introduction without repeatedly sending new documents."
+      title="A calmer, more respectful way to create and share a marriage portfolio."
+      summary="Nakshatra turns familiar wedding biodata into one clear, mobile-friendly portfolio that stays current without repeatedly sending new documents."
     >
       <PolicySection title="The product idea">
         <p>Start with essential details, add only what feels useful, choose a Light or Dark presentation, and decide between Balanced or Private sharing. A single active link can be updated when your story changes.</p>

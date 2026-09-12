@@ -27,6 +27,7 @@
     "privacy:process-deletions": "node scripts/process-account-deletions.mjs",
     "identity-verification:process": "node scripts/process-identity-verifications.mjs",
     "privacy:retention": "node scripts/run-data-retention.mjs",
+    "pilot:creator": "node scripts/manage-pilot-creator.mjs",
     "db:types": "supabase gen types typescript --local --schema public > src/types/database.generated.ts",
     "check": "npm run lint && npm run typecheck && npm test && npm run build",
     "prepare": "husky"

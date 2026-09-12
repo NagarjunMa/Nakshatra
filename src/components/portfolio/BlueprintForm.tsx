@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, type HTMLInputTypeAttribute, type ReactNode } from "react";
+import { createContext, useContext, useId, useState, type HTMLInputTypeAttribute, type ReactNode } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -67,6 +67,7 @@ type SectionId =
   | "privacy";
 
 const SECTIONS: Array<{ id: SectionId; label: string; optional?: boolean }> = [
+  { id: "privacy", label: "Privacy & sharing" },
   { id: "foundation", label: "Foundation" },
   { id: "story", label: "About you", optional: true },
   { id: "work", label: "Education & work", optional: true },
@@ -75,8 +76,9 @@ const SECTIONS: Array<{ id: SectionId; label: string; optional?: boolean }> = [
   { id: "lifestyle", label: "Lifestyle", optional: true },
   { id: "preferences", label: "Partner preferences", optional: true },
   { id: "future", label: "Future plans", optional: true },
-  { id: "privacy", label: "Privacy & contact" },
 ];
+
+const PortfolioPrivacyModeContext = createContext<"private" | "balanced">("balanced");
 
 const RASHI_SELECT_OPTIONS: BlueprintOption[] = [
   { value: "", label: "Select moon sign" },
@@ -128,7 +130,7 @@ export function BlueprintForm({
   horoscopeManager?: ReactNode;
   hasShareablePrimaryPhoto?: boolean;
 }) {
-  const [activeSection, setActiveSection] = useState<SectionId>("foundation");
+  const [activeSection, setActiveSection] = useState<SectionId>("privacy");
   const activeIndex = SECTIONS.findIndex((section) => section.id === activeSection);
   const nameParts = resolvePortfolioNameParts(data.personal);
   const foundationFields = [
@@ -229,6 +231,7 @@ export function BlueprintForm({
   }
 
   return (
+    <PortfolioPrivacyModeContext.Provider value={data.privacy_mode === "private" ? "private" : "balanced"}>
     <div className="biodata-editor grid gap-6 lg:grid-cols-[15rem_minmax(0,1fr)]">
       <aside className="hidden lg:sticky lg:top-0 lg:block lg:self-start">
         <div className="biodata-editor-sidebar rounded-2xl p-3">
@@ -443,7 +446,7 @@ export function BlueprintForm({
         )}
 
         {activeSection === "privacy" && (
-          <FormSection eyebrow="Before publishing" title="Privacy and sharing" description="Choose the appearance and how much the public introduction reveals.">
+          <FormSection eyebrow="Start with control" title="Privacy and sharing" description="Choose what kind of introduction people receive before you add personal details. You can change this at any time.">
             <InfoCard title="Sensitive details stay protected" audience="Never public" text="Exact birth details, contact information, income, and the horoscope are not shown in the public introduction." />
             <div>
               <p className="mb-1 text-base font-semibold text-[color:var(--workspace-ink)]">Portfolio appearance</p>
@@ -498,6 +501,7 @@ export function BlueprintForm({
         </div>
       </div>
     </div>
+    </PortfolioPrivacyModeContext.Provider>
   );
 }
 
@@ -514,8 +518,9 @@ function EmbeddedPanel({ title, description, children }: { title: string; descri
 }
 
 function FieldLabel({ label, hint, required, requirement, audience }: { label: string; hint?: string; required?: boolean; requirement?: string; audience?: string }) {
+  const privacyMode = useContext(PortfolioPrivacyModeContext);
   const visibleRequirement = required ? "Required" : requirement || "Optional";
-  const visibleAudience = audience ? audienceCopy(audience) : undefined;
+  const visibleAudience = audience ? audienceCopy(audience, privacyMode) : undefined;
   return <span><span className="flex flex-wrap items-center gap-2"><span>{label}{required && <span className="ml-1 text-[color:var(--workspace-teal)]" aria-hidden="true">*</span>}</span>{visibleRequirement && <span className="rounded-full border border-[color:var(--workspace-border)] bg-white px-2 py-0.5 text-xs font-semibold text-[color:var(--workspace-ink-muted)]">{visibleRequirement}</span>}</span>{visibleAudience && <span className="mt-1 block text-xs font-medium text-[color:var(--workspace-teal)]">Shown in: {visibleAudience}</span>}{hint && <span className="mt-1 block text-sm font-normal leading-5 text-[color:var(--workspace-ink-muted)]">{hint}</span>}</span>;
 }
 
@@ -610,12 +615,14 @@ function splitValues(value: string) {
   return Array.from(new Set(value.split(/[,;\n]/).map((item) => item.trim()).filter(Boolean)));
 }
 
-function audienceCopy(audience: string) {
-  if (audience === "All portfolio views") return "Every portfolio view";
-  if (audience === "Standard and Full") return "Standard and Full";
+function audienceCopy(audience: string, privacyMode: "private" | "balanced") {
+  const initialView = privacyMode === "private" ? "Short" : "Standard";
+  if (audience === "All portfolio views") return `${initialView} and Full`;
+  if (audience === "Standard and Full") return privacyMode === "private" ? "Full only" : "Standard and Full";
+  if (audience === "Age in initial views · Exact date in Full") return `Age in ${initialView} · Exact date in Full`;
   if (audience === "Full portfolio" || audience === "Approved people") return "Full only";
-  if (audience === "Portfolio") return "Public introduction";
-  if (audience === "Portfolio, if you choose") return "Public when selected";
+  if (audience === "Portfolio") return `${initialView} introduction`;
+  if (audience === "Portfolio, if you choose") return `${initialView} when selected`;
   if (audience === "Protected") return "Not in the public introduction";
   if (audience === "Only you") return "Private draft only";
   return audience;

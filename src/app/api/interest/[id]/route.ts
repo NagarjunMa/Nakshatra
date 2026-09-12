@@ -56,7 +56,13 @@ export async function PATCH(
   }
   if (result === "signin_required") {
     return NextResponse.json(
-      { code: "INTEREST_SIGNIN_REQUIRED", error: "Ask this viewer to verify their email before approving access." },
+      { code: "INTEREST_SIGNIN_REQUIRED", error: "Ask this viewer to sign in and verify their email before approving access." },
+      { status: 409 }
+    );
+  }
+  if (result === "verification_required") {
+    return NextResponse.json(
+      { code: "INTEREST_VERIFICATION_REQUIRED", error: "Ask this viewer to verify their email before approving access." },
       { status: 409 }
     );
   }

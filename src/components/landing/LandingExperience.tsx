@@ -22,30 +22,30 @@ export type LandingVariant = "clarity" | "control" | "story";
 const concepts = {
   clarity: {
     className: styles.clarity,
-    eyebrow: "A digital marriage portfolio",
-    headline: "Share your introduction without losing control of it.",
-    lead: "Your story, photographs, family details, and horoscope in one portfolio. Every family opens the same current link. Contact details stay private until you approve a viewer.",
-    primary: "Create my portfolio",
+    eyebrow: "Invite-only private beta",
+    headline: "One marriage introduction. Shared on your terms.",
+    lead: "Replace scattered biodata files, photographs, and horoscope attachments with one current portfolio. Families see a clear first introduction. Personal details are shared only after you approve their verified request.",
+    primary: "I have a pilot invitation",
     secondary: "View a sample portfolio",
     visualMode: "Standard introduction",
     visualNote: "Contact details protected",
   },
   control: {
     className: styles.control,
-    eyebrow: "Privacy is part of the introduction",
+    eyebrow: "Invite-only private beta",
     headline: "Share your story. Not your privacy.",
     lead: "Choose what a first-time viewer sees, keep contact details protected, and approve seven-day full portfolio access only when an introduction feels relevant.",
-    primary: "Create my portfolio",
+    primary: "I have a pilot invitation",
     secondary: "See how control works",
     visualMode: "Short introduction",
     visualNote: "Full portfolio needs approval",
   },
   story: {
     className: styles.story,
-    eyebrow: "More than a list of facts",
+    eyebrow: "Invite-only private beta",
     headline: "A biodata is a list. This is how you’re introduced.",
     lead: "Bring your story, photographs, family, and horoscope together in the way you would actually want someone to understand you. Not as another form or attachment.",
-    primary: "Create my portfolio",
+    primary: "I have a pilot invitation",
     secondary: "See the portfolio structure",
     visualMode: "Standard introduction",
     visualNote: "Story · Journey · Family · Gallery",
@@ -60,7 +60,7 @@ const problems = [
 
 const steps = [
   { number: "01", title: "Create", body: "Add your story, family background, photographs, and horoscope in a guided form. Save as you go and finish in your own time." },
-  { number: "02", title: "Preview and verify", body: "See exactly what each family will see before anyone else does. Complete a short identity check to add your verified badge." },
+  { number: "02", title: "Preview and verify", body: "See exactly what each family will see before anyone else does. Every pilot creator completes Didit identity verification before publication." },
   { number: "03", title: "Share", body: "Publish when you are ready and send one link through WhatsApp, email, or wherever your family already talks." },
   { number: "04", title: "Approve", body: "Review interest requests in your dashboard and decide who sees your full portfolio." },
 ] as const;
@@ -81,7 +81,7 @@ const trustFacts = [
 const familyBenefits = [
   { icon: Smartphone, title: "Clear on every phone", body: "Large, readable text and plain labels. Comfortable for parents and grandparents to read." },
   { icon: Globe2, title: "Nothing to install", body: "The link opens straight in a browser. There is no app to download and no account needed to read the first view." },
-  { icon: BadgeCheck, title: "Identity check available", body: "Complete an identity check to add a verified badge before you share your portfolio." },
+  { icon: BadgeCheck, title: "Identity verification required", body: "Every pilot creator completes the Didit identity check before publication. The verified badge does not guarantee every portfolio detail." },
   { icon: RefreshCw, title: "Always current", body: "Change a detail, update your published portfolio, and the same link shows the current version." },
 ] as const;
 
@@ -91,26 +91,15 @@ const samplePortfolios = [
   { initials: "MI", name: "Meera Iyer", detail: "Physician · Chennai", accent: "rose" },
 ] as const;
 
-const plans = [
-  { duration: "4 months", price: "₹1,600", rate: "₹400/month", recommended: false },
-  { duration: "7 months", price: "₹2,450", rate: "₹350/month", recommended: true },
-  { duration: "14 months", price: "₹4,200", rate: "₹300/month", recommended: false },
-] as const;
-
-const internationalPlans = [
-  { duration: "4 months", price: "$24", rate: "$6/month" },
-  { duration: "7 months", price: "$35", rate: "$5/month" },
-  { duration: "14 months", price: "$56", rate: "$4/month" },
-] as const;
-
 const faqs = [
   { question: "Is Nakshatra a matchmaking website?", answer: "No. Nakshatra does not suggest matches or search for people on your behalf. It gives you one clear portfolio to share with the families you choose." },
-  { question: "Can I see my portfolio before I pay?", answer: "Yes. You can build your portfolio and preview every view for free. You only choose a plan when you are ready to publish." },
+  { question: "Who can create a portfolio during beta testing?", answer: "Portfolio creation is limited to invited pilot participants. People who receive a shared portfolio do not need a creator invitation to read its First View, verify their email, express interest, or receive approved Full View access." },
+  { question: "Is the pilot paid?", answer: "No. The private beta is free for invited pilot participants. Paid plans are not available during the pilot." },
   { question: "Does someone need to sign in to open my link?", answer: "No. Anyone with your link can read your first view straight away. A viewer verifies their email before asking to see your full portfolio." },
-  { question: "What does Identity Verified mean?", answer: "It means the portfolio owner successfully completed an identity check. It does not guarantee that every detail entered in the portfolio is accurate." },
+  { question: "Is identity verification required?", answer: "Yes. Every pilot creator must complete the Didit identity check before publishing. The verified badge confirms that the owner completed the identity check; it does not guarantee that every portfolio detail is accurate." },
+  { question: "How long does a public link remain active?", answer: "A published portfolio link is active for 30 days by default. The owner can unpublish or replace the link earlier." },
   { question: "How long does approved access last?", answer: "Full portfolio access lasts for seven days. You can end it earlier or renew it from your dashboard." },
   { question: "Can someone find my portfolio by searching my name?", answer: "No. Nakshatra has no public portfolio directory, and portfolio pages tell search engines not to list them. Anyone who receives or is forwarded your link can still open its first view." },
-  { question: "What happens when my plan ends?", answer: "Your shared link stops opening. Your saved portfolio remains in your account, and you can publish it again when you are ready." },
 ] as const;
 
 export function LandingExperience({ variant }: { variant: LandingVariant }) {
@@ -126,10 +115,10 @@ export function LandingExperience({ variant }: { variant: LandingVariant }) {
         </Link>
         <nav className={styles.navigation} aria-label="Main navigation">
           <div className={styles.navigationLinks}>
-            <a href="#how">How it works</a><a href="#control">Your control</a><a href="#pricing">Pricing</a><a href="#questions">Questions</a>
+            <a href="#how">How it works</a><a href="#control">Your control</a><a href="#beta">Beta access</a><a href="#questions">Questions</a>
           </div>
           <Link href="/login" className={styles.signIn}>Sign in</Link>
-          <Link href="/signup" className={styles.primaryButton}>Create portfolio</Link>
+          <Link href="/signup" className={styles.primaryButton}>Pilot access</Link>
         </nav>
       </header>
 
@@ -143,7 +132,7 @@ export function LandingExperience({ variant }: { variant: LandingVariant }) {
               <Link href="/signup" className={styles.primaryButton}>{concept.primary} <ArrowRight aria-hidden="true" /></Link>
               <a href={variant === "control" ? "#control" : "#samples"} className={styles.secondaryButton}>{concept.secondary}</a>
             </div>
-            <p className={styles.heroNote}><Check aria-hidden="true" /> Create and preview before choosing a plan.</p>
+            <p className={styles.heroNote}><Check aria-hidden="true" /> Free beta for invited creators. Didit identity verification is required before publication.</p>
           </div>
           <PortfolioPreview mode={concept.visualMode} note={concept.visualNote} variant={variant} />
         </section>
@@ -178,17 +167,21 @@ export function LandingExperience({ variant }: { variant: LandingVariant }) {
           <p className={styles.sampleNote}>Sample layouts. These are not real Nakshatra users.</p>
         </section>
 
-        <section id="pricing" className={styles.pricingSection}>
-          <div className={styles.sectionHeading}><p className={styles.eyebrow}>Simple, one-time pricing</p><h2>Build for free. Pay when you are ready to publish.</h2><p>Every plan includes the same portfolio, the same updates, and the same access controls. The only difference is how long your portfolio stays published. Plans do not renew automatically.</p></div>
-          <div className={styles.pricingGrid}>
-            {plans.map((plan) => <article key={plan.duration} className={plan.recommended ? styles.recommendedPlan : undefined}>{plan.recommended && <span>Most chosen</span>}<h3>{plan.duration}</h3><strong>{plan.price}</strong><p>{plan.rate}</p><Link href="/signup">Start creating</Link></article>)}
+        <section id="beta" className={styles.betaSection}>
+          <div className={styles.betaCopy}>
+            <p className={styles.eyebrow}>Private beta testing</p>
+            <h2>Creation is invited. Introductions can still travel.</h2>
+            <p>Invited pilot participants can create, verify, publish, share, update, and manage their portfolios. People in their network can open a shared First View and express interest without a creator invitation.</p>
           </div>
-          <details className={styles.pricingDetails}><summary>Every plan includes <ChevronDown aria-hidden="true" /></summary><div><span><BadgeCheck aria-hidden="true" /> Identity verification and verified badge</span><span><RefreshCw aria-hidden="true" /> Unlimited updates on the same link</span><span><LockKeyhole aria-hidden="true" /> Interest requests and approval dashboard</span></div></details>
-          <details className={styles.internationalPricing}>
-            <summary>Outside India? View pricing in USD <ChevronDown aria-hidden="true" /></summary>
-            <div>{internationalPlans.map((plan) => <span key={plan.duration}><strong>{plan.duration}</strong><b>{plan.price}</b><small>{plan.rate}</small></span>)}</div>
-          </details>
-          <p className={styles.planEndNote}>When your publishing period ends, the shared link stops opening. Your saved portfolio remains in your account, and you can publish it again when you are ready.</p>
+          <div className={styles.betaDetails}>
+            <span><BadgeCheck aria-hidden="true" /><strong>Invited creators</strong>Use your pilot invitation to create an account. Every creator completes Didit identity verification before publication.</span>
+            <span><MessageCircle aria-hidden="true" /><strong>Shared-network viewers</strong>Open the First View, verify an email to express interest, and receive seven-day Full View access after approval.</span>
+            <span><RefreshCw aria-hidden="true" /><strong>Free pilot</strong>No payment or plan purchase is required. Public portfolio links are active for 30 days by default.</span>
+          </div>
+          <div className={styles.betaActions}>
+            <Link href="/signup" className={styles.primaryButton}>I have a pilot invitation <ArrowRight aria-hidden="true" /></Link>
+            <Link href="/login" className={styles.secondaryButton}>Sign in to Nakshatra</Link>
+          </div>
         </section>
 
         <section id="questions" className={styles.faqSection}>
@@ -197,8 +190,8 @@ export function LandingExperience({ variant }: { variant: LandingVariant }) {
         </section>
 
         <section className={styles.finalCta}>
-          <div><p className={styles.eyebrow}>Ready when you are</p><h2>Your introduction deserves more than another file.</h2><p>Create your portfolio privately, preview every view, and publish only when it feels right.</p></div>
-          <div className={styles.finalAction}><Link href="/signup" className={styles.lightButton}>Create my portfolio <ArrowRight aria-hidden="true" /></Link><span>Free to create. Choose a plan when you publish.</span></div>
+          <div><p className={styles.eyebrow}>Private beta</p><h2>Your introduction deserves more than another file.</h2><p>If you have a pilot invitation, create privately, complete identity verification, preview every view, and publish when you are ready.</p></div>
+          <div className={styles.finalAction}><Link href="/signup" className={styles.lightButton}>Use my pilot invitation <ArrowRight aria-hidden="true" /></Link><span>Free for invited pilot participants.</span></div>
         </section>
       </main>
 

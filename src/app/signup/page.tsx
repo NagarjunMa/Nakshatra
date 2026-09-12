@@ -5,8 +5,8 @@ import { getApiUser } from "@/lib/auth";
 import { sanitizeInternalRedirect } from "@/lib/security/redirect";
 
 export const metadata = {
-  title: "Create account · Nakshatra",
-  description: "Start building your digital wedding portfolio.",
+  title: "Pilot access · Nakshatra",
+  description: "Create a Nakshatra portfolio with your private-beta invitation.",
   robots: { index: false, follow: false },
 };
 

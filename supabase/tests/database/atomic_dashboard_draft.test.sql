@@ -101,6 +101,11 @@ select pg_temp.create_auth_actor(
   'other@draft.test'
 );
 
+insert into app_private.b2c_creator_entitlements (email_hash)
+values
+  (app_private.normalized_email_hash('owner@draft.test')),
+  (app_private.normalized_email_hash('other@draft.test'));
+
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"61000000-0000-4000-8000-000000000001","role":"authenticated","session_id":"62000000-0000-4000-8000-000000000001"}';
 

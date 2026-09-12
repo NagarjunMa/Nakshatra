@@ -16,6 +16,7 @@ import { DashboardRepository } from "./dashboard.repository";
 export type DashboardSaveErrorCode =
   | "DASHBOARD_DATABASE_UPDATE_REQUIRED"
   | "DASHBOARD_DATA_REJECTED"
+  | "PILOT_INVITATION_REQUIRED"
   | "DASHBOARD_SAVE_FAILED";
 
 export class DashboardSaveError extends Error {
@@ -72,6 +73,18 @@ export async function saveDashboardDraft({
     education: hasCandidate ? mapEducationEntry(data) : null,
     career: hasCandidate ? mapCareerEntry(data) : null,
   });
+
+  if (
+    result &&
+    typeof result === "object" &&
+    (result as { status?: unknown }).status === "creator_entitlement_required"
+  ) {
+    throw new DashboardSaveError(
+      "Portfolio creation is currently available only to invited beta participants.",
+      "PILOT_INVITATION_REQUIRED",
+      403
+    );
+  }
 
   if (error) {
     const code = databaseErrorCode(error);

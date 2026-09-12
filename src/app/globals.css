@@ -461,6 +461,11 @@
 .account-title { margin: 0; color: #18272e; font-family: var(--font-portfolio-display), Georgia, serif; font-size: clamp(2rem, 3vw, 2.35rem); font-weight: 500; letter-spacing: -0.035em; line-height: 1.04; }
 .account-title span { color: #315e63; }
 .account-copy { margin: 0.5rem 0 0.9rem; color: #59686d; font-size: 0.93rem; line-height: 1.4; }
+.account-pilot-note { display: grid; grid-template-columns: auto 1fr; gap: 0.75rem; margin: 0.25rem 0 1rem; border: 1px solid #c4d5d0; border-radius: 12px; padding: 0.9rem; background: #eef5f2; color: #40545a; font-size: 0.84rem; line-height: 1.5; }
+.account-pilot-note > svg { width: 1.1rem; height: 1.1rem; margin-top: 0.15rem; color: #28736e; }
+.account-pilot-note strong { display: block; color: #223a42; }
+.account-pilot-note p { margin: 0.3rem 0 0; }
+.account-pilot-note a { display: inline-block; margin-top: 0.45rem; color: #245f63; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
 .account-shell .auth-google-btn,
 .account-shell .auth-primary-btn { box-sizing: border-box; width: 100%; height: 48px; min-height: 48px; padding: 0 1rem; border-radius: 10px; font-family: var(--font-portfolio-body), system-ui, sans-serif; font-size: 0.94rem; font-weight: 650; }
 .account-shell .auth-google-btn { border: 1px solid #adb8ba; background: #fffdf8; color: #26383f; }

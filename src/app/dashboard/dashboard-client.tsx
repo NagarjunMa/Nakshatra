@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -53,6 +53,7 @@ import { normalizePortfolioName } from "@/features/portfolio/name";
 
 interface Props {
   portfolio: Portfolio | null;
+  canCreatePortfolio: boolean;
   viewCount: number;
   userEmail: string;
   shareUrl: string | null;
@@ -83,6 +84,7 @@ const EMPTY_ACCESS_SUMMARY: PortfolioAccessSummary = { grants: [], events: [] };
 
 export default function DashboardClient({
   portfolio,
+  canCreatePortfolio,
   viewCount,
   userEmail,
   shareUrl,
@@ -97,13 +99,14 @@ export default function DashboardClient({
 }: Props) {
   const [copied, setCopied] = useState(false);
   const [renewing, setRenewing] = useState(false);
-  const [formOpen, setFormOpen] = useState(initialEditorOpen);
+  const [formOpen, setFormOpen] = useState(initialEditorOpen && canCreatePortfolio);
   const [draftData, setDraftData] = useState<PortfolioData>(() =>
     normalizePortfolioData(portfolio?.draft_data, portfolio?.privacy_mode)
   );
   const [savingDraft, setSavingDraft] = useState(false);
   const [draftSaveState, setDraftSaveState] = useState<"saved" | "unsaved" | "saving">("saved");
   const [publishing, setPublishing] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
   const [rotatingLink, setRotatingLink] = useState(false);
   const [unpublishing, setUnpublishing] = useState(false);
   const [draftError, setDraftError] = useState<string | null>(null);
@@ -118,7 +121,13 @@ export default function DashboardClient({
   const accessEvents = accessSummary.events;
   const photoInputRef = useRef<HTMLInputElement>(null);
   const horoscopeInputRef = useRef<HTMLInputElement>(null);
+  const reviewPublishRef = useRef<HTMLButtonElement>(null);
   const router = useRouter();
+  const disclosedCategories = fullViewDisclosureCategories(
+    draftData,
+    portfolioMedia,
+    portfolioHoroscope
+  );
 
   useEffect(() => {
     if (draftSaveState === "saved") return;
@@ -129,6 +138,27 @@ export default function DashboardClient({
     window.addEventListener("beforeunload", warnBeforeLeaving);
     return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
   }, [draftSaveState]);
+
+  useEffect(() => {
+    if (!reviewOpen) return;
+    const previous = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    reviewPublishRef.current?.focus();
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !publishing) {
+        setReviewOpen(false);
+        return;
+      }
+      trapDialogFocus(event, reviewPublishRef.current?.closest<HTMLElement>("[role='dialog']") || null);
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("keydown", handleKey);
+      document.body.style.overflow = previousOverflow;
+      previous?.focus();
+    };
+  }, [reviewOpen, publishing]);
 
   function closePortfolioEditor() {
     if (
@@ -172,7 +202,7 @@ export default function DashboardClient({
 
   async function renewLink() {
     if (!portfolio) return;
-    if (!confirm("Renew link for 90 days?")) return;
+    if (!confirm("Renew link for 30 days?")) return;
     setRenewing(true);
     setDraftError(null);
     try {
@@ -201,6 +231,7 @@ export default function DashboardClient({
       const result = await publishPortfolioRequest(draftData);
       if (!result.ok) return void handlePortfolioApiFailure(result);
       setFormOpen(false);
+      setReviewOpen(false);
       router.refresh();
     } finally {
       setPublishing(false);
@@ -255,7 +286,7 @@ export default function DashboardClient({
     setDraftSaveState("unsaved");
   }
 
-  async function saveDashboardDraft() {
+  async function persistDashboardDraft({ refresh = true }: { refresh?: boolean } = {}) {
     setSavingDraft(true);
     setDraftSaveState("saving");
     setDraftError(null);
@@ -266,17 +297,31 @@ export default function DashboardClient({
       const result = await saveDashboardDraftRequest(draftData);
       if (!result.ok) {
         setDraftSaveState("unsaved");
-        return void handlePortfolioApiFailure(result);
+        handlePortfolioApiFailure(result);
+        return false;
       }
       setActivePortfolioId(result.data.portfolioId);
       setDraftSaveState("saved");
-      router.refresh();
+      if (refresh) router.refresh();
+      return true;
     } catch {
       setDraftSaveState("unsaved");
       setDraftError("Your changes could not be saved. Please check your connection and try again.");
+      return false;
     } finally {
       setSavingDraft(false);
     }
+  }
+
+  function saveDashboardDraft() {
+    return persistDashboardDraft();
+  }
+
+  async function reviewPortfolio() {
+    const saved = await persistDashboardDraft({ refresh: false });
+    if (!saved) return;
+    setFormOpen(false);
+    setReviewOpen(true);
   }
 
   async function uploadPhotos(files: FileList | null) {
@@ -427,7 +472,28 @@ export default function DashboardClient({
 
       <main className="relative z-10 flex-1 px-4 py-8 sm:py-12">
         <div className="mx-auto max-w-5xl">
-          {!portfolio?.is_published ? (
+          <div className="flex flex-col gap-6">
+          {!canCreatePortfolio && !portfolio ? (
+            <section className="dashboard-glass dashboard-onboarding flex flex-col items-center gap-6 px-6 py-12 text-center sm:px-12">
+              <div className="rounded-full bg-[#dcebe5] p-4">
+                <LockKeyhole className="h-7 w-7 text-[#315f57]" />
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-[0.18em] text-[#477b77]">
+                  Private beta testing
+                </p>
+                <h2 className="mt-2 text-3xl font-medium text-[#18272e]">
+                  Portfolio creation is currently invite-only.
+                </h2>
+                <p className="mx-auto mt-3 max-w-xl text-slate-600">
+                  We are opening creation to a small group of pilot participants while we learn and improve. You can still open portfolio links shared with you, verify your email, express interest, and receive Full View when the portfolio owner approves it.
+                </p>
+              </div>
+              <Link href="/" className="dashboard-secondary-action">
+                Learn about the private beta
+              </Link>
+            </section>
+          ) : !portfolio?.is_published ? (
             <div className="dashboard-glass dashboard-onboarding flex flex-col items-center gap-6 px-6 py-12 text-center sm:px-12">
               <div className="rounded-full bg-[#dcebe5] p-4">
                 <Edit3 className="h-7 w-7 text-[#315f57]" />
@@ -443,18 +509,23 @@ export default function DashboardClient({
                   Begin with the main details. Add photos, family information, and your horoscope when you are ready.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setFormOpen(true)}
-                className="dashboard-primary-action"
-              >
-                <PanelRightOpen className="h-4 w-4" />
-                {portfolio ? "Continue portfolio" : "Start with the basics"}
-              </button>
+              {canCreatePortfolio ? (
+                <button
+                  type="button"
+                  onClick={() => setFormOpen(true)}
+                  className="dashboard-primary-action"
+                >
+                  <PanelRightOpen className="h-4 w-4" />
+                  {portfolio ? "Continue portfolio" : "Start with the basics"}
+                </button>
+              ) : (
+                <p className="rounded-xl border border-[#477b77]/25 bg-[#dcebe5]/50 px-4 py-3 text-sm text-[#315f57]">
+                  Creator access is paused for this account. Your saved portfolio and history remain available.
+                </p>
+              )}
               <p className="text-sm text-slate-500">Save your work and continue later. Nothing is published until you complete the final review.</p>
             </div>
           ) : (
-            <div className="flex flex-col gap-6">
               <section className="dashboard-welcome">
                 <div>
                   <span className={`dashboard-status ${isExpired ? "is-expired" : ""}`}>{isExpired ? "Link expired" : "Portfolio active"}</span>
@@ -463,35 +534,38 @@ export default function DashboardClient({
                 </div>
                 {!isExpired && <button onClick={shareWhatsApp} className="dashboard-primary-action"><Share2 className="h-4 w-4" /> Share portfolio</button>}
               </section>
+          )}
 
-              <InterestInbox
-                interests={interestItems}
-                onDecision={(id, status) => {
-                  setInterestItems((current) =>
-                    current.map((interest) =>
-                      interest.id === id ? { ...interest, status } : interest
-                    )
-                  );
-                  router.refresh();
-                }}
-              />
+          {(canCreatePortfolio || portfolio) && <>
+          <InterestInbox
+            interests={interestItems}
+            disclosedCategories={disclosedCategories}
+            onDecision={(id, status) => {
+              setInterestItems((current) =>
+                current.map((interest) =>
+                  interest.id === id ? { ...interest, status } : interest
+                )
+              );
+              router.refresh();
+            }}
+          />
 
-              <AccessControls
-                grants={accessGrants}
-                events={accessEvents}
-                onGrantChange={(grantId, action, expiresAt) => {
-                  setAccessGrants((current) => current.map((grant) =>
-                    grant.id === grantId
-                      ? action === "revoke"
-                        ? { ...grant, status: "revoked", revokedAt: new Date().toISOString() }
-                        : { ...grant, status: "active", expiresAt: expiresAt || grant.expiresAt }
-                      : grant
-                  ));
-                  router.refresh();
-                }}
-              />
+          <AccessControls
+            grants={accessGrants}
+            events={accessEvents}
+            onGrantChange={(grantId, action, expiresAt) => {
+              setAccessGrants((current) => current.map((grant) =>
+                grant.id === grantId
+                  ? action === "revoke"
+                    ? { ...grant, status: "revoked", revokedAt: new Date().toISOString() }
+                    : { ...grant, status: "active", expiresAt: expiresAt || grant.expiresAt }
+                  : grant
+              ));
+              router.refresh();
+            }}
+          />
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="dashboard-glass p-4">
                   <div className="flex items-center gap-2 text-slate-500">
                     <Eye className="h-4 w-4" />
@@ -510,17 +584,17 @@ export default function DashboardClient({
                 <div className="dashboard-glass p-4">
                   <div className="flex items-center gap-2 text-slate-500">
                     <Clock className="h-4 w-4" />
-                    <span className="text-sm font-medium">Link expires</span>
+                    <span className="text-sm font-medium">Public link</span>
                   </div>
                   <p className="mt-2 text-lg font-semibold text-[#18272e]">
-                    {daysLeft !== null
+                    {portfolio?.is_published && daysLeft !== null
                       ? `${daysLeft} day${daysLeft !== 1 ? "s" : ""}`
-                      : "—"}
+                      : "Not published"}
                   </p>
                 </div>
               </div>
 
-              {shareUrl && (
+          {portfolio?.is_published && shareUrl ? (
                 <div className="dashboard-glass p-4">
                   <p className="mb-3 text-sm font-semibold text-[#18272e]">Portfolio link</p>
                   <div className="flex items-center gap-2">
@@ -542,7 +616,7 @@ export default function DashboardClient({
                       <Share2 className="h-4 w-4" />
                       Share on WhatsApp
                     </button>
-                    {isExpired && (
+                    {isExpired && canCreatePortfolio && (
                       <button
                         onClick={renewLink}
                         disabled={renewing}
@@ -551,17 +625,19 @@ export default function DashboardClient({
                         <RefreshCw
                           className={`h-4 w-4 ${renewing ? "animate-spin" : ""}`}
                         />
-                        Renew (90 days)
+                        Renew (30 days)
                       </button>
                     )}
-                    <button
-                      onClick={rotateLink}
-                      disabled={rotatingLink}
-                      className="dashboard-secondary-action"
-                    >
-                      <RotateCcw className={`h-4 w-4 ${rotatingLink ? "animate-spin" : ""}`} />
-                      Rotate link
-                    </button>
+                    {canCreatePortfolio && (
+                      <button
+                        onClick={rotateLink}
+                        disabled={rotatingLink}
+                        className="dashboard-secondary-action"
+                      >
+                        <RotateCcw className={`h-4 w-4 ${rotatingLink ? "animate-spin" : ""}`} />
+                        Rotate link
+                      </button>
+                    )}
                     <button
                       onClick={unpublishPortfolio}
                       disabled={unpublishing}
@@ -572,9 +648,17 @@ export default function DashboardClient({
                     </button>
                   </div>
                 </div>
-              )}
+          ) : (
+            <div className="dashboard-glass p-4">
+              <p className="text-sm font-semibold text-[#18272e]">Public sharing is off</p>
+              <p className="mt-1 text-sm leading-6 text-slate-600">
+                Your saved portfolio, interests, access history, and view totals remain available here. Review and publish when you are ready to create a shareable link.
+              </p>
+            </div>
+          )}
 
-              <div className="flex flex-wrap gap-3">
+          {portfolio && <div className="flex flex-wrap gap-3">
+                {canCreatePortfolio && (
                 <button
                   type="button"
                   onClick={() => setFormOpen(true)}
@@ -583,12 +667,13 @@ export default function DashboardClient({
                   <Edit3 className="mr-2 h-4 w-4" />
                   Edit portfolio
                 </button>
+                )}
                 <Link
                   href="/preview"
                   className="dashboard-secondary-action"
                 >
                   <Eye className="mr-2 h-4 w-4" />
-                  Preview Short / Standard introduction
+                  Preview public introduction
                 </Link>
                 <Link
                   href="/approved-preview"
@@ -597,30 +682,84 @@ export default function DashboardClient({
                   <ShieldCheck className="mr-2 h-4 w-4" />
                   Full portfolio preview
                 </Link>
-              </div>
-            </div>
-          )}
-          {portfolio?.candidate_id ? <div className="mt-6"><IdentityVerificationDashboard candidateId={portfolio.candidate_id} /></div> : null}
+          </div>}
+          </>}
+          </div>
+          {canCreatePortfolio && portfolio?.candidate_id ? <div className="mt-6"><IdentityVerificationDashboard candidateId={portfolio.candidate_id} /></div> : null}
         </div>
       </main>
 
-      <button
+      {canCreatePortfolio && reviewOpen && (
+        <div className="fixed inset-0 z-[60] bg-[#18272e]/70 p-3 backdrop-blur-sm sm:p-6">
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="portfolio-review-heading"
+            className="mx-auto flex h-full w-full max-w-[96rem] flex-col overflow-hidden rounded-2xl bg-[#f8f6f0] text-[#18272e] shadow-2xl"
+          >
+            <header className="flex flex-none flex-col gap-4 border-b border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#477b77]">Final disclosure review</p>
+                <h2 id="portfolio-review-heading" className="mt-1 text-xl font-semibold">Check both views before publishing</h2>
+                <p className="mt-1 text-sm text-slate-600">Your draft is saved. Nothing public changes until you confirm below.</p>
+              </div>
+              <button type="button" className="dashboard-secondary-action" disabled={publishing} onClick={() => { setReviewOpen(false); setFormOpen(true); }}>
+                Back to editing
+              </button>
+            </header>
+
+            <div className="grid min-h-0 flex-1 gap-4 overflow-y-auto p-4 sm:p-6 lg:grid-cols-2 lg:overflow-hidden">
+              <article className="flex min-h-[34rem] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white lg:min-h-0">
+                <div className="border-b border-slate-200 px-4 py-3">
+                  <h3 className="font-semibold">First View · {normalizePortfolioPrivacyMode(draftData.privacy_mode) === "private" ? "Short" : "Standard"}</h3>
+                  <p className="mt-1 text-xs text-slate-600">What anyone with the share link can see.</p>
+                </div>
+                <iframe src="/preview" title="First View portfolio preview" className="min-h-[30rem] w-full flex-1 bg-white" />
+              </article>
+              <article className="flex min-h-[34rem] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white lg:min-h-0">
+                <div className="border-b border-slate-200 px-4 py-3">
+                  <h3 className="font-semibold">Full View · Approved people only</h3>
+                  <p className="mt-1 text-xs text-slate-600">What a verified person receives after your approval.</p>
+                </div>
+                <iframe src="/approved-preview" title="Full View portfolio preview" className="min-h-[30rem] w-full flex-1 bg-white" />
+              </article>
+            </div>
+
+            <footer className="flex flex-none flex-col gap-3 border-t border-slate-200 bg-[#fffdf8] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+              <div>
+                <p className="text-sm font-semibold">Publishing creates or updates your First View link.</p>
+                <p className="mt-1 text-xs text-slate-600">Full View remains locked until you approve a verified interest request.</p>
+                {draftError && <p className="dashboard-action-error mt-2" role="alert">{draftError}</p>}
+              </div>
+              <div className="flex flex-col-reverse gap-2 sm:flex-row">
+                <button type="button" className="dashboard-secondary-action" disabled={publishing} onClick={() => setReviewOpen(false)}>Cancel review</button>
+                <button ref={reviewPublishRef} type="button" className="dashboard-primary-action" disabled={publishing} onClick={publishPortfolio}>
+                  <Send className={`h-4 w-4 ${publishing ? "animate-pulse" : ""}`} />
+                  {publishing ? "Publishing..." : portfolio?.is_published ? "Publish reviewed changes" : "Publish portfolio"}
+                </button>
+              </div>
+            </footer>
+          </section>
+        </div>
+      )}
+
+      {canCreatePortfolio && <button
         type="button"
         onClick={() => setFormOpen(true)}
         className="dashboard-primary-action fixed bottom-5 right-5 z-40 shadow-lg"
       >
         <PanelRightOpen className="h-4 w-4" />
         Portfolio details
-      </button>
+      </button>}
 
-      {formOpen && (
+      {canCreatePortfolio && formOpen && (
         <div className="dashboard-editor fixed inset-0 z-50 bg-[#18272e]/45 backdrop-blur-sm">
-          <div className="dashboard-editor-surface absolute inset-0 flex h-full w-full flex-col overflow-hidden shadow-2xl">
+          <div role="dialog" aria-modal="true" aria-labelledby="portfolio-editor-heading" className="dashboard-editor-surface absolute inset-0 flex h-full w-full flex-col overflow-hidden shadow-2xl">
             <div className="flex-none border-b border-slate-200 px-4 py-4 sm:px-6 lg:px-8">
               <div className="mx-auto flex w-full max-w-[90rem] items-center justify-between gap-4">
                 <div>
                   <div className="flex flex-wrap items-center gap-3">
-                    <h2 className="text-lg font-semibold">Portfolio details</h2>
+                    <h2 id="portfolio-editor-heading" className="text-lg font-semibold">Portfolio details</h2>
                     <span className={`dashboard-save-state is-${draftSaveState}`} aria-live="polite">
                       {draftSaveState === "saving" ? "Saving..." : draftSaveState === "saved" ? "Saved" : "Changes not saved"}
                     </span>
@@ -701,15 +840,15 @@ export default function DashboardClient({
                     </button>
                     <button
                       type="button"
-                      onClick={publishPortfolio}
+                      onClick={reviewPortfolio}
                       disabled={publishing || savingDraft}
                       className="dashboard-primary-action flex-1 sm:flex-none"
                     >
                       <Send className={`h-4 w-4 ${publishing ? "animate-pulse" : ""}`} />
-                      {publishing
-                        ? "Generating..."
+                      {savingDraft
+                        ? "Saving..."
                         : portfolio?.is_published
-                          ? "Update published"
+                          ? "Review changes"
                           : "Review and publish"}
                     </button>
                   </div>
@@ -829,15 +968,41 @@ function formatBytes(bytes: number) {
 
 function InterestInbox({
   interests,
+  disclosedCategories,
   onDecision,
 }: {
   interests: InterestSummary[];
+  disclosedCategories: string[];
   onDecision: (id: string, status: "approved" | "rejected" | "pending_review") => void;
 }) {
   const newInterests = interests.filter((interest) => interest.status === "new" || interest.status === "pending_review");
   const rejectedInterests = interests.filter((interest) => interest.status === "rejected");
   const [workingId, setWorkingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [approvalCandidate, setApprovalCandidate] = useState<InterestSummary | null>(null);
+  const approvalTitleId = useId();
+  const approvalConfirmRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!approvalCandidate) return;
+    const previous = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    approvalConfirmRef.current?.focus();
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && workingId === null) {
+        setApprovalCandidate(null);
+        return;
+      }
+      trapDialogFocus(event, approvalConfirmRef.current?.closest<HTMLElement>("[role='dialog']") || null);
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("keydown", handleKey);
+      document.body.style.overflow = previousOverflow;
+      previous?.focus();
+    };
+  }, [approvalCandidate, workingId]);
 
   async function decide(interest: InterestSummary, decision: "approved" | "rejected" | "reopened") {
     setWorkingId(interest.id);
@@ -851,11 +1016,13 @@ function InterestInbox({
       const result = (await response.json()) as { error?: string };
       if (!response.ok) {
         setActionError(result.error || "This interest could not be updated.");
-        return;
+        return false;
       }
       onDecision(interest.id, decision === "reopened" ? "pending_review" : decision);
+      return true;
     } catch {
       setActionError("This interest could not be updated. Please try again.");
+      return false;
     } finally {
       setWorkingId(null);
     }
@@ -894,7 +1061,7 @@ function InterestInbox({
                     {portfolioUrl && <a href={portfolioUrl} target="_blank" rel="noreferrer" className="dashboard-secondary-action">Open their portfolio</a>}
                     <button type="button" className="dashboard-secondary-action" disabled={workingId === interest.id} onClick={() => void decide(interest, "rejected")}>Not right now</button>
                     {interest.requester_user_id ? (
-                      <button type="button" className="dashboard-primary-action" disabled={workingId === interest.id} onClick={() => void decide(interest, "approved")}>{workingId === interest.id ? "Saving..." : "Approve access"}</button>
+                      <button type="button" className="dashboard-primary-action" disabled={workingId === interest.id} onClick={() => setApprovalCandidate(interest)}>Review Full View access</button>
                     ) : (
                       <span className="dashboard-action-note">Ask the viewer to verify their email before approving access.</span>
                     )}
@@ -924,6 +1091,50 @@ function InterestInbox({
               </button>
             </div>
           ))}
+        </div>
+      )}
+      {approvalCandidate && (
+        <div className="fixed inset-0 z-[70] grid place-items-center bg-[#102027]/65 p-4" role="presentation">
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={approvalTitleId}
+            className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-200 bg-[#fffdf8] p-5 text-[#18272e] shadow-2xl sm:p-7"
+          >
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#477b77]">Confirm controlled disclosure</p>
+            <h3 id={approvalTitleId} className="mt-2 text-2xl font-semibold">Grant Full View to {approvalCandidate.viewer_name || "this viewer"}?</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Recipient: {approvalCandidate.viewer_email || "verified viewer"}. Access expires seven days after approval.
+            </p>
+            <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-sm font-semibold">This Full View will disclose:</p>
+              {disclosedCategories.length > 0 ? (
+                <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-5 text-slate-700">
+                  {disclosedCategories.map((category) => <li key={category}>{category}</li>)}
+                </ul>
+              ) : (
+                <p className="mt-2 text-sm text-slate-600">No additional protected information has been added yet.</p>
+              )}
+            </div>
+            <p className="mt-4 text-sm leading-6 text-slate-600">
+              You can end this person&apos;s access at any time. Ending access prevents future openings but cannot recall information they already viewed or saved.
+            </p>
+            {actionError && <p className="dashboard-action-error mt-4" role="alert">{actionError}</p>}
+            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button type="button" className="dashboard-secondary-action" disabled={workingId !== null} onClick={() => setApprovalCandidate(null)}>Cancel</button>
+              <button
+                ref={approvalConfirmRef}
+                type="button"
+                className="dashboard-primary-action"
+                disabled={workingId !== null}
+                onClick={() => void decide(approvalCandidate, "approved").then((approved) => {
+                  if (approved) setApprovalCandidate(null);
+                })}
+              >
+                {workingId === approvalCandidate.id ? "Granting access..." : "Confirm Full View for 7 days"}
+              </button>
+            </div>
+          </section>
         </div>
       )}
     </section>
@@ -1070,6 +1281,89 @@ function formatInterestLocation(metadata: Record<string, unknown> | null) {
     .filter((value): value is string => typeof value === "string" && value.trim().length > 0);
   if (parts.length) return parts.join(", ");
   return typeof metadata.location === "string" ? metadata.location : "";
+}
+
+function trapDialogFocus(event: KeyboardEvent, dialog: HTMLElement | null) {
+  if (event.key !== "Tab" || !dialog) return;
+  const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(
+    'button:not([disabled]), a[href], iframe, input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+  ));
+  if (!focusable.length) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+}
+
+function fullViewDisclosureCategories(
+  data: PortfolioData,
+  media: PortfolioMedia[],
+  horoscope: PortfolioHoroscope | null
+) {
+  const categories: string[] = [];
+  if (containsDisclosure({
+    name: data.personal.name,
+    gender: data.personal.gender,
+    location: data.personal.current_location,
+    maritalStatus: data.personal.marital_status,
+    citizenship: data.personal.citizenship,
+    story: data.personal.profile_summary || data.personal.short_bio,
+    height: data.vitals?.height,
+  })) {
+    categories.push("Personal profile, location, and story details provided");
+  }
+  if (data.personal.dob?.trim()) categories.push("Exact date of birth");
+  const birthDetails = [
+    data.astrology?.time_of_birth?.trim() ? "time" : "",
+    data.personal.place_of_birth?.trim() ? "place" : "",
+  ].filter(Boolean);
+  if (birthDetails.length) categories.push(`Exact ${birthDetails.join(" and ")} of birth`);
+  if (containsDisclosure(data.education) || containsDisclosure(data.career)) {
+    categories.push("Education, employer, career, and income details provided");
+  }
+  if (containsDisclosure(data.family)) {
+    categories.push("Family members, origins, and family background provided");
+  }
+  if (containsDisclosure(data.lifestyle)) {
+    categories.push("Lifestyle, languages, interests, and values provided");
+  }
+  if (containsDisclosure(data.astrology) || Boolean(data.vitals?.gotra)) {
+    categories.push("Astrology and gotra details provided");
+  }
+  if (containsDisclosure(data.preferences)) {
+    categories.push("Partner preferences and future plans provided");
+  }
+  const contacts = data.contact?.contacts?.filter(
+    (contact) => contact.name?.trim() && (contact.phone?.trim() || contact.email?.trim())
+  ) || [];
+  if (
+    contacts.length > 0
+    || Boolean(data.contact?.contact_person?.trim() && (data.contact.phone?.trim() || data.contact.email?.trim()))
+  ) {
+    categories.push("Protected contact details");
+  }
+  if (media.length > 0) {
+    const protectedPhotoCount = media.filter((item) => item.visibility !== "public").length;
+    const protectedCopy = protectedPhotoCount > 0
+      ? `, including ${protectedPhotoCount} protected ${protectedPhotoCount === 1 ? "photo" : "photos"}`
+      : "";
+    categories.push(`${media.length} portfolio ${media.length === 1 ? "photo" : "photos"}${protectedCopy}`);
+  }
+  if (horoscope) categories.push("Original horoscope attachment");
+  return categories;
+}
+
+function containsDisclosure(value: unknown): boolean {
+  if (typeof value === "string") return value.trim().length > 0;
+  if (typeof value === "number" || typeof value === "boolean") return true;
+  if (Array.isArray(value)) return value.some(containsDisclosure);
+  if (value && typeof value === "object") return Object.values(value).some(containsDisclosure);
+  return false;
 }
 
 const EMPTY_DATA: PortfolioData = {

@@ -4,7 +4,9 @@
 
 **Scope:** Repository-grounded product, positioning, UX, conversion, portfolio, dashboard, and design-system review
 
-**Pilot contract assessed:** Free, invite-only portfolio creation for adult pilot participants. Anyone with a shared First View link may view it and express interest. A verified viewer may receive identity-bound Full View access after owner approval. Payments, identity verification, and BrokerDesk are not part of the B2C pilot.
+**Pilot contract assessed:** Free, invite-only portfolio creation for adult pilot participants. Every pilot creator must complete Didit identity verification before first publication. Anyone with a shared First View link may view it and express interest. A verified viewer may receive identity-bound Full View access for seven days after owner approval. Public links are active for 30 days by default. Payments and BrokerDesk are not part of the B2C pilot; future 3-, 4-, 6-, and 12-month paid plans are not implemented.
+
+**Pilot-facing implementation update:** On 2026-09-11, landing and signup copy was aligned to the invite-only beta, required Didit verification, free pilot, 30-day public link, and seven-day Full View contract. Authorization and production-operation gates identified below remain separate implementation work.
 
 ## 1. Executive summary
 
@@ -12,14 +14,14 @@ Nakshatra has the foundations of a differentiated product, not merely a prettier
 
 The B2C pilot is not launch-ready yet. The main problem is not visual quality. The landing page, authentication surfaces, portfolio renderer, and dashboard are calm, credible, and responsive. The problem is that the product contract presented to users does not match the intended pilot or several actual transitions:
 
-- The marketing presents an open, paid, verification-enabled product instead of an invite-only beta.
+- At assessment time, the marketing presented an open, paid product instead of an invite-only beta and did not explain that Didit verification is mandatory for invited creators.
 - Authentication equates account creation with portfolio-owner eligibility; no pilot creator entitlement exists.
 - Viewer email verification creates an Auth user without clearly explaining that secure viewer identity.
 - “Review and publish” publishes without a review step.
 - “Approve access” releases Full View without showing the exact disclosure and seven-day term at confirmation.
 - Owners and viewers receive no operational notification when an interest or decision occurs.
 - Unpublishing hides the owner’s operational dashboard instead of preserving relationship history.
-- Didit and BrokerDesk are implemented and reachable but are outside the pilot promise.
+- Didit is part of the pilot publication journey and must be production-ready; BrokerDesk is implemented and reachable but outside the pilot promise.
 
 The correct launch strategy is to narrow the product, not expand it: enforce invited creator entitlement, disable non-pilot capabilities server-side, make every disclosure transition explicit, fix the notification loop, align public messaging with reality, and test the complete real-provider journey in staging.
 
@@ -135,7 +137,7 @@ Before I add or request sensitive information, show me exactly who can see it, f
 - Problem-aware: See why files fail.
 - Solution-aware: See how access works.
 - Product-aware invited participant: Create with my invitation.
-- Product-aware uninvited visitor: Join the beta waitlist.
+- Product-aware uninvited visitor: Understand beta access; use a shared portfolio link to view or express interest.
 - Existing participant: Sign in.
 
 ## 3. Repository discovery
@@ -257,7 +259,7 @@ Scores represent pilot readiness, not visual taste.
 
 ### Five-second test
 
-Users can understand that Nakshatra is a digital marriage portfolio, replaces scattered biodata material, and controls some protected details. They cannot understand that creation is invite-only, viewers can participate without creator rights, payment and verification are unavailable, or precisely what “control” ends once information is viewed.
+At assessment time, users could understand that Nakshatra is a digital marriage portfolio, replaces scattered biodata material, and controls some protected details. They could not understand that creation is invite-only, viewers can participate without creator rights, the pilot is free, Didit verification is mandatory for creators, or precisely where “control” ends once information is viewed. The 2026-09-11 pilot-facing copy update addresses the first four messaging gaps; the underlying creator entitlement is still not enforced.
 
 ### Current strengths
 
@@ -270,7 +272,7 @@ Users can understand that Nakshatra is a digital marriage portfolio, replaces sc
 
 ### Current information architecture
 
-Header → Hero → Biodata problem → Control → How it works → Family benefits → Sample cards → Pricing → FAQ → Final CTA.
+At assessment time: Header → Hero → Biodata problem → Control → How it works → Family benefits → Sample cards → Pricing → FAQ → Final CTA.
 
 This is coherent for a commercial launch but incorrect for the private beta. Pricing should be replaced by beta participation rules. The static “sample” cards should be replaced with an actual First/Full disclosure demonstration.
 
@@ -325,7 +327,7 @@ Required honesty note:
 
 ### Recommended flow
 
-1. **Uninvited boundary:** `/signup` explains that portfolio creation is invite-only. Offer Sign in and optionally Join waitlist; do not create a portfolio.
+1. **Uninvited boundary:** `/signup` explains that portfolio creation is invite-only and offers Sign in. Do not invent or advertise a waitlist until a real capture and consent workflow exists; do not create a portfolio for an uninvited account.
 2. **Invitation acceptance:** Single-use, email-bound invitation. Show pilot terms, enabled/disabled features, support contact, and candidate ownership requirement.
 3. **Authentication:** Google or password must match the invited email.
 4. **Representation and consent:** “I am the adult candidate” or “I am assisting an adult candidate.” Assisted creation requires recorded candidate consent before publication.
@@ -465,7 +467,7 @@ Persistent “Private beta: get help or send feedback” entry point.
 4. Full View approval occurs without a disclosure confirmation.
 5. No new-interest or decision notifications.
 6. Unpublishing hides operational history and controls.
-7. Didit verification conflicts with the pilot journey.
+7. Required Didit verification lacks confirmed production readiness, recovery guidance, and a fully rehearsed failure/support journey.
 8. BrokerDesk remains reachable from the B2C application.
 9. The interest CTA appears only near the end of a long portfolio.
 10. Nine equal-priority form sections signal excessive effort.
@@ -483,15 +485,15 @@ Persistent “Private beta: get help or send feedback” entry point.
 ## 11. Top 20 conversion problems
 
 1. Every major CTA sends visitors toward unrestricted signup.
-2. “Private beta” and “invite-only” are absent.
-3. Paid plans are advertised despite unavailable payment.
-4. Plan selection is described as a publication requirement.
-5. Verification is promised in the creation workflow.
-6. Verification is repeated as a family benefit.
-7. The hero mockup displays a misleading verified badge.
+2. At assessment time, “Private beta” and “invite-only” were absent; pilot-facing copy has now been corrected.
+3. At assessment time, paid plans were advertised despite unavailable payment; pilot pricing has now been removed.
+4. At assessment time, plan selection was described as a publication requirement; pilot-facing copy now states that no payment is required.
+5. Required Didit verification was presented as an optional creation step instead of a mandatory pre-publication gate.
+6. Verification messaging did not explain what the badge proves or the support path if verification fails.
+7. The hero mockup displayed a verified badge without explaining that every pilot creator must complete Didit before publication.
 8. “View a sample portfolio” leads to static cards, not a sample portfolio.
 9. Invited creators and uninvited viewers receive the same CTA.
-10. There is no waitlist or beta-interest route.
+10. There is no beta-interest capture route; do not add a waitlist CTA until that workflow exists.
 11. The forwardable First View is not distinguished early enough from identity-bound Full View.
 12. Trust claims are not supported by a concrete “who sees what” artifact.
 13. Category terminology varies across metadata, pages, and documents.
@@ -500,13 +502,13 @@ Persistent “Private beta: get help or send feedback” entry point.
 16. Repeated CTAs do not adapt to visitor awareness stage.
 17. Expected creation effort and preparation are absent.
 18. Candidate ownership and consent requirements are absent at conversion.
-19. Mobile hides Sign in while emphasizing an inappropriate open creator CTA.
+19. At assessment time, mobile hid Sign in while emphasizing an inappropriate open creator CTA; the pilot-facing update now preserves Sign in and places invited creation in the hero.
 20. Internal README/CLAUDE guidance has been materially stale, undermining launch alignment.
 
 ## 12. Top 20 design improvements
 
 1. Add a persistent Private beta label to marketing and owner surfaces.
-2. Create distinct invitation, waitlist, and viewer entry components.
+2. Create distinct invitation and viewer entry components; add a waitlist component only after its data, consent, and follow-up workflow exists.
 3. Build an actual First View/Full View disclosure comparison.
 4. Add a real publication-review screen.
 5. Add a Full View grant confirmation with categories and seven-day expiry.
@@ -568,12 +570,12 @@ Additional template-specific corrections within those improvements: fix the skip
 
 ### Quick wins: high impact, low effort
 
-1. Replace pricing with private-beta participation rules.
-2. Remove Didit promises and verified badges from pilot marketing/UI.
+1. Replace pricing with private-beta participation rules. Completed in the 2026-09-11 pilot-facing update.
+2. State that Didit identity verification is required before publication and explain accurately what the verified badge does and does not prove.
 3. Add Private beta labels and accurate creator-versus-viewer copy.
 4. Rename “Review and publish” until a review exists, or add a minimal confirmation.
 5. Add a seven-day disclosure confirmation before approving Full View.
-6. Preserve Sign in on mobile.
+6. Preserve Sign in on mobile. Completed in the 2026-09-11 pilot-facing update.
 7. Clarify First View forwarding and screenshot limits.
 8. Correct category terminology across metadata and legal pages.
 9. Change “sample portfolio” CTA to an actual sample or accurately label the static preview.
@@ -582,7 +584,7 @@ Additional template-specific corrections within those improvements: fix the skip
 ### Medium-term: required for a trustworthy pilot
 
 1. Implement email-bound creator invitations and owner entitlement enforcement.
-2. Gate BrokerDesk, Didit, and payment capabilities server-side.
+2. Gate BrokerDesk and payment capabilities server-side; keep Didit enabled only through the required, consented creator verification journey.
 3. Add owner and viewer workflow notifications.
 4. Build real public/Full publication review.
 5. Add autosave and readiness navigation.
@@ -609,7 +611,7 @@ Do not invite real participants until all P0 gates pass:
 
 - Only an email-bound invited user can become a portfolio owner.
 - Viewer identities cannot self-elevate into creator entitlement.
-- Payments, Didit, and BrokerDesk are disabled server-side and absent from pilot claims.
+- Payments and BrokerDesk are disabled server-side and absent from pilot claims; Didit is enabled, configured, consented, and successfully rehearsed as a mandatory creator publication gate.
 - Publication includes an explicit, accurate disclosure review.
 - Full View approval shows recipient, data categories, seven-day expiry, and revocation behavior.
 - Owners receive new-interest notifications; viewers receive decision notifications.

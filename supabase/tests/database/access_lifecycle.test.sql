@@ -10,6 +10,9 @@ select pg_temp.create_auth_actor('a1000000-0000-4000-8000-000000000001', 'a11000
 select pg_temp.create_auth_actor('a1000000-0000-4000-8000-000000000002', 'a1100000-0000-4000-8000-000000000002', 'viewer@access.test');
 select pg_temp.create_auth_actor('a1000000-0000-4000-8000-000000000003', 'a1100000-0000-4000-8000-000000000003', 'stranger@access.test');
 
+insert into app_private.b2c_creator_entitlements (email_hash)
+values (app_private.normalized_email_hash('owner@access.test'));
+
 insert into public.candidates (id, primary_owner_user_id, display_name, created_by)
 values (
   'a2000000-0000-4000-8000-000000000001',
